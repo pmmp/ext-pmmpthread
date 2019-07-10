@@ -70,6 +70,9 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D); /* }}} */
 /* {{{ read proeprties from storage */
 HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D); /* }}} */
 
+/* {{{ proxy get_property_ptr_ptr to read_property */
+zval *pthreads_get_property_ptr_ptr_stub(zval *object, zval *member, int type, void **cache_slot); /* }}} */
+
 /* {{{ read a property from the referenced object */
 zval * pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D);
 zval * pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D); /* }}} */
