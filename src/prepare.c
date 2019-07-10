@@ -395,7 +395,13 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	}
 	prepare_class_property_table(thread, candidate, prepared);
 
-	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_LINKED)) {
+	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags &
+#if PHP_VERSION_ID >= 70400
+		ZEND_ACC_LINKED
+#else
+		ZEND_ACC_ANON_BOUND
+#endif
+		)) {
 
 		// this first copy will copy all declared functions on the unbound anonymous class
 		prepare_class_function_table(candidate, prepared);
