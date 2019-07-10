@@ -180,7 +180,7 @@ PHP_METHOD(Threaded, isTerminated)
 PHP_METHOD(Threaded, synchronized)
 {
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
-	uint argc = 0;
+	int argc = 0;
 	zval *argv = NULL;
 	pthreads_object_t* threaded= PTHREADS_FETCH_TS;
 

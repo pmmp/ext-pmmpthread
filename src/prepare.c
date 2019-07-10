@@ -279,12 +279,20 @@ while(0)
 static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	if (candidate->num_traits) {
-		uint trait;
+		unsigned int trait;
+
+#if PHP_VERSION_ID >= 70400
+		prepared->trait_names = emalloc(sizeof(zend_class_name) * candidate->num_traits);
+		for (trait = 0; trait < candidate->num_traits; trait++) {
+			prepared->trait_names[trait].lc_name = zend_string_new(candidate->trait_names[trait].lc_name);
+			prepared->trait_names[trait].name = zend_string_new(candidate->trait_names[trait].name);
+		}
+#else
 		prepared->traits = emalloc(sizeof(zend_class_entry*) * candidate->num_traits);
-		for (trait=0; trait<candidate->num_traits; trait++)
+		for (trait = 0; trait < candidate->num_traits; trait++)
 			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
 		prepared->num_traits = candidate->num_traits;
-
+#endif
 		if (candidate->trait_aliases) {
 			size_t alias = 0;
 
@@ -336,7 +344,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	}
 
 	if (candidate->num_interfaces) {
-		uint interface;
+		unsigned int interface;
 		prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
 		for(interface=0; interface<candidate->num_interfaces; interface++)
 			prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
@@ -387,7 +395,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	}
 	prepare_class_property_table(thread, candidate, prepared);
 
-	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_ANON_BOUND)) {
+	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_LINKED)) {
 
 		// this first copy will copy all declared functions on the unbound anonymous class
 		prepare_class_function_table(candidate, prepared);
@@ -418,11 +426,25 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 
 		/* runtime cache relies on immutable scope, so if scope changed, reallocate runtime cache */
 		/* IT WOULD BE NICE IF THIS WERE DOCUMENTED SOMEWHERE OTHER THAN PHP-SRC */
-		if (!function->op_array.run_time_cache || function->common.scope != scope) {
+		if (
+#if PHP_VERSION_ID >= 70400
+			!ZEND_MAP_PTR_GET(function->op_array.run_time_cache)
+#else
+			!function->op_array.run_time_cache
+#endif
+			|| function->common.scope != scope) {
 			zend_op_array *op_array = &function->op_array;
+#if PHP_VERSION_ID >= 70400
+			void* ptr = emalloc(sizeof(void*) + op_array->cache_size);
+			ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
+			ptr = (char*)ptr + sizeof(void*);
+			ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
+			memset(ptr, 0, op_array->cache_size);
+#else
 			op_array->run_time_cache = emalloc(op_array->cache_size);
 			memset(op_array->run_time_cache, 0, op_array->cache_size);
 			op_array->fn_flags |= ZEND_ACC_NO_RT_ARENA;
+#endif
 		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
