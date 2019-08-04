@@ -157,7 +157,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		if (info->ce) {
 			if (info->ce == candidate) {
 				dup.ce = prepared;
-			} else dup.ce = pthreads_prepared_entry(thread, info->ce);
+			} else dup.ce = pthreads_create_entry(thread, info->ce, 0);
 		}
 
 		if (!zend_hash_str_add_mem(&prepared->properties_info, name->val, name->len, &dup, sizeof(zend_property_info))) {
