@@ -339,15 +339,28 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 	prepared->ce_flags = candidate->ce_flags;
 
-	if (candidate->parent) {
-		prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
+	if (candidate->ce_flags & ZEND_ACC_LINKED) {
+		if (candidate->parent) {
+			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
+		}
+	} else if (candidate->parent_name) {
+		prepared->parent_name = zend_string_new(candidate->parent_name);
 	}
 
 	if (candidate->num_interfaces) {
 		unsigned int interface;
-		prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
-		for(interface=0; interface<candidate->num_interfaces; interface++)
-			prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
+		if (candidate->ce_flags & ZEND_ACC_LINKED) {
+			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
+			for (interface = 0; interface < candidate->num_interfaces; interface++)
+				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
+		}
+		else {
+			prepared->interface_names = emalloc(sizeof(zend_class_name) * candidate->num_interfaces);
+			for (interface = 0; interface < candidate->num_interfaces; interface++) {
+				prepared->interface_names[interface].name = zend_string_new(candidate->interface_names[interface].name);
+				prepared->interface_names[interface].lc_name = zend_string_new(candidate->interface_names[interface].lc_name);
+			}
+		}
 		prepared->num_interfaces = candidate->num_interfaces;
 	} else prepared->num_interfaces = 0;
 
@@ -394,14 +407,8 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 		}
 	}
 	prepare_class_property_table(thread, candidate, prepared);
-
-	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags &
-#if PHP_VERSION_ID >= 70400
-		ZEND_ACC_LINKED
-#else
-		ZEND_ACC_ANON_BOUND
-#endif
-		)) {
+#if PHP_VERSION_ID < 70400
+	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_ANON_BOUND)) {
 
 		// this first copy will copy all declared functions on the unbound anonymous class
 		prepare_class_function_table(candidate, prepared);
@@ -409,7 +416,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 
 		return prepared;
 	}
-
+#endif
 	return pthreads_complete_entry(thread, candidate, prepared);
 } /* }}} */
 
