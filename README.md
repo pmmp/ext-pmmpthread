@@ -1,7 +1,7 @@
 # Threading for PHP - Share Nothing, Do Everything :)
 
-[![Build Status](https://travis-ci.org/pmmp/pthreads.svg?branch=master)](https://travis-ci.org/pmmp/pthreads)
-[![Build status](https://ci.appveyor.com/api/projects/status/929kgwur23p40n1y?svg=true)](https://ci.appveyor.com/project/pmmp/pthreads/branch/master)
+[![Build Status](https://travis-ci.org/pmmp/pthreads.svg?branch=fork)](https://travis-ci.org/pmmp/pthreads)
+[![Build status](https://ci.appveyor.com/api/projects/status/929kgwur23p40n1y/branch/fork?svg=true)](https://ci.appveyor.com/project/pmmp/pthreads/branch/fork)
 <!---
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Percentage of issues still open")
