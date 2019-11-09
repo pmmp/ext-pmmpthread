@@ -1,11 +1,12 @@
 # Threading for PHP - Share Nothing, Do Everything :)
 
-[![Build Status](https://travis-ci.org/krakjoe/pthreads.svg?branch=master)](https://travis-ci.org/krakjoe/pthreads)
-[![Build status](https://ci.appveyor.com/api/projects/status/5pyrhbrxcgenkpbk/branch/master?svg=true)](https://ci.appveyor.com/project/krakjoe/pthreads/branch/master)
+[![Build Status](https://travis-ci.org/pmmp/pthreads.svg?branch=master)](https://travis-ci.org/pmmp/pthreads)
+[![Build status](https://ci.appveyor.com/api/projects/status/929kgwur23p40n1y?svg=true)](https://ci.appveyor.com/project/pmmp/pthreads/branch/master)
+<!---
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Average time to resolve an issue")
 [![Percentage of issues still open](http://isitmaintained.com/badge/open/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Percentage of issues still open")
 [![Join the chat at https://gitter.im/krakjoe/pthreads](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/krakjoe/pthreads?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
+-->
 This project provides multi-threading that is compatible with PHP based on Posix Threads.
 
 ## Highlights
