@@ -125,17 +125,17 @@ void pthreads_socket_set_option(zval *object, zend_long level, zend_long name, z
 void pthreads_socket_get_option(zval *object, zend_long level, zend_long name, zval *return_value) {
 	pthreads_object_t *threaded =
 		PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
-	socklen_t unused = sizeof(zend_long);
+	int value;
+	socklen_t unused = sizeof(value);
 
 	PTHREADS_SOCKET_CHECK(threaded->store.sock);
 
-	if (getsockopt(threaded->store.sock->fd, level, name, (void*) &Z_LVAL_P(return_value), &unused) != SUCCESS) {
+	if (getsockopt(threaded->store.sock->fd, level, name, (void*) &value, &unused) != SUCCESS) {
 		PTHREADS_SOCKET_ERROR(threaded->store.sock, "Unable to retrieve socket option", errno);
 
 		RETURN_FALSE;
-	} else {
-		Z_TYPE_INFO_P(return_value) = IS_LONG;
 	}
+	ZVAL_LONG(return_value, (zend_long) value);
 }
 
 static inline zend_bool pthreads_socket_set_inet_addr(pthreads_socket_t *sock, struct sockaddr_in *sin, zend_string *address) {
