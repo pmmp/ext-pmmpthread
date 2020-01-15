@@ -119,8 +119,8 @@ static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) {
 } /* }}} */
 
 /* {{{ */
-static zval* pthreads_copy_literals(zval *old, int last) {
-	zval *literals = (zval*) safe_emalloc(last, sizeof(zval), 0);
+static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
+	zval *literals = (zval*) memory;
 	zval *literal = literals,
 		 *end = literals + last;
 
@@ -147,10 +147,8 @@ static zval* pthreads_copy_literals(zval *old, int last) {
 
 #if PHP_VERSION_ID < 70300
 /* {{{ */
-static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
-	zend_op *copy = safe_emalloc(
-		op_array->last, sizeof(zend_op), 0);
-
+static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
+	zend_op *copy = memory;
 	memcpy(copy, op_array->opcodes, sizeof(zend_op) * op_array->last);
 
 	/* The following code comes from ext/opcache/zend_persist.c */
@@ -209,10 +207,8 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
 #else /* PHP_VERSION_ID >= 70300 */
 
 /* {{{ */
-static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
-	zend_op *copy = safe_emalloc(
-		op_array->last, sizeof(zend_op), 0);
-
+static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
+	zend_op *copy = memory;
 	memcpy(copy, op_array->opcodes, sizeof(zend_op) * op_array->last);
 
 	/* The following code comes from ext/opcache/zend_persist.c */
@@ -359,10 +355,13 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	}
 
 	op_array->filename = filename_copy;
-
-	if (op_array->literals) op_array->literals = pthreads_copy_literals (literals, op_array->last_literal);
-
-	op_array->opcodes = pthreads_copy_opcodes(op_array, literals);
+	
+	void *opcodes_memory = emalloc(ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16) + sizeof (zval) * op_array->last_literal);
+	if (op_array->literals) {
+		void *literals_memory = ((char*) opcodes_memory) + ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16);
+		op_array->literals = pthreads_copy_literals (literals, op_array->last_literal, literals_memory);
+	}
+	op_array->opcodes = pthreads_copy_opcodes(op_array, literals, opcodes_memory);
 
 	if (op_array->arg_info) 	op_array->arg_info = pthreads_copy_arginfo(op_array, arg_info, op_array->num_args);
 	if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
