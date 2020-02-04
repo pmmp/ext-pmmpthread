@@ -223,6 +223,12 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
 #if ZEND_USE_ABS_CONST_ADDR
 			if (opline->op1_type == IS_CONST) {
 				opline->op1.zv = (zval*)((char*)opline->op1.zv + ((char*)op_array->literals - (char*)literals));
+				if (opline->opcode == ZEND_SEND_VAL
+				 || opline->opcode == ZEND_SEND_VAL_EX
+				 || opline->opcode == ZEND_QM_ASSIGN) {
+					/* Update handlers to eliminate REFCOUNTED check */
+					zend_vm_set_opcode_handler_ex(opline, 0, 0, 0);
+				}
 			}
 			if (opline->op2_type == IS_CONST) {
 				opline->op2.zv = (zval*)((char*)opline->op2.zv + ((char*)op_array->literals - (char*)literals));
@@ -234,6 +240,11 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
 						((zval*)((char*)(op_array->opcodes + (opline - copy)) +
 						(int32_t)opline->op1.constant) - literals)) -
 					(char*)opline;
+				if (opline->opcode == ZEND_SEND_VAL
+				 || opline->opcode == ZEND_SEND_VAL_EX
+				 || opline->opcode == ZEND_QM_ASSIGN) {
+					zend_vm_set_opcode_handler_ex(opline, 0, 0, 0);
+				}
 			}
 			if (opline->op2_type == IS_CONST) {
 				opline->op2.constant =
@@ -264,6 +275,11 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals) {
 				case ZEND_FE_RESET_RW:
 				case ZEND_ASSERT_CHECK:
 					opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
+					break;
+				case ZEND_CATCH:
+					if (!(opline->extended_value & ZEND_LAST_CATCH)) {
+						opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
+					}
 					break;
 				case ZEND_DECLARE_ANON_CLASS:
 				case ZEND_DECLARE_ANON_INHERITED_CLASS:
