@@ -63,7 +63,7 @@ define('PTHREADS_ALLOW_HEADERS', 0x1000000);
  * @link http://www.php.net/manual/en/class.threaded.php
  * @since 2.0.0
  */
-class Threaded implements Traversable, Countable, ArrayAccess, Collectable
+class Threaded implements Traversable, Countable, ArrayAccess
 {
     /**
      * Increments the object's reference count
@@ -338,10 +338,10 @@ class Worker extends Thread
     /**
      * Executes the collector on the collectable object passed
      *
-     * @param Collectable $collectable The collectable object to run the collector on
+     * @param Threaded $collectable The collectable object to run the collector on
      * @return bool The referenced object can be destroyed
      */
-    public function collector(Collectable $collectable) {}
+    public function collector(Threaded $collectable) {}
 
     /**
      * Returns the number of threaded tasks waiting to be executed by the referenced Worker
@@ -381,7 +381,7 @@ class Worker extends Thread
      * Removes the first task (the oldest one) in the stack.
      *
      * @link http://www.php.net/manual/en/worker.unstack.php
-     * @return Collectable|null The item removed from the stack
+     * @return Threaded|null The item removed from the stack
      */
     public function unstack() {}
 }
@@ -488,23 +488,6 @@ class Pool
      * @return int the identifier of the Worker that accepted the object
      */
     public function submitTo(int $worker, Threaded $task) {}
-}
-
-/**
- * Collectable Class
- *
- * Garbage Collection interface for references to objects on Worker stacks
- *
- * @link http://www.php.net/manual/en/class.collectable.php
- */
-interface Collectable
-{
-    /**
-     * Determine whether an object is ready to be destroyed
-     *
-     * @return bool Whether the referenced object can be destroyed
-     */
-    public function isGarbage() : bool;
 }
 
 class ThreadedSocket extends \Threaded

@@ -73,7 +73,6 @@ zend_class_entry *pthreads_threaded_entry;
 zend_class_entry *pthreads_volatile_entry;
 zend_class_entry *pthreads_thread_entry;
 zend_class_entry *pthreads_worker_entry;
-zend_class_entry *pthreads_collectable_entry;
 zend_class_entry *pthreads_pool_entry;
 zend_class_entry *pthreads_socket_entry;
 zend_class_entry *pthreads_ce_ThreadedConnectionException;
@@ -144,9 +143,6 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	REGISTER_LONG_CONSTANT("PTHREADS_ALLOW_HEADERS", PTHREADS_ALLOW_HEADERS, CONST_CS | CONST_PERSISTENT);
 
-	INIT_CLASS_ENTRY(ce, "Collectable", pthreads_collectable_methods);
-	pthreads_collectable_entry = zend_register_internal_interface(&ce);
-
 	INIT_CLASS_ENTRY(ce, "Threaded", pthreads_threaded_methods);
 	pthreads_threaded_entry=zend_register_internal_class(&ce);
 	pthreads_threaded_entry->get_iterator = pthreads_object_iterator_create;
@@ -155,13 +151,12 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_entry->unserialize = pthreads_threaded_unserialize;
 	zend_class_implements(
 		pthreads_threaded_entry,
-		2,
+		1,
 #if PHP_VERSION_ID >= 80000
-		zend_ce_aggregate,
+		zend_ce_aggregate
 #else
-		zend_ce_traversable,
+		zend_ce_traversable
 #endif
-		pthreads_collectable_entry
 	);
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
@@ -767,10 +762,6 @@ PHP_MINFO_FUNCTION(pthreads)
 
 #ifndef HAVE_PTHREADS_CLASS_THREAD
 #	include <classes/thread.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_COLLECTABLE
-#	include <classes/collectable.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_WORKER

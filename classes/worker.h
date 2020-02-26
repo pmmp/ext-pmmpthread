@@ -45,7 +45,7 @@ ZEND_BEGIN_ARG_INFO_EX(Worker_collect, 0, 0, 0)
 	ZEND_ARG_CALLABLE_INFO(0, function, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_collector, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, collectable, Collectable, 0)
+	ZEND_ARG_OBJ_INFO(0, collectable, Threaded, 0)
 ZEND_END_ARG_INFO()
 
 extern zend_function_entry pthreads_worker_methods[];
@@ -97,7 +97,7 @@ PHP_METHOD(Worker, stack)
 	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
 } /* }}} */
 
-/* {{{ proto Collectable Worker::unstack()
+/* {{{ proto Threaded Worker::unstack()
 	Removes the first item from the stack */
 PHP_METHOD(Worker, unstack)
 {
@@ -209,11 +209,11 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 	return remove;
 } /* }}} */
 
-/* {{{ proto bool Worker::collector(Collectable collectable) */
+/* {{{ proto bool Worker::collector(Threaded collectable) */
 PHP_METHOD(Worker, collector) {
 	zval *collectable;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_collectable_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_threaded_entry) != SUCCESS) {
 		return;
 	}
 

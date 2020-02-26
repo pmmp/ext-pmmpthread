@@ -14,7 +14,7 @@ $pool = new Pool(1);
 $pool->submit(new Work());
 $pool->shutdown();
 
-$pool->collect(function(Collectable $work) {
+$pool->collect(function(Threaded $work) {
 	return $work->isGarbage();
 });
 
