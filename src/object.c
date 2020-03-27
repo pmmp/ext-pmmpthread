@@ -274,19 +274,6 @@ zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *
 		valid = 1;
 		pthreads_zend_object_t *pthreads = (pthreads_zend_object_t*) address;
 
-		/*
-		* This can be done outside of a critical section because there are only two possibilities:
-		*	We own the object: no possible pathway to fault (read free'd memory)
-		*	We don't own the object: possibly pathway to fault whether we use critical section or not:
-		*		We use a critical section: we create the connection knowing that address cannot be freed while doing so
-		*		however, as soon as we leave the section, and before the conext that called this routine can reference the connection
-		*		object the creating context may have free'd the object.
-		*		We don't use a critical section: the object may be freed while we are creating the connection, causing a fault.
-		*
-		* As always, it's necessary for the programmer to retain the appropriate references so that this does not fault, creating connections
-		* in a critical section would be unecessarily slow, not to mention recursively lock mutex (which is fine, but not ideal).
-		*/
-
 		if (PTHREADS_THREAD_OWNS(pthreads)) {
 			/* we own the object in this context */
 			ZVAL_OBJ(object, &pthreads->std);
