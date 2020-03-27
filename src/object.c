@@ -376,12 +376,6 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 	pthreads_object_t *ts_obj = base->ts_obj;
 	if (!PTHREADS_IS_SOCKET(base)) {
-		if ((PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
-			pthreads_monitor_check(ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
-			!pthreads_monitor_check(ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
-			pthreads_join(base);
-		}
-
 		if (pthreads_monitor_lock(ts_obj->monitor)) {
 			pthreads_store_free(ts_obj->store.props);
 			if (PTHREADS_IS_WORKER(base)) {
@@ -405,6 +399,12 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 /* {{{ */
 void pthreads_base_free(zend_object *object) {
 	pthreads_zend_object_t* base = PTHREADS_FETCH_FROM(object);
+
+	if (PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
+		pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
+		!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
+		pthreads_join(base);
+	}
 
 	if (pthreads_globals_lock()) {
 		if (--base->ts_obj->refcount == 0) {
