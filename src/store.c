@@ -369,10 +369,6 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 				normal refcounting, we'll read the reference only at volatile objects
 			*/
 			rebuild_object_properties(&threaded->std);
-			
-			if(IS_PTHREADS_VOLATILE(object)) {
-				pthreads_store_sync(object);
-			}
 
 			if (Z_TYPE(member) == IS_LONG) {
 				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), write);
