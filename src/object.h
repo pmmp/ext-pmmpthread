@@ -49,7 +49,7 @@ zend_bool pthreads_join(pthreads_zend_object_t* thread); /* }}} */
 int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* destination); /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *ce, zval *object); /* }}} */
+zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_class_entry *ce, zval *object); /* }}} */
 
 /* {{{ */
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref); /* }}} */

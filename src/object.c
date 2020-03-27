@@ -220,7 +220,7 @@ int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsi
 		return FAILURE;
 	}
 
-	if (!pthreads_globals_object_connect((zend_ulong) address, ce, object)) {
+	if (!pthreads_globals_object_connect(address, ce, object)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"pthreads detected an attempt to connect to an object which has already been destroyed");
 		return FAILURE;
@@ -265,14 +265,14 @@ int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* des
 
 /* {{{ */
 //TODO: rename this
-zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *ce, zval *object) {
+zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_class_entry *ce, zval *object) {
 	zend_bool valid = 0;
 	if (!pthreads_globals_lock()) {
 		return valid;
 	}
-	if (pthreads_globals_object_valid((pthreads_zend_object_t*) address)) {
+	if (pthreads_globals_object_valid(address)) {
 		valid = 1;
-		pthreads_zend_object_t *pthreads = (pthreads_zend_object_t*) address;
+		pthreads_zend_object_t *pthreads = address;
 
 		if (PTHREADS_THREAD_OWNS(pthreads)) {
 			/* we own the object in this context */

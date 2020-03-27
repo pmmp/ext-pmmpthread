@@ -754,7 +754,7 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 				break;
 			}
 
-			if (!pthreads_globals_object_connect((zend_ulong)threaded, NULL, pzval)) {
+			if (!pthreads_globals_object_connect(threaded, NULL, pzval)) {
 				zend_throw_exception_ex(
 					spl_ce_RuntimeException, 0,
 					"pthreads detected an attempt to connect to an object which has already been destroyed");
