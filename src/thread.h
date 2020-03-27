@@ -114,13 +114,9 @@ static inline pthreads_zend_object_t* _pthreads_fetch_object(zend_object *object
 /* {{{ scope macros */
 #define PTHREADS_IS_KNOWN_ENTRY(t)      ((t)->ts_obj->scope)
 #define PTHREADS_IS_SOCKET(t)       	((t)->ts_obj->scope & PTHREADS_SCOPE_SOCKET)
-#define PTHREADS_IS_NOT_SOCKET(t)   	(!PTHREADS_IS_SOCKET(t))
 #define PTHREADS_IS_THREAD(t)           ((t)->ts_obj->scope & PTHREADS_SCOPE_THREAD)
-#define PTHREADS_IS_NOT_THREAD(t)       (!PTHREADS_IS_THREAD(t))
 #define PTHREADS_IS_WORKER(t)           ((t)->ts_obj->scope & PTHREADS_SCOPE_WORKER)
-#define PTHREADS_IS_NOT_WORKER(t)       (!PTHREADS_IS_WORKER(t))
-#define PTHREADS_IS_THREADED(t)         ((t)->ts_obj->scope & PTHREADS_SCOPE_THREADED)
-#define PTHREADS_IS_NOT_THREADED(t)     (!PTHREADS_IS_THREADED(t)) /* }}} */
+#define PTHREADS_IS_THREADED(t)         ((t)->ts_obj->scope & PTHREADS_SCOPE_THREADED) /* }}} */
 
 /* {{{ pthread_self wrapper */
 static inline ulong pthreads_self() {
