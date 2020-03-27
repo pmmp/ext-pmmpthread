@@ -128,7 +128,7 @@ PHP_METHOD(Threaded, getRefCount) 	{ RETURN_LONG(Z_REFCOUNT_P(getThis())); } /* 
 		Otherwise returns a boolean indication of success */
 PHP_METHOD(Threaded, wait)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH;
+	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 	zend_long timeout = 0L;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|l", &timeout)==SUCCESS) {
@@ -141,7 +141,7 @@ PHP_METHOD(Threaded, wait)
 		Will return a boolean indication of success */
 PHP_METHOD(Threaded, notify)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH;
+	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
 	RETURN_BOOL(pthreads_monitor_notify(threaded->monitor) == SUCCESS);
 } /* }}} */
@@ -151,7 +151,7 @@ PHP_METHOD(Threaded, notify)
 		Will return a boolean indication of success */
 PHP_METHOD(Threaded, notifyOne)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH;
+	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
 	RETURN_BOOL(pthreads_monitor_notify_one(threaded->monitor) == SUCCESS);
 } /* }}} */
@@ -160,7 +160,7 @@ PHP_METHOD(Threaded, notifyOne)
 	Will return true while the referenced Threaded is being executed by a Worker */
 PHP_METHOD(Threaded, isRunning)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH;
+	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 	
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_RUNNING));
 } /* }}} */
@@ -169,7 +169,7 @@ PHP_METHOD(Threaded, isRunning)
 	Will return true if the referenced Threaded suffered fatal errors or uncaught exceptions */
 PHP_METHOD(Threaded, isTerminated)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH;
+	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 	
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */
@@ -182,7 +182,7 @@ PHP_METHOD(Threaded, synchronized)
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	uint argc = 0;
 	zval *argv = NULL;
-	pthreads_object_t* threaded= PTHREADS_FETCH;
+	pthreads_object_t* threaded= PTHREADS_FETCH_TS;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "f|+", &call.fci, &call.fcc, &argv, &argc) != SUCCESS) {
 		return;

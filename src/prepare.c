@@ -740,7 +740,7 @@ void pthreads_prepare_parent(pthreads_object_t *thread) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready) {
+int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce) {
 
 	PTHREADS_PREPARATION_BEGIN_CRITICAL() {
 		thread->local.id = pthreads_self();
@@ -784,7 +784,7 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		if (thread->options & PTHREADS_INHERIT_CLASSES) {
 			pthreads_prepare_classes(thread);
 		} else {
-			pthreads_create_entry(thread, thread->std.ce, 0);
+			pthreads_create_entry(thread, thread_ce, 0);
 			pthreads_context_late_bindings(thread);
 		}
 

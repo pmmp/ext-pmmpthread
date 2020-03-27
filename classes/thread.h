@@ -83,7 +83,7 @@ zend_function_entry pthreads_thread_methods[] = {
 		$options should be a mask of inheritance constants */
 PHP_METHOD(Thread, start)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH;
+	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zend_long options = PTHREADS_INHERIT_ALL;
 	
 	if (ZEND_NUM_ARGS()) {
@@ -91,7 +91,7 @@ PHP_METHOD(Thread, start)
 			return;
 		}
 
-		thread->options = options;
+		thread->ts_obj->options = options;
 	}
 
 	RETURN_BOOL(pthreads_start(thread));
@@ -101,7 +101,7 @@ PHP_METHOD(Thread, start)
 	Will return true if a Thread has been started */
 PHP_METHOD(Thread, isStarted)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH;
+	pthreads_object_t* thread = PTHREADS_FETCH_TS;
 
 	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_STARTED));
 } /* }}} */
@@ -110,7 +110,7 @@ PHP_METHOD(Thread, isStarted)
 	Will return true if a Thread has been joined already */
 PHP_METHOD(Thread, isJoined)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH;
+	pthreads_object_t* thread = PTHREADS_FETCH_TS;
 
 	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_JOINED));
 } /* }}} */
@@ -119,7 +119,7 @@ PHP_METHOD(Thread, isJoined)
 		Will return a boolean indication of success */
 PHP_METHOD(Thread, join) 
 { 
-	pthreads_object_t* thread = PTHREADS_FETCH;
+	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
 	RETURN_BOOL(pthreads_join(thread));
 } /* }}} */
@@ -128,7 +128,7 @@ PHP_METHOD(Thread, join)
 	Will return the identifier of the referenced Thread */
 PHP_METHOD(Thread, getThreadId)
 {
-	ZVAL_LONG(return_value, (PTHREADS_FETCH_FROM(Z_OBJ_P(getThis())))->local.id);
+	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->local.id);
 } /* }}} */
 
 /* {{{ proto long Thread::getCurrentThreadId()
@@ -149,7 +149,7 @@ PHP_METHOD(Thread, getCurrentThread)
 	Will return the identifier of the thread ( or process ) that created the referenced Thread */
 PHP_METHOD(Thread, getCreatorId)
 {
-	ZVAL_LONG(return_value, (PTHREADS_FETCH_FROM(Z_OBJ_P(getThis())))->creator.id);
+	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */
 #	endif
 #endif

@@ -41,6 +41,7 @@ typedef struct _pthreads_ident_t {
 
 /* {{{ */
 typedef struct _pthreads_object_t {
+	zend_ulong refcount;
 	pthread_t thread;
 	uint scope;
 	zend_ulong options;
@@ -54,12 +55,17 @@ typedef struct _pthreads_object_t {
 	pthreads_ident_t 	creator;
 	pthreads_ident_t	local;
 	zend_object         **running;
-	zend_object std;
 } pthreads_object_t; /* }}} */
 
 /* {{{ */
+typedef struct _pthreads_zend_object_t {
+	pthreads_object_t *ts_obj;
+	zend_object std;
+} pthreads_zend_object_t; /* }}} */
+
+/* {{{ */
 typedef struct _pthreads_routine_arg_t {
-	pthreads_object_t *thread;
+	pthreads_zend_object_t *thread;
 	pthreads_monitor_t *ready;
 } pthreads_routine_arg_t; /* }}} */
 
@@ -70,8 +76,8 @@ typedef struct _pthreads_iterator_t {
     HashPosition         position;
 } pthreads_iterator_t; /* }}} */
 
-static inline pthreads_object_t* _pthreads_fetch_object(zend_object *object) {
-	return (pthreads_object_t*) ((char*)object - XtOffsetOf(pthreads_object_t, std));
+static inline pthreads_zend_object_t* _pthreads_fetch_object(zend_object *object) {
+	return (pthreads_zend_object_t*) ((char*)object - XtOffsetOf(pthreads_zend_object_t, std));
 }
 
 /* {{{ fetches a PTHREAD from a specific object in the current context */
@@ -79,6 +85,12 @@ static inline pthreads_object_t* _pthreads_fetch_object(zend_object *object) {
 
 /* {{{ fetches the current PTHREAD from $this */
 #define PTHREADS_FETCH PTHREADS_FETCH_FROM(Z_OBJ(EX(This))) /* }}} */
+
+/* {{{ fetches the internal thread-safe object from the object */
+#define PTHREADS_FETCH_TS_FROM(object) PTHREADS_FETCH_FROM(object)->ts_obj /* }}} */
+
+/* {{{ fetches the internal thread-safe object from $this */
+#define PTHREADS_FETCH_TS PTHREADS_FETCH_TS_FROM(Z_OBJ(EX(This))) /* }}} */
 
 /* {{{ option constants */
 #define PTHREADS_INHERIT_NONE      0x00000000
@@ -96,20 +108,17 @@ static inline pthreads_object_t* _pthreads_fetch_object(zend_object *object) {
 #define PTHREADS_SCOPE_THREADED    (1<<1)
 #define PTHREADS_SCOPE_THREAD      (1<<2)
 #define PTHREADS_SCOPE_WORKER      (1<<3)
-#define PTHREADS_SCOPE_SOCKET	   (1<<4)
-#define PTHREADS_SCOPE_CONNECTION  (1<<5) /* }}} */
+#define PTHREADS_SCOPE_SOCKET	   (1<<4) /* }}} */
 
 /* {{{ scope macros */
-#define PTHREADS_IS_KNOWN_ENTRY(t)      ((t)->scope)
-#define PTHREADS_IS_CONNECTION(t)       ((t)->scope & PTHREADS_SCOPE_CONNECTION)
-#define PTHREADS_IS_NOT_CONNECTION(t)   (!PTHREADS_IS_CONNECTION(t))
-#define PTHREADS_IS_SOCKET(t)       	((t)->scope & PTHREADS_SCOPE_SOCKET)
+#define PTHREADS_IS_KNOWN_ENTRY(t)      ((t)->ts_obj->scope)
+#define PTHREADS_IS_SOCKET(t)       	((t)->ts_obj->scope & PTHREADS_SCOPE_SOCKET)
 #define PTHREADS_IS_NOT_SOCKET(t)   	(!PTHREADS_IS_SOCKET(t))
-#define PTHREADS_IS_THREAD(t)           ((t)->scope & PTHREADS_SCOPE_THREAD)
+#define PTHREADS_IS_THREAD(t)           ((t)->ts_obj->scope & PTHREADS_SCOPE_THREAD)
 #define PTHREADS_IS_NOT_THREAD(t)       (!PTHREADS_IS_THREAD(t))
-#define PTHREADS_IS_WORKER(t)           ((t)->scope & PTHREADS_SCOPE_WORKER)
+#define PTHREADS_IS_WORKER(t)           ((t)->ts_obj->scope & PTHREADS_SCOPE_WORKER)
 #define PTHREADS_IS_NOT_WORKER(t)       (!PTHREADS_IS_WORKER(t))
-#define PTHREADS_IS_THREADED(t)         ((t)->scope & PTHREADS_SCOPE_THREADED)
+#define PTHREADS_IS_THREADED(t)         ((t)->ts_obj->scope & PTHREADS_SCOPE_THREADED)
 #define PTHREADS_IS_NOT_THREADED(t)     (!PTHREADS_IS_THREADED(t)) /* }}} */
 
 /* {{{ pthread_self wrapper */
@@ -122,10 +131,10 @@ static inline ulong pthreads_self() {
 } /* }}} */
 
 /* {{{ tell if the calling thread created referenced PTHREAD */
-#define PTHREADS_IN_CREATOR(t)	((t)->creator.ls == TSRMLS_CACHE) /* }}} */
+#define PTHREADS_IN_CREATOR(t)	((t)->ts_obj->creator.ls == TSRMLS_CACHE) /* }}} */
 
 /* {{{ tell if the referenced thread is the threading context */
-#define PTHREADS_IN_THREAD(t)	((t)->local.ls == TSRMLS_CACHE) /* }}} */
+#define PTHREADS_IN_THREAD(t)	((t)->ts_obj->local.ls == TSRMLS_CACHE) /* }}} */
 
 #endif /* HAVE_PTHREADS_THREAD_H */
 
