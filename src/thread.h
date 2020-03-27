@@ -135,7 +135,7 @@ static inline ulong pthreads_self() {
 #define PTHREADS_IN_CREATOR(t)	((t)->ts_obj->creator.ls == TSRMLS_CACHE) /* }}} */
 
 /* {{{ tell if the calling thread owns this pthreads zend object */
-#define PTHREADS_THREAD_OWNS(t) ((t)->owner.ls == TSRMLS_CACHE)
+#define PTHREADS_THREAD_OWNS(t) ((t)->owner.ls == TSRMLS_CACHE) /* }}} */
 
 /* {{{ tell if the referenced thread is the threading context */
 #define PTHREADS_IN_THREAD(t)	((t)->ts_obj->local.ls == TSRMLS_CACHE) /* }}} */
