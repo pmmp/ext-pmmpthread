@@ -21,7 +21,7 @@
 /* {{{ */
 static HashTable* pthreads_copy_statics(HashTable *old) {
 	HashTable *statics = NULL;
-	
+
 	if (old) {
 		zend_string *key;
 		zval *value;
@@ -42,11 +42,11 @@ static HashTable* pthreads_copy_statics(HashTable *old) {
 
 				switch (Z_TYPE_P(next)) {
 					case IS_STRING:
-						ZVAL_STR(&copy, 
+						ZVAL_STR(&copy,
 							zend_string_new(Z_STR_P(next)));
 						zend_hash_add(statics, name, &copy);
 					break;
-					
+
 					case IS_OBJECT:
 						if (instanceof_function(Z_OBJCE_P(next), pthreads_threaded_entry) ||
 							instanceof_function(Z_OBJCE_P(next), zend_ce_closure)) {
@@ -70,13 +70,13 @@ static HashTable* pthreads_copy_statics(HashTable *old) {
 					break;
 
 					default:
-						zend_hash_add_empty_element(statics, name);					
+						zend_hash_add_empty_element(statics, name);
 				}
 			} else zend_hash_add(statics, name, next);
 			zend_string_release(name);
 		} ZEND_HASH_FOREACH_END();
 	}
-	
+
 	return statics;
 } /* }}} */
 
@@ -84,30 +84,30 @@ static HashTable* pthreads_copy_statics(HashTable *old) {
 static zend_string** pthreads_copy_variables(zend_string **old, int end) {
 	zend_string **variables = safe_emalloc(end, sizeof(zend_string*), 0);
 	int it = 0;
-	
+
 	while (it < end) {
-		variables[it] = 
+		variables[it] =
 			zend_string_new(old[it]);
 		it++;
 	}
-	
+
 	return variables;
 } /* }}} */
 
 /* {{{ */
-static zend_try_catch_element* pthreads_copy_try(zend_try_catch_element *old, int end) {	
+static zend_try_catch_element* pthreads_copy_try(zend_try_catch_element *old, int end) {
 	zend_try_catch_element *try_catch = safe_emalloc(end, sizeof(zend_try_catch_element), 0);
-	
+
 	memcpy(
-		try_catch, 
+		try_catch,
 		old,
 		sizeof(zend_try_catch_element) * end);
-	
+
 	return try_catch;
 } /* }}} */
 
 /* {{{ */
-static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) { 
+static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) {
 	zend_live_range *range = safe_emalloc(end, sizeof(zend_live_range), 0);
 
 	memcpy(
@@ -124,7 +124,7 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 	zval *literal = literals,
 		 *end = literals + last;
 
-	memcpy(literals, old, sizeof(zval) * last);	
+	memcpy(literals, old, sizeof(zval) * last);
 
 	while (literal < end) {
 		switch (Z_TYPE_P(literal)) {
@@ -141,7 +141,7 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 		}
 		literal++;
 	}
-	
+
 	return literals;
 } /* }}} */
 
@@ -154,13 +154,13 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 	/* The following code comes from ext/opcache/zend_persist.c */
 #if ZEND_USE_ABS_CONST_ADDR || ZEND_USE_ABS_JMP_ADDR
 	zend_op *opline = copy;
-	zend_op *end    = copy + op_array->last;
+	zend_op *end = copy + op_array->last;
 
 	for (; opline < end; opline++) {
 #if ZEND_USE_ABS_CONST_ADDR
 		if (opline->op1_type == IS_CONST)
 			opline->op1.zv = (zval*)((char*)opline->op1.zv + ((char*)op_array->literals - (char*)literals));
-		if (opline->op2_type == IS_CONST) 
+		if (opline->op2_type == IS_CONST)
 			opline->op2.zv = (zval*)((char*)opline->op2.zv + ((char*)op_array->literals - (char*)literals));
 #endif
 #if ZEND_USE_ABS_JMP_ADDR
@@ -199,7 +199,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 	}
 #endif
 
-		
+
 
 	return copy;
 } /* }}} */
@@ -213,7 +213,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 
 	/* The following code comes from ext/opcache/zend_persist.c */
 	zend_op *opline = copy;
-	zend_op *end    = copy + op_array->last;
+	zend_op *end	= copy + op_array->last;
 
 	for (; opline < end; opline++) {
 #if ZEND_USE_ABS_CONST_ADDR
@@ -310,7 +310,7 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 
 	info = safe_emalloc
 		(end, sizeof(zend_arg_info), 0);
-	memcpy(info, old, sizeof(zend_arg_info) * end);	
+	memcpy(info, old, sizeof(zend_arg_info) * end);
 
 	while (it < end) {
 		if (info[it].name)
@@ -319,16 +319,16 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 		if (ZEND_TYPE_IS_SET(old[it].type) && ZEND_TYPE_IS_CLASS(old[it].type)) {
 			info[it].type = ZEND_TYPE_ENCODE_CLASS(
 				zend_string_new(
-					ZEND_TYPE_NAME(info[it].type)), 
+					ZEND_TYPE_NAME(info[it].type)),
 				ZEND_TYPE_ALLOW_NULL(info[it].type));
 		}
 		it++;
 	}
-	
+
 	if (op_array->fn_flags & ZEND_ACC_HAS_RETURN_TYPE) {
 		info++;
 	}
-	
+
 	return info;
 } /* }}} */
 
@@ -339,11 +339,11 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	zend_string   **variables, *filename_copy;
 	zval           *literals;
 	zend_arg_info  *arg_info;
-	
+
 	copy = (zend_function*)
 		zend_arena_alloc(&CG(arena), sizeof(zend_op_array));
 	memcpy(copy, function, sizeof(zend_op_array));
-	
+
 	op_array = &copy->op_array;
 	variables = op_array->vars;
 	literals = op_array->literals;
@@ -360,7 +360,7 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	if (op_array->doc_comment) {
 		op_array->doc_comment = zend_string_new(op_array->doc_comment);
 	}
-	
+
 	if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), op_array->filename))) {
 		filename_copy = zend_string_new(op_array->filename);
 		zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
@@ -421,7 +421,7 @@ static zend_function* pthreads_copy_function(zend_function *function) {
 			return copy;
 		}
 	}
-	
+
 	if (function->type == ZEND_USER_FUNCTION) {
 		copy = pthreads_copy_user_function(function);
 	} else {

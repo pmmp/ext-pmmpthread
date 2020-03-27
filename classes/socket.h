@@ -168,13 +168,13 @@ zend_function_entry pthreads_socket_methods[] = {
 	{NULL, NULL, NULL}
 };
 
-/* {{{ proto Socket::__construct(int domain, int type, int protocol) 
+/* {{{ proto Socket::__construct(int domain, int type, int protocol)
 	Create a Threaded Socket */
 PHP_METHOD(Socket, __construct) {
 	zend_long domain = AF_INET;
 	zend_long type = SOCK_STREAM;
 	zend_long protocol = 0;
-	
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lll", &domain, &type, &protocol) != SUCCESS) {
 		return;
 	}
@@ -182,7 +182,7 @@ PHP_METHOD(Socket, __construct) {
 	pthreads_socket_construct(getThis(), domain, type, protocol);
 } /* }}} */
 
-/* {{{ proto bool Socket::setOption(int level, int name, int value) 
+/* {{{ proto bool Socket::setOption(int level, int name, int value)
 	Sets long socket option */
 PHP_METHOD(Socket, setOption) {
 	zend_long level = 0;
@@ -213,7 +213,7 @@ PHP_METHOD(Socket, getOption) {
 PHP_METHOD(Socket, bind) {
 	zend_string *host = NULL;
 	zend_long port = 0;
-	
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|l", &host, &port) != SUCCESS) {
 		RETURN_FALSE;
 	}
@@ -224,7 +224,7 @@ PHP_METHOD(Socket, bind) {
 /* {{{ proto bool Socket::listen([int backlog = 0]) */
 PHP_METHOD(Socket, listen) {
 	zend_long backlog = 0;
-	
+
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|l", &backlog) != SUCCESS) {
 		return;
 	}

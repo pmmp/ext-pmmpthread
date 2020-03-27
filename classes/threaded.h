@@ -55,16 +55,16 @@ ZEND_BEGIN_ARG_INFO_EX(Threaded_synchronized, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_merge, 0, 0, 1)
-    ZEND_ARG_INFO(0, from)
-    ZEND_ARG_INFO(0, overwrite)
+	ZEND_ARG_INFO(0, from)
+	ZEND_ARG_INFO(0, overwrite)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_shift, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_chunk, 0, 0, 1)
-    ZEND_ARG_INFO(0, size)
-    ZEND_ARG_INFO(0, preserve)
+	ZEND_ARG_INFO(0, size)
+	ZEND_ARG_INFO(0, preserve)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_pop, 0, 0, 0)
@@ -74,7 +74,7 @@ ZEND_BEGIN_ARG_INFO_EX(Threaded_count, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_extend, 0, 0, 1)
-    ZEND_ARG_INFO(0, class)
+	ZEND_ARG_INFO(0, class)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_addRef, 0, 0, 0)
@@ -122,7 +122,7 @@ PHP_METHOD(Threaded, addRef) 		{ Z_ADDREF_P(getThis()); }
 PHP_METHOD(Threaded, delRef) 		{ zval_ptr_dtor(getThis()); }
 PHP_METHOD(Threaded, getRefCount) 	{ RETURN_LONG(Z_REFCOUNT_P(getThis())); } /* }}} */
 
-/* {{{ proto boolean Threaded::wait([long timeout]) 
+/* {{{ proto boolean Threaded::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object
 		When a timeout is used and reached boolean false will return
 		Otherwise returns a boolean indication of success */
@@ -156,28 +156,28 @@ PHP_METHOD(Threaded, notifyOne)
 	RETURN_BOOL(pthreads_monitor_notify_one(threaded->monitor) == SUCCESS);
 } /* }}} */
 
-/* {{{ proto boolean Threaded::isRunning() 
+/* {{{ proto boolean Threaded::isRunning()
 	Will return true while the referenced Threaded is being executed by a Worker */
 PHP_METHOD(Threaded, isRunning)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
-	
+
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_RUNNING));
 } /* }}} */
 
-/* {{{ proto boolean Threaded::isTerminated() 
+/* {{{ proto boolean Threaded::isTerminated()
 	Will return true if the referenced Threaded suffered fatal errors or uncaught exceptions */
 PHP_METHOD(Threaded, isTerminated)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
-	
+
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */
 
 /* {{{ proto void Threaded::synchronized(Callable function, ...)
 	Will synchronize the object, call the function, passing anything after the function as parameters
 	 */
-PHP_METHOD(Threaded, synchronized) 
+PHP_METHOD(Threaded, synchronized)
 {
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	uint argc = 0;
@@ -212,64 +212,64 @@ PHP_METHOD(Threaded, synchronized)
 
 /* {{{ proto boolean Threaded::merge(mixed $data, [boolean $overwrite = true])
 	Will merge data with the referenced Threaded */
-PHP_METHOD(Threaded, merge) 
+PHP_METHOD(Threaded, merge)
 {
-    zval *from;
-    zend_bool overwrite = 1;
-    
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "z|b", &from, &overwrite) != SUCCESS) {
-        return;
-    }
-    
+	zval *from;
+	zend_bool overwrite = 1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z|b", &from, &overwrite) != SUCCESS) {
+		return;
+	}
+
 	RETURN_BOOL((pthreads_store_merge(getThis(), from, overwrite)==SUCCESS));
 } /* }}} */
 
 /* {{{ proto mixed Threaded::shift()
 	Will shift the first member from the object */
-PHP_METHOD(Threaded, shift) 
+PHP_METHOD(Threaded, shift)
 {
-    if (zend_parse_parameters_none() != SUCCESS) {
-        return;
-    }
-    
-    pthreads_store_shift(getThis(), return_value);
+	if (zend_parse_parameters_none() != SUCCESS) {
+		return;
+	}
+
+	pthreads_store_shift(getThis(), return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::chunk(integer $size [, boolean $preserve = false])
 	Will shift the first member from the object */
-PHP_METHOD(Threaded, chunk) 
+PHP_METHOD(Threaded, chunk)
 {
-    zend_long size;
-    zend_bool preserve = 0;
-    
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|b", &size, &preserve) != SUCCESS) {
-        return;
-    }
-    
-    pthreads_store_chunk(getThis(), size, preserve, return_value);
+	zend_long size;
+	zend_bool preserve = 0;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|b", &size, &preserve) != SUCCESS) {
+		return;
+	}
+
+	pthreads_store_chunk(getThis(), size, preserve, return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::pop()
 	Will pop the last member from the object */
-PHP_METHOD(Threaded, pop) 
+PHP_METHOD(Threaded, pop)
 {
-    if (zend_parse_parameters_none() != SUCCESS) {
-        return;
-    }
-    
-    pthreads_store_pop(getThis(), return_value);
+	if (zend_parse_parameters_none() != SUCCESS) {
+		return;
+	}
+
+	pthreads_store_pop(getThis(), return_value);
 } /* }}} */
 
 /* {{{ proto boolean Threaded::count()
 	Will return the size of the properties table */
 PHP_METHOD(Threaded, count)
 {
-    if (zend_parse_parameters_none() != SUCCESS) {
-        return;
-    }
-	
+	if (zend_parse_parameters_none() != SUCCESS) {
+		return;
+	}
+
 	ZVAL_LONG(return_value, 0);
-	
+
 	pthreads_store_count(
 		getThis(), &Z_LVAL_P(return_value));
 } /* }}} */
@@ -284,50 +284,50 @@ PHP_METHOD(Threaded, isGarbage) {
 
 /* {{{ proto bool Threaded::extend(string class) */
 PHP_METHOD(Threaded, extend) {
-    zend_class_entry *ce = NULL;
-    zend_bool is_final = 0;
+	zend_class_entry *ce = NULL;
+	zend_bool is_final = 0;
 	zend_class_entry *parent;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS(), "C", &ce) != SUCCESS) {
-        return;
-    }
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "C", &ce) != SUCCESS) {
+		return;
+	}
 
 #ifdef ZEND_ACC_TRAIT
-    if ((ce->ce_flags & ZEND_ACC_TRAIT) == ZEND_ACC_TRAIT) {
-        zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
-            "cannot extend trait %s", ce->name->val);
-        return;
-    }
+	if ((ce->ce_flags & ZEND_ACC_TRAIT) == ZEND_ACC_TRAIT) {
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+			"cannot extend trait %s", ce->name->val);
+		return;
+	}
 #endif
 
-    if (ce->ce_flags & ZEND_ACC_INTERFACE) {
-        zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
-            "cannot extend interface %s", 
-            ce->name->val);
-        return;
-    }
-    
-    if (ce->parent) {
-        zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
-            "cannot extend class %s, it already extends %s", 
-            ce->name->val,
-            ce->parent->name->val);
-        return;
-    }
-    
-    is_final = ce->ce_flags & ZEND_ACC_FINAL;
+	if (ce->ce_flags & ZEND_ACC_INTERFACE) {
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+			"cannot extend interface %s",
+			ce->name->val);
+		return;
+	}
 
-    if (is_final)
-        ce->ce_flags = ce->ce_flags &~ ZEND_ACC_FINAL;
+	if (ce->parent) {
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+			"cannot extend class %s, it already extends %s",
+			ce->name->val,
+			ce->parent->name->val);
+		return;
+	}
+
+	is_final = ce->ce_flags & ZEND_ACC_FINAL;
+
+	if (is_final)
+		ce->ce_flags = ce->ce_flags &~ ZEND_ACC_FINAL;
 
 	parent = zend_get_called_scope(EG(current_execute_data));
 
 	zend_do_inheritance(ce, parent);
 
-    if (is_final)
-        ce->ce_flags |= ZEND_ACC_FINAL;
+	if (is_final)
+		ce->ce_flags |= ZEND_ACC_FINAL;
 
-    RETURN_BOOL(instanceof_function(ce, parent));
+	RETURN_BOOL(instanceof_function(ce, parent));
 } /* }}} */
 #	endif
 #endif

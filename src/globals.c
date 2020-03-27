@@ -39,10 +39,10 @@ zend_bool pthreads_globals_init(){
 		if (!(PTHREADS_G(monitor)=pthreads_monitor_alloc()))
 			PTHREADS_G(failed)=1;
 		if (PTHREADS_G(failed)) {
-		    PTHREADS_G(init)=0;
+			PTHREADS_G(init)=0;
 		} else {
-		    zend_hash_init(
-		    	&PTHREADS_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
+			zend_hash_init(
+				&PTHREADS_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
 		}
 
 #define INIT_STRING(n, v) do { \
@@ -55,7 +55,7 @@ zend_bool pthreads_globals_init(){
 #undef INIT_STRING
 
 		ZVAL_INTERNED_STR(
-			&PTHREADS_G(strings).worker, 
+			&PTHREADS_G(strings).worker,
 			zend_new_interned_string(zend_string_init(ZEND_STRL("worker"), 1)));
 
 		return PTHREADS_G(init);
@@ -84,7 +84,7 @@ pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length) {
 	}
 
 	memset(bucket, 0, length);
-	
+
 	return bucket;
 } /* }}} */
 
@@ -108,7 +108,7 @@ zend_bool pthreads_globals_object_valid(pthreads_zend_object_t *address) {
 /* {{{ */
 zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address) {
 	zend_bool deleted = 0;
-	
+
 	if (!address)
 		return deleted;
 
@@ -117,7 +117,7 @@ zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address) {
 			&PTHREADS_G(objects), (zend_ulong) address);
 		pthreads_globals_unlock();
 	}
-	
+
 	return deleted;
 } /* }}} */
 

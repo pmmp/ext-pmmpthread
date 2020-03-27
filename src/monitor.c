@@ -23,14 +23,14 @@
 #endif
 
 struct _pthreads_monitor_t {
-	pthreads_monitor_state_t state;	
-	pthread_mutex_t			 mutex;	
-	pthread_cond_t			 cond;
+	pthreads_monitor_state_t state;
+	pthread_mutex_t          mutex;
+	pthread_cond_t           cond;
 };
 
 pthreads_monitor_t* pthreads_monitor_alloc() {
 	pthread_mutexattr_t at;
-	pthreads_monitor_t *m = 
+	pthreads_monitor_t *m =
 		(pthreads_monitor_t*) calloc(1, sizeof(pthreads_monitor_t));
 
 	pthread_mutexattr_init(&at);
@@ -70,11 +70,11 @@ pthreads_monitor_state_t pthreads_monitor_check(pthreads_monitor_t *m, pthreads_
 int pthreads_monitor_wait(pthreads_monitor_t *m, long timeout) {
 	struct timeval time;
 	struct timespec spec;
-	
+
 	if (timeout == 0) {
 		return pthread_cond_wait(&m->cond, &m->mutex);
 	}
-	
+
 	if (gettimeofday(&time, NULL) != 0) {
 		return -1;
 	}

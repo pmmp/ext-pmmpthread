@@ -28,12 +28,12 @@ struct _pthreads_globals {
 	* Initialized flag
 	*/
 	volatile zend_bool init;
-	
+
 	/*
 	* Failed flag
 	*/
 	zend_bool failed;
-	
+
 	/*
 	* Global Monitor
 	*/
@@ -43,12 +43,12 @@ struct _pthreads_globals {
 	* Global/Default Resource Destructor
 	*/
 	dtor_func_t (default_resource_dtor);
-	
+
 	/*
 	* Objects Cache
 	*/
 	HashTable objects;
-	
+
 	/*
 	* High Frequency Strings
 	*/

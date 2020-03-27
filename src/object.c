@@ -67,52 +67,52 @@ static inline zval* pthreads_object_iterator_current_data(pthreads_iterator_t* i
 		return &EG(uninitialized_zval);
 	}
 
-    return &iterator->zit.data;
+	return &iterator->zit.data;
 }
 
 static inline void pthreads_object_iterator_current_key(pthreads_iterator_t* iterator, zval* result) {
-    pthreads_store_key(&iterator->object, result, &iterator->position);
+	pthreads_store_key(&iterator->object, result, &iterator->position);
 }
 
 static inline void pthreads_object_iterator_move_forward(pthreads_iterator_t* iterator) {
-    pthreads_store_forward(&iterator->object, &iterator->position);
+	pthreads_store_forward(&iterator->object, &iterator->position);
 }
 
 static inline void pthreads_object_iterator_rewind(pthreads_iterator_t* iterator) {
-    pthreads_store_reset(&iterator->object, &iterator->position);
+	pthreads_store_reset(&iterator->object, &iterator->position);
 }
 
 static zend_object_iterator_funcs pthreads_object_iterator_funcs = {
-    (void (*) (zend_object_iterator*)) 				pthreads_object_iterator_dtor,
-    (int (*)(zend_object_iterator *)) 				pthreads_object_iterator_validate,
-    (zval* (*)(zend_object_iterator *)) 			pthreads_object_iterator_current_data,
-    (void (*)(zend_object_iterator *, zval *)) 		pthreads_object_iterator_current_key,
-    (void (*)(zend_object_iterator *))				pthreads_object_iterator_move_forward,
-    (void (*)(zend_object_iterator *)) 				pthreads_object_iterator_rewind
+	(void (*) (zend_object_iterator*))         pthreads_object_iterator_dtor,
+	(int (*)(zend_object_iterator *))          pthreads_object_iterator_validate,
+	(zval* (*)(zend_object_iterator *))        pthreads_object_iterator_current_data,
+	(void (*)(zend_object_iterator *, zval *)) pthreads_object_iterator_current_key,
+	(void (*)(zend_object_iterator *))         pthreads_object_iterator_move_forward,
+	(void (*)(zend_object_iterator *))         pthreads_object_iterator_rewind
 };
 
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref) {
-    pthreads_iterator_t *iterator;
+	pthreads_iterator_t *iterator;
 
 	if (by_ref) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"iteration by reference is not allowed on %s objects", ZSTR_VAL(ce->name));
 		return NULL;
 	}
-	
-	iterator = (pthreads_iterator_t*) 
+
+	iterator = (pthreads_iterator_t*)
 		ecalloc(1, sizeof(pthreads_iterator_t));
-	
-    zend_iterator_init((zend_object_iterator*)iterator);
+
+	zend_iterator_init((zend_object_iterator*)iterator);
 
 	ZVAL_COPY(&iterator->object, object);
 	ZVAL_UNDEF(&iterator->zit.data);
 
 	pthreads_store_reset(&iterator->object, &iterator->position);
 
-    iterator->zit.funcs = &pthreads_object_iterator_funcs;
+	iterator->zit.funcs = &pthreads_object_iterator_funcs;
 
-    return (zend_object_iterator*) iterator;
+	return (zend_object_iterator*) iterator;
 }
 
 /* {{{ */
@@ -202,7 +202,7 @@ int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *bu
 
 /* {{{ */
 int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsigned char *buffer, size_t buflen, zend_unserialize_data *data) {
-	pthreads_zend_object_t *address = NULL;	
+	pthreads_zend_object_t *address = NULL;
 
 #ifdef _WIN64
 	if (!sscanf((const char*) buffer, ":%I64u:", (unsigned __int64*)&address)) {
@@ -215,13 +215,13 @@ int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsi
 	}
 
 	if (!address) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"pthreads detected an attempt to connect to an invalid object");
-		return FAILURE;	
+		return FAILURE;
 	}
-	
+
 	if (!pthreads_globals_object_connect((zend_ulong) address, ce, object)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0, 
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"pthreads detected an attempt to connect to an object which has already been destroyed");
 		return FAILURE;
 	}
@@ -248,7 +248,7 @@ static inline int _pthreads_connect_nolock(pthreads_zend_object_t* source, pthre
 
 		if (destination->std.properties)
 			zend_hash_clean(destination->std.properties);
-		
+
 		return SUCCESS;
 	} else return FAILURE;
 } /* }}} */
@@ -262,7 +262,7 @@ int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* des
 	}
 	return result;
 } /* }}} */
-		
+
 /* {{{ */
 //TODO: rename this
 zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *ce, zval *object) {
@@ -282,7 +282,7 @@ zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *
 		*		however, as soon as we leave the section, and before the conext that called this routine can reference the connection
 		*		object the creating context may have free'd the object.
 		*		We don't use a critical section: the object may be freed while we are creating the connection, causing a fault.
-		* 
+		*
 		* As always, it's necessary for the programmer to retain the appropriate references so that this does not fault, creating connections
 		* in a critical section would be unecessarily slow, not to mention recursively lock mutex (which is fine, but not ideal).
 		*/
@@ -310,16 +310,16 @@ zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *
 }
 
 /* {{{ */
-static inline void pthreads_base_init(pthreads_zend_object_t* base) {	
+static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 	zend_property_info *info;
 	zval tmp, key;
 
-	ZVAL_OBJ(&tmp, &base->std);	
+	ZVAL_OBJ(&tmp, &base->std);
 
 	ZEND_HASH_FOREACH_PTR(&base->std.ce->properties_info, info) {
 		zend_ulong offset;
-		const char *clazz = NULL, 
-			    *prop = NULL;
+		const char *clazz = NULL,
+		           *prop = NULL;
 		size_t plen = 0;
 
 		if (info->flags & ZEND_ACC_STATIC) {
@@ -381,7 +381,7 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 		if (pthreads_monitor_lock(ts_obj->monitor)) {
 			pthreads_store_free(ts_obj->store.props);
 			if (PTHREADS_IS_WORKER(base)) {
-				pthreads_stack_free(ts_obj->stack);	
+				pthreads_stack_free(ts_obj->stack);
 			}
 			pthreads_monitor_unlock(ts_obj->monitor);
 		}
@@ -432,7 +432,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 	pthreads_object_t *ts_obj = thread->ts_obj;
 
 	if (!PTHREADS_IN_CREATOR(thread)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 
+		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may start it",
 			thread->std.ce->name->val);
 		return 0;
@@ -460,7 +460,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 			zend_throw_exception_ex(spl_ce_RuntimeException,
 				0, "cannot start %s, unknown error", thread->std.ce->name->val);
 	}
-	
+
 	pthreads_routine_free(&routine);
 
 	return 0;
@@ -470,7 +470,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 zend_bool pthreads_join(pthreads_zend_object_t* thread) {
 
 	if (!PTHREADS_IN_CREATOR(thread)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 
+		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may join with it",
 			thread->std.ce->name->val);
 		return 0;
@@ -499,7 +499,7 @@ zend_bool pthreads_join(pthreads_zend_object_t* thread) {
 static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* object, pthreads_zend_object_t* connection, zval *work) {
 	zend_function *run;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
-	zval zresult;	
+	zval zresult;
 
 	if (pthreads_connect(object, connection) != SUCCESS) {
 		return 0;
@@ -517,10 +517,10 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 		pthreads_store_write(work, &PTHREADS_G(strings).worker, &PTHREADS_ZG(this));
 
 	zend_try {
-		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {							
+		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
 			if (run->type == ZEND_USER_FUNCTION) {
 				call.fci.size = sizeof(zend_fcall_info);
-			    call.fci.retval = &zresult;
+				call.fci.retval = &zresult;
 				call.fci.object = &connection->std;
 				call.fci.no_separation = 1;
 #if PHP_VERSION_ID < 70300
@@ -535,7 +535,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 			}
 		}
 	} zend_catch {
-	    pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
+		pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
 	} zend_end_try();
 
 	if (Z_TYPE(zresult) != IS_UNDEF) {
@@ -552,9 +552,9 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 	pthreads_zend_object_t* thread = routine->thread;
 	pthreads_object_t *ts_obj = thread->ts_obj;
 	pthreads_monitor_t* ready = routine->ready;
-	
+
 	if (pthreads_prepared_startup(ts_obj, ready, thread->std.ce) == SUCCESS) {
-		
+
 		zend_first_try {
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
 			object_init_ex(&PTHREADS_ZG(this), pthreads_prepared_entry(ts_obj, thread->std.ce));
@@ -574,7 +574,7 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 
 			zval_ptr_dtor(&PTHREADS_ZG(this));
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
-		} zend_end_try();	
+		} zend_end_try();
 	}
 
 	pthreads_prepared_shutdown();

@@ -152,7 +152,7 @@ static inline const zend_op* pthreads_check_opline(zend_execute_data *ex, zend_l
 		if ((opline + offset) >= ops->opcodes) {
 			opline += offset;
 			if (opline->opcode == opcode) {
-				return opline;			
+				return opline;
 			}
 		}
 	}

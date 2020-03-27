@@ -54,4 +54,4 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
 extern zend_module_entry pthreads_module_entry;
 #define phpext_pthreads_ptr &pthreads_module_entry
 
-#endif 
+#endif

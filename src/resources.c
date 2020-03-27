@@ -33,7 +33,7 @@ zend_bool pthreads_resources_keep(pthreads_resource res) {
 		ALLOC_HASHTABLE(PTHREADS_ZG(resources));
 		zend_hash_init(PTHREADS_ZG(resources), 15, NULL, NULL, 0);
 	}
-	
+
 	if (zend_hash_index_update_ptr(PTHREADS_ZG(resources), (zend_long) res->original, res)) {
 		return 1;
 	}

@@ -42,7 +42,7 @@
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
 /* {{{ */
-static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias); 
+static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias);
 static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence);
 #if PHP_VERSION_ID >= 70300
 static void pthreads_preparation_copy_trait_method_reference(pthreads_object_t* thread, zend_trait_method_reference *reference, zend_trait_method_reference *copy);
@@ -119,7 +119,7 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 			pthreads_store_separate(
 				&candidate->default_static_members_table[i],
 				&prepared->default_static_members_table[i], 0);
-		}	
+		}
 		prepared->static_members_table = prepared->default_static_members_table;
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
@@ -218,14 +218,14 @@ static void prepare_class_interceptors(zend_class_entry *candidate, zend_class_e
 	}
 
 #define FIND_AND_SET(f, n) do {\
-    if (!prepared->f && zend_hash_num_elements(&prepared->function_table)) { \
-        if ((func = zend_hash_str_find_ptr(&prepared->function_table, n, sizeof(n)-1))) { \
-            prepared->f = func; \
-        } \
-    } \
+	if (!prepared->f && zend_hash_num_elements(&prepared->function_table)) { \
+		if ((func = zend_hash_str_find_ptr(&prepared->function_table, n, sizeof(n)-1))) { \
+			prepared->f = func; \
+		} \
+	} \
 } \
 while(0)
-        
+
 	FIND_AND_SET(clone, "__clone");
 	FIND_AND_SET(__get, "__get");
 	FIND_AND_SET(__set, "__set");
@@ -306,18 +306,18 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 		if (candidate->trait_precedences) {
 			size_t precedence = 0;
 
-            while (candidate->trait_precedences[precedence]) {
-                precedence++;
-            }
-            prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
-            precedence = 0;
+			while (candidate->trait_precedences[precedence]) {
+				precedence++;
+			}
+			prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
+			precedence = 0;
 
-            while (candidate->trait_precedences[precedence]) {
-	            prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
-		            thread, candidate->trait_precedences[precedence]
-	            );
-	            precedence++;
-            }
+			while (candidate->trait_precedences[precedence]) {
+				prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
+					thread, candidate->trait_precedences[precedence]
+				);
+				precedence++;
+			}
 			prepared->trait_precedences[precedence]=NULL;
 		} else prepared->trait_precedences = NULL;
 	} else {
@@ -402,11 +402,11 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 /* {{{ */
 static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int argc, va_list argv, zend_hash_key *key) {
 	zend_function *function = (zend_function*) Z_PTR_P(bucket);
-	pthreads_object_t* thread = va_arg(argv, pthreads_object_t*);	
+	pthreads_object_t* thread = va_arg(argv, pthreads_object_t*);
 	zend_class_entry *prepared = va_arg(argv, zend_class_entry*);
 	zend_class_entry *candidate = va_arg(argv, zend_class_entry*);
 	zend_class_entry *scope = function->common.scope;
-	
+
 	if (function->type == ZEND_USER_FUNCTION) {
 		if (scope == candidate) {
 			function->common.scope = prepared;
@@ -476,8 +476,8 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 	lookup = zend_string_tolower(candidate->name);
 
 	if ((prepared = zend_hash_find_ptr(EG(class_table), lookup))) {
-	    zend_string_release(lookup);
-		
+		zend_string_release(lookup);
+
 		if(prepared->create_object == NULL && candidate->create_object != NULL) {
 			return pthreads_complete_entry(thread, candidate, prepared);
 		}
@@ -496,10 +496,10 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 	pthreads_prepare_closures(thread);
 
 	zend_hash_apply_with_arguments(
-		&prepared->function_table, 
-		pthreads_prepared_entry_function_prepare, 
-		3, thread, prepared, candidate);	
-	
+		&prepared->function_table,
+		pthreads_prepared_entry_function_prepare,
+		3, thread, prepared, candidate);
+
 	zend_string_release(lookup);
 
 	return prepared;
@@ -526,16 +526,16 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 
 /* {{{ */
 static inline zend_bool pthreads_constant_exists(zend_string *name) {
-    int retval = 1;
-    zend_string *lookup;
+	int retval = 1;
+	zend_string *lookup;
 
-    if (!zend_hash_exists(EG(zend_constants), name)) {
-        lookup = zend_string_tolower(name);
-        retval = zend_hash_exists(EG(zend_constants), lookup);
-        zend_string_release(lookup);
-    }
+	if (!zend_hash_exists(EG(zend_constants), name)) {
+		lookup = zend_string_tolower(name);
+		retval = zend_hash_exists(EG(zend_constants), lookup);
+		zend_string_release(lookup);
+	}
 
-    return retval;
+	return retval;
 } /* }}} */
 
 /* {{{ */
@@ -547,20 +547,20 @@ static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
 	if (!(thread->options & PTHREADS_ALLOW_HEADERS)) {
 		zend_alter_ini_entry_chars(
 			PTHREADS_G(strings).session.cache_limiter,
-			"nocache", sizeof("nocache")-1, 
+			"nocache", sizeof("nocache")-1,
 			PHP_INI_USER, PHP_INI_STAGE_ACTIVATE);
 		zend_alter_ini_entry_chars(
 			PTHREADS_G(strings).session.use_cookies,
 			"0", sizeof("0")-1,
 			PHP_INI_USER, PHP_INI_STAGE_ACTIVATE);
-	}	
+	}
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(table[0], name, entry[0]) {
 		if ((entry[1] = zend_hash_find_ptr(table[1], name))) {
 			if (entry[0]->value && entry[1]->value) {
 				if (strcmp(ZSTR_VAL(entry[0]->value), ZSTR_VAL(entry[1]->value)) != SUCCESS) {
 					zend_bool resmod = entry[1]->modifiable;
-					zend_string *copied = zend_string_new(name); 
+					zend_string *copied = zend_string_new(name);
 
 					if (!EG(modified_ini_directives)) {
 						ALLOC_HASHTABLE(EG(modified_ini_directives));
@@ -579,7 +579,7 @@ static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
 					if (entry[1]->modified && entry[1]->orig_value != entry[1]->value) {
 						zend_string_release(entry[1]->value);
 					}
-					entry[1]->value = zend_string_new(entry[0]->value);			
+					entry[1]->value = zend_string_new(entry[0]->value);
 					entry[1]->modifiable = resmod;
 
 					zend_string_release(copied);
@@ -593,7 +593,7 @@ static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
 static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 	zend_constant *zconstant;
 	zend_string *name;
-	
+
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_EG(thread->creator.ls, zend_constants), name, zconstant) {
 		if (zconstant->name) {
 			if (strncmp(name->val, "STDIN", name->len-1)==0||
@@ -692,7 +692,7 @@ static inline void pthreads_prepare_exception_handler(pthreads_object_t* thread)
 static inline void pthreads_prepare_resource_destructor(pthreads_object_t* thread) {
 	if (!PTHREADS_G(default_resource_dtor))
 		PTHREADS_G(default_resource_dtor)=(EG(regular_list).pDestructor);
-	EG(regular_list).pDestructor =  (dtor_func_t) pthreads_prepared_resource_dtor;	
+	EG(regular_list).pDestructor =  (dtor_func_t) pthreads_prepared_resource_dtor;
 } /* }}} */
 
 /* {{{ */
@@ -747,7 +747,7 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		thread->local.ls = ts_resource(0);
 		TSRMLS_CACHE_UPDATE();
 
-		SG(server_context) = 
+		SG(server_context) =
 			PTHREADS_SG(thread->creator.ls, server_context);
 
 		SG(request_info).argc = PTHREADS_SG(thread->creator.ls, request_info).argc;
@@ -770,7 +770,7 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		} ZEND_HASH_FOREACH_END();
 
 		pthreads_prepare_sapi(thread);
-	
+
 		if (thread->options & PTHREADS_INHERIT_INI)
 			pthreads_prepare_ini(thread);
 

@@ -102,7 +102,7 @@ static inline zend_bool pthreads_is_supported_sapi(char *name) {
 	zend_long nlen = strlen(name);
 
 	while (sapi->name) {
-		if (nlen == sapi->nlen && 
+		if (nlen == sapi->nlen &&
 			memcmp(sapi->name, name, nlen) == SUCCESS) {
 			return 1;
 		}
@@ -128,13 +128,13 @@ static inline void pthreads_execute_ex(zend_execute_data *data) {
 	if (zend_execute_ex_hook) {
 		zend_execute_ex_hook(data);
 	} else execute_ex(data);
-	
+
 	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		if (EG(exception) && 
+		if (EG(exception) &&
 			(!EG(current_execute_data) || !EG(current_execute_data)->prev_execute_data))
 			zend_try_exception_handler();
 	}
-} /* }}} */ 
+} /* }}} */
 
 /* {{{ */
 static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zval *var, zend_arg_info *info) {
@@ -145,8 +145,8 @@ static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zv
 	if (ZEND_TYPE_IS_CLASS(info->type)) {
 		pthreads_zend_object_t *threaded;
 
-		if (!var || 
-			Z_TYPE_P(var) != IS_OBJECT || 
+		if (!var ||
+			Z_TYPE_P(var) != IS_OBJECT ||
 			!instanceof_function(Z_OBJCE_P(var), pthreads_threaded_entry)) {
 			return 0;
 		}
@@ -160,9 +160,9 @@ static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zv
 			if (*cache) {
 				ce = *cache;
 			} else {
-				ce = zend_fetch_class(ZEND_TYPE_NAME(info->type), 
+				ce = zend_fetch_class(ZEND_TYPE_NAME(info->type),
 					(ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-			
+
 				if (!ce) {
 					return Z_TYPE_P(var) == IS_NULL && ZEND_TYPE_ALLOW_NULL(info->type);
 				}
@@ -189,24 +189,24 @@ static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zv
 /* {{{ */
 static inline int php_pthreads_recv(zend_execute_data *execute_data) {
 	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		uint32_t arg_num = EX(opline)->op1.num;	
+		uint32_t arg_num = EX(opline)->op1.num;
 		zval *var = NULL;
 
 		if (UNEXPECTED(arg_num > EX_NUM_ARGS())) {
-			return ZEND_USER_OPCODE_DISPATCH;	
+			return ZEND_USER_OPCODE_DISPATCH;
 		}
 
 #if ZEND_USE_ABS_CONST_ADDR
 		if (EX(opline)->result_type == IS_CONST) {
-				var = (zval*) EX(opline)->result.var;	
+				var = (zval*) EX(opline)->result.var;
 		} else var = EX_VAR(EX(opline)->result.num);
 #else
 		var = EX_VAR(EX(opline)->result.num);
 #endif
 
 		if (UNEXPECTED((EX(func)->op_array.fn_flags & ZEND_ACC_HAS_TYPE_HINTS) != 0)) {
-			if (pthreads_verify_type(execute_data, 
-				var, 
+			if (pthreads_verify_type(execute_data,
+				var,
 				&EX(func)->common.arg_info[arg_num-1])) {
 				EX(opline)++;
 				return ZEND_USER_OPCODE_CONTINUE;
@@ -220,8 +220,8 @@ static inline int php_pthreads_recv(zend_execute_data *execute_data) {
 static inline int php_pthreads_verify_return_type(zend_execute_data *execute_data) {
 	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
 		zval *var = NULL;
-		
-		if (EX(opline)->op1_type == IS_UNUSED) {	
+
+		if (EX(opline)->op1_type == IS_UNUSED) {
 			return ZEND_USER_OPCODE_DISPATCH;
 		}
 
@@ -233,7 +233,7 @@ static inline int php_pthreads_verify_return_type(zend_execute_data *execute_dat
 		var = EX_VAR(EX(opline)->op1.num);
 #endif
 
-		if (pthreads_verify_type(execute_data, 
+		if (pthreads_verify_type(execute_data,
 			var,
 			EX(func)->common.arg_info - 1)) {
 			EX(opline)++;
@@ -255,7 +255,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	}
 
 	zend_execute_ex_hook = zend_execute_ex;
-	zend_execute_ex = pthreads_execute_ex;	
+	zend_execute_ex = pthreads_execute_ex;
 
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_ALL", PTHREADS_INHERIT_ALL, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_NONE", PTHREADS_INHERIT_NONE, CONST_CS | CONST_PERSISTENT);
@@ -278,17 +278,17 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_entry->serialize = pthreads_threaded_serialize;
 	pthreads_threaded_entry->unserialize = pthreads_threaded_unserialize;
 	zend_class_implements(pthreads_threaded_entry, 2, zend_ce_traversable, pthreads_collectable_entry);
-	
+
 	INIT_CLASS_ENTRY(ce, "Volatile", NULL);
 	pthreads_volatile_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
-	
+
 	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
 	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
 	pthreads_thread_entry->create_object = pthreads_thread_ctor;
 
 	INIT_CLASS_ENTRY(ce, "Worker", pthreads_worker_methods);
 	pthreads_worker_entry=zend_register_internal_class_ex(&ce, pthreads_thread_entry);
-	pthreads_worker_entry->create_object = pthreads_worker_ctor;	
+	pthreads_worker_entry->create_object = pthreads_worker_ctor;
 
 	INIT_CLASS_ENTRY(ce, "Pool", pthreads_pool_methods);
 	pthreads_pool_entry=zend_register_internal_class(&ce);
@@ -742,7 +742,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	* Setup object handlers
 	*/
 	zend_handlers = (zend_object_handlers*)zend_get_std_object_handlers();
-	
+
 	memcpy(&pthreads_handlers, zend_handlers, sizeof(zend_object_handlers));
 
 	pthreads_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
@@ -751,14 +751,14 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_handlers.cast_object = pthreads_cast_object;
 	pthreads_handlers.count_elements = pthreads_count_properties;
 
-	pthreads_handlers.get_debug_info = pthreads_read_debug;	
+	pthreads_handlers.get_debug_info = pthreads_read_debug;
 	pthreads_handlers.get_properties = pthreads_read_properties;
-	
+
 	pthreads_handlers.read_property = pthreads_read_property;
 	pthreads_handlers.write_property = pthreads_write_property;
 	pthreads_handlers.has_property = pthreads_has_property;
 	pthreads_handlers.unset_property = pthreads_unset_property;
-	
+
 	pthreads_handlers.read_dimension = pthreads_read_dimension;
 	pthreads_handlers.write_dimension = pthreads_write_dimension;
 	pthreads_handlers.has_dimension = pthreads_has_dimension;
@@ -788,11 +788,11 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_socket_handlers.has_dimension = pthreads_has_dimension_disallow;
 	pthreads_socket_handlers.unset_dimension = pthreads_unset_dimension_disallow;
 
-	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);	
+	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);
 
 	if (pthreads_globals_init()) {
 		TSRMLS_CACHE_UPDATE();
-		
+
 		/*
 		* Global Init
 		*/
@@ -805,7 +805,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	return SUCCESS;
 }
 
-static inline int sapi_cli_deactivate(void) 
+static inline int sapi_cli_deactivate(void)
 {
 	fflush(stdout);
 	if (SG(request_info).argv0) {

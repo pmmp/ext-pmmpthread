@@ -45,16 +45,16 @@ typedef struct _pthreads_object_t {
 	pthread_t thread;
 	uint scope;
 	zend_ulong options;
-	pthreads_monitor_t	*monitor;
+	pthreads_monitor_t *monitor;
 	union {
-		pthreads_store_t	*props;
-		pthreads_socket_t	*sock;
+		pthreads_store_t *props;
+		pthreads_socket_t *sock;
 	} store;
-	pthreads_storage    *user_exception_handler;
-	pthreads_stack_t    *stack;
-	pthreads_ident_t 	creator;
-	pthreads_ident_t	local;
-	zend_object         **running;
+	pthreads_storage *user_exception_handler;
+	pthreads_stack_t *stack;
+	pthreads_ident_t creator;
+	pthreads_ident_t local;
+	zend_object **running;
 } pthreads_object_t; /* }}} */
 
 /* {{{ */
@@ -72,9 +72,9 @@ typedef struct _pthreads_routine_arg_t {
 
 /* {{{ object iterator structure */
 typedef struct _pthreads_iterator_t {
-    zend_object_iterator zit;
-	zval                 object;
-    HashPosition         position;
+	zend_object_iterator zit;
+	zval object;
+	HashPosition position;
 } pthreads_iterator_t; /* }}} */
 
 static inline pthreads_zend_object_t* _pthreads_fetch_object(zend_object *object) {

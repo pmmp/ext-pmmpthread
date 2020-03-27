@@ -104,8 +104,8 @@ PHP_METHOD(Worker, stack)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_entry) != SUCCESS) {
 		return;
 	}
-	
-	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));	
+
+	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
 } /* }}} */
 
 /* {{{ proto Collectable Worker::unstack()
@@ -119,8 +119,8 @@ PHP_METHOD(Worker, unstack)
 	}
 
 	if (!PTHREADS_IN_CREATOR(thread)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 
-			0, "only the creator of this %s may call unstack", 
+		zend_throw_exception_ex(spl_ce_RuntimeException,
+			0, "only the creator of this %s may call unstack",
 			thread->std.ce->name->val);
 		return;
 	}
@@ -148,8 +148,8 @@ PHP_METHOD(Worker, isShutdown)
 
 /* {{{ proto boolean Worker::shutdown()
 		Will wait for execution of all Stackables to complete before shutting down the Worker */
-PHP_METHOD(Worker, shutdown) 
-{ 
+PHP_METHOD(Worker, shutdown)
+{
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
 	RETURN_BOOL(pthreads_join(thread));
@@ -162,7 +162,7 @@ PHP_METHOD(Worker, getThreadId)
 	ZVAL_LONG(return_value, PTHREADS_FETCH_TS->local.id);
 } /* }}} */
 
-/* {{{ proto long Worker::getCreatorId() 
+/* {{{ proto long Worker::getCreatorId()
 	Will return the identifier of the thread ( or process ) that created the referenced Worker */
 PHP_METHOD(Worker, getCreatorId)
 {
@@ -183,10 +183,10 @@ static zend_bool pthreads_worker_running_function(zend_object *std, zval *value)
 
 			if (running->monitor == checking->monitor)
 				result = 1;
-		}	
+		}
 		pthreads_monitor_unlock(worker->monitor);
 	}
-	
+
 	return result;
 } /* }}} */
 
@@ -233,7 +233,7 @@ PHP_METHOD(Worker, collector) {
 PHP_METHOD(Worker, collect)
 {
 	pthreads_zend_object_t *thread = PTHREADS_FETCH;
-	pthreads_call_t call = PTHREADS_CALL_EMPTY;	
+	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(getThis()));
@@ -242,7 +242,7 @@ PHP_METHOD(Worker, collect)
 	}
 
 	if (!PTHREADS_IN_CREATOR(thread)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0,	
+		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"only the creator of this %s may call collect",
 			thread->std.ce->name->val);
 		return;
