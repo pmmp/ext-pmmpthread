@@ -60,6 +60,7 @@ typedef struct _pthreads_object_t {
 /* {{{ */
 typedef struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
+	pthreads_ident_t owner;
 	zend_object std;
 } pthreads_zend_object_t; /* }}} */
 
@@ -132,6 +133,9 @@ static inline ulong pthreads_self() {
 
 /* {{{ tell if the calling thread created referenced PTHREAD */
 #define PTHREADS_IN_CREATOR(t)	((t)->ts_obj->creator.ls == TSRMLS_CACHE) /* }}} */
+
+/* {{{ tell if the calling thread owns this pthreads zend object */
+#define PTHREADS_THREAD_OWNS(t) ((t)->owner.ls == TSRMLS_CACHE)
 
 /* {{{ tell if the referenced thread is the threading context */
 #define PTHREADS_IN_THREAD(t)	((t)->ts_obj->local.ls == TSRMLS_CACHE) /* }}} */

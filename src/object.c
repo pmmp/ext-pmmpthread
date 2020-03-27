@@ -287,7 +287,7 @@ zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *
 		* in a critical section would be unecessarily slow, not to mention recursively lock mutex (which is fine, but not ideal).
 		*/
 
-		if (PTHREADS_IN_CREATOR(pthreads)) {
+		if (PTHREADS_THREAD_OWNS(pthreads)) {
 			/* we own the object in this context */
 			ZVAL_OBJ(object, &pthreads->std);
 			Z_ADDREF_P(object);
@@ -364,6 +364,8 @@ static pthreads_object_t* pthreads_ts_object_ctor(uint scope) {
 /* {{{ */
 static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, uint scope) {
 	base->ts_obj = pthreads_ts_object_ctor(scope);
+	base->owner.ls = TSRMLS_CACHE;
+	base->owner.id = pthreads_self();
 
 	zend_object_std_init(&base->std, entry);
 	object_properties_init(&base->std, entry);
