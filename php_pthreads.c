@@ -143,7 +143,7 @@ static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zv
 	}
 
 	if (ZEND_TYPE_IS_CLASS(info->type)) {
-		pthreads_object_t *threaded;
+		pthreads_zend_object_t *threaded;
 
 		if (!var || 
 			Z_TYPE_P(var) != IS_OBJECT || 
@@ -745,7 +745,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	
 	memcpy(&pthreads_handlers, zend_handlers, sizeof(zend_object_handlers));
 
-	pthreads_handlers.offset = XtOffsetOf(pthreads_object_t, std);
+	pthreads_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
 
 	pthreads_handlers.free_obj = pthreads_base_free;
 	pthreads_handlers.cast_object = pthreads_cast_object;

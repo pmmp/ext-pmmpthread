@@ -42,11 +42,14 @@ int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *bu
 void pthreads_current_thread(zval *return_value); /* }}} */
 
 /* {{{ */
-zend_bool pthreads_start(pthreads_object_t* thread);
-zend_bool pthreads_join(pthreads_object_t* thread); /* }}} */
+zend_bool pthreads_start(pthreads_zend_object_t* thread);
+zend_bool pthreads_join(pthreads_zend_object_t* thread); /* }}} */
 
 /* {{{ */
-int pthreads_connect(pthreads_object_t* source, pthreads_object_t* destination); /* }}} */
+int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* destination); /* }}} */
+
+/* {{{ */
+zend_bool pthreads_globals_object_connect(zend_ulong address, zend_class_entry *ce, zval *object); /* }}} */
 
 /* {{{ */
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref); /* }}} */

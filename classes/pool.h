@@ -289,13 +289,13 @@ PHP_METHOD(Pool, collect) {
 		RETURN_LONG(0);
 
 	ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(workers), worker) {
-		pthreads_object_t *thread = 
+		pthreads_zend_object_t *thread = 
 			PTHREADS_FETCH_FROM(Z_OBJ_P(worker));
 		if (!ZEND_NUM_ARGS())
 			PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
 		collectable += pthreads_stack_collect(
 			&thread->std,
-			thread->stack, 
+			thread->ts_obj->stack, 
 			&call, 
 			pthreads_worker_running_function, 
 			pthreads_worker_collect_function);
