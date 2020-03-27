@@ -294,7 +294,7 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 
 	pthreads_globals_unlock();
 	return valid;
-}
+} /* }}} */
 
 /* {{{ */
 static inline void pthreads_base_init(pthreads_zend_object_t* base) {
