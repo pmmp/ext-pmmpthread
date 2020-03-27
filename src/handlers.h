@@ -30,8 +30,6 @@
 #define PTHREADS_CAST_PASSTHRU_C from, to, type
 #define PTHREADS_COUNT_PASSTHRU_D zval *object, zend_long *count
 #define PTHREADS_COUNT_PASSTHRU_C object, count
-#define PTHREADS_CLONE_PASSTHRU_D zval *object
-#define PTHREADS_CLONE_PASSTHRU_C object
 #define PTHREADS_COMPARE_PASSTHRU_D zval *op1, zval *op2
 #define PTHREADS_COMPARE_PASSTHRU_C op1, op2
 
@@ -65,9 +63,6 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D); /* }}} */
 
 /* {{{ read proeprties from storage */
 HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D); /* }}} */
-
-/* {{{ read proeprties from storage */
-HashTable* pthreads_read_properties_disallow(PTHREADS_READ_PROPERTIES_PASSTHRU_D); /* }}} */
 
 /* {{{ read a property from the referenced object */
 zval * pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D); 
@@ -109,12 +104,6 @@ int pthreads_count_properties_disallow(PTHREADS_COUNT_PASSTHRU_D); /* }}} */
 
 /* {{{ cast an object to a normal array helper */
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D); /* }}} */
-
-/* {{{ cast an object to a normal array helper */
-int pthreads_cast_object_disallow(PTHREADS_CAST_PASSTHRU_D); /* }}} */
-
-/* {{{ clone object handler */
-zend_object* pthreads_clone_object(PTHREADS_CLONE_PASSTHRU_D); /* }}} */
 
 /* {{{ */
 int pthreads_compare_objects(PTHREADS_COMPARE_PASSTHRU_D); /* }}} */

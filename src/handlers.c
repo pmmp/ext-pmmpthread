@@ -64,9 +64,7 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D) {
 	zend_hash_init(table, 8, NULL, ZVAL_PTR_DTOR, 0);
 	*is_temp = 1;
 
-	if (!PTHREADS_IS_SOCKET(threaded)) {
-		pthreads_store_tohash(object, table);
-	}
+	pthreads_store_tohash(object, table);
 
 	return table;
 } /* }}} */
@@ -80,19 +78,6 @@ HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
 	pthreads_store_tohash(
 		object, threaded->std.properties);
 		
-	return threaded->std.properties;
-} /* }}} */
-
-/* {{{ */
-HashTable* pthreads_read_properties_disallow(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
-
-	rebuild_object_properties(&threaded->std);
-
-	zend_throw_exception_ex(spl_ce_RuntimeException, 0,
-		"%s objects are not allowed to have properties",
-		ZSTR_VAL(threaded->std.ce->name));
-
 	return threaded->std.properties;
 } /* }}} */
 
@@ -335,15 +320,6 @@ void pthreads_unset_dimension_disallow(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { pt
 /* {{{ */
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(from));
-	if (PTHREADS_IS_SOCKET(threaded)) {
-		if (type == IS_LONG) {
-			ZVAL_LONG(to, 
-				(int) threaded->ts_obj->options);
-			return SUCCESS;
-		}
-		return FAILURE;
-	}
-
     switch (type) {
         case IS_ARRAY: {
             pthreads_store_tohash(from, Z_ARRVAL_P(to));
@@ -352,16 +328,6 @@ int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
     }
     
     return zend_handlers->cast_object(PTHREADS_CAST_PASSTHRU_C);
-} /* }}} */
-
-/* {{{ */
-zend_object* pthreads_clone_object(PTHREADS_CLONE_PASSTHRU_D)
-{
-	zend_throw_exception_ex(
-			spl_ce_RuntimeException, 0, 
-			"pthreads objects cannot be cloned");
-	
-	return NULL;
 } /* }}} */
 
 /* {{{ */

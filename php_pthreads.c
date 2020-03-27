@@ -777,7 +777,8 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_socket_handlers.count_elements = pthreads_count_properties_disallow;
 
 	pthreads_socket_handlers.cast_object = zend_handlers->cast_object;
-	pthreads_socket_handlers.get_properties = pthreads_read_properties_disallow;
+	pthreads_socket_handlers.get_debug_info = zend_handlers->get_debug_info;
+	pthreads_socket_handlers.get_properties = zend_handlers->get_properties;
 	pthreads_socket_handlers.read_property = pthreads_read_property_disallow;
 	pthreads_socket_handlers.write_property = pthreads_write_property_disallow;
 	pthreads_socket_handlers.has_property = pthreads_has_property_disallow;
