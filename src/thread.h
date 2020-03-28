@@ -61,6 +61,7 @@ typedef struct _pthreads_object_t {
 typedef struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
 	pthreads_ident_t owner;
+	zend_bool is_connection;
 	zend_object std;
 } pthreads_zend_object_t; /* }}} */
 
