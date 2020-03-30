@@ -209,19 +209,19 @@ int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsi
 #else
 	if (!sscanf((const char*) buffer, ":%lu:", (long unsigned int*)&address)) {
 #endif
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
 			"pthreads detected an attempt to connect to a corrupted object");
 		return FAILURE;
 	}
 
 	if (!address) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
 			"pthreads detected an attempt to connect to an invalid object");
 		return FAILURE;
 	}
 
 	if (!pthreads_globals_object_connect(address, ce, object)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
+		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
 			"pthreads detected an attempt to connect to an object which has already been destroyed");
 		return FAILURE;
 	}

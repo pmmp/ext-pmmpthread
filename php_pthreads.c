@@ -51,8 +51,15 @@
 #	include <src/copy.h>
 #endif
 
+static const zend_module_dep pthreads_module_deps[] = {
+	ZEND_MOD_REQUIRED("spl")
+	ZEND_MOD_END
+};
+
 zend_module_entry pthreads_module_entry = {
-  STANDARD_MODULE_HEADER,
+  STANDARD_MODULE_HEADER_EX,
+  NULL,
+  pthreads_module_deps,
   PHP_PTHREADS_EXTNAME,
   NULL,
   PHP_MINIT(pthreads),
@@ -73,6 +80,7 @@ zend_class_entry *pthreads_worker_entry;
 zend_class_entry *pthreads_collectable_entry;
 zend_class_entry *pthreads_pool_entry;
 zend_class_entry *pthreads_socket_entry;
+zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
 zend_object_handlers pthreads_handlers;
 zend_object_handlers pthreads_socket_handlers;
@@ -278,6 +286,9 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_entry->serialize = pthreads_threaded_serialize;
 	pthreads_threaded_entry->unserialize = pthreads_threaded_unserialize;
 	zend_class_implements(pthreads_threaded_entry, 2, zend_ce_traversable, pthreads_collectable_entry);
+
+	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
+	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
 
 	INIT_CLASS_ENTRY(ce, "Volatile", NULL);
 	pthreads_volatile_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
