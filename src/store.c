@@ -357,6 +357,11 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 				}
 				zend_string_release(keyed);
 			}
+			if (IS_PTHREADS_VOLATILE(object)) {
+				//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
+				//cached Threaded references that are dead, we have to take the opportunity
+				pthreads_store_sync(object);
+			}
 		}
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
