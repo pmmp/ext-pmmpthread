@@ -22,24 +22,14 @@
 #	include <config.h>
 #endif
 
+#include <src/store_types.h>
+#include <src/thread.h>
+
 #define IS_CLOSURE  (IS_PTR + 1)
 #define IS_PTHREADS (IS_PTR + 2)
 
-typedef HashTable pthreads_store_t;
-
-typedef struct _pthreads_storage {
-	zend_uchar 	type;
-	size_t 	length;
-	zend_bool 	exists;
-	union {
-		zend_long   lval;
-		double     dval;
-	} simple;
-	void    	*data;
-} pthreads_storage;
-
 pthreads_store_t* pthreads_store_alloc();
-void pthreads_store_sync(zend_object *object);
+void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
