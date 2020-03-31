@@ -23,8 +23,8 @@ class Dummy extends Threaded{
 		$this->synchronized(function() : void{
 			$this->running = true;
 			$this->notify();
+			echo "hi from worker\n";
 		});
-		echo "hi from worker\n";
 	}
 
 	public function waitUntilRunning() : void{
