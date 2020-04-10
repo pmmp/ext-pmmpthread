@@ -349,8 +349,10 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 				if (zend_hash_index_update_ptr(ts_obj->store.props, Z_LVAL(member), storage))
 					result = SUCCESS;
 			} else {
-				/* we can't use global strings here */
-				zend_string *keyed = zend_string_dup(Z_STR(member), 1);
+				/* anything provided by this context might not live long enough to be used by another context,
+				 * so we have to hard copy, even if the string is interned. */
+				zend_string *orig_key = Z_STR(member);
+				zend_string *keyed = zend_string_init(ZSTR_VAL(orig_key), ZSTR_LEN(orig_key), 1);
 
 				if (zend_hash_update_ptr(ts_obj->store.props, keyed, storage)) {
 					result = SUCCESS;
