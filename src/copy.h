@@ -378,12 +378,11 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 			literals_memory = ((char*) opcodes_memory) + ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16);
 		}
 	} else {
-#else
+#endif
 		opcodes_memory = safe_emalloc(op_array->last, sizeof(zend_op), 0);
 		if(op_array->literals) {
 			literals_memory = safe_emalloc(op_array->last_literal, sizeof(zval), 0);
 		}
-#endif
 #if PHP_VERSION_ID >= 70300 && !ZEND_USE_ABS_CONST_ADDR
 	}
 #endif
