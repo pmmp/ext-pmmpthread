@@ -356,6 +356,7 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	(*op_array->refcount) = 1;
 	/* we never want to share the same runtime cache */
 #if PHP_VERSION_ID >= 70400
+	ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
 	ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
 #else
 	op_array->run_time_cache = NULL;
