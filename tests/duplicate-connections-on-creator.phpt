@@ -8,6 +8,8 @@ This was fine until we ran into a problem with threads: they have to be joined b
 Because of the removal of distinction, it became possible to have two distinct Threaded objects referring to the same internal structure on the same thread, leading to implicit destruction of the thread unexpectedly when one of the references was destroyed.
 
 In this test, creating a duplicate connection to the Worker context by dereferencing the connection provided by the worker thread caused the Worker to be incorrectly stopped when the duplicate connection goes out of scope.
+--SKIPIF--
+<?php if (defined('PHP_WINDOWS_VERSION_MAJOR')) die("skip: this test is too unreliable on Windows right now for reasons unknown"); ?>
 --FILE--
 <?php
 

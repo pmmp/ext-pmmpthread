@@ -6,8 +6,6 @@ Previously, a Threaded object's monitor and property store would be directly des
 Now, we refcount the internal structures for Threaded objects, so they should continue to work after their creator has gone out of scope.
 
 This test verifies that locking, property write and more continue to work when the thread that created it destroys its original reference.
---SKIPIF--
-<?php if (defined('PHP_WINDOWS_VERSION_MAJOR')) die("skip: this test is too unreliable on Windows right now for reasons unknown"); ?>
 --FILE--
 <?php
 
