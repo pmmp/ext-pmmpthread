@@ -457,6 +457,7 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 			ptr = (char*)ptr + sizeof(void*);
 			ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
 			memset(ptr, 0, op_array->cache_size);
+			op_array->fn_flags |= ZEND_ACC_HEAP_RT_CACHE;
 #else
 			op_array->run_time_cache = emalloc(op_array->cache_size);
 			memset(op_array->run_time_cache, 0, op_array->cache_size);
