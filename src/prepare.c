@@ -192,6 +192,15 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			}
 		}
 		prepared->default_properties_count = candidate->default_properties_count;
+
+		if (prepared->ce_flags & ZEND_ACC_LINKED) {
+			prepared->properties_info_table = zend_arena_alloc(&CG(arena), sizeof(zend_property_info *) * candidate->default_properties_count);
+			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
+				if ((info->flags & ZEND_ACC_STATIC) == 0) {
+					prepared->properties_info_table[OBJ_PROP_TO_NUM(info->offset)] = info;
+				}
+			} ZEND_HASH_FOREACH_END();
+		} else prepared->properties_info_table = NULL;
 	} else prepared->default_properties_count = 0;
 } /* }}} */
 
