@@ -952,7 +952,15 @@ int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite) {
 
 								if (Z_TYPE(key) == IS_LONG) {
 									zend_hash_index_update_ptr(tables[0], Z_LVAL(key), copy);
-								} else zend_hash_update_ptr(tables[0], Z_STR(key), copy);
+								} else {
+									/* anything provided by this context might not live long enough to be used by another context,
+									 * so we have to hard copy, even if the string is interned. */
+									zend_string *orig_key = Z_STR(key);
+									zend_string *keyed = zend_string_init(ZSTR_VAL(orig_key), ZSTR_LEN(orig_key), 1);
+
+									zend_hash_update_ptr(tables[0], keyed, copy);
+									zend_string_release(keyed);
+								}
 							}
 						}
 
