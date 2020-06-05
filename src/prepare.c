@@ -120,7 +120,11 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 				&candidate->default_static_members_table[i],
 				&prepared->default_static_members_table[i], 0);
 		}
+#if PHP_VERSION_ID < 70400
 		prepared->static_members_table = prepared->default_static_members_table;
+#else
+		ZEND_MAP_PTR_SET(prepared->static_members_table, prepared->default_static_members_table);
+#endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
 
