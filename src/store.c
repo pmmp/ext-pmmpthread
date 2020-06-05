@@ -915,6 +915,8 @@ int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite) {
 							 (storage = zend_hash_get_current_data_ptr_ex(tables[1], &position));
 							 zend_hash_move_forward_ex(tables[1], &position)) {
 							zend_hash_get_current_key_zval_ex(tables[1], &key, &position);
+							if (Z_TYPE(key) == IS_STRING)
+								zend_string_delref(Z_STR(key));
 
 							if (!overwrite) {
 								if (Z_TYPE(key) == IS_LONG) {
