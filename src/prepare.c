@@ -418,6 +418,8 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 			zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 			zend_string_release(filename_copy);
 		}
+
+		prepared->info.user.filename = filename_copy;
 	}
 	prepare_class_property_table(thread, candidate, prepared);
 #if PHP_VERSION_ID < 70400
