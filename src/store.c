@@ -884,6 +884,8 @@ static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength) {
 			PHP_VAR_UNSERIALIZE_INIT(vars);
 			if (!php_var_unserialize(pzval, &pointer, pointer+slength, &vars)) {
 				result = FAILURE;
+			} else if (Z_REFCOUNTED_P(pzval)) {
+				gc_check_possible_root(Z_COUNTED_P(pzval));
 			}
 			PHP_VAR_UNSERIALIZE_DESTROY(vars);
 		} else result = FAILURE;
