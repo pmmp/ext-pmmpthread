@@ -449,30 +449,6 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 				function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
 			}
 		}
-
-		/* runtime cache relies on immutable scope, so if scope changed, reallocate runtime cache */
-		/* IT WOULD BE NICE IF THIS WERE DOCUMENTED SOMEWHERE OTHER THAN PHP-SRC */
-		if (
-#if PHP_VERSION_ID >= 70400
-			!ZEND_MAP_PTR_GET(function->op_array.run_time_cache)
-#else
-			!function->op_array.run_time_cache
-#endif
-			|| function->common.scope != scope) {
-			zend_op_array *op_array = &function->op_array;
-#if PHP_VERSION_ID >= 70400
-			void* ptr = emalloc(sizeof(void*) + op_array->cache_size);
-			ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
-			ptr = (char*)ptr + sizeof(void*);
-			ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
-			memset(ptr, 0, op_array->cache_size);
-			op_array->fn_flags |= ZEND_ACC_HEAP_RT_CACHE;
-#else
-			op_array->run_time_cache = emalloc(op_array->cache_size);
-			memset(op_array->run_time_cache, 0, op_array->cache_size);
-			op_array->fn_flags |= ZEND_ACC_NO_RT_ARENA;
-#endif
-		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
 } /* }}} */
