@@ -781,20 +781,6 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 }
 /* }}} */
 
-/* {{{ */
-static inline int pthreads_store_remove_complex(zval *pzval) {
-	switch (Z_TYPE_P(pzval)) {
-		case IS_ARRAY:
-			zend_hash_apply(Z_ARRVAL_P(pzval), pthreads_store_remove_complex);
-		break;
-
-		case IS_RESOURCE:
-			return ZEND_HASH_APPLY_REMOVE; 
-	}
-
-	return ZEND_HASH_APPLY_KEEP;
-} /* }}} */
-
 HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent);
 
 static zend_always_inline void pthreads_store_zval_dtor(zval *zv) {
@@ -895,8 +881,6 @@ static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength,
 
 			ZVAL_ARR(&ztmp, tmp);
 			pzval = &ztmp;
-
-			zend_hash_apply(tmp, pthreads_store_remove_complex);
 		}
 
 		if ((Z_TYPE_P(pzval) != IS_OBJECT) ||
