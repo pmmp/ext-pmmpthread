@@ -137,6 +137,9 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 			case IS_CONSTANT_AST:
 				zval_copy_ctor(literal);
 			break;
+			case IS_STRING:
+				ZVAL_STR(literal, zend_string_new(Z_STR_P(literal)));
+			break;
 
 		}
 		literal++;
