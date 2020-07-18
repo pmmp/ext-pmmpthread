@@ -152,6 +152,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 	zend_string *name;
 	ZEND_HASH_FOREACH_STR_KEY_PTR(&candidate->properties_info, name, info) {
 		zend_property_info dup = *info;
+		dup.name = zend_string_new(info->name);
 		if (info->doc_comment) {
 			if (thread->options & PTHREADS_INHERIT_COMMENTS) {
 				dup.doc_comment = zend_string_new(info->doc_comment);
