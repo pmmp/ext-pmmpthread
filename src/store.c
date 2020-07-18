@@ -829,11 +829,6 @@ int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
 			} else result = FAILURE;
 		break;
 
-		case IS_RESOURCE:
-			ZVAL_COPY_VALUE(dest, source);
-			result = SUCCESS;
-		break;
-
 		default:
 			result = FAILURE;
 	}
