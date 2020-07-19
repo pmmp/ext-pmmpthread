@@ -841,7 +841,6 @@ static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persiste
 */
 static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent) {
 	Bucket *p;
-	zend_string *str_key;
 	zval newzval;
 	HashTable *ht = (HashTable*) pemalloc(sizeof(HashTable), persistent);
 	zend_hash_init(ht, source->nNumUsed, NULL, pthreads_store_zval_dtor, persistent);
