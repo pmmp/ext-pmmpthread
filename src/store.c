@@ -781,7 +781,7 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 }
 /* }}} */
 
-HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent);
+static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent);
 
 static zend_always_inline void pthreads_store_zval_dtor(zval *zv) {
 	if (Z_TYPE_P(zv) == IS_ARRAY) {
@@ -800,7 +800,7 @@ static zend_always_inline void pthreads_store_zval_dtor(zval *zv) {
 	}
 }
 
-int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
+static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
 	int result = FAILURE;
 	switch (Z_TYPE_P(source)) {
 		case IS_NULL:
@@ -839,7 +839,7 @@ int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
 * This may be used for copying hashes into store without serialization, you want them persistently allocated in store
 * and copied out without persistence
 */
-HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent) {
+static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent) {
 	Bucket *p;
 	zend_string *str_key;
 	zval newzval;
