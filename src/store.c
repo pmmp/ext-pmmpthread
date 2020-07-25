@@ -776,6 +776,11 @@ static zend_always_inline void pthreads_store_zval_dtor(zval *zv) {
 }
 
 static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
+	if (Z_TYPE_P(source) == IS_INDIRECT)
+		return pthreads_store_copy_zval(dest, Z_INDIRECT_P(source), persistent);
+	if (Z_TYPE_P(source) == IS_REFERENCE)
+		return pthreads_store_copy_zval(dest, &Z_REF_P(source)->val, persistent);
+
 	int result = FAILURE;
 	switch (Z_TYPE_P(source)) {
 		case IS_NULL:
