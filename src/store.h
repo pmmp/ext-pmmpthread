@@ -46,7 +46,6 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read);
 zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists);
 int pthreads_store_write(zval *object, zval *key, zval *write);
 int pthreads_store_separate(zval *pzval, zval *seperated, zend_bool complex);
-void pthreads_store_separate_zval(zval *pzval);
 void pthreads_store_tohash(zval *object, HashTable *hash);
 int pthreads_store_shift(zval *object, zval *member);
 int pthreads_store_chunk(zval *object, zend_long size, zend_bool preserve, zval *chunk);
