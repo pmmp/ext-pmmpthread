@@ -799,7 +799,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persiste
 
 		case IS_OBJECT:
 			if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_entry)) {
-				ZVAL_COPY(dest, source);
+				pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), NULL, dest);
 				result = SUCCESS;
 			} else result = FAILURE;
 		break;
