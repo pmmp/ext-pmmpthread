@@ -404,9 +404,11 @@ int pthreads_store_separate(zval * pzval, zval *separated, zend_bool complex) {
 	pthreads_storage *storage;
 
 	if (Z_TYPE_P(pzval) != IS_NULL) {
-		storage = pthreads_store_create(pzval, complex);
-		result = pthreads_store_convert(storage, separated);
-		pthreads_store_storage_dtor(storage);
+		if(pthreads_store_copy_zval(separated, pzval, 0) == FAILURE) {
+			storage = pthreads_store_create(pzval, complex);
+			result = pthreads_store_convert(storage, separated);
+			pthreads_store_storage_dtor(storage);
+		}
 	} else ZVAL_NULL(separated);
 
 	return result;
