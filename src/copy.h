@@ -34,45 +34,15 @@ static HashTable* pthreads_copy_statics(HashTable *old) {
 		ZEND_HASH_FOREACH_STR_KEY_VAL(old, key, value) {
 			zend_string *name = zend_string_new(key);
 			zval *next = value;
+			zval copy;
 			while (Z_TYPE_P(next) == IS_REFERENCE)
 				next = &Z_REF_P(next)->val;
 
-			if (Z_REFCOUNTED_P(next)) {
-				zval copy;
-
-				switch (Z_TYPE_P(next)) {
-					case IS_STRING:
-						ZVAL_STR(&copy,
-							zend_string_new(Z_STR_P(next)));
-						zend_hash_add(statics, name, &copy);
-					break;
-
-					case IS_OBJECT:
-						if (instanceof_function(Z_OBJCE_P(next), pthreads_threaded_entry) ||
-							instanceof_function(Z_OBJCE_P(next), zend_ce_closure)) {
-							pthreads_store_separate(next, &copy, 1);
-							zend_hash_add(statics, name, &copy);
-						} else zend_hash_add_empty_element(statics, name);
-					break;
-
-					case IS_ARRAY:
-						pthreads_store_separate(next, &copy, 1);
-						zend_hash_add(statics, name, &copy);
-					break;
-
-					case IS_CONSTANT_AST:
-#if PHP_VERSION_ID < 70300
-						ZVAL_NEW_AST(&copy, zend_ast_copy(Z_AST_P(next)->ast));
-#else
-						ZVAL_AST(&copy, zend_ast_copy(GC_AST(Z_AST_P(next))));
-#endif
-						zend_hash_add(statics, name, &copy);
-					break;
-
-					default:
-						zend_hash_add_empty_element(statics, name);
-				}
-			} else zend_hash_add(statics, name, next);
+			if (pthreads_store_separate(next, &copy) == SUCCESS) {
+				zend_hash_add(statics, name, &copy);
+			} else {
+				zend_hash_add_empty_element(statics, name);
+			}
 			zend_string_release(name);
 		} ZEND_HASH_FOREACH_END();
 	}
@@ -123,25 +93,11 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 	zval *literals = (zval*) memory;
 	zval *literal = literals,
 		 *end = literals + last;
-
-	memcpy(literals, old, sizeof(zval) * last);
+	zval *old_literal = old;
 
 	while (literal < end) {
-		switch (Z_TYPE_P(literal)) {
-			case IS_ARRAY:
-				pthreads_store_separate(literal, literal, 1);
-			break;
-#if PHP_VERSION_ID < 70300
-			case IS_CONSTANT:
-#endif
-			case IS_CONSTANT_AST:
-				zval_copy_ctor(literal);
-			break;
-			case IS_STRING:
-				ZVAL_STR(literal, zend_string_new(Z_STR_P(literal)));
-			break;
-
-		}
+		pthreads_store_separate(old_literal, literal);
+		old_literal++;
 		literal++;
 	}
 
