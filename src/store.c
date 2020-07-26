@@ -807,6 +807,9 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 			}
 		break;
 
+#if PHP_VERSION_ID < 70300
+		case IS_CONSTANT:
+#endif
 		case IS_CONSTANT_AST:
 			//TODO: this doesn't copy the internal AST structures properly, only adds references to them >.<
 #if PHP_VERSION_ID < 70300
