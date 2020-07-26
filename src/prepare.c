@@ -65,33 +65,24 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			continue;
 		}
 
-		switch (Z_TYPE_P(value)) {
-			case IS_PTR: {
-				zend_class_constant *zc = Z_PTR_P(value), rc;
+		if (Z_TYPE_P(value) == IS_PTR) {
+			zend_class_constant *zc = Z_PTR_P(value), rc;
 
-				memcpy(&rc, zc, sizeof(zend_class_constant));
+			memcpy(&rc, zc, sizeof(zend_class_constant));
 
-				if (pthreads_store_separate(&zc->value, &rc.value, 1) == SUCCESS) {
-					if (zc->doc_comment != NULL) {
-						rc.doc_comment = zend_string_new(zc->doc_comment);
-					}
-					rc.ce = pthreads_prepared_entry(thread, zc->ce);
-
-					name = zend_string_new(key);
-					zend_hash_add_mem(&prepared->constants_table, name, &rc, sizeof(zend_class_constant));
-					zend_string_release(name);
+			if (pthreads_store_separate(&zc->value, &rc.value) == SUCCESS) {
+				if (zc->doc_comment != NULL) {
+					rc.doc_comment = zend_string_new(zc->doc_comment);
 				}
-				continue;
+				rc.ce = pthreads_prepared_entry(thread, zc->ce);
+
+				name = zend_string_new(key);
+				zend_hash_add_mem(&prepared->constants_table, name, &rc, sizeof(zend_class_constant));
+				zend_string_release(name);
 			}
-
-			case IS_STRING:
-			case IS_ARRAY: {
-				if (pthreads_store_separate(value, &separated, 1) != SUCCESS) {
-					continue;
-				}
-			} break;
-
-			default: ZVAL_COPY(&separated, value);
+			continue;
+		} else if (pthreads_store_separate(value, &separated) != SUCCESS) {
+			continue;
 		}
 
 		name = zend_string_new(key);
@@ -115,7 +106,7 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		for (i=0; i<prepared->default_static_members_count; i++) {
 			pthreads_store_separate(
 				&candidate->default_static_members_table[i],
-				&prepared->default_static_members_table[i], 0);
+				&prepared->default_static_members_table[i]);
 		}
 		prepared->static_members_table = prepared->default_static_members_table;
 	} else prepared->default_static_members_count = 0;
@@ -182,7 +173,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			if (Z_REFCOUNTED(prepared->default_properties_table[i])) {
 				pthreads_store_separate(
 					&candidate->default_properties_table[i],
-					&prepared->default_properties_table[i], 1);
+					&prepared->default_properties_table[i]);
 			}
 		}
 		prepared->default_properties_count = candidate->default_properties_count;
@@ -606,21 +597,9 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 				if (!pthreads_constant_exists(name)) {
 					constant.name = zend_string_new(name);
 
-					switch((Z_TYPE_INFO(constant.value)=Z_TYPE(zconstant->value))) {
-						case IS_TRUE:
-						case IS_FALSE:
-						case IS_LONG: {
-							Z_LVAL(constant.value)=Z_LVAL(zconstant->value);
-						} break;
-						case IS_DOUBLE: Z_DVAL(constant.value)=Z_DVAL(zconstant->value); break;
-						case IS_STRING: {
-							ZVAL_STR(&constant.value, zend_string_new(Z_STR(zconstant->value)));
-						} break;
-						case IS_ARRAY: {
-							pthreads_store_separate(&zconstant->value, &constant.value, 1);
-						} break;
+					if (pthreads_store_separate(&zconstant->value, &constant.value) != SUCCESS) {
+						zend_error_noreturn(E_CORE_ERROR, "Encountered unknown non-copyable constant type");
 					}
-
 #if PHP_VERSION_ID < 70300
 					constant.flags = zconstant->flags;
 					constant.module_number = zconstant->module_number;
@@ -734,7 +713,7 @@ void pthreads_prepare_parent(pthreads_object_t *thread) {
 				}
 			}
 
-			thread->user_exception_handler = pthreads_store_create(handler, 1);
+			thread->user_exception_handler = pthreads_store_create(handler);
 		}
 	}
 } /* }}} */

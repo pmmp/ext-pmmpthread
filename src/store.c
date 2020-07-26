@@ -42,7 +42,7 @@
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
 /* {{{ */
-static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength, zend_bool complex);
+static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength);
 static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength);
 /* }}} */
 
@@ -340,7 +340,7 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 		rebuild_object_properties(Z_OBJ_P(write));
 	}
 
-	storage = pthreads_store_create(write, 1);
+	storage = pthreads_store_create(write);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		coerced = pthreads_store_coerce(ts_obj->store.props, key, &member);
@@ -585,13 +585,13 @@ void pthreads_store_free(pthreads_store_t *store){
 } /* }}} */
 
 /* {{{ */
-pthreads_storage* pthreads_store_create(zval *unstore, zend_bool complex){
+pthreads_storage* pthreads_store_create(zval *unstore){
 	pthreads_storage *storage = NULL;
 
 	if (Z_TYPE_P(unstore) == IS_INDIRECT)
-		return pthreads_store_create(Z_INDIRECT_P(unstore), complex);
+		return pthreads_store_create(Z_INDIRECT_P(unstore));
 	if (Z_TYPE_P(unstore) == IS_REFERENCE)
-		return pthreads_store_create(&Z_REF_P(unstore)->val, complex);
+		return pthreads_store_create(&Z_REF_P(unstore)->val);
 
 	storage = (pthreads_storage*) calloc(1, sizeof(pthreads_storage));
 
@@ -610,16 +610,14 @@ pthreads_storage* pthreads_store_create(zval *unstore, zend_bool complex){
 		} break;
 
 		case IS_RESOURCE: {
-			if (complex) {
-				pthreads_resource resource = malloc(sizeof(*resource));
-				if (resource) {
-					resource->original = Z_RES_P(unstore);
-					resource->ls = TSRMLS_CACHE;
+			pthreads_resource resource = malloc(sizeof(*resource));
+			if (resource) {
+				resource->original = Z_RES_P(unstore);
+				resource->ls = TSRMLS_CACHE;
 
-					storage->data = resource;
-					Z_ADDREF_P(unstore);
-				}
-			} else storage->type = IS_NULL;
+				storage->data = resource;
+				Z_ADDREF_P(unstore);
+			}
 		} break;
 
 		case IS_OBJECT:
@@ -639,13 +637,8 @@ pthreads_storage* pthreads_store_create(zval *unstore, zend_bool complex){
 				break;
 			}
 
-			if (!complex) {
-				storage->type = IS_NULL;
-				break;
-			}
-
 		/* break intentionally omitted */
-		case IS_ARRAY: if (pthreads_store_tostring(unstore, (char**) &storage->data, &storage->length, complex)==SUCCESS) {
+		case IS_ARRAY: if (pthreads_store_tostring(unstore, (char**) &storage->data, &storage->length)==SUCCESS) {
 			if (Z_TYPE_P(unstore) == IS_ARRAY)
 				storage->exists = zend_hash_num_elements(Z_ARRVAL_P(unstore));
 		} break;
@@ -755,30 +748,13 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 }
 /* }}} */
 
-static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent);
+static HashTable *pthreads_store_copy_hash(HashTable *source);
 
-static zend_always_inline void pthreads_store_zval_dtor(zval *zv) {
-	if (Z_TYPE_P(zv) == IS_ARRAY) {
-		zend_hash_destroy(Z_ARRVAL_P(zv));
-#if PHP_VERSION_ID < 70300
-		pefree(Z_ARRVAL_P(zv), Z_ARRVAL_P(zv)->u.flags & HASH_FLAG_PERSISTENT);
-#else
-		pefree(Z_ARRVAL_P(zv), GC_FLAGS(Z_ARRVAL_P(zv)) & IS_ARRAY_PERSISTENT);
-#endif
-	} else if (Z_TYPE_P(zv) == IS_STRING) {
-		zend_string_release(Z_STR_P(zv));
-	} else {
-		if (Z_REFCOUNTED_P(zv)) {
-			zval_ptr_dtor(zv);
-		}
-	}
-}
-
-static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persistent) {
+static int pthreads_store_copy_zval(zval *dest, zval *source) {
 	if (Z_TYPE_P(source) == IS_INDIRECT)
-		return pthreads_store_copy_zval(dest, Z_INDIRECT_P(source), persistent);
+		return pthreads_store_copy_zval(dest, Z_INDIRECT_P(source));
 	if (Z_TYPE_P(source) == IS_REFERENCE)
-		return pthreads_store_copy_zval(dest, &Z_REF_P(source)->val, persistent);
+		return pthreads_store_copy_zval(dest, &Z_REF_P(source)->val);
 
 	int result = FAILURE;
 	switch (Z_TYPE_P(source)) {
@@ -792,12 +768,12 @@ static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persiste
 		break;
 
 		case IS_STRING:
-			ZVAL_STR(dest, zend_string_init(Z_STRVAL_P(source), Z_STRLEN_P(source), persistent));
+			ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
 			result = SUCCESS;
 		break;
 
 		case IS_ARRAY:
-			ZVAL_ARR(dest, pthreads_store_copy_hash(Z_ARRVAL_P(source), persistent));
+			ZVAL_ARR(dest, pthreads_store_copy_hash(Z_ARRVAL_P(source)));
 			result = SUCCESS;
 		break;
 
@@ -805,32 +781,60 @@ static int pthreads_store_copy_zval(zval *dest, zval *source, zend_bool persiste
 			if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_entry)) {
 				pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), NULL, dest);
 				result = SUCCESS;
-			} else result = FAILURE;
+			} else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
+				const zend_function *def =
+					zend_get_closure_method_def(source);
+
+				char *name;
+				size_t name_len;
+				zend_string *zname;
+				zend_function *closure = pthreads_copy_function(def);
+
+				//TODO: executed_scope() doesn't seem appropriate here, especially not during initial bootup ...
+				zend_create_closure(dest, closure, zend_get_executed_scope(), closure->common.scope, NULL);
+
+				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(dest));
+				zname = zend_string_init(name, name_len, 0);
+
+				if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
+					result = FAILURE;
+					zval_dtor(dest);
+				} else result = SUCCESS;
+				efree(name);
+				zend_string_release(zname);
+
+				result = SUCCESS;
+			}
 		break;
 
+		case IS_CONSTANT_AST:
+			//TODO: this doesn't copy the internal AST structures properly, only adds references to them >.<
+#if PHP_VERSION_ID < 70300
+			ZVAL_NEW_AST(dest, zend_ast_copy(Z_AST_P(source)->ast));
+#else
+			ZVAL_AST(dest, zend_ast_copy(GC_AST(Z_AST_P(source))));
+#endif
+			result = SUCCESS;
+		break;
 		default:
 			result = FAILURE;
 	}
 	return result;
 }
 
-/*
-* This may be used for copying hashes into store without serialization, you want them persistently allocated in store
-* and copied out without persistence
-*/
-static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persistent) {
+static HashTable *pthreads_store_copy_hash(HashTable *source) {
 	Bucket *p;
 	zval newzval;
-	HashTable *ht = (HashTable*) pemalloc(sizeof(HashTable), persistent);
-	zend_hash_init(ht, source->nNumUsed, NULL, pthreads_store_zval_dtor, persistent);
+	HashTable *ht = (HashTable*) emalloc(sizeof(HashTable));
+	zend_hash_init(ht, source->nNumUsed, NULL, NULL, 0);
 
 	ZEND_HASH_FOREACH_BUCKET(source, p){
-		if(pthreads_store_copy_zval(&newzval, &p->val, persistent) == FAILURE){
+		if(pthreads_store_copy_zval(&newzval, &p->val) == FAILURE){
 			continue;
 		}
 
 		if (p->key) {
-			zend_hash_update(ht, zend_string_init(ZSTR_VAL(p->key), ZSTR_LEN(p->key), persistent), &newzval);
+			zend_hash_update(ht, zend_string_new(p->key), &newzval);
 		} else {
 			zend_hash_index_update(ht, p->h, &newzval);
 		}
@@ -840,40 +844,20 @@ static HashTable *pthreads_store_copy_hash(HashTable *source, zend_bool persiste
 }
 
 /* {{{ */
-int pthreads_store_separate(zval * pzval, zval *separated, zend_bool complex) {
-	int result = FAILURE;
-	pthreads_storage *storage;
-
-	if (Z_TYPE_P(pzval) != IS_NULL) {
-		if(pthreads_store_copy_zval(separated, pzval, 0) == FAILURE) {
-			storage = pthreads_store_create(pzval, complex);
-			result = pthreads_store_convert(storage, separated);
-			pthreads_store_storage_dtor(storage);
-		} else result = SUCCESS;
-	} else {
+int pthreads_store_separate(zval * pzval, zval *separated) {
+	if(pthreads_store_copy_zval(separated, pzval) != SUCCESS){
 		ZVAL_NULL(separated);
-		result = SUCCESS;
+		return FAILURE;
 	}
-
-	return result;
+	return SUCCESS;
 } /* }}} */
 
 /* {{{ */
-static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength, zend_bool complex) {
+static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength) {
 	int result = FAILURE;
 	if (pzval && (Z_TYPE_P(pzval) != IS_NULL)) {
 		smart_str smart;
-		HashTable *tmp = NULL;
-		zval ztmp;
-
 		memset(&smart, 0, sizeof(smart_str));
-
-		if (Z_TYPE_P(pzval) == IS_ARRAY && !complex) {
-			tmp = pthreads_store_copy_hash(Z_ARRVAL_P(pzval), 0);
-
-			ZVAL_ARR(&ztmp, tmp);
-			pzval = &ztmp;
-		}
 
 		if ((Z_TYPE_P(pzval) != IS_OBJECT) ||
 			(Z_OBJCE_P(pzval)->serialize != zend_class_serialize_deny)) {
@@ -886,18 +870,10 @@ static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength,
 			if (EG(exception)) {
 				smart_str_free(&smart);
 
-				if (tmp) {
-					zval_dtor(&ztmp);
-				}
-
 				*pstring = NULL;
 				*slength = 0;
 				return FAILURE;
 			}
-		}
-
-		if (tmp) {
-			zval_dtor(&ztmp);
 		}
 
 		if (smart.s) {
