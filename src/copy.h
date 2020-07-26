@@ -95,6 +95,7 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 		 *end = literals + last;
 	zval *old_literal = old;
 
+	memcpy(memory, old, sizeof(zval) * last);
 	while (literal < end) {
 		pthreads_store_separate(old_literal, literal);
 		old_literal++;
