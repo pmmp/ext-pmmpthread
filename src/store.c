@@ -771,7 +771,6 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 		case IS_CONSTANT:
 			ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
 			Z_TYPE_INFO_P(dest) = Z_TYPE_P(source);
-			Z_CONST_FLAGS_P(dest) = Z_CONST_FLAGS_P(source);
 			result = SUCCESS;
 		break;
 #endif
