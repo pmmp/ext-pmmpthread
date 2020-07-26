@@ -398,7 +398,6 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 	return result;
 } /* }}} */
 
-
 /* {{{ */
 int pthreads_store_count(zval *object, zend_long *count) {
 	pthreads_object_t* ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
@@ -851,7 +850,10 @@ int pthreads_store_separate(zval * pzval, zval *separated, zend_bool complex) {
 			result = pthreads_store_convert(storage, separated);
 			pthreads_store_storage_dtor(storage);
 		} else result = SUCCESS;
-	} else ZVAL_NULL(separated);
+	} else {
+		ZVAL_NULL(separated);
+		result = SUCCESS;
+	}
 
 	return result;
 } /* }}} */
