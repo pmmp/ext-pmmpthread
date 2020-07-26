@@ -13,6 +13,7 @@ class A
 	private const D = false;
 	private const E = 1.1;
 	private const F = 'a';
+	private const G = null;
 
 	public static function getA()
 	{
@@ -22,7 +23,8 @@ class A
 			static::C,
 			static::D,
 			static::E,
-			static::F
+			static::F,
+			static::G
 		);
 	}
 }
@@ -48,3 +50,4 @@ bool(true)
 bool(false)
 float(1.1)
 string(1) "a"
+NULL
