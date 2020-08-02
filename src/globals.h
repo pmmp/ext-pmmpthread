@@ -88,9 +88,6 @@ zend_bool pthreads_globals_lock(); /* }}} */
 /* {{{ release global lock */
 void pthreads_globals_unlock(); /* }}} */
 
-/* {{{ copy string to globals */
-char *pthreads_global_string(char *strkey, int32_t keylen, zend_bool lower); /* }}} */
-
 /* {{{ shutdown global structures */
 void pthreads_globals_shutdown(); /* }}} */
 
