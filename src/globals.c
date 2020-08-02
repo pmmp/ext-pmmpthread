@@ -45,6 +45,8 @@ zend_bool pthreads_globals_init(){
 				&PTHREADS_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
 		}
 
+		PTHREADS_G(autoload_file) = NULL;
+
 #define INIT_STRING(n, v) do { \
 	PTHREADS_G(strings).n = zend_new_interned_string(zend_string_init(v, 1)); \
 } while(0)
@@ -119,6 +121,21 @@ zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address) {
 	}
 
 	return deleted;
+} /* }}} */
+
+/* {{{ */
+zend_bool pthreads_globals_set_autoload_file(const zend_string *path) {
+	if (pthreads_globals_lock()) {
+		zend_string *copy = path ? zend_string_init(ZSTR_VAL(path), ZSTR_LEN(path), 1) : NULL;
+
+		if (PTHREADS_G(autoload_file)) {
+			zend_string_release(PTHREADS_G(autoload_file));
+		}
+		PTHREADS_G(autoload_file) = copy;
+		pthreads_globals_unlock();
+		return 1;
+	}
+	return 0;
 } /* }}} */
 
 /* {{{ */
