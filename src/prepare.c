@@ -587,9 +587,8 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_EG(thread->creator.ls, zend_constants), name, zconstant) {
 		if (zconstant->name) {
-			if (strncmp(name->val, "STDIN", name->len-1)==0||
-				strncmp(name->val, "STDOUT", name->len-1)==0||
-				strncmp(name->val, "STDERR", name->len-1)==0){
+			if (Z_TYPE(zconstant->value) == IS_RESOURCE){
+				//we can't copy these
 				continue;
 			} else {
 				zend_constant constant;
