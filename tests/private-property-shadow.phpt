@@ -7,7 +7,7 @@ multiple private properties in a hierarchy with the same name should not become 
 --FILE--
 <?php
 
-class A{
+class A extends \Threaded{
 	private $test = 1;
 
 	protected function dump() : void{
