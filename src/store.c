@@ -83,13 +83,8 @@ void pthreads_store_sync(zval *object) { /* {{{ */
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
-static inline zend_bool pthreads_store_coerce(HashTable *table, zval *key, zval *member) {
+static inline zend_bool pthreads_store_coerce(zval *key, zval *member) {
 	zend_ulong hval;
-
-	if (!key || Z_TYPE_P(key) == IS_NULL) {
-		ZVAL_LONG(member, zend_hash_next_free_element(table));
-		return 0;
-	}
 
 	switch (Z_TYPE_P(key)) {
 		case IS_STRING:
@@ -140,7 +135,7 @@ int pthreads_store_delete(zval *object, zval *key) {
 	zval member, *property = NULL;
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	pthreads_object_t *ts_obj = threaded->ts_obj;
-	zend_bool coerced = pthreads_store_coerce(ts_obj->store.props, key, &member);
+	zend_bool coerced = pthreads_store_coerce(key, &member);
 
 	rebuild_object_properties(&threaded->std);
 
@@ -172,7 +167,7 @@ zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists) {
 	zval member;
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	pthreads_object_t *ts_obj = threaded->ts_obj;
-	zend_bool coerced = pthreads_store_coerce(ts_obj->store.props, key, &member);
+	zend_bool coerced = pthreads_store_coerce(key, &member);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		pthreads_storage *storage;
@@ -239,7 +234,7 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 	zval member, *property = NULL;
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	pthreads_object_t *ts_obj = threaded->ts_obj;
-	zend_bool coerced = pthreads_store_coerce(ts_obj->store.props, key, &member);
+	zend_bool coerced = pthreads_store_coerce(key, &member);
 
 	rebuild_object_properties(&threaded->std);
 
@@ -343,7 +338,11 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 	storage = pthreads_store_create(write);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
-		coerced = pthreads_store_coerce(ts_obj->store.props, key, &member);
+		if (!key) {
+			ZVAL_LONG(&member, zend_hash_next_free_element(ts_obj->store.props));
+		} else {
+			coerced = pthreads_store_coerce(key, &member);
+		}
 		if (!pthreads_store_is_immutable(object, &member)) {
 			if (Z_TYPE(member) == IS_LONG) {
 				if (zend_hash_index_update_ptr(ts_obj->store.props, Z_LVAL(member), storage))
