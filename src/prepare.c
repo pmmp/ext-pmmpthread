@@ -351,9 +351,13 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 
 /* {{{ */
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+	int old_ce_flags = prepared->ce_flags;
 	prepared->ce_flags = candidate->ce_flags;
 
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
+		if(!(old_ce_flags & ZEND_ACC_LINKED) && prepared->parent_name){ //we're updating an unlinked copy with information from a newly linked copy
+			zend_string_release(prepared->parent_name);
+		}
 		if (candidate->parent) {
 			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
 		}
@@ -364,6 +368,13 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	if (candidate->num_interfaces) {
 		unsigned int interface;
 		if (candidate->ce_flags & ZEND_ACC_LINKED) {
+			if(!(old_ce_flags & ZEND_ACC_LINKED)){
+				for (interface = 0; interface < candidate->num_interfaces; interface++) {
+					zend_string_release(prepared->interface_names[interface].name);
+					zend_string_release(prepared->interface_names[interface].lc_name);
+				}
+				efree(prepared->interfaces);
+			}
 			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++)
 				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
