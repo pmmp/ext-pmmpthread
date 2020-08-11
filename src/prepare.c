@@ -469,7 +469,11 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 	if ((prepared = zend_hash_find_ptr(EG(class_table), lookup))) {
 		zend_string_release(lookup);
 
-		if(prepared->create_object == NULL && candidate->create_object != NULL) {
+		if(
+			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
+			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)
+		){
+			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 			return pthreads_complete_entry(thread, candidate, prepared);
 		}
 		return prepared;
