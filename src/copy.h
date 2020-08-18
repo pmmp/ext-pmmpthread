@@ -362,7 +362,9 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
 	if (op_array->static_variables) {
 		op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
+#if PHP_VERSION_ID >= 70400
 		ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+#endif
 	}
 
 	return copy;
