@@ -94,7 +94,9 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 /* {{{ */
 static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 	if (candidate->default_static_members_count) {
-		int i;
+		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
+		int i, end;
+		zend_class_entry *parent = prepared->parent;
 
 		if (prepared->default_static_members_table) {
 			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
@@ -107,10 +109,24 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		       candidate->default_static_members_table,
 			sizeof(zval) * candidate->default_static_members_count);
 
-		for (i=0; i<prepared->default_static_members_count; i++) {
+		i = candidate->default_static_members_count - 1;
+		/* Copy static properties in this class */
+		end = parent ? parent->default_static_members_count : 0;
+		for (; i >= end; i--) {
 			pthreads_store_separate(
 				&candidate->default_static_members_table[i],
 				&prepared->default_static_members_table[i]);
+		}
+
+		/* Create indirections to static properties from parent classes */
+		while (parent && parent->default_static_members_table) {
+			end = parent->parent ? parent->parent->default_static_members_count : 0;
+			for (; i >= end; i--) {
+				zval *p = &prepared->default_static_members_table[i];
+				ZVAL_INDIRECT(p, &parent->default_static_members_table[i]);
+			}
+
+			parent = parent->parent;
 		}
 		prepared->static_members_table = prepared->default_static_members_table;
 	} else prepared->default_static_members_count = 0;
