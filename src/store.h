@@ -45,8 +45,7 @@ int pthreads_store_delete(zval *object, zval *key);
 int pthreads_store_read(zval *object, zval *key, int type, zval *read);
 zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists);
 int pthreads_store_write(zval *object, zval *key, zval *write);
-int pthreads_store_separate(zval *pzval, zval *seperated, zend_bool complex);
-void pthreads_store_separate_zval(zval *pzval);
+int pthreads_store_separate(zval *pzval, zval *seperated);
 void pthreads_store_tohash(zval *object, HashTable *hash);
 int pthreads_store_shift(zval *object, zval *member);
 int pthreads_store_chunk(zval *object, zend_long size, zend_bool preserve, zval *chunk);
@@ -60,7 +59,7 @@ void pthreads_store_key(zval *object, zval *key, HashPosition *position);
 void pthreads_store_data(zval *object, zval *value, HashPosition *position);
 void pthreads_store_forward(zval *object, HashPosition *position); /* }}} */
 
-pthreads_storage* pthreads_store_create(zval *pzval, zend_bool complex);
+pthreads_storage* pthreads_store_create(zval *pzval);
 int pthreads_store_convert(pthreads_storage *storage, zval *pzval);
 void pthreads_store_storage_dtor(pthreads_storage *element);
 

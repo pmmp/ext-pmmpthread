@@ -4,15 +4,27 @@ Null member crash
 This test verifies that null members do not crash php
 --FILE--
 <?php
-class Test extends Threaded {
-    public function run(){}
+class Test{
+	public function run(){}
+}
+
+class Test2 extends \Threaded{
+	public function run(){}
 }
 $test = new Test();
-@$test[$undefined]="what";
+@$test->{$undefined} = "what";
 var_dump($test);
+
+$test2 = new Test2();
+@$test2->{$undefined} = "what";
+var_dump($test2);
 ?>
 --EXPECTF--
 object(Test)#1 (1) {
-  [0]=>
+  [""]=>
+  string(4) "what"
+}
+object(Test2)#2 (1) {
+  [""]=>
   string(4) "what"
 }

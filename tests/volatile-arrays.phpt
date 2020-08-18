@@ -28,12 +28,16 @@ $threaded["0"] = [];
 $threaded[1] = [];
 $threaded[2] = 'foo';
 $threaded['3'] = 'bar';
+$threaded[null] = 'null key';
+$threaded[] = 'appended';
 
 var_dump($threaded);
 var_dump(isset($threaded["0"]));
 var_dump(isset($threaded[0]));
+var_dump($threaded[null]);
+var_dump($threaded[4]);
 
-unset($threaded["2"], $threaded[3]);
+unset($threaded["2"], $threaded[3], $threaded[null], $threaded[4]);
 
 /*
  This kind of thing would simply fail before, creating really unexpected results
@@ -70,9 +74,15 @@ object(Threaded)#%d (%d) {
   string(3) "foo"
   [3]=>
   string(3) "bar"
+  [""]=>
+  string(8) "null key"
+  [4]=>
+  string(8) "appended"
 }
 bool(true)
 bool(true)
+string(8) "null key"
+string(8) "appended"
 object(Threaded)#%d (%d) {
   ["test"]=>
   object(Volatile)#%d (%d) {
