@@ -207,7 +207,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			}
 		}
 		prepared->default_properties_count = candidate->default_properties_count;
-
+#if PHP_VERSION_ID >= 70400
 		if (prepared->ce_flags & ZEND_ACC_LINKED) {
 			prepared->properties_info_table = zend_arena_alloc(&CG(arena), sizeof(zend_property_info *) * candidate->default_properties_count);
 			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
@@ -216,6 +216,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 				}
 			} ZEND_HASH_FOREACH_END();
 		} else prepared->properties_info_table = NULL;
+#endif
 	} else prepared->default_properties_count = 0;
 } /* }}} */
 
@@ -367,20 +368,24 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 	int old_ce_flags = prepared->ce_flags;
 	prepared->ce_flags = candidate->ce_flags;
-
+#if PHP_VERSION_ID >= 70400
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
 		if(!(old_ce_flags & ZEND_ACC_LINKED) && prepared->parent_name){ //we're updating an unlinked copy with information from a newly linked copy
 			zend_string_release(prepared->parent_name);
 		}
+#endif
 		if (candidate->parent) {
 			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
 		}
+#if PHP_VERSION_ID >= 70400
 	} else if (candidate->parent_name) {
 		prepared->parent_name = zend_string_new(candidate->parent_name);
 	}
+#endif
 
 	if (candidate->num_interfaces) {
 		unsigned int interface;
+#if PHP_VERSION_ID >= 70400
 		if (candidate->ce_flags & ZEND_ACC_LINKED) {
 			if(!(old_ce_flags & ZEND_ACC_LINKED)){
 				for (interface = 0; interface < prepared->num_interfaces; interface++) {
@@ -389,17 +394,19 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 				}
 				efree(prepared->interfaces);
 			}
+#endif
 			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++)
 				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
-		}
-		else {
+#if PHP_VERSION_ID >= 70400
+		} else {
 			prepared->interface_names = emalloc(sizeof(zend_class_name) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++) {
 				prepared->interface_names[interface].name = zend_string_new(candidate->interface_names[interface].name);
 				prepared->interface_names[interface].lc_name = zend_string_new(candidate->interface_names[interface].lc_name);
 			}
 		}
+#endif
 		prepared->num_interfaces = candidate->num_interfaces;
 	} else prepared->num_interfaces = 0;
 
