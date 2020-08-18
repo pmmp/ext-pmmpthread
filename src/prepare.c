@@ -341,10 +341,12 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	prepare_class_handlers(candidate, prepared);
 
 	// if this is an unbound anonymous class, then this will be the second copy,
-	// where all inherited functions will be copied
+	// where all inherited functions and property info will be copied
 	prepare_class_function_table(candidate, prepared);
 
 	prepare_class_interceptors(candidate, prepared);
+
+	prepare_class_property_table(thread, candidate, prepared);
 
 	return prepared;
 } /* }}} */
@@ -380,13 +382,13 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 
 		prepared->info.user.filename = filename_copy;
 	}
-	prepare_class_property_table(thread, candidate, prepared);
 
 	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_ANON_BOUND)) {
 
-		// this first copy will copy all declared functions on the unbound anonymous class
+		// this first copy will copy all declared functions and property info on the unbound anonymous class
 		prepare_class_function_table(candidate, prepared);
 		prepare_class_interceptors(candidate, prepared);
+		prepare_class_property_table(thread, candidate, prepared);
 
 		return prepared;
 	}
