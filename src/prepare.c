@@ -319,8 +319,8 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 		prepared->traits = emalloc(sizeof(zend_class_entry*) * candidate->num_traits);
 		for (trait = 0; trait < candidate->num_traits; trait++)
 			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
-		prepared->num_traits = candidate->num_traits;
 #endif
+		prepared->num_traits = candidate->num_traits;
 	} else prepared->num_traits = 0;
 
 	if (candidate->trait_aliases) {
