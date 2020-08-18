@@ -293,47 +293,46 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 		for (trait=0; trait<candidate->num_traits; trait++)
 			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
 		prepared->num_traits = candidate->num_traits;
+	} else prepared->num_traits = 0;
 
-		if (candidate->trait_aliases) {
-			size_t alias = 0;
+	if (candidate->trait_aliases) {
+		size_t alias = 0;
 
-			while (candidate->trait_aliases[alias]) {
-				alias++;
-			}
-			prepared->trait_aliases = emalloc(sizeof(zend_trait_alias*) * (alias+1));
-			alias = 0;
+		while (candidate->trait_aliases[alias]) {
+			alias++;
+		}
 
-			while (candidate->trait_aliases[alias]) {
-				prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(
-					thread, candidate->trait_aliases[alias]
-				);
-				alias++;
-			}
-			prepared->trait_aliases[alias]=NULL;
-		} else prepared->trait_aliases = NULL;
+		//TODO: some stuff may already have been copied, they will leak if this is the second pass on an anonymous class
+		prepared->trait_aliases = emalloc(sizeof(zend_trait_alias*) * (alias+1));
+		alias = 0;
 
-		if (candidate->trait_precedences) {
-			size_t precedence = 0;
+		while (candidate->trait_aliases[alias]) {
+			prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(
+				thread, candidate->trait_aliases[alias]
+			);
+			alias++;
+		}
+		prepared->trait_aliases[alias]=NULL;
+	} else prepared->trait_aliases = NULL;
 
-			while (candidate->trait_precedences[precedence]) {
-				precedence++;
-			}
-			prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
-			precedence = 0;
+	if (candidate->trait_precedences) {
+		size_t precedence = 0;
 
-			while (candidate->trait_precedences[precedence]) {
-				prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
-					thread, candidate->trait_precedences[precedence]
-				);
-				precedence++;
-			}
-			prepared->trait_precedences[precedence]=NULL;
-		} else prepared->trait_precedences = NULL;
-	} else {
-		prepared->num_traits = 0;
-		prepared->trait_aliases = 0;
-		prepared->trait_precedences = 0;
-	}
+		while (candidate->trait_precedences[precedence]) {
+			precedence++;
+		}
+		prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
+		//TODO: some stuff may already have been copied, they will leak if this is the second pass on an anonymous class
+		precedence = 0;
+
+		while (candidate->trait_precedences[precedence]) {
+			prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
+				thread, candidate->trait_precedences[precedence]
+			);
+			precedence++;
+		}
+		prepared->trait_precedences[precedence]=NULL;
+	} else prepared->trait_precedences = NULL;
 } /* }}} */
 
 /* {{{ */
@@ -402,6 +401,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_ANON_BOUND)) {
 
 		// this first copy will copy all declared functions and property info on the unbound anonymous class
+		prepare_class_traits(thread, candidate, prepared);
 		prepare_class_function_table(candidate, prepared);
 		prepare_class_interceptors(candidate, prepared);
 		prepare_class_property_table(thread, candidate, prepared);
