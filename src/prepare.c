@@ -41,6 +41,12 @@
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
+#if PHP_VERSION_ID >= 70400
+#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_LINKED
+#else
+#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_ANON_BOUND
+#endif
+
 /* {{{ */
 static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias);
 static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence);
@@ -506,8 +512,8 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		zend_string_release(lookup);
 
 		if(
-			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
-			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)
+			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
+			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)
 		){
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 			return pthreads_complete_entry(thread, candidate, prepared);
