@@ -363,7 +363,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 		unsigned int interface;
 		if (candidate->ce_flags & ZEND_ACC_LINKED) {
 			if(!(old_ce_flags & ZEND_ACC_LINKED)){
-				for (interface = 0; interface < candidate->num_interfaces; interface++) {
+				for (interface = 0; interface < prepared->num_interfaces; interface++) {
 					zend_string_release(prepared->interface_names[interface].name);
 					zend_string_release(prepared->interface_names[interface].lc_name);
 				}
