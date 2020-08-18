@@ -96,6 +96,10 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 	if (candidate->default_static_members_count) {
 		int i;
 
+		if (prepared->default_static_members_table) {
+			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
+			efree(prepared->default_static_members_table);
+		}
 		prepared->default_static_members_table = (zval*) ecalloc(
 			sizeof(zval), candidate->default_static_members_count);
 		prepared->default_static_members_count = candidate->default_static_members_count;
@@ -474,7 +478,11 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)
 		){
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
-			return pthreads_complete_entry(thread, candidate, prepared);
+			pthreads_complete_entry(thread, candidate, prepared);
+			if (do_late_bindings) {
+				//linking might cause new statics and constants to become visible
+				pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
+			}
 		}
 		return prepared;
 	}
