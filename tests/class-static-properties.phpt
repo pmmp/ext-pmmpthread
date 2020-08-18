@@ -84,10 +84,10 @@ array(2) {
     int(6)
   }
 }
-object(Threaded)#1 (0) {
+object(Threaded)#5 (0) {
 }
 NULL
-object(Closure)#2 (0) {
+object(Closure)#4 (0) {
 }
 array(3) {
   [0]=>
@@ -102,17 +102,17 @@ array(0) {
 }
 array(2) {
   [0]=>
-  object(Threaded)#3 (0) {
+  object(Threaded)#1 (0) {
   }
   [2]=>
   array(2) {
     [0]=>
-    object(Threaded)#4 (0) {
+    object(Threaded)#2 (0) {
     }
     [2]=>
     array(1) {
       [0]=>
-      object(Threaded)#5 (0) {
+      object(Threaded)#3 (0) {
       }
     }
   }

@@ -100,8 +100,14 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 /* {{{ */
 static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 	if (candidate->default_static_members_count) {
-		int i;
+		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
+		int i, end;
+		zend_class_entry *parent = prepared->parent;
 
+		if (prepared->default_static_members_table) {
+			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
+			efree(prepared->default_static_members_table);
+		}
 		prepared->default_static_members_table = (zval*) ecalloc(
 			sizeof(zval), candidate->default_static_members_count);
 		prepared->default_static_members_count = candidate->default_static_members_count;
@@ -109,10 +115,24 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		       candidate->default_static_members_table,
 			sizeof(zval) * candidate->default_static_members_count);
 
-		for (i=0; i<prepared->default_static_members_count; i++) {
+		i = candidate->default_static_members_count - 1;
+		/* Copy static properties in this class */
+		end = parent ? parent->default_static_members_count : 0;
+		for (; i >= end; i--) {
 			pthreads_store_separate(
 				&candidate->default_static_members_table[i],
 				&prepared->default_static_members_table[i]);
+		}
+
+		/* Create indirections to static properties from parent classes */
+		while (parent && parent->default_static_members_table) {
+			end = parent->parent ? parent->parent->default_static_members_count : 0;
+			for (; i >= end; i--) {
+				zval *p = &prepared->default_static_members_table[i];
+				ZVAL_INDIRECT(p, &parent->default_static_members_table[i]);
+			}
+
+			parent = parent->parent;
 		}
 #if PHP_VERSION_ID < 70400
 		prepared->static_members_table = prepared->default_static_members_table;
@@ -301,46 +321,46 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
 		prepared->num_traits = candidate->num_traits;
 #endif
-		if (candidate->trait_aliases) {
-			size_t alias = 0;
+	} else prepared->num_traits = 0;
 
-			while (candidate->trait_aliases[alias]) {
-				alias++;
-			}
-			prepared->trait_aliases = emalloc(sizeof(zend_trait_alias*) * (alias+1));
-			alias = 0;
+	if (candidate->trait_aliases) {
+		size_t alias = 0;
 
-			while (candidate->trait_aliases[alias]) {
-				prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(
-					thread, candidate->trait_aliases[alias]
-				);
-				alias++;
-			}
-			prepared->trait_aliases[alias]=NULL;
-		} else prepared->trait_aliases = NULL;
+		while (candidate->trait_aliases[alias]) {
+			alias++;
+		}
 
-		if (candidate->trait_precedences) {
-			size_t precedence = 0;
+		//TODO: some stuff may already have been copied, they will leak if this is the second pass on an anonymous class
+		prepared->trait_aliases = emalloc(sizeof(zend_trait_alias*) * (alias+1));
+		alias = 0;
 
-			while (candidate->trait_precedences[precedence]) {
-				precedence++;
-			}
-			prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
-			precedence = 0;
+		while (candidate->trait_aliases[alias]) {
+			prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(
+				thread, candidate->trait_aliases[alias]
+			);
+			alias++;
+		}
+		prepared->trait_aliases[alias]=NULL;
+	} else prepared->trait_aliases = NULL;
 
-			while (candidate->trait_precedences[precedence]) {
-				prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
-					thread, candidate->trait_precedences[precedence]
-				);
-				precedence++;
-			}
-			prepared->trait_precedences[precedence]=NULL;
-		} else prepared->trait_precedences = NULL;
-	} else {
-		prepared->num_traits = 0;
-		prepared->trait_aliases = 0;
-		prepared->trait_precedences = 0;
-	}
+	if (candidate->trait_precedences) {
+		size_t precedence = 0;
+
+		while (candidate->trait_precedences[precedence]) {
+			precedence++;
+		}
+		prepared->trait_precedences = emalloc(sizeof(zend_trait_precedence*) * (precedence+1));
+		//TODO: some stuff may already have been copied, they will leak if this is the second pass on an anonymous class
+		precedence = 0;
+
+		while (candidate->trait_precedences[precedence]) {
+			prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
+				thread, candidate->trait_precedences[precedence]
+			);
+			precedence++;
+		}
+		prepared->trait_precedences[precedence]=NULL;
+	} else prepared->trait_precedences = NULL;
 } /* }}} */
 
 /* {{{ */
@@ -384,14 +404,10 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	} else prepared->num_interfaces = 0;
 
 	prepare_class_traits(thread, candidate, prepared);
-
 	prepare_class_handlers(candidate, prepared);
-
-	// if this is an unbound anonymous class, then this will be the second copy,
-	// where all inherited functions will be copied
 	prepare_class_function_table(candidate, prepared);
-
 	prepare_class_interceptors(candidate, prepared);
+	prepare_class_property_table(thread, candidate, prepared);
 
 	return prepared;
 } /* }}} */
@@ -427,17 +443,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 
 		prepared->info.user.filename = filename_copy;
 	}
-	prepare_class_property_table(thread, candidate, prepared);
-#if PHP_VERSION_ID < 70400
-	if (candidate->ce_flags & ZEND_ACC_ANON_CLASS && !(prepared->ce_flags & ZEND_ACC_ANON_BOUND)) {
 
-		// this first copy will copy all declared functions on the unbound anonymous class
-		prepare_class_function_table(candidate, prepared);
-		prepare_class_interceptors(candidate, prepared);
-
-		return prepared;
-	}
-#endif
 	return pthreads_complete_entry(thread, candidate, prepared);
 } /* }}} */
 
@@ -516,7 +522,11 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)
 		){
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
-			return pthreads_complete_entry(thread, candidate, prepared);
+			pthreads_complete_entry(thread, candidate, prepared);
+			if (do_late_bindings) {
+				//linking might cause new statics and constants to become visible
+				pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
+			}
 		}
 		return prepared;
 	}
