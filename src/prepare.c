@@ -102,7 +102,11 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 	if (candidate->default_static_members_count) {
 		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
 		int i, end;
-		zend_class_entry *parent = !(prepared->ce_flags & PTHREADS_ACC_ANON_BOUND) ? NULL : prepared->parent;
+#if PHP_VERSION_ID >= 70400
+		zend_class_entry *parent = !(prepared->ce_flags & ZEND_ACC_LINKED) ? NULL : prepared->parent;
+#else
+		zend_class_entry *parent = prepared->parent;
+#endif
 
 		if (prepared->default_static_members_table) {
 			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
