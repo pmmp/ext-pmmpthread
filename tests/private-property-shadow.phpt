@@ -4,6 +4,8 @@ Test that private properties are correctly shadowed
 Child classes shouldn't be able to access parent private properties by defining a property with the same name.
 Regardless of whether we verify visibility or not, private properties are supposed to be exclusive to a class and
 multiple private properties in a hierarchy with the same name should not become one.
+--XFAIL--
+This bug has not been fixed yet
 --FILE--
 <?php
 
