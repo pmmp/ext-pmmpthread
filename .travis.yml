@@ -1,6 +1,5 @@
 language: php
 php:
-  - 7.2
   - 7.3
   - 7.4snapshot
   - nightly
@@ -9,6 +8,11 @@ matrix:
   allow_failures:
     - php: nightly
     - php: 7.4snapshot
+
+before_script:
+  - echo "opcache.enable=$USE_OPCACHE" >> travis-opcache.ini
+  - echo "opcache.enable_cli=$USE_OPCACHE" >> travis-opcache.ini
+  - phpenv config-add travis-opcache.ini
 
 script:
   - phpize

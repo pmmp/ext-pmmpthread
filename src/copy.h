@@ -105,67 +105,6 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 	return literals;
 } /* }}} */
 
-#if PHP_VERSION_ID < 70300
-/* {{{ */
-static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
-	zend_op *copy = memory;
-	memcpy(copy, op_array->opcodes, sizeof(zend_op) * op_array->last);
-
-	/* The following code comes from ext/opcache/zend_persist.c */
-#if ZEND_USE_ABS_CONST_ADDR || ZEND_USE_ABS_JMP_ADDR
-	zend_op *opline = copy;
-	zend_op *end = copy + op_array->last;
-
-	for (; opline < end; opline++) {
-#if ZEND_USE_ABS_CONST_ADDR
-		if (opline->op1_type == IS_CONST)
-			opline->op1.zv = (zval*)((char*)opline->op1.zv + ((char*)op_array->literals - (char*)literals));
-		if (opline->op2_type == IS_CONST)
-			opline->op2.zv = (zval*)((char*)opline->op2.zv + ((char*)op_array->literals - (char*)literals));
-#endif
-#if ZEND_USE_ABS_JMP_ADDR
-		if (op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO) {
-			/* fix jumps to point to new array */
-			switch (opline->opcode) {
-				case ZEND_JMP:
-				case ZEND_FAST_CALL:
-					opline->op1.jmp_addr = &copy[opline->op1.jmp_addr - op_array->opcodes];
-					break;
-				case ZEND_JMPZNZ:
-					/* relative extended_value don't have to be changed */
-					/* break omitted intentionally */
-				case ZEND_JMPZ:
-				case ZEND_JMPNZ:
-				case ZEND_JMPZ_EX:
-				case ZEND_JMPNZ_EX:
-				case ZEND_JMP_SET:
-				case ZEND_COALESCE:
-				case ZEND_FE_RESET_R:
-				case ZEND_FE_RESET_RW:
-				case ZEND_ASSERT_CHECK:
-					opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
-					break;
-				case ZEND_DECLARE_ANON_CLASS:
-				case ZEND_DECLARE_ANON_INHERITED_CLASS:
-				case ZEND_FE_FETCH_R:
-				case ZEND_FE_FETCH_RW:
-				case ZEND_SWITCH_LONG:
-				case ZEND_SWITCH_STRING:
-					/* relative extended_value don't have to be changed */
-					break;
-			}
-		}
-#endif
-	}
-#endif
-
-
-
-	return copy;
-} /* }}} */
-
-#else /* PHP_VERSION_ID >= 70300 */
-
 /* {{{ */
 static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
 	zend_op *copy = memory;
@@ -252,7 +191,6 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 
 	return copy;
 } /* }}} */
-#endif /* PHP_VERSION_ID < 70300 */
 
 /* {{{ */
 static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_info *old, uint32_t end) {
@@ -336,7 +274,7 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 
 	void *opcodes_memory;
 	void *literals_memory = NULL;
-#if PHP_VERSION_ID >= 70300 && !ZEND_USE_ABS_CONST_ADDR
+#if !ZEND_USE_ABS_CONST_ADDR
 	if(op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO){
 		opcodes_memory = emalloc(ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16) + sizeof (zval) * op_array->last_literal);
 		if (op_array->literals) {
@@ -348,7 +286,7 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 		if(op_array->literals) {
 			literals_memory = safe_emalloc(op_array->last_literal, sizeof(zval), 0);
 		}
-#if PHP_VERSION_ID >= 70300 && !ZEND_USE_ABS_CONST_ADDR
+#if !ZEND_USE_ABS_CONST_ADDR
 	}
 #endif
 
