@@ -96,6 +96,9 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 
 		if (prepared->default_static_members_table) {
 			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
+			for (i = 0; i < prepared->default_static_members_count; i++) {
+				zval_ptr_dtor(&prepared->default_static_members_table[i]);
+			}
 			efree(prepared->default_static_members_table);
 		}
 		prepared->default_static_members_table = (zval*) ecalloc(
