@@ -10,8 +10,10 @@ matrix:
     - php: 7.4
 
 env:
-  - USE_OPCACHE=1
-  - USE_OPCACHE=0
+  - USE_OPCACHE=1 USE_ZEND_ALLOC=0
+  - USE_OPCACHE=1 USE_ZEND_ALLOC=1
+  - USE_OPCACHE=0 USE_ZEND_ALLOC=0
+  - USE_OPCACHE=0 USE_ZEND_ALLOC=1
 
 before_script:
   - echo "opcache.enable=$USE_OPCACHE" >> travis-opcache.ini
