@@ -9,6 +9,10 @@ matrix:
     - php: nightly
     - php: 7.4
 
+env:
+  - USE_OPCACHE=1
+  - USE_OPCACHE=0
+
 before_script:
   - echo "opcache.enable=$USE_OPCACHE" >> travis-opcache.ini
   - echo "opcache.enable_cli=$USE_OPCACHE" >> travis-opcache.ini
