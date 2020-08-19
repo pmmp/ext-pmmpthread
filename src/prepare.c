@@ -67,18 +67,25 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			continue;
 		}
 
-		zend_class_constant *zc = Z_PTR_P(value), rc;
+		zend_class_constant *zc = Z_PTR_P(value);
+		zend_class_constant *rc;
 
-		memcpy(&rc, zc, sizeof(zend_class_constant));
+		if (zc->ce->type == ZEND_INTERNAL_CLASS) {
+			rc = pemalloc(sizeof(zend_class_constant), 1);
+		} else {
+			rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
+		}
 
-		if (pthreads_store_separate(&zc->value, &rc.value) == SUCCESS) {
+		memcpy(rc, zc, sizeof(zend_class_constant));
+
+		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
 			if (zc->doc_comment != NULL) {
-				rc.doc_comment = zend_string_new(zc->doc_comment);
+				rc->doc_comment = zend_string_new(zc->doc_comment);
 			}
-			rc.ce = pthreads_prepared_entry(thread, zc->ce);
+			rc->ce = pthreads_prepared_entry(thread, zc->ce);
 
 			name = zend_string_new(key);
-			zend_hash_add_mem(&prepared->constants_table, name, &rc, sizeof(zend_class_constant));
+			zend_hash_add_ptr(&prepared->constants_table, name, rc);
 			zend_string_release(name);
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -159,32 +166,40 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 	zend_property_info *info;
 	zend_string *name;
 	ZEND_HASH_FOREACH_STR_KEY_PTR(&candidate->properties_info, name, info) {
-		zend_property_info dup = *info;
-		dup.name = zend_string_new(info->name);
+		zend_property_info *dup;
+
+		if (info->ce->type == ZEND_INTERNAL_CLASS) {
+			dup = pemalloc(sizeof(zend_property_info), 1);
+		} else {
+			dup = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
+		}
+		memcpy(dup, info, sizeof(zend_property_info));
+
+		dup->name = zend_string_new(info->name);
 		if (info->doc_comment) {
 			if (thread->options & PTHREADS_INHERIT_COMMENTS) {
-				dup.doc_comment = zend_string_new(info->doc_comment);
-			} else dup.doc_comment = NULL;
+				dup->doc_comment = zend_string_new(info->doc_comment);
+			} else dup->doc_comment = NULL;
 		}
 
 		if (info->ce) {
 			if (info->ce == candidate) {
-				dup.ce = prepared;
-			} else dup.ce = pthreads_prepared_entry(thread, info->ce);
+				dup->ce = prepared;
+			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
 #if PHP_VERSION_ID >= 70400
 		if (ZEND_TYPE_IS_NAME(info->type)) {
 			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
-			dup.type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
+			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
 		} else if (ZEND_TYPE_IS_CE(info->type)) {
 			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
-			dup.type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
+			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
 		}
 #endif
-		if (!zend_hash_str_add_mem(&prepared->properties_info, name->val, name->len, &dup, sizeof(zend_property_info))) {
-			if (dup.doc_comment)
-				zend_string_release(dup.doc_comment);
+		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
+			if (dup->doc_comment)
+				zend_string_release(dup->doc_comment);
 		}
 	} ZEND_HASH_FOREACH_END();
 
