@@ -766,14 +766,6 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 			result = SUCCESS;
 		break;
 
-#if PHP_VERSION_ID < 70300
-		case IS_CONSTANT:
-			ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
-			Z_TYPE_INFO_P(dest) = Z_TYPE_INFO_P(source);
-			Z_CONST_FLAGS_P(dest) = Z_CONST_FLAGS_P(source);
-			result = SUCCESS;
-		break;
-#endif
 		case IS_STRING:
 			ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
 			result = SUCCESS;
@@ -816,12 +808,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 
 		case IS_CONSTANT_AST:
 			//TODO: this doesn't copy the internal AST structures properly, only adds references to them >.<
-#if PHP_VERSION_ID < 70300
-			ZVAL_NEW_AST(dest, zend_ast_copy(Z_AST_P(source)->ast));
-			Z_CONST_FLAGS_P(dest) = Z_CONST_FLAGS_P(source);
-#else
 			ZVAL_AST(dest, zend_ast_copy(GC_AST(Z_AST_P(source))));
-#endif
 			result = SUCCESS;
 		break;
 		default:

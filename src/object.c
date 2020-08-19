@@ -512,9 +512,6 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 				call.fci.retval = &zresult;
 				call.fci.object = &connection->std;
 				call.fci.no_separation = 1;
-#if PHP_VERSION_ID < 70300
-				call.fcc.initialized = 1;
-#endif
 				call.fcc.object = &connection->std;
 				call.fcc.calling_scope = connection->std.ce;
 				call.fcc.called_scope = connection->std.ce;

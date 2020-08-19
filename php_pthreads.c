@@ -34,8 +34,8 @@
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
 #endif
 
-#if PHP_VERSION_ID < 70200
-#	error "pthreads requires PHP 7.2, ZTS in versions 7.0 and 7.1 is broken"
+#if PHP_VERSION_ID < 70300
+#	error "pthreads requires PHP 7.3 or later"
 #endif
 
 #if COMPILE_DL_PTHREADS
