@@ -182,6 +182,15 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			} else dup.ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
+#if PHP_VERSION_ID >= 70400
+		if (ZEND_TYPE_IS_NAME(info->type)) {
+			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
+			dup.type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
+		} else if (ZEND_TYPE_IS_CE(info->type)) {
+			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
+			dup.type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
+		}
+#endif
 		if (!zend_hash_str_add_mem(&prepared->properties_info, name->val, name->len, &dup, sizeof(zend_property_info))) {
 			if (dup.doc_comment)
 				zend_string_release(dup.doc_comment);
@@ -399,7 +408,6 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	prepare_class_handlers(candidate, prepared);
 	prepare_class_function_table(candidate, prepared);
 	prepare_class_interceptors(candidate, prepared);
-	prepare_class_property_table(thread, candidate, prepared);
 
 	return prepared;
 } /* }}} */
@@ -546,6 +554,7 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 
 /* {{{ */
 void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+	prepare_class_property_table(thread, candidate, prepared);
 	prepare_class_statics(thread, candidate, prepared);
 	prepare_class_constants(thread, candidate, prepared);
 } /* }}} */
