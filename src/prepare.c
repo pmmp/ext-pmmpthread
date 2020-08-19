@@ -508,7 +508,7 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		return NULL;
 	}
 
-	if (candidate->type == ZEND_INTERNAL_CLASS) {
+	if (candidate->type == ZEND_INTERNAL_CLASS || candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		return zend_lookup_class(candidate->name);
 	}
 
@@ -566,7 +566,7 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->local.ls, class_table), name, entry) {
-		if (entry->type != ZEND_INTERNAL_CLASS) {
+		if (entry->type != ZEND_INTERNAL_CLASS && !(entry->ce_flags & ZEND_ACC_IMMUTABLE)) {
 			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
 		}
 	} ZEND_HASH_FOREACH_END();
