@@ -8,6 +8,10 @@ matrix:
   allow_failures:
     - php: nightly
 
+env:
+  - USE_OPCACHE=1
+  - USE_OPCACHE=0
+
 before_script:
   - echo "opcache.enable=$USE_OPCACHE" >> travis-opcache.ini
   - echo "opcache.enable_cli=$USE_OPCACHE" >> travis-opcache.ini
