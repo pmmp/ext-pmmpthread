@@ -465,7 +465,7 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 		if (scope == candidate) {
 			function->common.scope = prepared;
 		} else {
-			if (function->common.scope->type == ZEND_USER_CLASS) {
+			if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
 				function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
 			}
 		}
