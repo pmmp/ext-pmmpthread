@@ -165,7 +165,7 @@ zend_function_entry pthreads_socket_methods[] = {
 	PHP_ME(Socket, getLastError, Socket_getLastError, ZEND_ACC_PUBLIC)
 	PHP_ME(Socket, clearError, Socket_void, ZEND_ACC_PUBLIC)
 	PHP_ME(Socket, strerror, Socket_strerror, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto Socket::__construct(int domain, int type, int protocol)

@@ -61,7 +61,7 @@ zend_function_entry pthreads_pool_methods[] = {
 	PHP_ME(Pool, submitTo, 		Pool_submitTo, 		ZEND_ACC_PUBLIC)
 	PHP_ME(Pool, collect, 		Pool_collect, 		ZEND_ACC_PUBLIC)
 	PHP_ME(Pool, shutdown, 		Pool_noargs, 		ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto Pool Pool::__construct(integer size, [class worker, [array $ctor]])

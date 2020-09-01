@@ -111,7 +111,7 @@ zend_function_entry pthreads_threaded_methods[] = {
 	PHP_ME(Threaded, delRef, Threaded_delRef, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, getRefCount, Threaded_getRefCount, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, extend, Threaded_extend, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ */
