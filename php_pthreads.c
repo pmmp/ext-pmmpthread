@@ -47,10 +47,6 @@
 #	include <src/globals.h>
 #endif
 
-#ifndef HAVE_PTHREADS_COPY_H
-#	include <src/copy.h>
-#endif
-
 static const zend_module_dep pthreads_module_deps[] = {
 	ZEND_MOD_REQUIRED("spl")
 	ZEND_MOD_END
