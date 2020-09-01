@@ -7,7 +7,6 @@ php:
 matrix:
   allow_failures:
     - php: nightly
-    - php: 7.4
 
 env:
   - USE_OPCACHE=1 USE_ZEND_ALLOC=0

@@ -253,7 +253,12 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	op_array->refcount = emalloc(sizeof(uint32_t));
 	(*op_array->refcount) = 1;
 	/* we never want to share the same runtime cache */
+#if PHP_VERSION_ID >= 70400
+	ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
+	ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
+#else
 	op_array->run_time_cache = NULL;
+#endif
 
 	if (op_array->doc_comment) {
 		op_array->doc_comment = zend_string_new(op_array->doc_comment);
@@ -293,7 +298,12 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 	if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
 	if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 	if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
-	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
+	if (op_array->static_variables) {
+		op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
+#if PHP_VERSION_ID >= 70400
+		ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+#endif
+	}
 
 	return copy;
 } /* }}} */
@@ -310,11 +320,20 @@ static inline zend_function* pthreads_copy_internal_function(zend_function *func
 static zend_function* pthreads_copy_function(zend_function *function) {
 	zend_function *copy;
 
+#if PHP_VERSION_ID >= 70400
+	if (function->type & ZEND_ACC_IMMUTABLE) {
+		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
+		return function;
+	}
+#endif
+
 	if (!(function->op_array.fn_flags & ZEND_ACC_CLOSURE)) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
 
 		if (copy) {
-			function_add_ref(copy);
+			if (copy->op_array.refcount) { //TODO: check under what circumstances the refcount is not allocated
+				(*copy->op_array.refcount)++;
+			}
 			return copy;
 		}
 	}

@@ -82,6 +82,10 @@ HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
 } /* }}} */
 
 /* {{{ */
+zval *pthreads_get_property_ptr_ptr_stub(zval *object, zval *member, int type, void **cache_slot) { return NULL; }
+/* }}} */
+
+/* {{{ */
 zval * pthreads_read_property (PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 	zend_guard *guard = NULL;
 	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
@@ -129,8 +133,12 @@ zval* pthreads_read_dimension_disallow(PTHREADS_READ_DIMENSION_PASSTHRU_D) { ret
 /* }}} */
 
 /* {{{ */
-void pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
+PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
 	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+
+#if PHP_VERSION_ID >= 70400
+	zval* result;
+#endif
 
 	rebuild_object_properties(&threaded->std);
 
@@ -172,6 +180,9 @@ void pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 			} else {
 				pthreads_store_write(object, member, value);
 			}
+#if PHP_VERSION_ID >= 70400
+			result = value;
+#endif
 		} break;
 
 		default: {
@@ -180,20 +191,28 @@ void pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 				"pthreads detected an attempt to use unsupported data (%s) for %s::$%s",
 				zend_get_type_by_const(Z_TYPE_P(value)),
 				ZSTR_VAL(Z_OBJCE_P(object)->name), Z_STRVAL_P(member));
+#if PHP_VERSION_ID >= 70400
+			result = &EG(error_zval);
+#endif
 		}
 	}
+
+#if PHP_VERSION_ID >= 70400
+	return result;
+#endif
 }
 
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { pthreads_write_property(PTHREADS_WRITE_DIMENSION_PASSTHRU_C); }
 /* }}} */
 
 /* {{{ */
-void pthreads_write_property_disallow(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
+PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property_disallow) {
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 
 	zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 		"%s objects are not allowed to have properties",
 		ZSTR_VAL(threaded->std.ce->name));
+	return &EG(error_zval);
 }
 
 void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { pthreads_write_property_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_C); }

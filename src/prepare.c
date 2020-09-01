@@ -41,6 +41,12 @@
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
+#if PHP_VERSION_ID >= 70400
+#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_LINKED
+#else
+#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_ANON_BOUND
+#endif
+
 /* {{{ */
 static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias);
 static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence);
@@ -61,18 +67,25 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			continue;
 		}
 
-		zend_class_constant *zc = Z_PTR_P(value), rc;
+		zend_class_constant *zc = Z_PTR_P(value);
+		zend_class_constant *rc;
 
-		memcpy(&rc, zc, sizeof(zend_class_constant));
+		if (zc->ce->type == ZEND_INTERNAL_CLASS) {
+			rc = pemalloc(sizeof(zend_class_constant), 1);
+		} else {
+			rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
+		}
 
-		if (pthreads_store_separate(&zc->value, &rc.value) == SUCCESS) {
+		memcpy(rc, zc, sizeof(zend_class_constant));
+
+		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
 			if (zc->doc_comment != NULL) {
-				rc.doc_comment = zend_string_new(zc->doc_comment);
+				rc->doc_comment = zend_string_new(zc->doc_comment);
 			}
-			rc.ce = pthreads_prepared_entry(thread, zc->ce);
+			rc->ce = pthreads_prepared_entry(thread, zc->ce);
 
 			name = zend_string_new(key);
-			zend_hash_add_mem(&prepared->constants_table, name, &rc, sizeof(zend_class_constant));
+			zend_hash_add_ptr(&prepared->constants_table, name, rc);
 			zend_string_release(name);
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -83,7 +96,11 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 	if (candidate->default_static_members_count) {
 		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
 		int i, end;
+#if PHP_VERSION_ID >= 70400
+		zend_class_entry *parent = !(prepared->ce_flags & ZEND_ACC_LINKED) ? NULL : prepared->parent;
+#else
 		zend_class_entry *parent = prepared->parent;
+#endif
 
 		if (prepared->default_static_members_table) {
 			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
@@ -118,7 +135,11 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 
 			parent = parent->parent;
 		}
+#if PHP_VERSION_ID < 70400
 		prepared->static_members_table = prepared->default_static_members_table;
+#else
+		ZEND_MAP_PTR_SET(prepared->static_members_table, prepared->default_static_members_table);
+#endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
 
@@ -145,23 +166,40 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 	zend_property_info *info;
 	zend_string *name;
 	ZEND_HASH_FOREACH_STR_KEY_PTR(&candidate->properties_info, name, info) {
-		zend_property_info dup = *info;
-		dup.name = zend_string_new(info->name);
+		zend_property_info *dup;
+
+		if (info->ce->type == ZEND_INTERNAL_CLASS) {
+			dup = pemalloc(sizeof(zend_property_info), 1);
+		} else {
+			dup = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
+		}
+		memcpy(dup, info, sizeof(zend_property_info));
+
+		dup->name = zend_string_new(info->name);
 		if (info->doc_comment) {
 			if (thread->options & PTHREADS_INHERIT_COMMENTS) {
-				dup.doc_comment = zend_string_new(info->doc_comment);
-			} else dup.doc_comment = NULL;
+				dup->doc_comment = zend_string_new(info->doc_comment);
+			} else dup->doc_comment = NULL;
 		}
 
 		if (info->ce) {
 			if (info->ce == candidate) {
-				dup.ce = prepared;
-			} else dup.ce = pthreads_prepared_entry(thread, info->ce);
+				dup->ce = prepared;
+			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
-		if (!zend_hash_str_add_mem(&prepared->properties_info, name->val, name->len, &dup, sizeof(zend_property_info))) {
-			if (dup.doc_comment)
-				zend_string_release(dup.doc_comment);
+#if PHP_VERSION_ID >= 70400
+		if (ZEND_TYPE_IS_NAME(info->type)) {
+			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
+			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
+		} else if (ZEND_TYPE_IS_CE(info->type)) {
+			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
+			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
+		}
+#endif
+		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
+			if (dup->doc_comment)
+				zend_string_release(dup->doc_comment);
 		}
 	} ZEND_HASH_FOREACH_END();
 
@@ -187,6 +225,16 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			}
 		}
 		prepared->default_properties_count = candidate->default_properties_count;
+#if PHP_VERSION_ID >= 70400
+		if (prepared->ce_flags & ZEND_ACC_LINKED) {
+			prepared->properties_info_table = zend_arena_alloc(&CG(arena), sizeof(zend_property_info *) * candidate->default_properties_count);
+			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
+				if ((info->flags & ZEND_ACC_STATIC) == 0) {
+					prepared->properties_info_table[OBJ_PROP_TO_NUM(info->offset)] = info;
+				}
+			} ZEND_HASH_FOREACH_END();
+		} else prepared->properties_info_table = NULL;
+#endif
 	} else prepared->default_properties_count = 0;
 } /* }}} */
 
@@ -260,10 +308,19 @@ while(0)
 static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	if (candidate->num_traits) {
-		uint trait;
+		unsigned int trait;
+
+#if PHP_VERSION_ID >= 70400
+		prepared->trait_names = emalloc(sizeof(zend_class_name) * candidate->num_traits);
+		for (trait = 0; trait < candidate->num_traits; trait++) {
+			prepared->trait_names[trait].lc_name = zend_string_new(candidate->trait_names[trait].lc_name);
+			prepared->trait_names[trait].name = zend_string_new(candidate->trait_names[trait].name);
+		}
+#else
 		prepared->traits = emalloc(sizeof(zend_class_entry*) * candidate->num_traits);
-		for (trait=0; trait<candidate->num_traits; trait++)
+		for (trait = 0; trait < candidate->num_traits; trait++)
 			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
+#endif
 		prepared->num_traits = candidate->num_traits;
 	} else prepared->num_traits = 0;
 
@@ -309,17 +366,47 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 
 /* {{{ */
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+	int old_ce_flags = prepared->ce_flags;
 	prepared->ce_flags = candidate->ce_flags;
-
-	if (candidate->parent) {
-		prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
+#if PHP_VERSION_ID >= 70400
+	if (candidate->ce_flags & ZEND_ACC_LINKED) {
+		if(!(old_ce_flags & ZEND_ACC_LINKED) && prepared->parent_name){ //we're updating an unlinked copy with information from a newly linked copy
+			zend_string_release(prepared->parent_name);
+		}
+#endif
+		if (candidate->parent) {
+			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
+		}
+#if PHP_VERSION_ID >= 70400
+	} else if (candidate->parent_name) {
+		prepared->parent_name = zend_string_new(candidate->parent_name);
 	}
+#endif
 
 	if (candidate->num_interfaces) {
-		uint interface;
-		prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
-		for(interface=0; interface<candidate->num_interfaces; interface++)
-			prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
+		unsigned int interface;
+#if PHP_VERSION_ID >= 70400
+		if (candidate->ce_flags & ZEND_ACC_LINKED) {
+			if(!(old_ce_flags & ZEND_ACC_LINKED)){
+				for (interface = 0; interface < prepared->num_interfaces; interface++) {
+					zend_string_release(prepared->interface_names[interface].name);
+					zend_string_release(prepared->interface_names[interface].lc_name);
+				}
+				efree(prepared->interfaces);
+			}
+#endif
+			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
+			for (interface = 0; interface < candidate->num_interfaces; interface++)
+				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
+#if PHP_VERSION_ID >= 70400
+		} else {
+			prepared->interface_names = emalloc(sizeof(zend_class_name) * candidate->num_interfaces);
+			for (interface = 0; interface < candidate->num_interfaces; interface++) {
+				prepared->interface_names[interface].name = zend_string_new(candidate->interface_names[interface].name);
+				prepared->interface_names[interface].lc_name = zend_string_new(candidate->interface_names[interface].lc_name);
+			}
+		}
+#endif
 		prepared->num_interfaces = candidate->num_interfaces;
 	} else prepared->num_interfaces = 0;
 
@@ -327,7 +414,6 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	prepare_class_handlers(candidate, prepared);
 	prepare_class_function_table(candidate, prepared);
 	prepare_class_interceptors(candidate, prepared);
-	prepare_class_property_table(thread, candidate, prepared);
 
 	return prepared;
 } /* }}} */
@@ -379,18 +465,9 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 		if (scope == candidate) {
 			function->common.scope = prepared;
 		} else {
-			if (function->common.scope->type == ZEND_USER_CLASS) {
+			if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
 				function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
 			}
-		}
-
-		/* runtime cache relies on immutable scope, so if scope changed, reallocate runtime cache */
-		/* IT WOULD BE NICE IF THIS WERE DOCUMENTED SOMEWHERE OTHER THAN PHP-SRC */
-		if (!function->op_array.run_time_cache || function->common.scope != scope) {
-			zend_op_array *op_array = &function->op_array;
-			op_array->run_time_cache = emalloc(op_array->cache_size);
-			memset(op_array->run_time_cache, 0, op_array->cache_size);
-			op_array->fn_flags |= ZEND_ACC_NO_RT_ARENA;
 		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
@@ -437,7 +514,7 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		return NULL;
 	}
 
-	if (candidate->type == ZEND_INTERNAL_CLASS) {
+	if (candidate->type == ZEND_INTERNAL_CLASS || candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		return zend_lookup_class(candidate->name);
 	}
 
@@ -447,8 +524,8 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		zend_string_release(lookup);
 
 		if(
-			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
-			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_ANON_BOUND)
+			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
+			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)
 		){
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 			pthreads_complete_entry(thread, candidate, prepared);
@@ -483,6 +560,7 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 
 /* {{{ */
 void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+	prepare_class_property_table(thread, candidate, prepared);
 	prepare_class_statics(thread, candidate, prepared);
 	prepare_class_constants(thread, candidate, prepared);
 } /* }}} */
@@ -494,7 +572,7 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->local.ls, class_table), name, entry) {
-		if (entry->type != ZEND_INTERNAL_CLASS) {
+		if (entry->type != ZEND_INTERNAL_CLASS && !(entry->ce_flags & ZEND_ACC_IMMUTABLE)) {
 			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
 		}
 	} ZEND_HASH_FOREACH_END();

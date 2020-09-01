@@ -58,11 +58,20 @@
 #define PTHREADS_UNSET_PROPERTY_PASSTHRU_C object, member, cache
 #define PTHREADS_UNSET_DIMENSION_PASSTHRU_C object, member, NULL /* }}} */
 
+#if PHP_VERSION_ID >= 70400
+#define PTHREADS_DEFINE_WRITE_PROPERTY(name) zval* (name)(PTHREADS_WRITE_PROPERTY_PASSTHRU_D)
+#else
+#define PTHREADS_DEFINE_WRITE_PROPERTY(name) void (name)(PTHREADS_WRITE_PROPERTY_PASSTHRU_D)
+#endif
+
 /* {{{ read proeprties from storage */
 HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D); /* }}} */
 
 /* {{{ read proeprties from storage */
 HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D); /* }}} */
+
+/* {{{ proxy get_property_ptr_ptr to read_property */
+zval *pthreads_get_property_ptr_ptr_stub(zval *object, zval *member, int type, void **cache_slot); /* }}} */
 
 /* {{{ read a property from the referenced object */
 zval * pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D);
@@ -73,11 +82,11 @@ zval * pthreads_read_property_disallow(PTHREADS_READ_PROPERTY_PASSTHRU_D);
 zval * pthreads_read_dimension_disallow(PTHREADS_READ_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ disallow write a property to the referenced object */
-void pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D);
+PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property);
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ disallow write a property to the referenced object */
-void pthreads_write_property_disallow(PTHREADS_WRITE_PROPERTY_PASSTHRU_D);
+PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property_disallow);
 void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ check if the referenced object has a specific property */

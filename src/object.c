@@ -38,7 +38,7 @@
 extern zend_module_entry pthreads_module_entry; /* }}} */
 
 /* {{{ */
-static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, uint scope); /* }}} */
+static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, unsigned int scope); /* }}} */
 
 /* {{{ */
 static void pthreads_ts_object_free(pthreads_zend_object_t* base); /* }}} */
@@ -328,7 +328,7 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 } /* }}} */
 
 /* {{{ */
-static pthreads_object_t* pthreads_ts_object_ctor(uint scope) {
+static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 	pthreads_object_t* ts_obj = calloc(1, sizeof(pthreads_object_t));
 	ts_obj->scope = scope;
 	ts_obj->refcount = 1;
@@ -350,7 +350,7 @@ static pthreads_object_t* pthreads_ts_object_ctor(uint scope) {
 } /* }}} */
 
 /* {{{ */
-static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, uint scope) {
+static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, unsigned int scope) {
 	base->ts_obj = pthreads_ts_object_ctor(scope);
 	base->owner.ls = TSRMLS_CACHE;
 	base->owner.id = pthreads_self();
