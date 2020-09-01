@@ -231,7 +231,7 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 } /* }}} */
 
 /* {{{ */
-static inline zend_function* pthreads_copy_user_function(zend_function *function) {
+static inline zend_function* pthreads_copy_user_function(const zend_function *function) {
 	zend_function  *copy;
 	zend_op_array  *op_array;
 	zend_string   **variables, *filename_copy;
@@ -309,7 +309,7 @@ static inline zend_function* pthreads_copy_user_function(zend_function *function
 } /* }}} */
 
 /* {{{ */
-static inline zend_function* pthreads_copy_internal_function(zend_function *function) {
+static inline zend_function* pthreads_copy_internal_function(const zend_function *function) {
 	zend_function *copy = zend_arena_alloc(&CG(arena), sizeof(zend_internal_function));
 	memcpy(copy, function, sizeof(zend_internal_function));
 	copy->common.fn_flags |= ZEND_ACC_ARENA_ALLOCATED;
@@ -317,7 +317,7 @@ static inline zend_function* pthreads_copy_internal_function(zend_function *func
 } /* }}} */
 
 /* {{{ */
-static zend_function* pthreads_copy_function(zend_function *function) {
+static zend_function* pthreads_copy_function(const zend_function *function) {
 	zend_function *copy;
 
 #if PHP_VERSION_ID >= 70400
