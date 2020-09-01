@@ -61,7 +61,6 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 	ZEND_HASH_FOREACH_STR_KEY_VAL(&candidate->constants_table, key, value) {
 		zend_string *name;
-		zval separated;
 
 		if (zend_hash_exists(&prepared->constants_table, key)) {
 			continue;
@@ -366,7 +365,9 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 
 /* {{{ */
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+#if PHP_VERSION_ID >= 70400
 	int old_ce_flags = prepared->ce_flags;
+#endif
 	prepared->ce_flags = candidate->ce_flags;
 #if PHP_VERSION_ID >= 70400
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {

@@ -329,7 +329,6 @@ void pthreads_socket_accept(zval *object, zend_class_entry *ce, zval *return_val
 
 	php_sockaddr_storage sa;
 	socklen_t            sa_len = sizeof(sa);
-	zend_bool	     blocking = threaded->store.sock->blocking;
 
 	PTHREADS_SOCKET_CHECK(threaded->store.sock);
 

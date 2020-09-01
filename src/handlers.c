@@ -59,7 +59,6 @@ int pthreads_count_properties_disallow(PTHREADS_COUNT_PASSTHRU_D) {
 /* {{{ */
 HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D) {
 	HashTable *table = emalloc(sizeof(HashTable));
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 
 	zend_hash_init(table, 8, NULL, ZVAL_PTR_DTOR, 0);
 	*is_temp = 1;
@@ -328,7 +327,6 @@ void pthreads_unset_dimension_disallow(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { pt
 
 /* {{{ */
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(from));
 	switch (type) {
 		case IS_ARRAY: {
 			pthreads_store_tohash(from, Z_ARRVAL_P(to));

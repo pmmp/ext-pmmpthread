@@ -132,7 +132,7 @@ static inline zend_bool pthreads_store_is_immutable(zval *object, zval *key) {
 /* {{{ */
 int pthreads_store_delete(zval *object, zval *key) {
 	int result = FAILURE;
-	zval member, *property = NULL;
+	zval member;
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = pthreads_store_coerce(key, &member);
@@ -310,7 +310,7 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 int pthreads_store_write(zval *object, zval *key, zval *write) {
 	int result = FAILURE;
 	pthreads_storage *storage;
-	zval vol, member, *property = NULL, *read = NULL;
+	zval vol, member;
 	pthreads_zend_object_t *threaded =
 		PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	pthreads_object_t *ts_obj = threaded->ts_obj;
@@ -670,11 +670,9 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 
 			if (stored->ls != TSRMLS_CACHE) {
 				zval *search = NULL;
-				zend_ulong index = 0;
-				zend_string *name = NULL;
 				zend_resource *resource, *found = NULL;
 
-				ZEND_HASH_FOREACH_KEY_VAL(&EG(regular_list), index, name, search) {
+				ZEND_HASH_FOREACH_VAL(&EG(regular_list), search) {
 					resource = Z_RES_P(search);
 					if (resource->ptr == stored->original->ptr) {
 						found = resource;
