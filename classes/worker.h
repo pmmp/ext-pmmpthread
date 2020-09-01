@@ -70,7 +70,7 @@ zend_function_entry pthreads_worker_methods[] = {
 	PHP_ME(Worker, isShutdown, Worker_isShutdown, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collect, Worker_collect, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collector, Worker_collector, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto int Worker::stack(Threaded $work)
