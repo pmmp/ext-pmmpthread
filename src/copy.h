@@ -331,6 +331,8 @@ static zend_function* pthreads_copy_function(zend_function *function) {
 		}
 	}
 
+	ZEND_ASSERT(!(function->op_array.fn_flags & ZEND_ACC_IMMUTABLE));
+
 	if (function->type == ZEND_USER_FUNCTION) {
 		copy = pthreads_copy_user_function(function);
 	} else {

@@ -1,5 +1,5 @@
 --TEST--
-Test that OPCache persisted classes are used when available
+Test that OPCache persisted classes and functions are used when available
 --SKIPIF--
 <?php if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
@@ -9,15 +9,15 @@ opcache.enable_cli=1
 --FILE--
 <?php
 
-SomeClass::$var = 2;
-
 $w = new Worker;
 $w->start(PTHREADS_INHERIT_NONE);
 $w->stack(new class extends \Threaded{
 	public function run() : void{
-		var_dump(SomeClass::$var);
+		var_dump(class_exists(SomeClass::class));
+		iAmPreloaded();
 	}
 });
 $w->shutdown();
 --EXPECT--
-int(1)
+bool(true)
+string(3) "yes"
