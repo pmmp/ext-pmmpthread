@@ -320,6 +320,13 @@ static inline zend_function* pthreads_copy_internal_function(zend_function *func
 static zend_function* pthreads_copy_function(zend_function *function) {
 	zend_function *copy;
 
+#if PHP_VERSION_ID >= 70400
+	if (function->type & ZEND_ACC_IMMUTABLE) {
+		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
+		return function;
+	}
+#endif
+
 	if (!(function->op_array.fn_flags & ZEND_ACC_CLOSURE)) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
 
@@ -330,8 +337,6 @@ static zend_function* pthreads_copy_function(zend_function *function) {
 			return copy;
 		}
 	}
-
-	ZEND_ASSERT(!(function->op_array.fn_flags & ZEND_ACC_IMMUTABLE));
 
 	if (function->type == ZEND_USER_FUNCTION) {
 		copy = pthreads_copy_user_function(function);
