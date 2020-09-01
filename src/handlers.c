@@ -212,7 +212,9 @@ PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property_disallow) {
 	zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 		"%s objects are not allowed to have properties",
 		ZSTR_VAL(threaded->std.ce->name));
+#if PHP_VERSION_ID >= 70400
 	return &EG(error_zval);
+#endif
 }
 
 void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { pthreads_write_property_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_C); }
