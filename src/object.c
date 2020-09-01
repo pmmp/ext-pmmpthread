@@ -88,7 +88,8 @@ static zend_object_iterator_funcs pthreads_object_iterator_funcs = {
 	(zval* (*)(zend_object_iterator *))        pthreads_object_iterator_current_data,
 	(void (*)(zend_object_iterator *, zval *)) pthreads_object_iterator_current_key,
 	(void (*)(zend_object_iterator *))         pthreads_object_iterator_move_forward,
-	(void (*)(zend_object_iterator *))         pthreads_object_iterator_rewind
+	(void (*)(zend_object_iterator *))         pthreads_object_iterator_rewind,
+	NULL
 };
 
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref) {
