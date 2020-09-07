@@ -5,7 +5,6 @@ These classes aren't actually supposed to be copied at all because they are immu
 should be available just like a regular class regardless.
 --SKIPIF--
 <?php
-if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+");
 if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
 opcache.enable=1
