@@ -1,7 +1,9 @@
 --TEST--
 Test that OPCache persisted classes and functions are used when available
 --SKIPIF--
-<?php if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
+<?php
+if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+");
+if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
 opcache.preload={PWD}/assets/preload.php
 opcache.enable=1

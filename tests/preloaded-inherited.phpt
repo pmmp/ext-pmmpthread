@@ -4,7 +4,9 @@ Test that immutable functions on mutable classes are handled properly
 Inherited immutable functions might appear on classes that weren't preloaded.
 These should not be copied, same as immutable classes.
 --SKIPIF--
-<?php if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
+<?php
+if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+");
+if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
 opcache.preload={PWD}/assets/preload.php
 opcache.enable=1

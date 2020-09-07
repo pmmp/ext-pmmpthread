@@ -4,7 +4,9 @@ Test that non-preloaded classes marked immutable by OPCache are correctly "copie
 These classes aren't actually supposed to be copied at all because they are immutable, but they
 should be available just like a regular class regardless.
 --SKIPIF--
-<?php if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
+<?php
+if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+");
+if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
 opcache.enable=1
 opcache.enable_cli=1
