@@ -15,15 +15,20 @@ env:
   - USE_OPCACHE=0 USE_ZEND_ALLOC=1
 
 before_script:
-  - echo "opcache.enable=$USE_OPCACHE" >> travis-opcache.ini
-  - echo "opcache.enable_cli=$USE_OPCACHE" >> travis-opcache.ini
-  - phpenv config-add travis-opcache.ini
+  - |
+    if [[ "$USE_OPCACHE" == "1" ]]; then
+      echo "zend_extension=opcache.so" >> ./php.ini
+      echo "opcache.enable=1" >> ./php.ini
+      echo "opcache.enable_cli=1" >> ./php.ini
+    fi
 
 script:
   - phpize
   - ./configure
   - make
-  - REPORT_EXIT_STATUS=1 TEST_PHP_ARGS="-q --show-diff" make test
+  - make install
+  - echo "extension=pthreads.so" >> ./php.ini
+  - php ./run-tests.php -P -q --show-diff -n -c ./php.ini
 
 #notifications:
 #  webhooks:
