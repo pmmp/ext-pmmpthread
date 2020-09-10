@@ -9,21 +9,49 @@
 -->
 This project provides multi-threading that is compatible with PHP based on Posix Threads.
 
+This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjoe/pthreads) extension.
+
+## Focus
+This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
+
+## Changes compared to the original
+- PHP 7.4 support
+- Many bug fixes which were never merged upstream
+- Performance improvements
+- Memory usage improvements
+- Integration with [OPcache](https://www.php.net/manual/en/book.opcache.php) on PHP 7.4+ (pthreads leverages opcache SHM to reuse classes and functions, saving lots of memory)
+
+## [OPcache](https://www.php.net/manual/en/book.opcache.php) compatibility
+Despite popular belief, OPcache is still useful in a CLI environment - as long as it's a threaded one :)
+Every thread in pthreads is like a web server "request", so while OPcache doesn't offer as big an advantage to an application using pthreads as it does to a web server, it's far from useless.
+
+If you're using PHP 7.4+, using [OPcache](https://www.php.net/manual/en/book.opcache.php) with pthreads is **strongly recommended**, as you'll get various benefits from doing so:
+
+- Reduced memory usage when the same class is used on several threads
+- Better performance of starting new threads when threads inherit classes and functions
+
+Preloading classes and functions is also supported on PHP 7.4, which will make classes available to all threads without an autoloader.
+
+OPcache isn't enabled in the CLI by default, so you'll need to add
+```
+opcache.enable=1
+opcache.enable_cli=1
+```
+to your `php.ini` file.
+
+## Why not something newer and easier to work with, like [krakjoe/parallel](https://github.com/krakjoe/parallel)?
+Several reasons. The biggest one is that we found ext-parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded`, it might be more usable. In addition, ext-parallel is less widely used, less well maintained and requires significant migration efforts for code using pthreads.
+
+Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the benefits of PHP 7.4 without needing to suffer PocketMine API breaks that would affect plugins. In addition, PHP 7.4 introduced various new internal features which are highly beneficial specifically to pthreads, such as immutable classes and op_arrays.
+
+While pthreads is an extraordinary challenge to maintain throughout several PHP versions, I'm something of a masochist and I enjoy the challenge. I've also learned a great deal about PHP internals because of this extension.
+
 ## Highlights
 
 * An easy to use, quick to learn OO Threading API for PHP 7.3+
 * Execute any and all predefined and user declared methods and functions, including closures.
 * Ready made synchronization included
 * A world of possibilities ...
-
-## Technical Features
-
-* High Level Threading
-* Synchronization
-* Worker Threads
-* Thread Pools
-* Complete Support for OO - ie. traits, interfaces, inheritance etc
-* Full read/write/execute support for Threaded objects
 
 ## Requirements
 
