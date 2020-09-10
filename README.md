@@ -11,7 +11,7 @@ This project provides multi-threading that is compatible with PHP based on Posix
 
 ## Highlights
 
-* An easy to use, quick to learn OO Threading API for PHP 7.2+
+* An easy to use, quick to learn OO Threading API for PHP 7.3+
 * Execute any and all predefined and user declared methods and functions, including closures.
 * Ready made synchronization included
 * A world of possibilities ...
@@ -27,52 +27,11 @@ This project provides multi-threading that is compatible with PHP based on Posix
 
 ## Requirements
 
-* PHP 7.2+
+* PHP 7.3+
 * ZTS Enabled ( Thread Safety )
 * Posix Threads Implementation
 
 Testing has been carried out on x86, x64 and ARM, in general you just need a compiler and pthread.h
-
-## PHP7
-
-For PHP7, pthreads has been almost completely rewritten to be more efficient, easier to use and more robust. I will give a brief changelog here:
-
-The API for v3 has changed, the following things have been removed:
-
- * ```Mutex```, ```Cond```, and ```Stackable```
- * ```Threaded::lock``` and ```Threaded::unlock```
- * ```Threaded::isWaiting```
- * ```Threaded::from```
- * ```Thread::kill``` (there be dragons)
- * ```Thread::detach```
- * ```Worker::isWorking```
- * ```Threaded::getTerminationInfo``` (this was unsafe, a better, safe impl can be done in userland)
- * Special behaviour of ```protected``` and ```private``` methods on ```Threaded``` objects
-
-The following things have significant changes:
- 
- * The method by which ```Threaded``` objects are stored as member properties of other ```Threaded``` objects.
- * The structure used by a ```Worker``` for stack (```Collectable``` objects to execute inserted by ```Worker::stack```).
- * The ```Pool::collect``` mechanism was moved from ```Pool``` to ```Worker``` for a more robust ```Worker``` and simpler ```Pool``` inheritance.
- * The method by which iteration occurs on ```Threaded``` objects, such that it uses memory more efficiently.
- * ```Threaded::synchronized``` provides true synchronization (state and properties lock).
- * ```Worker``` objects no longer require that you retain a reference to ```Collectable``` objects on the stack.
- * Unified monitor (cond/mutex/state) for ```Threaded``` objects
- * ```Threaded``` members of ```Threaded``` objects are immutable
- * ```Volatile``` objects, exempt from immutability
- * ```array``` coerced to ```Volatile``` when set as member of ```Threaded```
- * ```Collectable``` converted to interface, to make ```extends Volatile implements Collectable``` possible.
-
-Some blog posts explaining these changes:
-
- * [A Letter from the Future](http://blog.krakjoe.ninja/2015/08/a-letter-from-future.html)
- * [Addendum to A Letter from the Future](http://blog.krakjoe.ninja/2015/09/addendum-letter-from-future.html)
-
-### Supported PHP Versions
-
-pthreads v3 requires PHP7 or above. PHP5 needs to use pthreads v2 which can be found in the PHP5 branch.
-
-Note that only PHP 7.2+ is now supported (requiring the current master branch of pthreads). This is due to safety issues with ZTS mode on PHP 7.0 and 7.1.
 
 ##### Unix-based Building from Source
 
@@ -88,8 +47,6 @@ Building pthreads from source is quite simple on Unix-based OSs. The instruction
 ### Windows Support
 
 Yes !! Windows support is offered thanks to the pthread-w32 library.
-
-Releases for Windows can be found: http://windows.php.net/downloads/pecl/releases/pthreads/
 
 ##### Simple Windows Installation
 
@@ -140,38 +97,6 @@ Here are some links to articles I have prepared for users: everybody should read
  - https://gist.github.com/krakjoe/9384409
 
 If you have had the time to put any cool demo's together and would like them showcased on pthreads.org please get in touch.
-
-### Polyfill
-
-It's possible to write code that optionally takes advantage of parallelism where the environment has ```pthreads``` loaded.
-
-This is made possible by [pthreads-polyfill](http://github.com/krakjoe/pthreads-polyfill) which can be found on [packagist](https://packagist.org/packages/krakjoe/pthreads-polyfill).
-
-Having required the appropriate package in your composer.json, the following code is executable everywhere:
-
-```php
-<?php
-require_once("vendor/autoload.php");
-
-if (extension_loaded("pthreads")) {
-	    echo "Using pthreads\n";
-} else  echo "Using polyfill\n";
-
-$pool = new Pool(4);
-
-$pool->submit(new class extends Threaded {
-        public function run() {
-                echo "Hello World\n";
-        }
-});
-
-while ($pool->collect()) continue;
-
-$pool->shutdown();
-?>
-```
-
-Some guidance on getting started, and detail regarding how the polyfill came to exist can be found [here](http://blog.krakjoe.ninja/2015/09/what-polly-really-wants.html).
 
 ### Feedback
 
