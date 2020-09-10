@@ -544,7 +544,9 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
 			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)
 		){
+#if PHP_VERSION_ID >= 70400
 			ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE) && !(prepared->ce_flags & ZEND_ACC_IMMUTABLE));
+#endif
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 			pthreads_complete_entry(thread, candidate, prepared);
 			if (do_late_bindings) {
