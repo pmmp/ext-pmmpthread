@@ -48,6 +48,8 @@
 #endif
 
 /* {{{ */
+static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate);
+static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings);
 static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias);
 static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence);
 static void pthreads_preparation_copy_trait_method_reference(pthreads_object_t* thread, zend_trait_method_reference *reference, zend_trait_method_reference *copy);
@@ -502,12 +504,21 @@ static inline void pthreads_prepare_closures(pthreads_object_t *thread) {
 } /* }}} */
 
 /* {{{ */
-zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
+zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate) {
+#if PHP_VERSION_ID >= 70400
+	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
+	zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
+#endif
+	return pthreads_prepared_entry(thread, candidate);
+} /* }}} */
+
+/* {{{ */
+static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
 	return pthreads_create_entry(thread, candidate, 1);
 } /* }}} */
 
 /* {{{ */
-zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings) {
+static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings) {
 	zend_class_entry *prepared = NULL;
 	zend_string *lookup = NULL;
 
@@ -515,11 +526,16 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		return NULL;
 	}
 
-	if (candidate->type == ZEND_INTERNAL_CLASS || candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
+	if (candidate->type == ZEND_INTERNAL_CLASS
+#if PHP_VERSION_ID >= 70400
+		|| candidate->ce_flags & ZEND_ACC_PRELOADED
+#endif
+	) {
 		return zend_lookup_class(candidate->name);
 	}
 
 	lookup = zend_string_tolower(candidate->name);
+
 
 	if ((prepared = zend_hash_find_ptr(EG(class_table), lookup))) {
 		zend_string_release(lookup);
@@ -538,6 +554,15 @@ zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_en
 		}
 		return prepared;
 	}
+
+#if PHP_VERSION_ID >= 70400
+	if (candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
+		//IMMUTABLE classes don't need to be copied and should not be modified
+		zend_hash_update_ptr(EG(class_table), lookup, candidate);
+		zend_string_release(lookup);
+		return candidate;
+	}
+#endif
 
 	if (!(prepared = pthreads_copy_entry(thread, candidate))) {
 		zend_string_release(lookup);
@@ -814,6 +839,10 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 
 		if (thread->options & PTHREADS_INHERIT_CONSTANTS)
 			pthreads_prepare_constants(thread);
+
+#if PHP_VERSION_ID >= 70400
+		zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
+#endif
 
 		if (thread->options & PTHREADS_INHERIT_FUNCTIONS)
 			pthreads_prepare_functions(thread);

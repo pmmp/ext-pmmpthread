@@ -23,10 +23,7 @@
 #endif
 
 /* {{{ fetch prepared class entry */
-zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate); /* }}} */
-
-/* {{{ */
-zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings); /* }}} */
+zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate); /* }}} */
 
 /* {{{ */
 void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared); /* }}} */

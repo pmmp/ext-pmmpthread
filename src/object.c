@@ -286,7 +286,7 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 				/* we may not know the class, can't use ce directly
 					from zend_object because it is from another context */
 				PTHREADS_ZG(hard_copy_interned_strings) = 1;
-				ce = pthreads_prepared_entry(pthreads->ts_obj, pthreads->std.ce);
+				ce = pthreads_prepare_single_class(pthreads->ts_obj, pthreads->std.ce);
 				PTHREADS_ZG(hard_copy_interned_strings) = 0;
 			}
 			object_init_ex(object, ce);
@@ -544,7 +544,7 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 
 		zend_first_try {
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
-			object_init_ex(&PTHREADS_ZG(this), pthreads_prepared_entry(ts_obj, thread->std.ce));
+			object_init_ex(&PTHREADS_ZG(this), pthreads_prepare_single_class(ts_obj, thread->std.ce));
 			pthreads_routine_run_function(thread, PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this))), NULL);
 
 			if (PTHREADS_IS_WORKER(thread)) {
@@ -553,7 +553,7 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 				while (pthreads_stack_next(ts_obj->stack, &stacked, ts_obj->running) != PTHREADS_MONITOR_JOINED) {
 					zval that;
 					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(stacked));
-					object_init_ex(&that, pthreads_prepared_entry(ts_obj, work->std.ce));
+					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
 					zval_ptr_dtor(&that);
 				}
