@@ -497,6 +497,8 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 	zend_function *run;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	zval zresult;
+	zend_execute_data execute_data;
+	memset(&execute_data, 0, sizeof(execute_data));
 
 	if (pthreads_connect(object, connection) != SUCCESS) {
 		return 0;
@@ -516,6 +518,8 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 	zend_try {
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
 			if (run->type == ZEND_USER_FUNCTION) {
+				EG(current_execute_data) = &execute_data;
+
 				call.fci.size = sizeof(zend_fcall_info);
 				call.fci.retval = &zresult;
 				call.fci.object = &connection->std;
@@ -526,6 +530,17 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 				call.fcc.function_handler = run;
 
 				zend_call_function(&call.fci, &call.fcc);
+
+				EG(current_execute_data) = NULL;
+
+				if (EG(exception)) {
+					if (Z_TYPE(EG(user_exception_handler)) != IS_UNDEF) {
+						zend_user_exception_handler();
+					}
+					if (EG(exception)) {
+						zend_exception_error(EG(exception), E_ERROR);
+					}
+				}
 			}
 		}
 	} zend_catch {

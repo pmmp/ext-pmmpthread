@@ -116,29 +116,12 @@ static inline zend_bool pthreads_is_supported_sapi(char *name) {
 	return 0;
 }
 
-typedef void (*zend_execute_ex_function)(zend_execute_data *);
-
-zend_execute_ex_function zend_execute_ex_hook = NULL;
-
 static inline void pthreads_globals_ctor(zend_pthreads_globals *pg) {
 	ZVAL_UNDEF(&pg->this);
 	pg->pid = 0L;
 	pg->signal = 0;
 	pg->resources = NULL;
 }
-
-/* {{{ */
-static inline void pthreads_execute_ex(zend_execute_data *data) {
-	if (zend_execute_ex_hook) {
-		zend_execute_ex_hook(data);
-	} else execute_ex(data);
-
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		if (EG(exception) &&
-			(!EG(current_execute_data) || !EG(current_execute_data)->prev_execute_data))
-			zend_try_exception_handler();
-	}
-} /* }}} */
 
 PHP_MINIT_FUNCTION(pthreads)
 {
@@ -149,9 +132,6 @@ PHP_MINIT_FUNCTION(pthreads)
 			sapi_module.name);
 		return FAILURE;
 	}
-
-	zend_execute_ex_hook = zend_execute_ex;
-	zend_execute_ex = pthreads_execute_ex;
 
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_ALL", PTHREADS_INHERIT_ALL, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_NONE", PTHREADS_INHERIT_NONE, CONST_CS | CONST_PERSISTENT);
@@ -720,8 +700,6 @@ PHP_MSHUTDOWN_FUNCTION(pthreads)
 			sapi_module.deactivate = sapi_cli_deactivate;
 		}
 	}
-
-	zend_execute_ex = zend_execute_ex_hook;
 
 	return SUCCESS;
 }
