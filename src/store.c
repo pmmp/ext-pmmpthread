@@ -242,7 +242,7 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 		property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
 	} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
 
-	if (property && IS_PTHREADS_VOLATILE(object)) {
+	if (property && IS_PTHREADS_OBJECT(property) && IS_PTHREADS_VOLATILE(object)) {
 		if (pthreads_monitor_lock(ts_obj->monitor)) {
 			pthreads_storage *storage;
 
