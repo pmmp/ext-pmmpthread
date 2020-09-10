@@ -80,7 +80,7 @@ PHP_METHOD(Worker, stack)
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zval *work;
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call stack",
 			thread->std.ce->name->val);
@@ -104,7 +104,7 @@ PHP_METHOD(Worker, unstack)
 		return;
 	}
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call unstack",
 			thread->std.ce->name->val);
@@ -227,7 +227,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"only the creator of this %s may call collect",
 			thread->std.ce->name->val);

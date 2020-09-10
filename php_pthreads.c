@@ -140,114 +140,6 @@ static inline void pthreads_execute_ex(zend_execute_data *data) {
 	}
 } /* }}} */
 
-/* {{{ */
-static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zval *var, zend_arg_info *info) {
-	if (!ZEND_TYPE_IS_SET(info->type)) {
-		return 1;
-	}
-
-	if (ZEND_TYPE_IS_CLASS(info->type)) {
-		pthreads_zend_object_t *threaded;
-
-		if (!var ||
-			Z_TYPE_P(var) != IS_OBJECT ||
-			!instanceof_function(Z_OBJCE_P(var), pthreads_threaded_entry)) {
-			return 0;
-		}
-
-		threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(var));
-
-		if (!PTHREADS_IN_CREATOR(threaded)) {
-			zend_class_entry *ce;
-			void **cache = CACHE_ADDR(EX(opline)->op2.num);
-
-			if (*cache) {
-				ce = *cache;
-			} else {
-				ce = zend_fetch_class(ZEND_TYPE_NAME(info->type),
-					(ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-
-				if (!ce) {
-					return Z_TYPE_P(var) == IS_NULL && ZEND_TYPE_ALLOW_NULL(info->type);
-				}
-
-				*cache = (void*) ce;
-			}
-
-			if (Z_TYPE_P(var) == IS_OBJECT) {
-				zend_class_entry *instance = zend_fetch_class(
-					threaded->std.ce->name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-
-				if (!instance) {
-					return 0;
-				}
-
-				return instanceof_function(instance, ce);
-			}
-		}
-	}
-
-	return 0;
-} /* }}} */
-
-/* {{{ */
-static inline int php_pthreads_recv(zend_execute_data *execute_data) {
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		uint32_t arg_num = EX(opline)->op1.num;
-		zval *var = NULL;
-
-		if (UNEXPECTED(arg_num > EX_NUM_ARGS())) {
-			return ZEND_USER_OPCODE_DISPATCH;
-		}
-
-#if ZEND_USE_ABS_CONST_ADDR
-		if (EX(opline)->result_type == IS_CONST) {
-				var = (zval*) EX(opline)->result.var;
-		} else var = EX_VAR(EX(opline)->result.num);
-#else
-		var = EX_VAR(EX(opline)->result.num);
-#endif
-
-		if (UNEXPECTED((EX(func)->op_array.fn_flags & ZEND_ACC_HAS_TYPE_HINTS) != 0)) {
-			if (pthreads_verify_type(execute_data,
-				var,
-				&EX(func)->common.arg_info[arg_num-1])) {
-				EX(opline)++;
-				return ZEND_USER_OPCODE_CONTINUE;
-			}
-		}
-	}
-	return ZEND_USER_OPCODE_DISPATCH;
-} /* }}} */
-
-/* {{{ */
-static inline int php_pthreads_verify_return_type(zend_execute_data *execute_data) {
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		zval *var = NULL;
-
-		if (EX(opline)->op1_type == IS_UNUSED) {
-			return ZEND_USER_OPCODE_DISPATCH;
-		}
-
-#if ZEND_USE_ABS_CONST_ADDR
-		if (EX(opline)->op1_type & IS_CONST) {
-			var = (zval*) EX(opline)->op1.var;
-		} else var = EX_VAR(EX(opline)->op1.num);
-#else
-		var = EX_VAR(EX(opline)->op1.num);
-#endif
-
-		if (pthreads_verify_type(execute_data,
-			var,
-			EX(func)->common.arg_info - 1)) {
-			EX(opline)++;
-			return ZEND_USER_OPCODE_CONTINUE;
-		}
-	}
-
-	return ZEND_USER_OPCODE_DISPATCH;
-} /* }}} */
-
 PHP_MINIT_FUNCTION(pthreads)
 {
 	zend_class_entry ce;
@@ -805,9 +697,6 @@ PHP_MINIT_FUNCTION(pthreads)
 		*/
 		pthreads_instance = TSRMLS_CACHE;
 	}
-
-	zend_set_user_opcode_handler(ZEND_RECV, php_pthreads_recv);
-	zend_set_user_opcode_handler(ZEND_VERIFY_RETURN_TYPE, php_pthreads_verify_return_type);
 
 	return SUCCESS;
 }

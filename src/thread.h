@@ -58,12 +58,15 @@ typedef struct _pthreads_object_t {
 } pthreads_object_t; /* }}} */
 
 /* {{{ */
-typedef struct _pthreads_zend_object_t {
+struct _pthreads_zend_object_t;
+typedef struct _pthreads_zend_object_t pthreads_zend_object_t;
+
+struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
 	pthreads_ident_t owner;
-	zend_bool is_connection;
+	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
 	zend_object std;
-} pthreads_zend_object_t; /* }}} */
+}; /* }}} */
 
 /* {{{ */
 typedef struct _pthreads_routine_arg_t {

@@ -251,7 +251,7 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 			} else storage = zend_hash_find_ptr(ts_obj->store.props, Z_STR(member));
 
 			if (storage && storage->type == IS_PTHREADS) {
-				pthreads_object_t* threadedStorage = PTHREADS_FETCH_TS_FROM(storage->data);
+				pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) storage->data)->ts_obj;
 				pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(property));
 
 				if (threadedStorage->monitor != threadedProperty->monitor) {
@@ -631,8 +631,12 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 			}
 
 			if (instanceof_function(Z_OBJCE_P(unstore), pthreads_threaded_entry)) {
+				pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(unstore));
+				if (threaded->original_zobj != NULL) {
+					threaded = threaded->original_zobj;
+				}
 				storage->type = IS_PTHREADS;
-				storage->data = Z_OBJ_P(unstore);
+				storage->data = threaded;
 				break;
 			}
 
@@ -713,13 +717,7 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 		} break;
 
 		case IS_PTHREADS: {
-			pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(storage->data);
-
-			if (pthreads_check_opline_ex(EG(current_execute_data), 1, ZEND_CAST, IS_OBJECT)) {
-				ZVAL_OBJ(pzval, &threaded->std);
-				Z_ADDREF_P(pzval);
-				break;
-			}
+			pthreads_zend_object_t* threaded = storage->data;
 
 			if (!pthreads_globals_object_connect(threaded, NULL, pzval)) {
 				zend_throw_exception_ex(

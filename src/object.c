@@ -184,6 +184,9 @@ zend_object* pthreads_socket_ctor(zend_class_entry *entry) {
 /* {{{ */
 int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *buflen, zend_serialize_data *data) {
 	pthreads_zend_object_t *address = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+	if (address->original_zobj != NULL) {
+		address = address->original_zobj;
+	}
 #ifdef _WIN64
 	(*buflen) = snprintf(NULL, 0, ":%I64u:", (unsigned __int64) address);
 #else
@@ -246,7 +249,11 @@ static inline int _pthreads_connect_nolock(pthreads_zend_object_t* source, pthre
 
 		destination->ts_obj = source->ts_obj;
 		++destination->ts_obj->refcount;
-		destination->is_connection = 1;
+		if (source->original_zobj != NULL) {
+			destination->original_zobj = source->original_zobj;
+		} else {
+			destination->original_zobj = source;
+		}
 
 		if (destination->std.properties)
 			zend_hash_clean(destination->std.properties);
@@ -355,7 +362,7 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 	base->ts_obj = pthreads_ts_object_ctor(scope);
 	base->owner.ls = TSRMLS_CACHE;
 	base->owner.id = pthreads_self();
-	base->is_connection = 0;
+	base->original_zobj = NULL;
 
 	zend_object_std_init(&base->std, entry);
 	object_properties_init(&base->std, entry);
@@ -392,7 +399,7 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 void pthreads_base_free(zend_object *object) {
 	pthreads_zend_object_t* base = PTHREADS_FETCH_FROM(object);
 
-	if (!base->is_connection && PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
+	if (base->original_zobj == NULL && PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
 		pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
 		!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
 		pthreads_join(base);
@@ -421,7 +428,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 	pthreads_routine_arg_t routine;
 	pthreads_object_t *ts_obj = thread->ts_obj;
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may start it",
 			thread->std.ce->name->val);
@@ -459,7 +466,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 /* {{{ */
 zend_bool pthreads_join(pthreads_zend_object_t* thread) {
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may join with it",
 			thread->std.ce->name->val);
