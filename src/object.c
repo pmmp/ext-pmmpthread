@@ -534,9 +534,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 				EG(current_execute_data) = NULL;
 
 				if (EG(exception)) {
-					if (Z_TYPE(EG(user_exception_handler)) != IS_UNDEF) {
-						zend_user_exception_handler();
-					}
+					zend_try_exception_handler();
 					if (EG(exception)) {
 						zend_exception_error(EG(exception), E_ERROR);
 					}
