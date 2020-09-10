@@ -254,8 +254,19 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	(*op_array->refcount) = 1;
 	/* we never want to share the same runtime cache */
 #if PHP_VERSION_ID >= 70400
-	ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
-	ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
+	if (op_array->fn_flags & ZEND_ACC_HEAP_RT_CACHE) {
+		//TODO: we really shouldn't need to initialize this here, but right now it's the most convenient way to do it.
+		//the primary problem is zend_create_closure(), which doesn't like being given an op_array that has a NULL
+		//map_ptr. However, when allocated on heap, Zend expects the map ptr and the runtime cache to be part of the
+		//same contiguous memory block freed with a single call to efree(), and the cache won't be resized.
+		void *ptr = ecalloc(1, sizeof(void*) + op_array->cache_size);
+		ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
+		ptr = (char*)ptr + sizeof(void*);
+		ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
+	} else {
+		ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
+		ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
+	}
 #else
 	op_array->run_time_cache = NULL;
 #endif
