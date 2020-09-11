@@ -137,9 +137,10 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 			parent = parent->parent;
 		}
 #if PHP_VERSION_ID < 70400
+		//we realloc'd the table
 		prepared->static_members_table = prepared->default_static_members_table;
 #else
-		ZEND_MAP_PTR_SET(prepared->static_members_table, prepared->default_static_members_table);
+		//zend_initialize_class_data() already inits the map_ptr, which is ptr(default_static_members_table), so nothing to do here
 #endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
