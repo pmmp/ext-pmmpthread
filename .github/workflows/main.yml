@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    env:
+      PHP_BUILD_REVISION: 5a3d184ed9b817ffe8e405a3475eca7652a9ec8c
+    strategy:
+      matrix:
+        php: [7.3.25, 7.4.13]
+        opcache: [0, 1]
+        zend-alloc: [0, 1]
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      - name: Restore PHP build cache
+        uses: actions/cache@v2
+        id: php-build-cache
+        with:
+          path: $GITHUB_WORKSPACE/php 
+          key: php-${{ matrix.php }}
+          
+      - name: Clone php-build repository
+        if: outputs.php-build-cache.cache-hit != 'true'
+        uses: actions/checkout@v2
+        with:
+          repository: php-build/php-build
+          ref: 5a3d184ed9b817ffe8e405a3475eca7652a9ec8c
+          path: php-build
+
+      - name: Compile PHP
+        if: outputs.php-build-cache.cache-hit != 'true'
+        run: PHP_BUILD_ZTS_ENABLE=on ./php-build/bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+
+      - name: Compile extension
+        run: |
+          cd pthreads
+          $GITHUB_WORKSPACE/php/bin/phpize
+          ./configure
+          make install
+
+      - name: Generate php.ini
+        run: |
+          echo "extension=pthreads.so" > $GITHUB_WORKSPACE/php.ini
+          if [[ "${{ matrix.opcache }}" == "1" ]]; then
+            echo "Enabling OPcache"
+            echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
+          else
+            echo "OPcache is not enabled for this run"
+          fi
+
+      - name: Run PHPT tests
+        run: |
+          cd $GITHUB_WORKSPACE/pthreads
+          USE_ZEND_ALLOC=${{ matrix.zend_alloc }} $GITHUB_WORKSPACE/php/bin/php ./run-tests.php -P -q --show-diff -n -c $GITHUB_WORKSPACE/php.ini
