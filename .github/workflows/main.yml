@@ -37,7 +37,10 @@ jobs:
 
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
-        run: PHP_BUILD_ZTS_ENABLE=on ./php-build/bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+        run: |
+          cd php-build
+          ./install-dependencies.sh
+          PHP_BUILD_ZTS_ENABLE=on ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
