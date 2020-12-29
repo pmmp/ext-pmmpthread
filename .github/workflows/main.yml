@@ -28,7 +28,7 @@ jobs:
           key: php-${{ matrix.php }}
           
       - name: Clone php-build repository
-        if: outputs.php-build-cache.cache-hit != 'true'
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v2
         with:
           repository: php-build/php-build
@@ -36,7 +36,7 @@ jobs:
           path: php-build
 
       - name: Compile PHP
-        if: outputs.php-build-cache.cache-hit != 'true'
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
         run: PHP_BUILD_ZTS_ENABLE=on ./php-build/bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
