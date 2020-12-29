@@ -39,13 +39,13 @@ jobs:
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
         run: |
-          cd php-build
+          cd $GITHUB_WORKSPACE/php-build
           ./install-dependencies.sh
           PHP_BUILD_ZTS_ENABLE=on ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
-          cd pthreads
+          cd $GITHUB_WORKSPACE/pthreads
           $GITHUB_WORKSPACE/php/bin/phpize
           ./configure
           make install
