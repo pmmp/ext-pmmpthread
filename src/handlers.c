@@ -132,15 +132,7 @@ zval* pthreads_read_dimension_disallow(PTHREADS_READ_DIMENSION_PASSTHRU_D) { ret
 /* }}} */
 
 /* {{{ */
-PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
-
-#if PHP_VERSION_ID >= 70400
-	zval* result;
-#endif
-
-	rebuild_object_properties(&threaded->std);
-
+static zend_bool pthreads_is_supported_type(zval *value) {
 	switch(Z_TYPE_P(value)){
 		case IS_UNDEF:
 		case IS_STRING:
@@ -151,51 +143,63 @@ PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
 		case IS_DOUBLE:
 		case IS_RESOURCE:
 		case IS_TRUE:
-		case IS_FALSE: {
-			zend_guard *guard = NULL;
-			if ((member && Z_TYPE_P(member) != IS_NULL) &&
-				Z_OBJCE_P(object)->__set &&
-				(guard = pthreads_get_guard(&threaded->std, member)) && !((*guard) & IN_SET)) {
-				zend_fcall_info fci = empty_fcall_info;
-				zend_fcall_info_cache fcc = empty_fcall_info_cache;
-				zval rv;
-
-				ZVAL_UNDEF(&rv);
-
-				fci.size = sizeof(zend_fcall_info);
-				fci.retval = &rv;
-				fci.object = &threaded->std;
-				zend_fcall_info_argn(&fci, 2, member, value);
-				fcc.function_handler = Z_OBJCE_P(object)->__set;
-				fcc.object = &threaded->std;
-
-				(*guard) |= IN_SET;
-				zend_call_function(&fci, &fcc);
-				(*guard) &= ~IN_SET;
-
-				if (Z_TYPE(rv) != IS_UNDEF)
-					zval_dtor(&rv);
-				zend_fcall_info_args_clear(&fci, 1);
-			} else {
-				pthreads_store_write(Z_OBJ_P(object), member, value);
-			}
-#if PHP_VERSION_ID >= 70400
-			result = value;
-#endif
-		} break;
-
-		default: {
-			zend_throw_exception_ex(
-				spl_ce_RuntimeException, 0,
-				"pthreads detected an attempt to use unsupported data (%s) for %s::$%s",
-				zend_get_type_by_const(Z_TYPE_P(value)),
-				ZSTR_VAL(Z_OBJCE_P(object)->name), Z_STRVAL_P(member));
-#if PHP_VERSION_ID >= 70400
-			result = &EG(error_zval);
-#endif
-		}
+		case IS_FALSE:
+			return 1;
+		default:
+			return 0;
 	}
+} /* }}} */
 
+/* {{{ */
+PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
+#if PHP_VERSION_ID >= 70400
+	zval *result;
+#endif
+	if (!pthreads_is_supported_type(value)) {
+		zend_throw_exception_ex(
+			spl_ce_RuntimeException, 0,
+			"pthreads detected an attempt to use unsupported data (%s) for %s::$%s",
+			zend_get_type_by_const(Z_TYPE_P(value)),
+			ZSTR_VAL(Z_OBJCE_P(object)->name), Z_STRVAL_P(member));
+#if PHP_VERSION_ID >= 70400
+		result = &EG(error_zval);
+#endif
+	} else {
+		pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+
+		rebuild_object_properties(&threaded->std);
+
+		zend_guard *guard = NULL;
+		if ((member && Z_TYPE_P(member) != IS_NULL) &&
+			Z_OBJCE_P(object)->__set &&
+			(guard = pthreads_get_guard(&threaded->std, member)) && !((*guard) & IN_SET)) {
+			zend_fcall_info fci = empty_fcall_info;
+			zend_fcall_info_cache fcc = empty_fcall_info_cache;
+			zval rv;
+
+			ZVAL_UNDEF(&rv);
+
+			fci.size = sizeof(zend_fcall_info);
+			fci.retval = &rv;
+			fci.object = &threaded->std;
+			zend_fcall_info_argn(&fci, 2, member, value);
+			fcc.function_handler = Z_OBJCE_P(object)->__set;
+			fcc.object = &threaded->std;
+
+			(*guard) |= IN_SET;
+			zend_call_function(&fci, &fcc);
+			(*guard) &= ~IN_SET;
+
+			if (Z_TYPE(rv) != IS_UNDEF)
+				zval_dtor(&rv);
+			zend_fcall_info_args_clear(&fci, 1);
+		} else {
+			pthreads_store_write(Z_OBJ_P(object), member, value);
+		}
+#if PHP_VERSION_ID >= 70400
+		result = value;
+#endif
+	}
 #if PHP_VERSION_ID >= 70400
 	return result;
 #endif
