@@ -176,8 +176,10 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 						opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
 					}
 					break;
+#if PHP_VERSION_ID < 70400
 				case ZEND_DECLARE_ANON_CLASS:
 				case ZEND_DECLARE_ANON_INHERITED_CLASS:
+#endif
 				case ZEND_FE_FETCH_R:
 				case ZEND_FE_FETCH_RW:
 				case ZEND_SWITCH_LONG:
