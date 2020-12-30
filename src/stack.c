@@ -130,7 +130,7 @@ zend_long pthreads_stack_add(pthreads_stack_t *stack, zval *value) {
 	return size;
 }
 
-static inline zend_long pthreads_stack_remove(pthreads_stack_t *stack, pthreads_stack_item_t *item, zval *value, zend_bool garbage) {
+static inline zend_long pthreads_stack_remove(pthreads_stack_t *stack, pthreads_stack_item_t *item, zval *value, int garbage) {
 	if (!item) {
 		value = NULL;
 		return 0;
