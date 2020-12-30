@@ -61,7 +61,7 @@ static inline zval* pthreads_object_iterator_current_data(pthreads_iterator_t* i
 		zval_ptr_dtor(&iterator->zit.data);
 	}
 
-	pthreads_store_data(&iterator->object, &iterator->zit.data, &iterator->position);
+	pthreads_store_data(Z_OBJ(iterator->object), &iterator->zit.data, &iterator->position);
 
 	if (Z_ISUNDEF(iterator->zit.data)) {
 		return &EG(uninitialized_zval);
@@ -71,15 +71,15 @@ static inline zval* pthreads_object_iterator_current_data(pthreads_iterator_t* i
 }
 
 static inline void pthreads_object_iterator_current_key(pthreads_iterator_t* iterator, zval* result) {
-	pthreads_store_key(&iterator->object, result, &iterator->position);
+	pthreads_store_key(Z_OBJ(iterator->object), result, &iterator->position);
 }
 
 static inline void pthreads_object_iterator_move_forward(pthreads_iterator_t* iterator) {
-	pthreads_store_forward(&iterator->object, &iterator->position);
+	pthreads_store_forward(Z_OBJ(iterator->object), &iterator->position);
 }
 
 static inline void pthreads_object_iterator_rewind(pthreads_iterator_t* iterator) {
-	pthreads_store_reset(&iterator->object, &iterator->position);
+	pthreads_store_reset(Z_OBJ(iterator->object), &iterator->position);
 }
 
 static zend_object_iterator_funcs pthreads_object_iterator_funcs = {
@@ -109,7 +109,7 @@ zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval
 	ZVAL_COPY(&iterator->object, object);
 	ZVAL_UNDEF(&iterator->zit.data);
 
-	pthreads_store_reset(&iterator->object, &iterator->position);
+	pthreads_store_reset(Z_OBJ(iterator->object), &iterator->position);
 
 	iterator->zit.funcs = &pthreads_object_iterator_funcs;
 
@@ -308,9 +308,7 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 /* {{{ */
 static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 	zend_property_info *info;
-	zval tmp, key;
-
-	ZVAL_OBJ(&tmp, &base->std);
+	zval key;
 
 	ZEND_HASH_FOREACH_PTR(&base->std.ce->properties_info, info) {
 		zend_ulong offset;
@@ -329,7 +327,7 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 
 		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
 		pthreads_store_write(
-			&tmp, &key,
+			&base->std, &key,
 			&base->std.ce->default_properties_table[offset]);
 		zval_ptr_dtor(&key);
 	} ZEND_HASH_FOREACH_END();
@@ -513,7 +511,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 	pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
 
 	if (work)
-		pthreads_store_write(work, &PTHREADS_G(strings).worker, &PTHREADS_ZG(this));
+		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this));
 
 	zend_try {
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {

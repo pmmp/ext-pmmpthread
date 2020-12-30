@@ -64,8 +64,8 @@ pthreads_store_t* pthreads_store_alloc() {
 	return store;
 } /* }}} */
 
-void pthreads_store_sync(zval *object) { /* {{{ */
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+void pthreads_store_sync(zend_object *object) { /* {{{ */
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_ulong idx;
 	zend_string *name;
@@ -103,11 +103,11 @@ static inline zend_bool pthreads_store_coerce(zval *key, zval *member) {
 }
 
 /* {{{ */
-static inline zend_bool pthreads_store_is_immutable(zval *object, zval *key) {
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+static inline zend_bool pthreads_store_is_immutable(zend_object *object, zval *key) {
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_storage *storage;
 
-	if (IS_PTHREADS_VOLATILE(object)) {
+	if (IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
 		return 0;
 	}
 
@@ -130,10 +130,10 @@ static inline zend_bool pthreads_store_is_immutable(zval *object, zval *key) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_delete(zval *object, zval *key) {
+int pthreads_store_delete(zend_object *object, zval *key) {
 	int result = FAILURE;
 	zval member;
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = pthreads_store_coerce(key, &member);
 
@@ -162,10 +162,10 @@ int pthreads_store_delete(zval *object, zval *key) {
 /* }}} */
 
 /* {{{ */
-zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists) {
+zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists) {
 	zend_bool isset = 0;
 	zval member;
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = pthreads_store_coerce(key, &member);
 
@@ -229,10 +229,10 @@ zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
+int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	int result = FAILURE;
 	zval member, *property = NULL;
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = pthreads_store_coerce(key, &member);
 
@@ -242,7 +242,7 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 		property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
 	} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
 
-	if (property && IS_PTHREADS_OBJECT(property) && IS_PTHREADS_VOLATILE(object)) {
+	if (property && IS_PTHREADS_OBJECT(property) && IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
 		if (pthreads_monitor_lock(ts_obj->monitor)) {
 			pthreads_storage *storage;
 
@@ -307,12 +307,12 @@ int pthreads_store_read(zval *object, zval *key, int type, zval *read) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_write(zval *object, zval *key, zval *write) {
+int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 	int result = FAILURE;
 	pthreads_storage *storage;
 	zval vol, member;
 	pthreads_zend_object_t *threaded =
-		PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+		PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = 0;
 
@@ -322,7 +322,7 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 			/* coerce arrays into volatile objects unless explicitly cast as array */
 			object_init_ex(
 				&vol, pthreads_volatile_entry);
-			pthreads_store_merge(&vol, write, 1);
+			pthreads_store_merge(Z_OBJ(vol), write, 1);
 			/* this will be addref'd when caching the object */
 			Z_SET_REFCOUNT(vol, 0);
 			write = &vol;
@@ -358,7 +358,7 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 				}
 				zend_string_release(keyed);
 			}
-			if (IS_PTHREADS_VOLATILE(object)) {
+			if (IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
 				//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 				//cached Threaded references that are dead, we have to take the opportunity
 				pthreads_store_sync(object);
@@ -370,7 +370,7 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 	if (result != SUCCESS) {
 		pthreads_store_storage_dtor(storage);
 	} else {
-		if (IS_PTHREADS_OBJECT(write) || IS_PTHREADS_CLOSURE(write)) {
+		if (IS_PTHREADS_OBJECT(write) || IS_PTHREADS_CLOSURE_OBJECT(write)) {
 			/*
 				This could be a volatile object, but, we don't want to break
 				normal refcounting, we'll read the reference only at volatile objects
@@ -398,8 +398,8 @@ int pthreads_store_write(zval *object, zval *key, zval *write) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_count(zval *object, zend_long *count) {
-	pthreads_object_t* ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
+int pthreads_store_count(zend_object *object, zend_long *count) {
+	pthreads_object_t* ts_obj = PTHREADS_FETCH_TS_FROM(object);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		(*count) = zend_hash_num_elements(ts_obj->store.props);
@@ -410,8 +410,8 @@ int pthreads_store_count(zval *object, zend_long *count) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_shift(zval *object, zval *member) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+int pthreads_store_shift(zend_object *object, zval *member) {
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 
 	rebuild_object_properties(&threaded->std);
@@ -444,8 +444,8 @@ int pthreads_store_shift(zval *object, zval *member) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_chunk(zval *object, zend_long size, zend_bool preserve, zval *chunk) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve, zval *chunk) {
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 
 	rebuild_object_properties(&threaded->std);
@@ -488,8 +488,8 @@ int pthreads_store_chunk(zval *object, zend_long size, zend_bool preserve, zval 
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_pop(zval *object, zval *member) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+int pthreads_store_pop(zend_object *object, zval *member) {
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 
 	rebuild_object_properties(&threaded->std);
@@ -529,8 +529,8 @@ int pthreads_store_pop(zval *object, zval *member) {
 } /* }}} */
 
 /* {{{ */
-void pthreads_store_tohash(zval *object, HashTable *hash) {
-	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+void pthreads_store_tohash(zend_object *object, HashTable *hash) {
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 
 	rebuild_object_properties(&threaded->std);
@@ -547,7 +547,7 @@ void pthreads_store_tohash(zval *object, HashTable *hash) {
 			zend_string *rename;
 
 			/* don't overwrite pthreads objects for non volatile objects */
-			if (!IS_PTHREADS_VOLATILE(object) && storage->type == IS_PTHREADS) {
+			if (!IS_PTHREADS_VOLATILE_CLASS(object->ce) && storage->type == IS_PTHREADS) {
 				if (!name) {
 					if (zend_hash_index_exists(hash, idx))
 						continue;
@@ -916,7 +916,7 @@ static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite) {
+int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite) {
 	if (Z_TYPE_P(from) != IS_ARRAY &&
 		Z_TYPE_P(from) != IS_OBJECT) {
 		return FAILURE;
@@ -925,7 +925,7 @@ int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite) {
 	switch (Z_TYPE_P(from)) {
 		case IS_OBJECT: {
 			if (IS_PTHREADS_OBJECT(from)) {
-				pthreads_object_t* threaded[2] = {PTHREADS_FETCH_TS_FROM(Z_OBJ_P(destination)), PTHREADS_FETCH_TS_FROM(Z_OBJ_P(from))};
+				pthreads_object_t* threaded[2] = {PTHREADS_FETCH_TS_FROM(destination), PTHREADS_FETCH_TS_FROM(Z_OBJ_P(from))};
 
 				if (pthreads_monitor_lock(threaded[0]->monitor)) {
 					if (pthreads_monitor_lock(threaded[1]->monitor)) {
@@ -1001,7 +1001,7 @@ int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite) {
 		/* fall through on purpose to handle normal objects and arrays */
 
 		default: {
-			pthreads_object_t* ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(destination));
+			pthreads_object_t* ts_obj = PTHREADS_FETCH_TS_FROM(destination);
 
 			if (pthreads_monitor_lock(ts_obj->monitor)) {
 				HashPosition position;
@@ -1066,8 +1066,8 @@ void pthreads_store_storage_dtor (pthreads_storage *storage){
 } /* }}} */
 
 /* {{{ iteration helpers */
-void pthreads_store_reset(zval *object, HashPosition *position) {
-	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
+void pthreads_store_reset(zend_object *object, HashPosition *position) {
+	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(object);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		zend_hash_internal_pointer_reset_ex(ts_obj->store.props, position);
@@ -1078,8 +1078,8 @@ void pthreads_store_reset(zval *object, HashPosition *position) {
 	}
 }
 
-void pthreads_store_key(zval *object, zval *key, HashPosition *position) {
-	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
+void pthreads_store_key(zend_object *object, zval *key, HashPosition *position) {
+	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(object);
 	zend_string *str_key;
 	zend_ulong num_key;
 
@@ -1099,8 +1099,8 @@ void pthreads_store_key(zval *object, zval *key, HashPosition *position) {
 	}
 }
 
-void pthreads_store_data(zval *object, zval *value, HashPosition *position) {
-	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
+void pthreads_store_data(zend_object *object, zval *value, HashPosition *position) {
+	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(object);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		pthreads_storage *storage = (pthreads_storage*)
@@ -1114,8 +1114,8 @@ void pthreads_store_data(zval *object, zval *value, HashPosition *position) {
 	}
 }
 
-void pthreads_store_forward(zval *object, HashPosition *position) {
-	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(object));
+void pthreads_store_forward(zend_object *object, HashPosition *position) {
+	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(object);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		zend_hash_move_forward_ex(

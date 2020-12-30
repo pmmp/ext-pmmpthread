@@ -195,7 +195,7 @@ PHP_METHOD(Threaded, synchronized)
 
 	if (pthreads_monitor_lock(threaded->monitor)) {
 		/* synchronize property tables */
-		pthreads_store_sync(getThis());
+		pthreads_store_sync(Z_OBJ_P(getThis()));
 
 		zend_try {
 			/* call the closure */
@@ -221,7 +221,7 @@ PHP_METHOD(Threaded, merge)
 		return;
 	}
 
-	RETURN_BOOL((pthreads_store_merge(getThis(), from, overwrite)==SUCCESS));
+	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite)==SUCCESS));
 } /* }}} */
 
 /* {{{ proto mixed Threaded::shift()
@@ -232,7 +232,7 @@ PHP_METHOD(Threaded, shift)
 		return;
 	}
 
-	pthreads_store_shift(getThis(), return_value);
+	pthreads_store_shift(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::chunk(integer $size [, boolean $preserve = false])
@@ -246,7 +246,7 @@ PHP_METHOD(Threaded, chunk)
 		return;
 	}
 
-	pthreads_store_chunk(getThis(), size, preserve, return_value);
+	pthreads_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::pop()
@@ -257,7 +257,7 @@ PHP_METHOD(Threaded, pop)
 		return;
 	}
 
-	pthreads_store_pop(getThis(), return_value);
+	pthreads_store_pop(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto boolean Threaded::count()
@@ -271,7 +271,7 @@ PHP_METHOD(Threaded, count)
 	ZVAL_LONG(return_value, 0);
 
 	pthreads_store_count(
-		getThis(), &Z_LVAL_P(return_value));
+		Z_OBJ_P(getThis()), &Z_LVAL_P(return_value));
 } /* }}} */
 
 /* {{{ proto Threaded::isGarbage(void) : bool */

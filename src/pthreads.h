@@ -82,25 +82,17 @@ extern zend_class_entry *pthreads_worker_entry;
 extern zend_class_entry *pthreads_socket_entry;
 extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
-#ifndef IS_PTHREADS_CLASS
 #define IS_PTHREADS_CLASS(c) \
 	(instanceof_function(c, pthreads_threaded_entry))
-#endif
 
-#ifndef IS_PTHREADS_OBJECT
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
-#endif
 
-#ifndef IS_PTHREADS_VOLATILE
-#define IS_PTHREADS_VOLATILE(o)   \
-        (Z_TYPE_P(o) == IS_OBJECT && instanceof_function(Z_OBJCE_P(o), pthreads_volatile_entry))
-#endif
+#define IS_PTHREADS_VOLATILE_CLASS(o)   \
+        instanceof_function(o, pthreads_volatile_entry)
 
-#ifndef IS_PTHREADS_CLOSURE
-#define IS_PTHREADS_CLOSURE(z) \
+#define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
-#endif
 
 extern zend_object_handlers pthreads_handlers;
 extern zend_object_handlers pthreads_socket_handlers;

@@ -42,7 +42,7 @@ typedef uint32_t zend_guard;
 
 /* {{{ */
 int pthreads_count_properties(PTHREADS_COUNT_PASSTHRU_D) {
-	return pthreads_store_count(PTHREADS_COUNT_PASSTHRU_C);
+	return pthreads_store_count(Z_OBJ_P(object), count);
 } /* }}} */
 
 /* {{{ */
@@ -63,7 +63,7 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D) {
 	zend_hash_init(table, 8, NULL, ZVAL_PTR_DTOR, 0);
 	*is_temp = 1;
 
-	pthreads_store_tohash(object, table);
+	pthreads_store_tohash(Z_OBJ_P(object), table);
 
 	return table;
 } /* }}} */
@@ -75,7 +75,7 @@ HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
 	rebuild_object_properties(&threaded->std);
 
 	pthreads_store_tohash(
-		object, threaded->std.properties);
+		Z_OBJ_P(object), threaded->std.properties);
 
 	return threaded->std.properties;
 } /* }}} */
@@ -108,7 +108,7 @@ zval * pthreads_read_property (PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 
 		zend_fcall_info_args_clear(&fci, 1);
 	} else {
-		pthreads_store_read(object, member, type, rv);
+		pthreads_store_read(Z_OBJ_P(object), member, type, rv);
 	}
 
 	return rv;
@@ -177,7 +177,7 @@ PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
 					zval_dtor(&rv);
 				zend_fcall_info_args_clear(&fci, 1);
 			} else {
-				pthreads_store_write(object, member, value);
+				pthreads_store_write(Z_OBJ_P(object), member, value);
 			}
 #if PHP_VERSION_ID >= 70400
 			result = value;
@@ -252,7 +252,7 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 		}
 		zend_fcall_info_args_clear(&fci, 1);
 	} else {
-		isset = pthreads_store_isset(object, member, has_set_exists);
+		isset = pthreads_store_isset(Z_OBJ_P(object), member, has_set_exists);
 	}
 
 	return isset;
@@ -306,7 +306,7 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 		}
 		zend_fcall_info_args_clear(&fci, 1);
 	} else {
-		if (pthreads_store_delete(object, member) == SUCCESS){
+		if (pthreads_store_delete(Z_OBJ_P(object), member) == SUCCESS){
 
 		}
 	}
@@ -329,7 +329,7 @@ void pthreads_unset_dimension_disallow(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { pt
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
 	switch (type) {
 		case IS_ARRAY: {
-			pthreads_store_tohash(from, Z_ARRVAL_P(to));
+			pthreads_store_tohash(Z_OBJ_P(from), Z_ARRVAL_P(to));
 			return SUCCESS;
 		} break;
 	}
