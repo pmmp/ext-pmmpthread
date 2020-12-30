@@ -43,17 +43,10 @@ jobs:
           ./install-dependencies.sh
           PHP_BUILD_ZTS_ENABLE=on ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
-      - name: Upload PHP build logs
-        if: steps.php-build-cache.outputs.cache-hit != 'true'
-        uses: actions/upload-artifact@v2
-        with:
-          name: php-build-log
-          path: /tmp/php-build.${{ matrix.php }}.*.log
-
       - name: Compile extension
         run: |
           $GITHUB_WORKSPACE/php/bin/phpize
-          ./configure
+          ./configure --with-php-config=$GITHUB_WORKSPACE/php/bin/php-config
           make install
 
       - name: Generate php.ini
