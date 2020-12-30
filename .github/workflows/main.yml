@@ -11,6 +11,7 @@ jobs:
     env:
       PHP_BUILD_REVISION: 5a3d184ed9b817ffe8e405a3475eca7652a9ec8c
     strategy:
+      fail-fast: false
       matrix:
         php: [7.3.25, 7.4.13]
         opcache: [0, 1]
