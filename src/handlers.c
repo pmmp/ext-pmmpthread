@@ -112,7 +112,7 @@ zval * pthreads_read_property (PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 	return rv;
 }
 
-zval* pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D) { return pthreads_read_property(PTHREADS_READ_DIMENSION_PASSTHRU_C); }
+zval* pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D) { return pthreads_read_property(object, member, type, NULL, rv); }
 /* }}} */
 
 /* {{{ */
@@ -201,7 +201,7 @@ PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
 #endif
 }
 
-void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { pthreads_write_property(PTHREADS_WRITE_DIMENSION_PASSTHRU_C); }
+void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { pthreads_write_property(object, member, value, NULL); }
 /* }}} */
 
 /* {{{ */
@@ -253,7 +253,7 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 
 	return isset;
 }
-int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) { return pthreads_has_property(PTHREADS_HAS_DIMENSION_PASSTHRU_C); }
+int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) { return pthreads_has_property(object, member, has_set_exists, NULL); }
 /* }}} */
 
 /* {{{ */
@@ -305,7 +305,7 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 		}
 	}
 }
-void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { pthreads_unset_property(PTHREADS_UNSET_DIMENSION_PASSTHRU_C); }
+void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { pthreads_unset_property(object, member, NULL); }
 /* }}} */
 
 /* {{{ */
@@ -324,7 +324,7 @@ int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
 		} break;
 	}
 
-	return zend_handlers->cast_object(PTHREADS_CAST_PASSTHRU_C);
+	return zend_handlers->cast_object(from, to, type);
 } /* }}} */
 
 /* {{{ */
