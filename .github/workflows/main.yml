@@ -26,8 +26,8 @@ jobs:
         uses: actions/cache@v2
         id: php-build-cache
         with:
-          path: $GITHUB_WORKSPACE/php 
-          key: php-${{ matrix.php }}
+          path: ${{ github.workspace }}/php 
+          key: php--${{ matrix.php }}
           
       - name: Clone php-build repository
         if: steps.php-build-cache.outputs.cache-hit != 'true'
