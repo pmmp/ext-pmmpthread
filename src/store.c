@@ -340,7 +340,11 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		if (!key) {
-			ZVAL_LONG(&member, zend_hash_next_free_element(ts_obj->store.props));
+			zend_ulong next = zend_hash_next_free_element(ts_obj->store.props);
+#if PHP_VERSION_ID >= 80000
+			if (next == ZEND_LONG_MIN) next = 0;
+#endif
+			ZVAL_LONG(&member, next);
 		} else {
 			coerced = pthreads_store_coerce(key, &member);
 		}
