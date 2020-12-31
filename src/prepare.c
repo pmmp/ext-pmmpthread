@@ -190,7 +190,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
-#if PHP_VERSION_ID == 70400
+#if PHP_VERSION_ID >= 70400 && PHP_VERSION_ID < 80000
 		if (ZEND_TYPE_IS_NAME(info->type)) {
 			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
