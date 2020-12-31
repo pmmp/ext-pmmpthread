@@ -153,7 +153,16 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_entry->create_object = pthreads_threaded_ctor;
 	pthreads_threaded_entry->serialize = pthreads_threaded_serialize;
 	pthreads_threaded_entry->unserialize = pthreads_threaded_unserialize;
-	zend_class_implements(pthreads_threaded_entry, 2, zend_ce_traversable, pthreads_collectable_entry);
+	zend_class_implements(
+		pthreads_threaded_entry,
+		2,
+#if PHP_VERSION_ID >= 80000
+		zend_ce_aggregate,
+#else
+		zend_ce_traversable,
+#endif
+		pthreads_collectable_entry
+	);
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
