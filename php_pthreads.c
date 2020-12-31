@@ -644,12 +644,18 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_handlers.unset_dimension = pthreads_unset_dimension;
 
 	pthreads_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
+#if PHP_VERSION_ID < 80000
 	pthreads_handlers.get = NULL;
 	pthreads_handlers.set = NULL;
+#endif
 	pthreads_handlers.get_gc = pthreads_base_gc;
 
 	pthreads_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID < 80000
 	pthreads_handlers.compare_objects = pthreads_compare_objects;
+#else
+	pthreads_handlers.compare = pthreads_compare_objects;
+#endif
 
 	memcpy(&pthreads_socket_handlers, &pthreads_handlers, sizeof(zend_object_handlers));
 

@@ -195,6 +195,20 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 } /* }}} */
 
 /* {{{ */
+static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
+#if PHP_VERSION_ID < 80000
+	if (ZEND_TYPE_IS_SET(old[it].type) && ZEND_TYPE_IS_CLASS(old[it].type)) {
+		*new_type = ZEND_TYPE_ENCODE_CLASS(
+			zend_string_new(
+				ZEND_TYPE_NAME(new_type)),
+			ZEND_TYPE_ALLOW_NULL(new_type));
+	}
+#else
+	//TODO
+#endif
+} /* }}} */
+
+/* {{{ */
 static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_info *old, uint32_t end) {
 	zend_arg_info *info;
 	uint32_t it = 0;
@@ -216,12 +230,7 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 		if (info[it].name)
 			info[it].name = zend_string_new(old[it].name);
 
-		if (ZEND_TYPE_IS_SET(old[it].type) && ZEND_TYPE_IS_CLASS(old[it].type)) {
-			info[it].type = ZEND_TYPE_ENCODE_CLASS(
-				zend_string_new(
-					ZEND_TYPE_NAME(info[it].type)),
-				ZEND_TYPE_ALLOW_NULL(info[it].type));
-		}
+		pthreads_copy_zend_type(&old[it].type, &info[it].type);
 		it++;
 	}
 

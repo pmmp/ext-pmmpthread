@@ -190,7 +190,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
-#if PHP_VERSION_ID >= 70400
+#if PHP_VERSION_ID == 70400
 		if (ZEND_TYPE_IS_NAME(info->type)) {
 			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
@@ -198,6 +198,8 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
 		}
+#elif PHP_VERSION_ID >= 80000
+		//TODO
 #endif
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
 			if (dup->doc_comment)
@@ -279,8 +281,8 @@ while(0)
 	FIND_AND_SET(__isset, "__isset");
 	FIND_AND_SET(__call, "__call");
 	FIND_AND_SET(__callstatic, "__callstatic");
-	FIND_AND_SET(serialize_func, "serialize");
-	FIND_AND_SET(unserialize_func, "unserialize");
+	FIND_AND_SET(__serialize, "__serialize");
+	FIND_AND_SET(__unserialize, "__unserialize");
 	FIND_AND_SET(__tostring, "__tostring");
 	FIND_AND_SET(destructor, "__destruct");
 #undef FIND_AND_SET

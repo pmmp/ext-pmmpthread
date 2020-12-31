@@ -17,6 +17,9 @@
  */
 #ifndef HAVE_PTHREADS_CLASS_THREADED_H
 #define HAVE_PTHREADS_CLASS_THREADED_H
+
+#include <src/compat.h>
+
 PHP_METHOD(Threaded, run);
 PHP_METHOD(Threaded, wait);
 PHP_METHOD(Threaded, notify);
@@ -191,7 +194,9 @@ PHP_METHOD(Threaded, synchronized)
 	zend_fcall_info_argp(&call.fci, argc, argv);
 
 	call.fci.retval = return_value;
+#if PHP_VERSION_ID < 80000
 	call.fci.no_separation = 1;
+#endif
 
 	if (pthreads_monitor_lock(threaded->monitor)) {
 		/* synchronize property tables */

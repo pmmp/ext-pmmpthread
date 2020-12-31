@@ -38,6 +38,7 @@
 #	include <src/store.h>
 #endif
 
+#include <src/compat.h>
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
@@ -622,7 +623,7 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 		case IS_OBJECT:
 			if (instanceof_function(Z_OBJCE_P(unstore), zend_ce_closure)) {
 				const zend_function *def =
-					zend_get_closure_method_def(unstore);
+					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(unstore));
 				storage->type = IS_CLOSURE;
 				storage->data =
 					(zend_function*) malloc(sizeof(zend_op_array));
@@ -705,7 +706,7 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 
 			zend_create_closure(pzval, closure, zend_get_executed_scope(), closure->common.scope, NULL);
 
-			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(pzval));
+			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(pzval)));
 			zname = zend_string_init(name, name_len, 0);
 
 			if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
@@ -778,7 +779,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 				result = SUCCESS;
 			} else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
 				const zend_function *def =
-					zend_get_closure_method_def(source);
+					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(source));
 
 				char *name;
 				size_t name_len;
@@ -788,7 +789,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 				//TODO: executed_scope() doesn't seem appropriate here, especially not during initial bootup ...
 				zend_create_closure(dest, closure, zend_get_executed_scope(), closure->common.scope, NULL);
 
-				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(dest));
+				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(dest)));
 				zname = zend_string_init(name, name_len, 0);
 
 				if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {

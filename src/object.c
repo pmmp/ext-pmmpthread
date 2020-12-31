@@ -34,6 +34,8 @@
 #	include <src/prepare.h>
 #endif
 
+#include <src/compat.h>
+
 /* {{{ */
 extern zend_module_entry pthreads_module_entry; /* }}} */
 
@@ -415,10 +417,10 @@ void pthreads_base_free(zend_object *object) {
 } /* }}} */
 
 /* {{{ */
-HashTable* pthreads_base_gc(zval *object, zval **table, int *n) {
+HashTable* pthreads_base_gc(pthreads_handler_context *object, zval **table, int *n) {
 	*table = NULL;
 	*n = 0;
-	return Z_OBJ_P(object)->properties;
+	return PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object)->properties;
 } /* }}} */
 
 /* {{{ */
@@ -521,7 +523,9 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 				call.fci.size = sizeof(zend_fcall_info);
 				call.fci.retval = &zresult;
 				call.fci.object = &connection->std;
+#if PHP_VERSION_ID < 80000
 				call.fci.no_separation = 1;
+#endif
 				call.fcc.object = &connection->std;
 				call.fcc.calling_scope = connection->std.ce;
 				call.fcc.called_scope = connection->std.ce;

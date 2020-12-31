@@ -735,13 +735,9 @@ static int pthreads_sockets_from_fd_set(zval *sockets, fd_set *fds) /* {{{ */
 
 		if (PHP_SAFE_FD_ISSET(threaded->store.sock->fd, fds)) {
 			if (key) {
-				if (!add_assoc_zval_ex(&set, ZSTR_VAL(key), ZSTR_LEN(key), element)) {
-					continue;
-				}
+				add_assoc_zval_ex(&set, ZSTR_VAL(key), ZSTR_LEN(key), element);
 			} else {
-				if (!add_index_zval(&set, idx, element)) {
-					continue;
-				}
+				add_index_zval(&set, idx, element);
 			}
 
 			Z_ADDREF_P(element);
