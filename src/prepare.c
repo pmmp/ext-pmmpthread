@@ -281,8 +281,13 @@ while(0)
 	FIND_AND_SET(__isset, "__isset");
 	FIND_AND_SET(__call, "__call");
 	FIND_AND_SET(__callstatic, "__callstatic");
+#if PHP_VERSION_ID >= 80000
 	FIND_AND_SET(__serialize, "__serialize");
 	FIND_AND_SET(__unserialize, "__unserialize");
+#else
+	FIND_AND_SET(serialize_func, "serialize");
+	FIND_AND_SET(unserialize_func, "unserialize");
+#endif
 	FIND_AND_SET(__tostring, "__tostring");
 	FIND_AND_SET(destructor, "__destruct");
 #undef FIND_AND_SET
