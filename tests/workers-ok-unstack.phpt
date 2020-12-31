@@ -15,5 +15,5 @@ $worker->stack(new class extends Threaded {
 var_dump($worker->unstack());
 ?>
 --EXPECTF--
-object(class@anonymous)#%d (%d) {
+object(%s@anonymous)#%d (%d) {
 }

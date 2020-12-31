@@ -52,8 +52,8 @@ while(true) {
 	}
 }
 $test->join();
---EXPECT--
-object(class@anonymous)#2 (3) {
+--EXPECTF--
+object(%s@anonymous)#2 (3) {
   ["pubProp"]=>
   NULL
   ["protProp"]=>
@@ -62,7 +62,7 @@ object(class@anonymous)#2 (3) {
   NULL
 }
 string(13) "anonymous run"
-object(class@anonymous)#2 (4) {
+object(%s@anonymous)#2 (4) {
   ["pubProp"]=>
   NULL
   ["protProp"]=>

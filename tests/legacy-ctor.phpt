@@ -1,5 +1,7 @@
 --TEST--
 Test legacy constructor (issue #336)
+--SKIPIF--
+<?php if(PHP_VERSION_ID >= 80000) die("skip: legacy constructors are no longer supported in PHP 8 and have no special treatment"); ?>
 --DESCRIPTION--
 This test verifies that legacy ctors do not induce failure
 --FILE--

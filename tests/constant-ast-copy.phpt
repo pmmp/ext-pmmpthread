@@ -23,7 +23,7 @@ $t->start() && $t->join();
 --EXPECTF--
 Fatal error: Uncaught Exception in %s:12
 Stack trace:
-#0 [internal function]: class@anonymous->run()
+#0 [internal function]: %s@anonymous->run()
 #1 {main}
   thrown in %s on line 12
 

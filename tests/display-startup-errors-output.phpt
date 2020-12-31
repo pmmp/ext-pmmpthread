@@ -36,8 +36,8 @@ $w->shutdown();
 Fatal error: Uncaught Exception: Exception in %s:%d
 Stack trace:
 #0 %s(%d): throwException()
-#1 [internal function]: class@anonymous->run()
+#1 [internal function]: %s@anonymous->run()
 #2 {main}
   thrown in %s on line %d
 
-Notice: Undefined variable: a in %s on line %d
+%s: Undefined variable%s in %s on line %d
