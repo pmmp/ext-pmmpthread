@@ -26,7 +26,7 @@ class C extends Threaded
     public function __wakeup(){}
     public function __toString(){}
     public function __invoke(){}
-    public function __set_state($ps){}
+    public static function __set_state($ps){}
     public function __clone(){}
     public function __debugInfo(){}
     public function run(){var_dump(self::C, $this->c2);}
