@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3.25, 7.4.13]
+        php: [7.3.25, 7.4.13, 8.0.0]
         opcache: [0, 1]
         zend-alloc: [0, 1]
     runs-on: ubuntu-latest
