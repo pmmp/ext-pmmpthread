@@ -539,6 +539,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 					zend_try_exception_handler();
 					if (EG(exception)) {
 						zend_exception_error(EG(exception), E_ERROR);
+						pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
 					}
 				}
 			}
