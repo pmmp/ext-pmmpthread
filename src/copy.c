@@ -197,11 +197,11 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 /* {{{ */
 static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
 #if PHP_VERSION_ID < 80000
-	if (ZEND_TYPE_IS_SET(old[it].type) && ZEND_TYPE_IS_CLASS(old[it].type)) {
+	if (ZEND_TYPE_IS_SET(*old_type) && ZEND_TYPE_IS_CLASS(*old_type)) {
 		*new_type = ZEND_TYPE_ENCODE_CLASS(
 			zend_string_new(
-				ZEND_TYPE_NAME(new_type)),
-			ZEND_TYPE_ALLOW_NULL(new_type));
+				ZEND_TYPE_NAME(*new_type)),
+			ZEND_TYPE_ALLOW_NULL(*new_type));
 	}
 #else
 	//TODO
