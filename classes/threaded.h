@@ -59,6 +59,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_synchronized, 0, 0, 1)
 	ZEND_ARG_INFO(0, function)
+	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_merge, 0, 0, 1)
