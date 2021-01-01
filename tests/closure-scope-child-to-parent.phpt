@@ -20,6 +20,8 @@ $t = new class extends \Thread{
 
 $t->start() && $t->join();
 ($t->closure)();
+echo "OK\n";
 ?>
 --EXPECT--
+OK
 
