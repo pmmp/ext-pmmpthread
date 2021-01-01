@@ -473,12 +473,17 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
-
+#if PHP_VERSION_ID < 80000
 		if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), candidate->info.user.filename))) {
 			filename_copy = zend_string_new(candidate->info.user.filename);
 			zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 			zend_string_release(filename_copy);
 		}
+#else
+		//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer interned
+		//TODO: explore interning them anyway (but I don't think anyone is going to care ...)
+		filename_copy = zend_string_new(candidate->info.user.filename);
+#endif
 
 		prepared->info.user.filename = filename_copy;
 	}
