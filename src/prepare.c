@@ -199,7 +199,27 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
 		}
 #elif PHP_VERSION_ID >= 80000
-		//TODO
+		memcpy(&dup->type, &info->type, sizeof(zend_type));
+
+		//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
+		if (ZEND_TYPE_HAS_LIST(dup->type)) {
+			zend_type_list *list = ZEND_TYPE_LIST(dup->type);
+			if (ZEND_TYPE_USES_ARENA(dup->type)) {
+				list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(list->num_types));
+			} else {
+				list = emalloc(ZEND_TYPE_LIST_SIZE(list->num_types));
+			}
+			ZEND_TYPE_SET_PTR(dup->type, list);
+		}
+
+		zend_type *single_type;
+		ZEND_TYPE_FOREACH(dup->type, single_type) {
+			if (ZEND_TYPE_HAS_NAME(*single_type)) {
+				ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
+			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
+				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
+			}
+		} ZEND_TYPE_FOREACH_END();
 #endif
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
 			if (dup->doc_comment)

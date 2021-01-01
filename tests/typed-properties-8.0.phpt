@@ -70,14 +70,14 @@ $w->shutdown();
 	
 --EXPECT--
 --- main thread start ---
-string(48) "Typed property Test::$a must be int, string used"
-string(75) "Typed property Test::$b must be an instance of Test2 or null, stdClass used"
-string(50) "Typed property Test::$int must be int, string used"
-string(77) "Typed property Test::$obj must be an instance of Test2 or null, stdClass used"
+string(53) "Cannot assign string to property Test::$a of type int"
+string(58) "Cannot assign stdClass to property Test::$b of type ?Test2"
+string(55) "Cannot assign string to property Test::$int of type int"
+string(60) "Cannot assign stdClass to property Test::$obj of type ?Test2"
 --- main thread end ---
 --- worker thread start ---
-string(48) "Typed property Test::$a must be int, string used"
-string(75) "Typed property Test::$b must be an instance of Test2 or null, stdClass used"
-string(50) "Typed property Test::$int must be int, string used"
-string(77) "Typed property Test::$obj must be an instance of Test2 or null, stdClass used"
+string(53) "Cannot assign string to property Test::$a of type int"
+string(58) "Cannot assign stdClass to property Test::$b of type ?Test2"
+string(55) "Cannot assign string to property Test::$int of type int"
+string(60) "Cannot assign stdClass to property Test::$obj of type ?Test2"
 --- worker thread end ---
