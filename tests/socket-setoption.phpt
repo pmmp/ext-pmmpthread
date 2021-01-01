@@ -11,14 +11,14 @@ Test of Socket::setOption() with and without parameters
 
     try {
         $socket->setOption("hello", "world", new stdClass());
-    } catch(Throwable $throwable) {
-        var_dump($throwable->getMessage());
+    } catch(\TypeError $throwable) {
+        echo "bad types for Socket::setOption()" . PHP_EOL;
     }
     var_dump($socket->setOption(\Socket::SOL_SOCKET, \Socket::SO_REUSEADDR, 1));
     var_dump($socket->getOption(\Socket::SOL_SOCKET, \Socket::SO_REUSEADDR));
 ?>
 --EXPECTF--
-Socket::setOption() expects exactly 3 parameters, 0 given
-string(%i) "Argument 1 passed to Socket::setOption() must be of the type %s, string given"
+Socket::setOption() expects exactly 3 %s, 0 given
+bad types for Socket::setOption()
 bool(true)
 int(1)

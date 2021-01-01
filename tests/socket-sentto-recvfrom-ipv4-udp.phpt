@@ -59,6 +59,6 @@ PHP Testfest Berlin 2009-05-09
 --EXPECTF--
 Port must be provided for AF_INET
 bool(false)
-Socket::recvfrom() expects at least 4 parameters, 3 given
+Socket::recvfrom() expects at least 4 %s, 3 given
 Port must be provided for AF_INET
 Received Ping! from remote address 127.0.0.1 and remote port 1223

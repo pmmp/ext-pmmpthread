@@ -36,7 +36,7 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 
     $socket->close();
 --EXPECTF--
-Socket::select() expects at least 4 parameters, 0 given
+Socket::select() expects at least 4 %s, 0 given
 int(0)
 int(0)
 int(0)

@@ -31,8 +31,8 @@ display_errors=1
   try {
     // Test with non integer parameters
     $server = new Socket(array(), 1, 1);
-  } catch(Throwable $throwable) {
-    var_dump($throwable->getMessage());
+  } catch(\TypeError $throwable) {
+    echo "bad types for new Socket()" . PHP_EOL;
   }
 
   try {
@@ -44,7 +44,7 @@ display_errors=1
   
 ?>
 --EXPECTF--
-Socket::__construct() expects exactly 3 parameters, 0 given
-Socket::__construct() expects exactly 3 parameters, 2 given
-string(%d) "Argument 1 passed to Socket::__construct() must be of the type %s, array given"
+Socket::__construct() expects exactly 3 %s, 0 given
+Socket::__construct() expects exactly 3 %s, 2 given
+bad types for new Socket()
 string(%d) "Unable to create socket (%d): Address family not supported by protocol"

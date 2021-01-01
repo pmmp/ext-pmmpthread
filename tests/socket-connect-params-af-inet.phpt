@@ -21,5 +21,5 @@ Socket::connect() - AF_INET - test with empty parameters
     $socket->close();
 ?>
 --EXPECTF--
-Socket::connect() expects at least 1 parameter, 0 given
+Socket::connect() expects at least 1 %s, 0 given
 string(43) "Socket of type AF_INET requires 2 arguments"
