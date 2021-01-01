@@ -14,7 +14,7 @@ Socket::connect() - AF_INET - test with empty parameters
     }
     try {
         $socket->connect('0.0.0.0');
-    } catch(Exception $exception) {
+    } catch(\ArgumentCountError $exception) {
         var_dump($exception->getMessage());
     }
     $socket->connect('127.0.0.1', 31330+$rand);
