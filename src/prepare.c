@@ -202,14 +202,16 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		memcpy(&dup->type, &info->type, sizeof(zend_type));
 
 		//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
-		if (ZEND_TYPE_HAS_LIST(dup->type)) {
-			zend_type_list *list = ZEND_TYPE_LIST(dup->type);
-			if (ZEND_TYPE_USES_ARENA(dup->type)) {
-				list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(list->num_types));
+		if (ZEND_TYPE_HAS_LIST(info->type)) {
+			const zend_type_list *old_list = ZEND_TYPE_LIST(info->type);
+			zend_type_list *new_list;
+			if (ZEND_TYPE_USES_ARENA(info->type)) {
+				new_list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(old_list->num_types));
 			} else {
-				list = emalloc(ZEND_TYPE_LIST_SIZE(list->num_types));
+				new_list = emalloc(ZEND_TYPE_LIST_SIZE(old_list->num_types));
 			}
-			ZEND_TYPE_SET_PTR(dup->type, list);
+			memcpy(new_list, old_list, ZEND_TYPE_LIST_SIZE(old_list->num_types));
+			ZEND_TYPE_SET_PTR(dup->type, new_list);
 		}
 
 		zend_type *single_type;

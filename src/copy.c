@@ -207,14 +207,16 @@ static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_ty
 	memcpy(new_type, old_type, sizeof(zend_type));
 
 	//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
-	if (ZEND_TYPE_HAS_LIST(*new_type)) {
-		zend_type_list *list = ZEND_TYPE_LIST(*new_type);
+	if (ZEND_TYPE_HAS_LIST(*old_type)) {
+		const zend_type_list *old_list = ZEND_TYPE_LIST(*old_type);
+		zend_type_list *new_list;
 		if (ZEND_TYPE_USES_ARENA(*old_type)) {
-			list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(list->num_types));
+			new_list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(old_list->num_types));
 		} else {
-			list = emalloc(ZEND_TYPE_LIST_SIZE(list->num_types));
+			new_list = emalloc(ZEND_TYPE_LIST_SIZE(old_list->num_types));
 		}
-		ZEND_TYPE_SET_PTR(*new_type, list);
+		memcpy(new_list, old_list, ZEND_TYPE_LIST_SIZE(old_list->num_types));
+		ZEND_TYPE_SET_PTR(*new_type, new_list);
 	}
 
 	zend_type *single_type;
