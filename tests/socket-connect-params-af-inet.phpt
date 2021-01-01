@@ -6,7 +6,12 @@ Socket::connect() - AF_INET - test with empty parameters
     $socket = new \Socket(\Socket::AF_INET, \Socket::SOCK_DGRAM, 0);
     $socket->bind('0.0.0.0');
     // wrong parameter count
-    $socket->connect();
+
+    try{
+        $socket->connect();
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     try {
         $socket->connect('0.0.0.0');
     } catch(Exception $exception) {
@@ -16,6 +21,5 @@ Socket::connect() - AF_INET - test with empty parameters
     $socket->close();
 ?>
 --EXPECTF--
-
-Warning: Socket::connect() expects at least 1 parameter, 0 given in %s on line %i
+Socket::connect() expects at least 1 parameter, 0 given
 string(43) "Socket of type AF_INET requires 2 arguments"

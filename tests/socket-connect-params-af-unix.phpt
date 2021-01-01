@@ -21,12 +21,16 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     if (!$socket->bind($address)) {
         die("Unable to bind to $address");
     }
-    $socket->connect();
+
+    try{
+        $socket->connect();
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $socket->connect($address);
     $socket->connect($address, 31330+$rand);
 
     $socket->close();
 ?>
 --EXPECTF--
-
-Warning: Socket::connect() expects at least 1 parameter, 0 given in %s on line %i
+Socket::connect() expects at least 1 parameter, 0 given

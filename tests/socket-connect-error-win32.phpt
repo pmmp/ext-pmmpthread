@@ -14,12 +14,20 @@ error_reporting=E_ALL
 display_errors=1
 --FILE--
 <?php
-  // Test with no arguments
-  $server = new Socket();
-  
-  // Test with less arguments than required
-  $server = new Socket(\Socket::SOCK_STREAM, getprotobyname('tcp'));
-  
+  try{
+    // Test with no arguments
+    $server = new Socket();
+  }catch(\ArgumentCountError $e){
+    echo $e->getMessage() . PHP_EOL;
+  }
+
+  try{
+    // Test with less arguments than required
+    $server = new Socket(\Socket::SOCK_STREAM, getprotobyname('tcp'));
+  }catch(\ArgumentCountError $e){
+    echo $e->getMessage() . PHP_EOL;
+  }
+
   try {
     // Test with non integer parameters
     $server = new Socket(array(), 1, 1);
@@ -36,9 +44,8 @@ display_errors=1
   
 ?>
 --EXPECTF--
-Warning: Socket::__construct() expects exactly 3 parameters, 0 given in %s on line %d
-
-Warning: Socket::__construct() expects exactly 3 parameters, 2 given in %s on line %d
+Socket::__construct() expects exactly 3 parameters, 0 given
+Socket::__construct() expects exactly 3 parameters, 2 given
 string(%d) "Argument 1 passed to Socket::__construct() must be of the type %s, array given"
 string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used.
 "

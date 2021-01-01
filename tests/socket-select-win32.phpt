@@ -12,8 +12,8 @@ if (substr(PHP_OS, 0, 3) != 'WIN') {
 
     try {
         \Socket::select();
-    } catch(Throwable $throwable) {
-        var_dump($throwable->getMessage());
+    } catch(\ArgumentCountError $e) {
+        echo $e->getMessage() . PHP_EOL;
     }
     $read   = [$socket];
     $write  = null;
@@ -36,8 +36,7 @@ if (substr(PHP_OS, 0, 3) != 'WIN') {
 
     $socket->close();
 --EXPECTF--
-
-Warning: Socket::select() expects at least 4 parameters, 0 given in %s on line %d
+Socket::select() expects at least 4 parameters, 0 given
 int(0)
 int(0)
 int(0)
