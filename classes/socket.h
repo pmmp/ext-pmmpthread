@@ -175,7 +175,7 @@ PHP_METHOD(Socket, __construct) {
 	zend_long type = SOCK_STREAM;
 	zend_long protocol = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lll", &domain, &type, &protocol) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "lll", &domain, &type, &protocol) != SUCCESS) {
 		return;
 	}
 
@@ -189,8 +189,8 @@ PHP_METHOD(Socket, setOption) {
 	zend_long name = 0;
 	zend_long value = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lll", &level, &name, &value) != SUCCESS) {
-		RETURN_FALSE;
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "lll", &level, &name, &value) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_set_option(getThis(), level, name, value, return_value);
@@ -202,8 +202,8 @@ PHP_METHOD(Socket, getOption) {
 	zend_long level = 0;
 	zend_long name = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "ll", &level, &name) != SUCCESS) {
-		RETURN_LONG(0);
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "ll", &level, &name) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_get_option(getThis(), level, name, return_value);
@@ -214,8 +214,8 @@ PHP_METHOD(Socket, bind) {
 	zend_string *host = NULL;
 	zend_long port = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|l", &host, &port) != SUCCESS) {
-		RETURN_FALSE;
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "S|l", &host, &port) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_bind(getThis(), host, port, return_value);
@@ -225,7 +225,7 @@ PHP_METHOD(Socket, bind) {
 PHP_METHOD(Socket, listen) {
 	zend_long backlog = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|l", &backlog) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "|l", &backlog) != SUCCESS) {
 		return;
 	}
 
@@ -236,7 +236,7 @@ PHP_METHOD(Socket, listen) {
 PHP_METHOD(Socket, accept) {
 	zend_class_entry *ce = zend_get_called_scope(execute_data);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|C", &ce) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "|C", &ce) != SUCCESS) {
 		return;
 	}
 
@@ -249,8 +249,8 @@ PHP_METHOD(Socket, connect) {
 	zend_long port = 0;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc, "S|l", &host, &port) != SUCCESS) {
-		RETURN_FALSE;
+	if (zend_parse_parameters_throw(argc, "S|l", &host, &port) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_connect(getThis(), argc, host, port, return_value);
@@ -261,7 +261,7 @@ PHP_METHOD(Socket, select) {
 	zval *read, *write, *except, *sec, *errorno = NULL;
 	zend_long usec = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "a/!a/!a/!z!|lz/", &read, &write, &except, &sec, &usec, &errorno) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "a/!a/!a/!z!|lz/", &read, &write, &except, &sec, &usec, &errorno) != SUCCESS) {
 		return;
 	}
 	pthreads_socket_select(read, write, except, sec, usec, errorno, return_value);
@@ -273,7 +273,7 @@ PHP_METHOD(Socket, read) {
 	zend_long flags = 0;
 	zend_long type = PTHREADS_BINARY_READ;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|ll", &length, &flags, &type) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "l|ll", &length, &flags, &type) != SUCCESS) {
 		return;
 	}
 
@@ -285,7 +285,7 @@ PHP_METHOD(Socket, write) {
 	zend_string *buffer = NULL;
 	zend_long length = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "S|l", &buffer, &length) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "S|l", &buffer, &length) != SUCCESS) {
 		return;
 	}
 
@@ -298,7 +298,7 @@ PHP_METHOD(Socket, send) {
 	zend_long length = 0;
 	zend_long flags = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sll", &buffer, &length, &flags) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "Sll", &buffer, &length, &flags) != SUCCESS) {
 		return;
 	}
 
@@ -310,7 +310,7 @@ PHP_METHOD(Socket, recvfrom) {
 	zval		*buffer, *name, *port = NULL;
 	zend_long	len, flags;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z/llz/|z/", &buffer, &len, &flags, &name, &port) == FAILURE) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "z/llz/|z/", &buffer, &len, &flags, &name, &port) == FAILURE) {
 		return;
 	}
 
@@ -328,7 +328,7 @@ PHP_METHOD(Socket, sendto) {
 	zend_long	len, flags, port = 0;
 	int	argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc, "SllS|l", &buffer, &len, &flags, &address, &port) == FAILURE) {
+	if (zend_parse_parameters_throw(argc, "SllS|l", &buffer, &len, &flags, &address, &port) == FAILURE) {
 		return;
 	}
 
@@ -339,8 +339,8 @@ PHP_METHOD(Socket, sendto) {
 PHP_METHOD(Socket, setBlocking) {
 	zend_bool blocking = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "b", &blocking) != SUCCESS) {
-		RETURN_FALSE;
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "b", &blocking) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_set_blocking(getThis(), blocking, return_value);
@@ -350,7 +350,7 @@ PHP_METHOD(Socket, setBlocking) {
 PHP_METHOD(Socket, getPeerName) {
 	zend_bool port = 1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &port) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "|b", &port) != SUCCESS) {
 		return;
 	}
 
@@ -361,7 +361,7 @@ PHP_METHOD(Socket, getPeerName) {
 PHP_METHOD(Socket, getSockName) {
 	zend_bool port = 1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &port) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "|b", &port) != SUCCESS) {
 		return;
 	}
 
@@ -372,7 +372,7 @@ PHP_METHOD(Socket, getSockName) {
 PHP_METHOD(Socket, getLastError) {
 	zend_bool clear = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|b", &clear) != SUCCESS) {
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "|b", &clear) != SUCCESS) {
 		return;
 	}
 
@@ -392,8 +392,8 @@ PHP_METHOD(Socket, clearError) {
 PHP_METHOD(Socket, strerror) {
 	zend_long error = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &error) != SUCCESS) {
-		RETURN_NULL();
+	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "l", &error) != SUCCESS) {
+		return;
 	}
 
 	pthreads_socket_strerror(error, return_value);

@@ -15,7 +15,12 @@ PHP Testfest Berlin 2009-05-09
     }
 
     $address = '127.0.0.1';
-    $socket->sendto('', 1, 0, $address); // cause warning
+
+    try{
+        $socket->sendto('', 1, 0, $address);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     if (!$socket->bind($address, 1223)) {
         die("Unable to bind to $address:1223");
     }
@@ -32,8 +37,16 @@ PHP Testfest Berlin 2009-05-09
 
     $from = "";
     $port = 0;
-    $socket->recvfrom($buf, 12, 0); // cause warning
-    $socket->recvfrom($buf, 12, 0, $from); // cause warning
+    try{
+        $socket->recvfrom($buf, 12, 0);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
+    try{
+        $socket->recvfrom($buf, 12, 0, $from);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $bytes_received = $socket->recvfrom($buf, 12, 0, $from, $port);
     if ($bytes_received == -1) {
         die('An error occurred while receiving from the socket');
@@ -44,11 +57,8 @@ PHP Testfest Berlin 2009-05-09
 
     $socket->close();
 --EXPECTF--
-
-Warning: Wrong parameter count for Socket::sendto() in %s on line %d
+Port must be provided for AF_INET
 bool(false)
-
-Warning: Socket::recvfrom() expects at least 4 parameters, 3 given in %s on line %d
-
-Warning: Wrong parameter count for Socket::recvfrom() in %s on line %d
+Socket::recvfrom() expects at least 4 parameters, 3 given
+Port must be provided for AF_INET
 Received Ping! from remote address 127.0.0.1 and remote port 1223

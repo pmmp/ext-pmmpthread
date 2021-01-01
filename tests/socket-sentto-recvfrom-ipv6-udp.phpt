@@ -18,7 +18,11 @@ require 'ipv6_skipif.inc';
     }
     var_dump($socket->recvfrom($buf, 12, 0, $from, $port));
     $address = '::1';
-    $socket->sendto('', 1, 0, $address); // cause warning
+    try{
+        $socket->sendto('', 1, 0, $address);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     if (!$socket->bind($address, 1223)) {
         die("Unable to bind to $address:1223");
     }
@@ -34,8 +38,16 @@ require 'ipv6_skipif.inc';
 
     $from = "";
     $port = 0;
-    $socket->recvfrom($buf, 12, 0); // cause warning
-    $socket->recvfrom($buf, 12, 0, $from); // cause warning
+    try{
+        $socket->recvfrom($buf, 12, 0);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
+    try{
+        $socket->recvfrom($buf, 12, 0, $from);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $bytes_received = $socket->recvfrom($buf, 12, 0, $from, $port);
     if ($bytes_received == -1) {
         die('An error occurred while receiving from the socket');
@@ -47,10 +59,7 @@ require 'ipv6_skipif.inc';
     $socket->close();
 --EXPECTF--
 bool(false)
-
-Warning: Wrong parameter count for Socket::sendto() in %s on line %d
-
-Warning: Socket::recvfrom() expects at least 4 parameters, 3 given in %s on line %d
-
-Warning: Wrong parameter count for Socket::recvfrom() in %s on line %d
+Port must be provided for AF_INET6
+Socket::recvfrom() expects at least 4 parameters, 3 given
+Port must be provided for AF_INET6
 Received Ping! from remote address ::1 and remote port 1223

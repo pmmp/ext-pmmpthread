@@ -31,7 +31,12 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 
     $msg = "Ping!";
     $len = strlen($msg);
-    $bytes_sent = $socket->sendto($msg, $len, 0); // cause warning
+
+    try{
+        $bytes_sent = $socket->sendto($msg, $len, 0);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $bytes_sent = $socket->sendto($msg, $len, 0, $address);
     if ($bytes_sent == -1) {
         @unlink($address);
@@ -59,7 +64,6 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 --EXPECTF--
 string(%d) "Unable to create socket (%d): Protocol not supported"
 bool(false)
-
-Warning: Socket::sendto() expects at least 4 parameters, 3 given in %s on line %d
+Socket::sendto() expects at least 4 parameters, 3 given
 bool(false)
 Received Ping!
