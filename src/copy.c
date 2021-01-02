@@ -382,6 +382,12 @@ zend_function* pthreads_copy_function(const zend_function *function) {
 			if (copy->op_array.refcount) { //TODO: check under what circumstances the refcount is not allocated
 				(*copy->op_array.refcount)++;
 			}
+#if PHP_VERSION_ID >= 80000
+			//TODO: I think we're actually supposed to dup the entire structure (see zend_inheritance.c zend_duplicate_function)
+			//the only time functions usually get reused is for inheritance and we're not generally supposed to reuse the actual
+			//structure for that, just its members ...
+			zend_string_addref(copy->op_array.function_name);
+#endif
 			return copy;
 		}
 	}
