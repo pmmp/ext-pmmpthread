@@ -122,7 +122,11 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				 || opline->opcode == ZEND_SEND_VAL_EX
 				 || opline->opcode == ZEND_QM_ASSIGN) {
 					/* Update handlers to eliminate REFCOUNTED check */
+#if PHP_VERSION_ID >= 80000
+					zend_vm_set_opcode_handler_ex(opline, 1 << Z_TYPE_P(opline->op1.zv), 0, 0);
+#else
 					zend_vm_set_opcode_handler_ex(opline, 0, 0, 0);
+#endif
 				}
 			}
 			if (opline->op2_type == IS_CONST) {
@@ -169,6 +173,9 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				case ZEND_FE_RESET_R:
 				case ZEND_FE_RESET_RW:
 				case ZEND_ASSERT_CHECK:
+#if PHP_VERSION_ID >= 80000
+				case ZEND_JMP_NULL:
+#endif
 					opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
 					break;
 				case ZEND_CATCH:
@@ -184,6 +191,9 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				case ZEND_FE_FETCH_RW:
 				case ZEND_SWITCH_LONG:
 				case ZEND_SWITCH_STRING:
+#if PHP_VERSION_ID >= 80000
+				case ZEND_MATCH:
+#endif
 					/* relative extended_value don't have to be changed */
 					break;
 			}
