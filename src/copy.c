@@ -369,7 +369,7 @@ zend_function* pthreads_copy_function(const zend_function *function) {
 	zend_function *copy;
 
 #if PHP_VERSION_ID >= 70400
-	if (function->type & ZEND_ACC_IMMUTABLE) {
+	if (function->common.fn_flags & ZEND_ACC_IMMUTABLE) {
 		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
 		return function;
 	}
