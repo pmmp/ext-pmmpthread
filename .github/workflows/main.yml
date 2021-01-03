@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, ZMM ${{ matrix.zend-alloc }})
+    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, ZMM ${{ matrix.zend-alloc }}, JIT ${{ matrix.jit }})
     env:
       PHP_BUILD_REVISION: 5a3d184ed9b817ffe8e405a3475eca7652a9ec8c
     strategy:
@@ -16,6 +16,10 @@ jobs:
         php: [7.3.25, 7.4.13, 8.0.0]
         opcache: [0, 1]
         zend-alloc: [0, 1]
+        jit: [0]
+        include:
+          - php: 8.0.0
+            jit: 1205
     runs-on: ubuntu-latest
 
     steps:
@@ -58,6 +62,8 @@ jobs:
             echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.jit=${{ matrix.jit }}" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
           else
             echo "OPcache is not enabled for this run"
           fi
