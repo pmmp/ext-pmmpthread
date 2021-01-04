@@ -129,13 +129,17 @@ ZEND_END_MODULE_GLOBALS(pthreads)
 
 static zend_string *zend_string_new(zend_string *s)
 {
+	zend_string *ret;
 	if (ZSTR_IS_INTERNED(s)) {
 		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
 			return s;
 		}
-		return zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+	} else {
+		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
 	}
-	return zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
+	ZSTR_H(ret) = ZSTR_H(s);
+	return ret;
 }
 
 /* {{{ */
