@@ -1,5 +1,5 @@
 --TEST--
-Basic test of Socket::getSockName() with AF_UNIX sockets
+Basic test of ThreadedSocket::getSockName() with AF_UNIX sockets
 --SKIPIF--
 <?php
 if (substr(PHP_OS, 0, 3) == 'WIN') {
@@ -12,14 +12,14 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     if (file_exists($address))
         die('Temporary file socket already exists.');
 
-    $unixSocket = new \Socket(\Socket::AF_UNIX,\Socket::SOCK_STREAM, 0);
+    $unixThreadedSocket = new \ThreadedSocket(\ThreadedSocket::AF_UNIX,\ThreadedSocket::SOCK_STREAM, 0);
 
-    if (!$unixSocket->bind($address)) {
+    if (!$unixThreadedSocket->bind($address)) {
         die("Unable to bind to $address");
     }
-    var_dump($unixSocket->getSockName());
+    var_dump($unixThreadedSocket->getSockName());
 
-    $unixSocket->close();
+    $unixThreadedSocket->close();
 ?>
 --EXPECTF--
 array(1) {

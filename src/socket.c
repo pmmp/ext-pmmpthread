@@ -334,7 +334,7 @@ void pthreads_socket_accept(zval *object, zend_class_entry *ce, zval *return_val
 
 	if (!instanceof_function(ce, pthreads_socket_entry)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
-			"%s is not an instance of Socket",
+			"%s is not an instance of ThreadedSocket",
 			ZSTR_VAL(ce->name));
 		return;
 	}

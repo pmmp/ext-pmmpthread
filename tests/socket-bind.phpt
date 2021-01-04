@@ -13,7 +13,7 @@ fa@php.net
 --FILE--
 <?php
 	$rand = rand(1,999);
-    $socket = new Socket(\Socket::AF_INET, \Socket::SOCK_STREAM, \Socket::SOL_TCP);
+    $socket = new ThreadedSocket(\ThreadedSocket::AF_INET, \ThreadedSocket::SOCK_STREAM, \ThreadedSocket::SOL_TCP);
     $bind   = $socket->bind('0.0.0.0', 31330+$rand);
     var_dump($bind);
 

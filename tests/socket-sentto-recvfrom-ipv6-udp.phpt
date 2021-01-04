@@ -1,5 +1,5 @@
 --TEST--
-Test if Socket::recvfrom() receives data sent by Socket::sendto() via IPv6 UDP
+Test if ThreadedSocket::recvfrom() receives data sent by ThreadedSocket::sendto() via IPv6 UDP
 --CREDITS--
 Copied from php/php-src and adjusted, originally created by 
 Falko Menge <mail at falko-menge dot de>
@@ -9,7 +9,7 @@ PHP Testfest Berlin 2009-05-09
 require 'ipv6_skipif.inc';
 --FILE--
 <?php
-    $socket = new Socket(\Socket::AF_INET6, \Socket::SOCK_DGRAM, \Socket::SOL_UDP);
+    $socket = new ThreadedSocket(\ThreadedSocket::AF_INET6, \ThreadedSocket::SOCK_DGRAM, \ThreadedSocket::SOL_UDP);
     if (!$socket) {
         die('Unable to create AF_INET6 socket');
     }
@@ -60,6 +60,6 @@ require 'ipv6_skipif.inc';
 --EXPECTF--
 bool(false)
 Port must be provided for AF_INET6
-Socket::recvfrom() expects at least 4 %s, 3 given
+ThreadedSocket::recvfrom() expects at least 4 %s, 3 given
 Port must be provided for AF_INET6
 Received Ping! from remote address ::1 and remote port 1223

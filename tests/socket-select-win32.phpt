@@ -1,5 +1,5 @@
 --TEST--
-Test parameter handling in Socket::select() on win32 only.
+Test parameter handling in ThreadedSocket::select() on win32 only.
 --SKIPIF--
 <?php
 if (substr(PHP_OS, 0, 3) != 'WIN') {
@@ -7,11 +7,11 @@ if (substr(PHP_OS, 0, 3) != 'WIN') {
 }
 --FILE--
 <?php
-    $socket = new Socket(\Socket::AF_INET, \Socket::SOCK_STREAM, \Socket::SOL_TCP);
+    $socket = new ThreadedSocket(\ThreadedSocket::AF_INET, \ThreadedSocket::SOCK_STREAM, \ThreadedSocket::SOL_TCP);
     $socket->listen();
 
     try {
-        \Socket::select();
+        \ThreadedSocket::select();
     } catch(\ArgumentCountError $e) {
         echo $e->getMessage() . PHP_EOL;
     }
@@ -20,23 +20,23 @@ if (substr(PHP_OS, 0, 3) != 'WIN') {
     $except = null;
 
     // Valid arguments, return immediately
-    var_dump(\Socket::select($read, $write, $except, 0));
+    var_dump(\ThreadedSocket::select($read, $write, $except, 0));
 
     $read = [$socket];
 
     // Valid sec argument, wait 1 second
-    var_dump(\Socket::select($read, $write, $except, 1, 0, $errno));
+    var_dump(\ThreadedSocket::select($read, $write, $except, 1, 0, $errno));
     var_dump($errno);
 
     $read = [$socket];
 
     // Invalid sec argument, return immediately
-    var_dump(\Socket::select($read, $write, $except, -1, 0, $errno));
+    var_dump(\ThreadedSocket::select($read, $write, $except, -1, 0, $errno));
     var_dump($errno);
 
     $socket->close();
 --EXPECTF--
-Socket::select() expects at least 4 %s, 0 given
+ThreadedSocket::select() expects at least 4 %s, 0 given
 int(0)
 int(0)
 int(0)

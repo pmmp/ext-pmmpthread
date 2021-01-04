@@ -16,36 +16,36 @@ display_errors=1
 <?php
   try{
     // Test with no arguments
-    $server = new Socket();
+    $server = new ThreadedSocket();
   }catch(\ArgumentCountError $e){
     echo $e->getMessage() . PHP_EOL;
   }
 
   try{
     // Test with less arguments than required
-    $server = new Socket(\Socket::SOCK_STREAM, getprotobyname('tcp'));
+    $server = new ThreadedSocket(\ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
   }catch(\ArgumentCountError $e){
     echo $e->getMessage() . PHP_EOL;
   }
 
   try {
     // Test with non integer parameters
-    $server = new Socket(array(), 1, 1);
+    $server = new ThreadedSocket(array(), 1, 1);
   } catch(\TypeError $throwable) {
-    echo "bad types for new Socket()" . PHP_EOL;
+    echo "bad types for new ThreadedSocket()" . PHP_EOL;
   }
 
   try {
     // Test with unknown domain
-    $server = new Socket(\Socket::AF_INET + 1000, \Socket::SOCK_STREAM, 0);
+    $server = new ThreadedSocket(\ThreadedSocket::AF_INET + 1000, \ThreadedSocket::SOCK_STREAM, 0);
   } catch(Throwable $throwable) {
     var_dump($throwable->getMessage());
   }
   
 ?>
 --EXPECTF--
-Socket::__construct() expects exactly 3 %s, 0 given
-Socket::__construct() expects exactly 3 %s, 2 given
-bad types for new Socket()
+ThreadedSocket::__construct() expects exactly 3 %s, 0 given
+ThreadedSocket::__construct() expects exactly 3 %s, 2 given
+bad types for new ThreadedSocket()
 string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used.
 "
