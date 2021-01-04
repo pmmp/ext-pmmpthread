@@ -291,8 +291,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	op_array->function_name = zend_string_new(op_array->function_name);
 	/* we don't care about prototypes */
 	op_array->prototype = NULL;
-	op_array->refcount = emalloc(sizeof(uint32_t));
-	(*op_array->refcount) = 1;
+	if (function->op_array.refcount) { //refcount will be NULL if opcodes are allocated on SHM
+		op_array->refcount = emalloc(sizeof(uint32_t));
+		(*op_array->refcount) = 1;
+	}
 	/* we never want to share the same runtime cache */
 #if PHP_VERSION_ID >= 70400
 	if (op_array->fn_flags & ZEND_ACC_HEAP_RT_CACHE) {
@@ -330,27 +332,33 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 
 	op_array->filename = filename_copy;
 
-	void *opcodes_memory;
-	void *literals_memory = NULL;
+	if (PHP_VERSION_ID < 80000 || op_array->refcount) {
+		//JIT opcodes are allocated on SHM and we don't want to mess with those
+		//the issue is that non-immutable functions can be JIT-compiled
+		//the non-copying of opcodes/literals may apply to <8.0 too, but since we
+		//only currently need it for JIT compatibility I'm playing it safe for now.
+		void *opcodes_memory;
+		void *literals_memory = NULL;
 #if !ZEND_USE_ABS_CONST_ADDR
-	if(op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO){
-		opcodes_memory = emalloc(ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16) + sizeof (zval) * op_array->last_literal);
-		if (op_array->literals) {
-			literals_memory = ((char*) opcodes_memory) + ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16);
-		}
-	} else {
+		if(op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO){
+			opcodes_memory = emalloc(ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16) + sizeof (zval) * op_array->last_literal);
+			if (op_array->literals) {
+				literals_memory = ((char*) opcodes_memory) + ZEND_MM_ALIGNED_SIZE_EX(sizeof (zend_op) * op_array->last, 16);
+			}
+		} else {
 #endif
-		opcodes_memory = safe_emalloc(op_array->last, sizeof(zend_op), 0);
-		if(op_array->literals) {
-			literals_memory = safe_emalloc(op_array->last_literal, sizeof(zval), 0);
-		}
+			opcodes_memory = safe_emalloc(op_array->last, sizeof(zend_op), 0);
+			if(op_array->literals) {
+				literals_memory = safe_emalloc(op_array->last_literal, sizeof(zval), 0);
+			}
 #if !ZEND_USE_ABS_CONST_ADDR
+		}
+#endif
+
+		if (op_array->literals) op_array->literals = pthreads_copy_literals (literals, op_array->last_literal, literals_memory);
+
+		op_array->opcodes = pthreads_copy_opcodes(op_array, literals, opcodes_memory);
 	}
-#endif
-
-	if (op_array->literals) op_array->literals = pthreads_copy_literals (literals, op_array->last_literal, literals_memory);
-
-	op_array->opcodes = pthreads_copy_opcodes(op_array, literals, opcodes_memory);
 
 	if (op_array->arg_info) 	op_array->arg_info = pthreads_copy_arginfo(op_array, arg_info, op_array->num_args);
 	if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
