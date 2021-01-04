@@ -507,7 +507,7 @@ interface Collectable
     public function isGarbage() : bool;
 }
 
-class Socket extends \Threaded
+class ThreadedSocket extends \Threaded
 {
     public const AF_UNIX = 1;
     public const AF_INET = 2;

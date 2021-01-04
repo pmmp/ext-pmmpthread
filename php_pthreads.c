@@ -177,7 +177,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	zend_declare_property_null(pthreads_pool_entry, ZEND_STRL("ctor"),    ZEND_ACC_PROTECTED);
 	zend_declare_property_long(pthreads_pool_entry, ZEND_STRL("last"), 0, ZEND_ACC_PROTECTED);
 
-	INIT_CLASS_ENTRY(ce, "Socket", pthreads_socket_methods);
+	INIT_CLASS_ENTRY(ce, "ThreadedSocket", pthreads_socket_methods);
 	pthreads_socket_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
 	pthreads_socket_entry->create_object = pthreads_socket_ctor;
 

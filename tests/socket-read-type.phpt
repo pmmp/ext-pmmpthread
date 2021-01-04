@@ -1,9 +1,9 @@
 --TEST--
-Test of Socket::read() - testing type \Socket::NORMAL_READ and \Socket::BINARY_READ
+Test of ThreadedSocket::read() - testing type \ThreadedSocket::NORMAL_READ and \ThreadedSocket::BINARY_READ
 --FILE--
 <?php
 	/* Setup socket server */
-    $server = new Socket(\Socket::AF_INET, \Socket::SOCK_STREAM, getprotobyname('tcp'));
+    $server = new ThreadedSocket(\ThreadedSocket::AF_INET, \ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
     if (!$server) {
         die('Unable to create AF_INET socket [server]');
     }
@@ -26,7 +26,7 @@ Test of Socket::read() - testing type \Socket::NORMAL_READ and \Socket::BINARY_R
     }
 
     /* Connect to it */
-    $client = new Socket(\Socket::AF_INET, \Socket::SOCK_STREAM, getprotobyname('tcp'));
+    $client = new ThreadedSocket(\ThreadedSocket::AF_INET, \ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
     if (!$client) {
         die('Unable to create AF_INET socket [client]');
     }
@@ -35,23 +35,23 @@ Test of Socket::read() - testing type \Socket::NORMAL_READ and \Socket::BINARY_R
     }
 
     /* Accept that connection */
-    /** @var Socket $socket */
-    $socket = $server->accept(\Socket::class);
+    /** @var ThreadedSocket $socket */
+    $socket = $server->accept(\ThreadedSocket::class);
     if (!$socket) {
         die('Unable to accept connection');
     }
 
     $client->write("ABCdef123\n456789");
 
-    $data = $socket->read(20, 0, \Socket::BINARY_READ);
+    $data = $socket->read(20, 0, \ThreadedSocket::BINARY_READ);
     var_dump($data);
 
     $client->write("ABCdef123\n456789\n");
 
-    $data = $socket->read(20, 0, \Socket::NORMAL_READ);
+    $data = $socket->read(20, 0, \ThreadedSocket::NORMAL_READ);
     var_dump($data);
 
-    $data = $socket->read(20, 0, \Socket::NORMAL_READ);
+    $data = $socket->read(20, 0, \ThreadedSocket::NORMAL_READ);
     var_dump($data);
 
     $client->close();
