@@ -1,5 +1,5 @@
 --TEST--
-Test if Socket::recvfrom() receives data sent by Socket::sendto() via IPv6 UDP
+Test if ThreadedSocket::recvfrom() receives data sent by ThreadedSocket::sendto() via IPv6 UDP
 --CREDITS--
 Copied from php/php-src and adjusted, originally created by 
 Falko Menge <mail at falko-menge dot de>
@@ -9,7 +9,7 @@ PHP Testfest Berlin 2009-05-09
 require 'ipv6_skipif.inc';
 --FILE--
 <?php
-    $socket = new Socket(\Socket::AF_INET6, \Socket::SOCK_DGRAM, \Socket::SOL_UDP);
+    $socket = new ThreadedSocket(\ThreadedSocket::AF_INET6, \ThreadedSocket::SOCK_DGRAM, \ThreadedSocket::SOL_UDP);
     if (!$socket) {
         die('Unable to create AF_INET6 socket');
     }
@@ -18,7 +18,11 @@ require 'ipv6_skipif.inc';
     }
     var_dump($socket->recvfrom($buf, 12, 0, $from, $port));
     $address = '::1';
-    $socket->sendto('', 1, 0, $address); // cause warning
+    try{
+        $socket->sendto('', 1, 0, $address);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     if (!$socket->bind($address, 1223)) {
         die("Unable to bind to $address:1223");
     }
@@ -34,8 +38,16 @@ require 'ipv6_skipif.inc';
 
     $from = "";
     $port = 0;
-    $socket->recvfrom($buf, 12, 0); // cause warning
-    $socket->recvfrom($buf, 12, 0, $from); // cause warning
+    try{
+        $socket->recvfrom($buf, 12, 0);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
+    try{
+        $socket->recvfrom($buf, 12, 0, $from);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $bytes_received = $socket->recvfrom($buf, 12, 0, $from, $port);
     if ($bytes_received == -1) {
         die('An error occurred while receiving from the socket');
@@ -47,10 +59,7 @@ require 'ipv6_skipif.inc';
     $socket->close();
 --EXPECTF--
 bool(false)
-
-Warning: Wrong parameter count for Socket::sendto() in %s on line %d
-
-Warning: Socket::recvfrom() expects at least 4 parameters, 3 given in %s on line %d
-
-Warning: Wrong parameter count for Socket::recvfrom() in %s on line %d
+Port must be provided for AF_INET6
+ThreadedSocket::recvfrom() expects at least 4 parameters, 3 given
+Port must be provided for AF_INET6
 Received Ping! from remote address ::1 and remote port 1223

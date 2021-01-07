@@ -52,6 +52,7 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_synchronized, 0, 0, 1)
 	ZEND_ARG_INFO(0, function)
+	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_merge, 0, 0, 1)
@@ -111,7 +112,7 @@ zend_function_entry pthreads_threaded_methods[] = {
 	PHP_ME(Threaded, delRef, Threaded_delRef, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, getRefCount, Threaded_getRefCount, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, extend, Threaded_extend, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ */
@@ -180,7 +181,7 @@ PHP_METHOD(Threaded, isTerminated)
 PHP_METHOD(Threaded, synchronized)
 {
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
-	uint argc = 0;
+	int argc = 0;
 	zval *argv = NULL;
 	pthreads_object_t* threaded= PTHREADS_FETCH_TS;
 
@@ -195,7 +196,7 @@ PHP_METHOD(Threaded, synchronized)
 
 	if (pthreads_monitor_lock(threaded->monitor)) {
 		/* synchronize property tables */
-		pthreads_store_sync(getThis());
+		pthreads_store_sync(Z_OBJ_P(getThis()));
 
 		zend_try {
 			/* call the closure */
@@ -221,7 +222,7 @@ PHP_METHOD(Threaded, merge)
 		return;
 	}
 
-	RETURN_BOOL((pthreads_store_merge(getThis(), from, overwrite)==SUCCESS));
+	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite)==SUCCESS));
 } /* }}} */
 
 /* {{{ proto mixed Threaded::shift()
@@ -232,7 +233,7 @@ PHP_METHOD(Threaded, shift)
 		return;
 	}
 
-	pthreads_store_shift(getThis(), return_value);
+	pthreads_store_shift(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::chunk(integer $size [, boolean $preserve = false])
@@ -246,7 +247,7 @@ PHP_METHOD(Threaded, chunk)
 		return;
 	}
 
-	pthreads_store_chunk(getThis(), size, preserve, return_value);
+	pthreads_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
 } /* }}} */
 
 /* {{{ proto mixed Threaded::pop()
@@ -257,7 +258,7 @@ PHP_METHOD(Threaded, pop)
 		return;
 	}
 
-	pthreads_store_pop(getThis(), return_value);
+	pthreads_store_pop(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto boolean Threaded::count()
@@ -271,7 +272,7 @@ PHP_METHOD(Threaded, count)
 	ZVAL_LONG(return_value, 0);
 
 	pthreads_store_count(
-		getThis(), &Z_LVAL_P(return_value));
+		Z_OBJ_P(getThis()), &Z_LVAL_P(return_value));
 } /* }}} */
 
 /* {{{ proto Threaded::isGarbage(void) : bool */

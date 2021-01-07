@@ -81,7 +81,7 @@ zend_function_entry pthreads_thread_methods[] = {
 	PHP_ME(Thread, getCurrentThreadId, Thread_getCurrentThreadId, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Thread, getCurrentThread, Thread_getCurrentThread, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	PHP_ME(Thread, setAutoloadFile, Thread_setAutoloadFile, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])

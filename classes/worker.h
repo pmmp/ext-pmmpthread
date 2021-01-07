@@ -47,19 +47,6 @@ ZEND_END_ARG_INFO()
 
 extern zend_function_entry pthreads_worker_methods[];
 
-#if PHP_VERSION_ID < 70300
-#define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
-	memset(&call, 0, sizeof(pthreads_call_t)); \
-	call.fci.size = sizeof(zend_fcall_info); \
-	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
-	call.fcc.function_handler = zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
-	call.fci.object = (w); \
-	call.fcc.initialized = 1; \
-	call.fcc.calling_scope = (w)->ce; \
-	call.fcc.called_scope = (w)->ce; \
-	call.fcc.object = (w); \
-} while(0)
-#else
 #define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
 	memset(&call, 0, sizeof(pthreads_call_t)); \
 	call.fci.size = sizeof(zend_fcall_info); \
@@ -70,7 +57,6 @@ extern zend_function_entry pthreads_worker_methods[];
 	call.fcc.called_scope = (w)->ce; \
 	call.fcc.object = (w); \
 } while(0)
-#endif
 
 #define PTHREADS_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
 #else
@@ -84,7 +70,7 @@ zend_function_entry pthreads_worker_methods[] = {
 	PHP_ME(Worker, isShutdown, Worker_isShutdown, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collect, Worker_collect, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collector, Worker_collector, ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto int Worker::stack(Threaded $work)
@@ -94,7 +80,7 @@ PHP_METHOD(Worker, stack)
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zval *work;
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call stack",
 			thread->std.ce->name->val);
@@ -118,7 +104,7 @@ PHP_METHOD(Worker, unstack)
 		return;
 	}
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call unstack",
 			thread->std.ce->name->val);
@@ -241,7 +227,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->is_connection) {
+	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"only the creator of this %s may call collect",
 			thread->std.ce->name->val);

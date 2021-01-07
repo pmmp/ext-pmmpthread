@@ -61,7 +61,7 @@ zend_function_entry pthreads_pool_methods[] = {
 	PHP_ME(Pool, submitTo, 		Pool_submitTo, 		ZEND_ACC_PUBLIC)
 	PHP_ME(Pool, collect, 		Pool_collect, 		ZEND_ACC_PUBLIC)
 	PHP_ME(Pool, shutdown, 		Pool_noargs, 		ZEND_ACC_PUBLIC)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 
 /* {{{ proto Pool Pool::__construct(integer size, [class worker, [array $ctor]])
@@ -206,9 +206,6 @@ PHP_METHOD(Pool, submit) {
 				fci.retval = &retval;
 				fci.no_separation = 1;
 
-#if PHP_VERSION_ID < 70300
-				fcc.initialized = 1;
-#endif
 				fcc.function_handler = constructor;
 				fcc.calling_scope = zend_get_executed_scope();
 				fcc.called_scope = Z_OBJCE(worker);

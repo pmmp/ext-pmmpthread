@@ -1,5 +1,5 @@
 --TEST--
-Basic test of Socket::getPeerName() with AF_UNIX sockets
+Basic test of ThreadedSocket::getPeerName() with AF_UNIX sockets
 --SKIPIF--
 <?php
 if (substr(PHP_OS, 0, 3) == 'WIN') {
@@ -9,14 +9,14 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 <?php
     $address = sprintf("/tmp/%s.sock", uniqid());
 
-    $socket = new \Socket(\Socket::AF_UNIX,\Socket::SOCK_STREAM, 0);
+    $socket = new \ThreadedSocket(\ThreadedSocket::AF_UNIX,\ThreadedSocket::SOCK_STREAM, 0);
 
     if (!$socket->bind($address)) {
         die("Unable to bind to $address");
     }
     $socket->listen(1);
 
-    $client = new Socket(\Socket::AF_UNIX, \Socket::SOCK_STREAM, 0);
+    $client = new ThreadedSocket(\ThreadedSocket::AF_UNIX, \ThreadedSocket::SOCK_STREAM, 0);
     $client->connect($address);
 
     var_dump($client->getPeerName());

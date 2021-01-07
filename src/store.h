@@ -39,25 +39,25 @@ typedef struct _pthreads_storage {
 } pthreads_storage;
 
 pthreads_store_t* pthreads_store_alloc();
-void pthreads_store_sync(zval *object);
-int pthreads_store_merge(zval *destination, zval *from, zend_bool overwrite);
-int pthreads_store_delete(zval *object, zval *key);
-int pthreads_store_read(zval *object, zval *key, int type, zval *read);
-zend_bool pthreads_store_isset(zval *object, zval *key, int has_set_exists);
-int pthreads_store_write(zval *object, zval *key, zval *write);
+void pthreads_store_sync(zend_object *object);
+int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite);
+int pthreads_store_delete(zend_object *object, zval *key);
+int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
+zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists);
+int pthreads_store_write(zend_object *object, zval *key, zval *write);
 int pthreads_store_separate(zval *pzval, zval *seperated);
-void pthreads_store_tohash(zval *object, HashTable *hash);
-int pthreads_store_shift(zval *object, zval *member);
-int pthreads_store_chunk(zval *object, zend_long size, zend_bool preserve, zval *chunk);
-int pthreads_store_pop(zval *object, zval *member);
-int pthreads_store_count(zval *object, zend_long *count);
+void pthreads_store_tohash(zend_object *object, HashTable *hash);
+int pthreads_store_shift(zend_object *object, zval *member);
+int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve, zval *chunk);
+int pthreads_store_pop(zend_object *object, zval *member);
+int pthreads_store_count(zend_object *object, zend_long *count);
 void pthreads_store_free(pthreads_store_t *store);
 
 /* {{{ * iteration helpers */
-void pthreads_store_reset(zval *object, HashPosition *position);
-void pthreads_store_key(zval *object, zval *key, HashPosition *position);
-void pthreads_store_data(zval *object, zval *value, HashPosition *position);
-void pthreads_store_forward(zval *object, HashPosition *position); /* }}} */
+void pthreads_store_reset(zend_object *object, HashPosition *position);
+void pthreads_store_key(zend_object *object, zval *key, HashPosition *position);
+void pthreads_store_data(zend_object *object, zval *value, HashPosition *position);
+void pthreads_store_forward(zend_object *object, HashPosition *position); /* }}} */
 
 pthreads_storage* pthreads_store_create(zval *pzval);
 int pthreads_store_convert(pthreads_storage *storage, zval *pzval);

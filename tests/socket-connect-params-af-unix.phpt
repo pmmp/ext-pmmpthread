@@ -1,5 +1,5 @@
 --TEST--
-Socket::connect() - AF_UNIX - test with empty parameters
+ThreadedSocket::connect() - AF_UNIX - test with empty parameters
 --SKIPIF--
 <?php
 if (substr(PHP_OS, 0, 3) == 'WIN') {
@@ -8,7 +8,7 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 --FILE--
 <?php
     $rand = rand(1,999);
-    $socket = new \Socket(\Socket::AF_UNIX,\Socket::SOCK_DGRAM, 0);
+    $socket = new \ThreadedSocket(\ThreadedSocket::AF_UNIX,\ThreadedSocket::SOCK_DGRAM, 0);
 
     if (!$socket->setBlocking(false)) {
         die('Unable to set nonblocking mode for socket');
@@ -21,12 +21,16 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     if (!$socket->bind($address)) {
         die("Unable to bind to $address");
     }
-    $socket->connect();
+
+    try{
+        $socket->connect();
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $socket->connect($address);
     $socket->connect($address, 31330+$rand);
 
     $socket->close();
 ?>
 --EXPECTF--
-
-Warning: Socket::connect() expects at least 1 parameter, 0 given in %s on line %i
+ThreadedSocket::connect() expects at least 1 parameter, 0 given

@@ -4,6 +4,9 @@ Basic anonymous class support, fix #505
 Unbound anon class causing segfaults, we delay copy but still cannot serialize the anon
 --FILE--
 <?php
+
+interface TestInterface{}
+
 class Test extends Thread {
 	/**
 	 * doccomment run
@@ -13,7 +16,7 @@ class Test extends Thread {
 		/**
 		 * doccomment anonymous
 		 */
-		$this->anonymous = new class extends Thread {
+		$this->anonymous = new class extends Thread implements TestInterface {
 			const CONSTANT = 'constant';
 			/**
 			 * @var

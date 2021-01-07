@@ -43,7 +43,7 @@ typedef struct _pthreads_ident_t {
 typedef struct _pthreads_object_t {
 	zend_ulong refcount;
 	pthread_t thread;
-	uint scope;
+	unsigned int scope;
 	zend_ulong options;
 	pthreads_monitor_t *monitor;
 	union {
@@ -58,12 +58,15 @@ typedef struct _pthreads_object_t {
 } pthreads_object_t; /* }}} */
 
 /* {{{ */
-typedef struct _pthreads_zend_object_t {
+struct _pthreads_zend_object_t;
+typedef struct _pthreads_zend_object_t pthreads_zend_object_t;
+
+struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
 	pthreads_ident_t owner;
-	zend_bool is_connection;
+	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
 	zend_object std;
-} pthreads_zend_object_t; /* }}} */
+}; /* }}} */
 
 /* {{{ */
 typedef struct _pthreads_routine_arg_t {
@@ -120,11 +123,11 @@ static inline pthreads_zend_object_t* _pthreads_fetch_object(zend_object *object
 #define PTHREADS_IS_THREADED(t)         ((t)->ts_obj->scope & PTHREADS_SCOPE_THREADED) /* }}} */
 
 /* {{{ pthread_self wrapper */
-static inline ulong pthreads_self() {
+static inline zend_ulong pthreads_self() {
 #ifdef _WIN32
-	return (ulong) GetCurrentThreadId();
+	return (zend_ulong) GetCurrentThreadId();
 #else
-	return (ulong) pthread_self();
+	return (zend_ulong) pthread_self();
 #endif
 } /* }}} */
 

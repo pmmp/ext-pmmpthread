@@ -9,70 +9,57 @@
 -->
 This project provides multi-threading that is compatible with PHP based on Posix Threads.
 
+This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjoe/pthreads) extension.
+
+## Focus
+This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
+
+## Changes compared to the original
+- PHP 7.4 support
+- Many bug fixes which were never merged upstream
+- Performance improvements
+- Memory usage improvements
+- Integration with [OPcache](https://www.php.net/manual/en/book.opcache.php) on PHP 7.4+ (pthreads leverages opcache SHM to reuse classes and functions, saving lots of memory)
+
+## [OPcache](https://www.php.net/manual/en/book.opcache.php) compatibility
+Despite popular belief, OPcache is still useful in a CLI environment - as long as it's a threaded one :)
+Every thread in pthreads is like a web server "request", so while OPcache doesn't offer as big an advantage to an application using pthreads as it does to a web server, it's far from useless.
+
+If you're using PHP 7.4+, using [OPcache](https://www.php.net/manual/en/book.opcache.php) with pthreads is **strongly recommended**, as you'll get various benefits from doing so:
+
+- Reduced memory usage when the same class is used on several threads
+- Better performance of starting new threads when threads inherit classes and functions
+
+Preloading classes and functions is also supported on PHP 7.4, which will make classes available to all threads without an autoloader.
+
+OPcache isn't enabled in the CLI by default, so you'll need to add
+```
+opcache.enable=1
+opcache.enable_cli=1
+```
+to your `php.ini` file.
+
+## Why not something newer and easier to work with, like [krakjoe/parallel](https://github.com/krakjoe/parallel)?
+Several reasons. The biggest one is that we found ext-parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded`, it might be more usable. In addition, ext-parallel is less widely used, less well maintained and requires significant migration efforts for code using pthreads.
+
+Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the benefits of PHP 7.4 without needing to suffer PocketMine API breaks that would affect plugins. In addition, PHP 7.4 introduced various new internal features which are highly beneficial specifically to pthreads, such as immutable classes and op_arrays.
+
+While pthreads is an extraordinary challenge to maintain throughout several PHP versions, I'm something of a masochist and I enjoy the challenge. I've also learned a great deal about PHP internals because of this extension.
+
 ## Highlights
 
-* An easy to use, quick to learn OO Threading API for PHP 7.2+
+* An easy to use, quick to learn OO Threading API for PHP 7.3+
 * Execute any and all predefined and user declared methods and functions, including closures.
 * Ready made synchronization included
 * A world of possibilities ...
 
-## Technical Features
-
-* High Level Threading
-* Synchronization
-* Worker Threads
-* Thread Pools
-* Complete Support for OO - ie. traits, interfaces, inheritance etc
-* Full read/write/execute support for Threaded objects
-
 ## Requirements
 
-* PHP 7.2+
+* PHP 7.3+
 * ZTS Enabled ( Thread Safety )
 * Posix Threads Implementation
 
 Testing has been carried out on x86, x64 and ARM, in general you just need a compiler and pthread.h
-
-## PHP7
-
-For PHP7, pthreads has been almost completely rewritten to be more efficient, easier to use and more robust. I will give a brief changelog here:
-
-The API for v3 has changed, the following things have been removed:
-
- * ```Mutex```, ```Cond```, and ```Stackable```
- * ```Threaded::lock``` and ```Threaded::unlock```
- * ```Threaded::isWaiting```
- * ```Threaded::from```
- * ```Thread::kill``` (there be dragons)
- * ```Thread::detach```
- * ```Worker::isWorking```
- * ```Threaded::getTerminationInfo``` (this was unsafe, a better, safe impl can be done in userland)
- * Special behaviour of ```protected``` and ```private``` methods on ```Threaded``` objects
-
-The following things have significant changes:
- 
- * The method by which ```Threaded``` objects are stored as member properties of other ```Threaded``` objects.
- * The structure used by a ```Worker``` for stack (```Collectable``` objects to execute inserted by ```Worker::stack```).
- * The ```Pool::collect``` mechanism was moved from ```Pool``` to ```Worker``` for a more robust ```Worker``` and simpler ```Pool``` inheritance.
- * The method by which iteration occurs on ```Threaded``` objects, such that it uses memory more efficiently.
- * ```Threaded::synchronized``` provides true synchronization (state and properties lock).
- * ```Worker``` objects no longer require that you retain a reference to ```Collectable``` objects on the stack.
- * Unified monitor (cond/mutex/state) for ```Threaded``` objects
- * ```Threaded``` members of ```Threaded``` objects are immutable
- * ```Volatile``` objects, exempt from immutability
- * ```array``` coerced to ```Volatile``` when set as member of ```Threaded```
- * ```Collectable``` converted to interface, to make ```extends Volatile implements Collectable``` possible.
-
-Some blog posts explaining these changes:
-
- * [A Letter from the Future](http://blog.krakjoe.ninja/2015/08/a-letter-from-future.html)
- * [Addendum to A Letter from the Future](http://blog.krakjoe.ninja/2015/09/addendum-letter-from-future.html)
-
-### Supported PHP Versions
-
-pthreads v3 requires PHP7 or above. PHP5 needs to use pthreads v2 which can be found in the PHP5 branch.
-
-Note that only PHP 7.2+ is now supported (requiring the current master branch of pthreads). This is due to safety issues with ZTS mode on PHP 7.0 and 7.1.
 
 ##### Unix-based Building from Source
 
@@ -88,8 +75,6 @@ Building pthreads from source is quite simple on Unix-based OSs. The instruction
 ### Windows Support
 
 Yes !! Windows support is offered thanks to the pthread-w32 library.
-
-Releases for Windows can be found: http://windows.php.net/downloads/pecl/releases/pthreads/
 
 ##### Simple Windows Installation
 
@@ -140,38 +125,6 @@ Here are some links to articles I have prepared for users: everybody should read
  - https://gist.github.com/krakjoe/9384409
 
 If you have had the time to put any cool demo's together and would like them showcased on pthreads.org please get in touch.
-
-### Polyfill
-
-It's possible to write code that optionally takes advantage of parallelism where the environment has ```pthreads``` loaded.
-
-This is made possible by [pthreads-polyfill](http://github.com/krakjoe/pthreads-polyfill) which can be found on [packagist](https://packagist.org/packages/krakjoe/pthreads-polyfill).
-
-Having required the appropriate package in your composer.json, the following code is executable everywhere:
-
-```php
-<?php
-require_once("vendor/autoload.php");
-
-if (extension_loaded("pthreads")) {
-	    echo "Using pthreads\n";
-} else  echo "Using polyfill\n";
-
-$pool = new Pool(4);
-
-$pool->submit(new class extends Threaded {
-        public function run() {
-                echo "Hello World\n";
-        }
-});
-
-while ($pool->collect()) continue;
-
-$pool->shutdown();
-?>
-```
-
-Some guidance on getting started, and detail regarding how the polyfill came to exist can be found [here](http://blog.krakjoe.ninja/2015/09/what-polly-really-wants.html).
 
 ### Feedback
 

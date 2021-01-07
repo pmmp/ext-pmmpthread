@@ -34,8 +34,8 @@
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
 #endif
 
-#if PHP_VERSION_ID < 70200
-#	error "pthreads requires PHP 7.2, ZTS in versions 7.0 and 7.1 is broken"
+#if PHP_VERSION_ID < 70300
+#	error "pthreads requires PHP 7.3 or later"
 #endif
 
 #if COMPILE_DL_PTHREADS
@@ -45,10 +45,6 @@
 
 #ifndef HAVE_PTHREADS_GLOBALS_H
 #	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_COPY_H
-#	include <src/copy.h>
 #endif
 
 static const zend_module_dep pthreads_module_deps[] = {
@@ -120,137 +116,12 @@ static inline zend_bool pthreads_is_supported_sapi(char *name) {
 	return 0;
 }
 
-typedef void (*zend_execute_ex_function)(zend_execute_data *);
-
-zend_execute_ex_function zend_execute_ex_hook = NULL;
-
 static inline void pthreads_globals_ctor(zend_pthreads_globals *pg) {
 	ZVAL_UNDEF(&pg->this);
 	pg->pid = 0L;
 	pg->signal = 0;
 	pg->resources = NULL;
 }
-
-/* {{{ */
-static inline void pthreads_execute_ex(zend_execute_data *data) {
-	if (zend_execute_ex_hook) {
-		zend_execute_ex_hook(data);
-	} else execute_ex(data);
-
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		if (EG(exception) &&
-			(!EG(current_execute_data) || !EG(current_execute_data)->prev_execute_data))
-			zend_try_exception_handler();
-	}
-} /* }}} */
-
-/* {{{ */
-static inline zend_bool pthreads_verify_type(zend_execute_data *execute_data, zval *var, zend_arg_info *info) {
-	if (!ZEND_TYPE_IS_SET(info->type)) {
-		return 1;
-	}
-
-	if (ZEND_TYPE_IS_CLASS(info->type)) {
-		pthreads_zend_object_t *threaded;
-
-		if (!var ||
-			Z_TYPE_P(var) != IS_OBJECT ||
-			!instanceof_function(Z_OBJCE_P(var), pthreads_threaded_entry)) {
-			return 0;
-		}
-
-		threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(var));
-
-		if (!PTHREADS_IN_CREATOR(threaded)) {
-			zend_class_entry *ce;
-			void **cache = CACHE_ADDR(EX(opline)->op2.num);
-
-			if (*cache) {
-				ce = *cache;
-			} else {
-				ce = zend_fetch_class(ZEND_TYPE_NAME(info->type),
-					(ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-
-				if (!ce) {
-					return Z_TYPE_P(var) == IS_NULL && ZEND_TYPE_ALLOW_NULL(info->type);
-				}
-
-				*cache = (void*) ce;
-			}
-
-			if (Z_TYPE_P(var) == IS_OBJECT) {
-				zend_class_entry *instance = zend_fetch_class(
-					threaded->std.ce->name, (ZEND_FETCH_CLASS_AUTO | ZEND_FETCH_CLASS_NO_AUTOLOAD));
-
-				if (!instance) {
-					return 0;
-				}
-
-				return instanceof_function(instance, ce);
-			}
-		}
-	}
-
-	return 0;
-} /* }}} */
-
-/* {{{ */
-static inline int php_pthreads_recv(zend_execute_data *execute_data) {
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		uint32_t arg_num = EX(opline)->op1.num;
-		zval *var = NULL;
-
-		if (UNEXPECTED(arg_num > EX_NUM_ARGS())) {
-			return ZEND_USER_OPCODE_DISPATCH;
-		}
-
-#if ZEND_USE_ABS_CONST_ADDR
-		if (EX(opline)->result_type == IS_CONST) {
-				var = (zval*) EX(opline)->result.var;
-		} else var = EX_VAR(EX(opline)->result.num);
-#else
-		var = EX_VAR(EX(opline)->result.num);
-#endif
-
-		if (UNEXPECTED((EX(func)->op_array.fn_flags & ZEND_ACC_HAS_TYPE_HINTS) != 0)) {
-			if (pthreads_verify_type(execute_data,
-				var,
-				&EX(func)->common.arg_info[arg_num-1])) {
-				EX(opline)++;
-				return ZEND_USER_OPCODE_CONTINUE;
-			}
-		}
-	}
-	return ZEND_USER_OPCODE_DISPATCH;
-} /* }}} */
-
-/* {{{ */
-static inline int php_pthreads_verify_return_type(zend_execute_data *execute_data) {
-	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
-		zval *var = NULL;
-
-		if (EX(opline)->op1_type == IS_UNUSED) {
-			return ZEND_USER_OPCODE_DISPATCH;
-		}
-
-#if ZEND_USE_ABS_CONST_ADDR
-		if (EX(opline)->op1_type & IS_CONST) {
-			var = (zval*) EX(opline)->op1.var;
-		} else var = EX_VAR(EX(opline)->op1.num);
-#else
-		var = EX_VAR(EX(opline)->op1.num);
-#endif
-
-		if (pthreads_verify_type(execute_data,
-			var,
-			EX(func)->common.arg_info - 1)) {
-			EX(opline)++;
-			return ZEND_USER_OPCODE_CONTINUE;
-		}
-	}
-
-	return ZEND_USER_OPCODE_DISPATCH;
-} /* }}} */
 
 PHP_MINIT_FUNCTION(pthreads)
 {
@@ -261,9 +132,6 @@ PHP_MINIT_FUNCTION(pthreads)
 			sapi_module.name);
 		return FAILURE;
 	}
-
-	zend_execute_ex_hook = zend_execute_ex;
-	zend_execute_ex = pthreads_execute_ex;
 
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_ALL", PTHREADS_INHERIT_ALL, CONST_CS | CONST_PERSISTENT);
 	REGISTER_LONG_CONSTANT("PTHREADS_INHERIT_NONE", PTHREADS_INHERIT_NONE, CONST_CS | CONST_PERSISTENT);
@@ -309,7 +177,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	zend_declare_property_null(pthreads_pool_entry, ZEND_STRL("ctor"),    ZEND_ACC_PROTECTED);
 	zend_declare_property_long(pthreads_pool_entry, ZEND_STRL("last"), 0, ZEND_ACC_PROTECTED);
 
-	INIT_CLASS_ENTRY(ce, "Socket", pthreads_socket_methods);
+	INIT_CLASS_ENTRY(ce, "ThreadedSocket", pthreads_socket_methods);
 	pthreads_socket_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
 	pthreads_socket_entry->create_object = pthreads_socket_ctor;
 
@@ -775,7 +643,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_handlers.has_dimension = pthreads_has_dimension;
 	pthreads_handlers.unset_dimension = pthreads_unset_dimension;
 
-	pthreads_handlers.get_property_ptr_ptr = NULL;
+	pthreads_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
 	pthreads_handlers.get = NULL;
 	pthreads_handlers.set = NULL;
 	pthreads_handlers.get_gc = pthreads_base_gc;
@@ -810,9 +678,6 @@ PHP_MINIT_FUNCTION(pthreads)
 		pthreads_instance = TSRMLS_CACHE;
 	}
 
-	zend_set_user_opcode_handler(ZEND_RECV, php_pthreads_recv);
-	zend_set_user_opcode_handler(ZEND_VERIFY_RETURN_TYPE, php_pthreads_verify_return_type);
-
 	return SUCCESS;
 }
 
@@ -835,8 +700,6 @@ PHP_MSHUTDOWN_FUNCTION(pthreads)
 			sapi_module.deactivate = sapi_cli_deactivate;
 		}
 	}
-
-	zend_execute_ex = zend_execute_ex_hook;
 
 	return SUCCESS;
 }

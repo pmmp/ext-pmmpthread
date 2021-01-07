@@ -26,7 +26,7 @@ extern zend_function_entry pthreads_collectable_methods[];
 #	define HAVE_PTHREADS_CLASS_COLLECTABLE
 zend_function_entry pthreads_collectable_methods[] = {
 	PHP_ABSTRACT_ME(Collectable, isGarbage, 	Collectable_isGarbage)
-	{NULL, NULL, NULL}
+	PHP_FE_END
 };
 #	endif
 #endif

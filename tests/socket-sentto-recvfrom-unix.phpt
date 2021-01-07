@@ -1,5 +1,5 @@
 --TEST--
-Test if Socket::recvfrom() receives data sent by Socket::sendto() through a Unix domain socket
+Test if ThreadedSocket::recvfrom() receives data sent by ThreadedSocket::sendto() through a Unix domain socket
 --CREDITS--
 Copied from php/php-src and adjusted, originally created by 
 Falko Menge <mail at falko-menge dot de>
@@ -12,11 +12,11 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 --FILE--
 <?php
     try {
-        $socket = new \Socket(\Socket::AF_UNIX, \Socket::SOCK_DGRAM, \Socket::SOL_UDP);
+        $socket = new \ThreadedSocket(\ThreadedSocket::AF_UNIX, \ThreadedSocket::SOCK_DGRAM, \ThreadedSocket::SOL_UDP);
     }catch(RuntimeException $exception) {
         var_dump($exception->getMessage());
     }
-    $socket = new \Socket(\Socket::AF_UNIX, \Socket::SOCK_DGRAM, 0);
+    $socket = new \ThreadedSocket(\ThreadedSocket::AF_UNIX, \ThreadedSocket::SOCK_DGRAM, 0);
     if (!$socket) {
         die('Unable to create AF_UNIX socket');
     }
@@ -31,7 +31,12 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 
     $msg = "Ping!";
     $len = strlen($msg);
-    $bytes_sent = $socket->sendto($msg, $len, 0); // cause warning
+
+    try{
+        $bytes_sent = $socket->sendto($msg, $len, 0);
+    }catch(\ArgumentCountError $e){
+        echo $e->getMessage() . PHP_EOL;
+    }
     $bytes_sent = $socket->sendto($msg, $len, 0, $address);
     if ($bytes_sent == -1) {
         @unlink($address);
@@ -59,7 +64,6 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 --EXPECTF--
 string(%d) "Unable to create socket (%d): Protocol not supported"
 bool(false)
-
-Warning: Socket::sendto() expects at least 4 parameters, 3 given in %s on line %d
+ThreadedSocket::sendto() expects at least 4 parameters, 3 given
 bool(false)
 Received Ping!

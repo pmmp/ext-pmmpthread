@@ -14,7 +14,7 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
         die('Temporary socket already exists.');
 
     /* Setup socket server */
-    $server = new Socket(\Socket::AF_UNIX, \Socket::SOCK_STREAM, 0);
+    $server = new ThreadedSocket(\ThreadedSocket::AF_UNIX, \ThreadedSocket::SOCK_STREAM, 0);
     if (!$server) {
         die('Unable to create AF_UNIX socket [server]');
     }
@@ -26,7 +26,7 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     }
 
     /* Connect to it */
-    $client = new Socket(\Socket::AF_UNIX, \Socket::SOCK_STREAM, 0);
+    $client = new ThreadedSocket(\ThreadedSocket::AF_UNIX, \ThreadedSocket::SOCK_STREAM, 0);
     if (!$client) {
         die('Unable to create AF_UNIX socket [client]');
     }
@@ -35,15 +35,15 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     }
 
     /* Accept that connection */
-    /** @var Socket $socket */
-    $socket = $server->accept(\Socket::class);
+    /** @var ThreadedSocket $socket */
+    $socket = $server->accept(\ThreadedSocket::class);
     if (!$socket) {
         die('Unable to accept connection');
     }
 
     $client->write("ABCdef123\n");
 
-    $data = $socket->read(10, 0, \Socket::BINARY_READ);
+    $data = $socket->read(10, 0, \ThreadedSocket::BINARY_READ);
     var_dump($data);
 
     $client->close();

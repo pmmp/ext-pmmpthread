@@ -14,31 +14,38 @@ error_reporting=E_ALL
 display_errors=1
 --FILE--
 <?php
-  // Test with no arguments
-  $server = new Socket();
-  
-  // Test with less arguments than required
-  $server = new Socket(\Socket::SOCK_STREAM, getprotobyname('tcp'));
-  
+  try{
+    // Test with no arguments
+    $server = new ThreadedSocket();
+  }catch(\ArgumentCountError $e){
+    echo $e->getMessage() . PHP_EOL;
+  }
+
+  try{
+    // Test with less arguments than required
+    $server = new ThreadedSocket(\ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
+  }catch(\ArgumentCountError $e){
+    echo $e->getMessage() . PHP_EOL;
+  }
+
   try {
     // Test with non integer parameters
-    $server = new Socket(array(), 1, 1);
+    $server = new ThreadedSocket(array(), 1, 1);
   } catch(Throwable $throwable) {
     var_dump($throwable->getMessage());
   }
 
   try {
     // Test with unknown domain
-    $server = new Socket(\Socket::AF_INET + 1000, \Socket::SOCK_STREAM, 0);
+    $server = new ThreadedSocket(\ThreadedSocket::AF_INET + 1000, \ThreadedSocket::SOCK_STREAM, 0);
   } catch(Throwable $throwable) {
     var_dump($throwable->getMessage());
   }
   
 ?>
 --EXPECTF--
-Warning: Socket::__construct() expects exactly 3 parameters, 0 given in %s on line %d
-
-Warning: Socket::__construct() expects exactly 3 parameters, 2 given in %s on line %d
-string(%d) "Argument 1 passed to Socket::__construct() must be of the type %s, array given"
+ThreadedSocket::__construct() expects exactly 3 parameters, 0 given
+ThreadedSocket::__construct() expects exactly 3 parameters, 2 given
+string(%d) "Argument 1 passed to ThreadedSocket::__construct() must be of the type %s, array given"
 string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used.
 "

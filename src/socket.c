@@ -329,13 +329,12 @@ void pthreads_socket_accept(zval *object, zend_class_entry *ce, zval *return_val
 
 	php_sockaddr_storage sa;
 	socklen_t            sa_len = sizeof(sa);
-	zend_bool	     blocking = threaded->store.sock->blocking;
 
 	PTHREADS_SOCKET_CHECK(threaded->store.sock);
 
 	if (!instanceof_function(ce, pthreads_socket_entry)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
-			"%s is not an instance of Socket",
+			"%s is not an instance of ThreadedSocket",
 			ZSTR_VAL(ce->name));
 		return;
 	}
@@ -367,7 +366,7 @@ void pthreads_socket_connect(zval *object, int argc, zend_string *address, zend_
 			struct sockaddr_in6 sin6 = {0};
 
 			if (argc != 2) {
-				zend_throw_exception_ex(spl_ce_RuntimeException, 0, "Socket of type AF_INET6 requires 2 arguments");
+				zend_throw_error(zend_ce_argument_count_error, "Socket of type AF_INET6 requires 2 arguments");
 				return;
 			}
 
@@ -388,7 +387,7 @@ void pthreads_socket_connect(zval *object, int argc, zend_string *address, zend_
 			struct sockaddr_in sin = {0};
 
 			if (argc != 2) {
-				zend_throw_exception_ex(spl_ce_RuntimeException, 0, "Socket of type AF_INET requires 2 arguments");
+				zend_throw_error(zend_ce_argument_count_error, "Socket of type AF_INET requires 2 arguments");
 				return;
 			}
 
@@ -897,7 +896,8 @@ void pthreads_socket_recvfrom(zval *object, zval *buffer, zend_long len, zend_lo
 
 			if (port == NULL) {
 				zend_string_free(recv_buf);
-				WRONG_PARAM_COUNT;
+				zend_throw_error(zend_ce_argument_count_error, "Port must be provided for AF_INET");
+				RETURN_FALSE;
 			}
 
 			retval = recvfrom(threaded->store.sock->fd, ZSTR_VAL(recv_buf), len, flags, (struct sockaddr *)&sin, (socklen_t *)&slen);
@@ -932,7 +932,8 @@ void pthreads_socket_recvfrom(zval *object, zval *buffer, zend_long len, zend_lo
 
 			if (port == NULL) {
 				zend_string_free(recv_buf);
-				WRONG_PARAM_COUNT;
+				zend_throw_error(zend_ce_argument_count_error, "Port must be provided for AF_INET6");
+				RETURN_FALSE;
 			}
 
 			retval = recvfrom(threaded->store.sock->fd, ZSTR_VAL(recv_buf), len, flags, (struct sockaddr *)&sin6, (socklen_t *)&slen);
@@ -987,7 +988,8 @@ void pthreads_socket_sendto(zval *object, int argc, zend_string *buf, zend_long 
 			struct sockaddr_in	sin;
 
 			if (argc != 5) {
-				WRONG_PARAM_COUNT;
+				zend_throw_error(zend_ce_argument_count_error, "Port must be provided for AF_INET");
+				RETURN_FALSE;
 			}
 
 			memset(&sin, 0, sizeof(sin));
@@ -1005,7 +1007,8 @@ void pthreads_socket_sendto(zval *object, int argc, zend_string *buf, zend_long 
 			struct sockaddr_in6	sin6;
 
 			if (argc != 5) {
-				WRONG_PARAM_COUNT;
+				zend_throw_error(zend_ce_argument_count_error, "Port must be provided for AF_INET6");
+				RETURN_FALSE;
 			}
 
 			memset(&sin6, 0, sizeof(sin6));

@@ -7,7 +7,7 @@ IPv6 Loopback test
 --FILE--
 <?php
 	/* Setup socket server */
-    $server = new Socket(\Socket::AF_INET6, \Socket::SOCK_STREAM, getprotobyname('tcp'));
+    $server = new ThreadedSocket(\ThreadedSocket::AF_INET6, \ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
     if (!$server) {
         die('Unable to create AF_INET6 socket [server]');
     }
@@ -30,7 +30,7 @@ IPv6 Loopback test
     }
 
     /* Connect to it */
-    $client = new Socket(\Socket::AF_INET6, \Socket::SOCK_STREAM, getprotobyname('tcp'));
+    $client = new ThreadedSocket(\ThreadedSocket::AF_INET6, \ThreadedSocket::SOCK_STREAM, getprotobyname('tcp'));
     if (!$client) {
         die('Unable to create AF_INET6 socket [client]');
     }
@@ -39,15 +39,15 @@ IPv6 Loopback test
     }
 
     /* Accept that connection */
-    /** @var Socket $socket */
-    $socket = $server->accept(\Socket::class);
+    /** @var ThreadedSocket $socket */
+    $socket = $server->accept(\ThreadedSocket::class);
     if (!$socket) {
         die('Unable to accept connection');
     }
 
     $client->write("ABCdef123\n");
 
-    $data = $socket->read(10, 0, \Socket::BINARY_READ);
+    $data = $socket->read(10, 0, \ThreadedSocket::BINARY_READ);
     var_dump($data);
 
     $client->close();
