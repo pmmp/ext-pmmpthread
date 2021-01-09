@@ -47,5 +47,4 @@ display_errors=1
 ThreadedSocket::__construct() expects exactly 3 %s, 0 given
 ThreadedSocket::__construct() expects exactly 3 %s, 2 given
 bad types for new ThreadedSocket()
-string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used.
-"
+string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used"
