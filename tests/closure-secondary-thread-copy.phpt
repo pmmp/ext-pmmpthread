@@ -28,4 +28,6 @@ $thread = new class extends Thread {
 };
 
 $thread->start() && $thread->join();
+echo "OK\n";
 --EXPECT--
+OK

@@ -28,4 +28,7 @@ class clientThread extends Thread {
 
 $objClientThread = new clientThread();
 $objClientThread->start();
---EXPECT--
+$objClientThread->join();
+echo "OK\n";
+--EXPECTF--
+OK
