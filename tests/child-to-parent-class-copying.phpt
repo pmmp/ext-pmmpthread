@@ -30,4 +30,6 @@ $baseClass = $foo->shared['baseClass']; // copy zend_class_entry
 $foo->running = false;
 
 $foo->join();
+echo "OK\n";
 --EXPECT--
+OK
