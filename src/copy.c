@@ -344,7 +344,7 @@ zend_function* pthreads_copy_function(const zend_function *function) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
 
 		if (copy) {
-			if (copy->op_array.refcount) { //TODO: check under what circumstances the refcount is not allocated
+			if (copy->type == ZEND_USER_FUNCTION && copy->op_array.refcount) { //TODO: check under what circumstances the refcount is not allocated
 				(*copy->op_array.refcount)++;
 			}
 			return copy;
