@@ -311,12 +311,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
 	if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 	if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
-	if (op_array->static_variables) {
-		op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
+	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
 #if PHP_VERSION_ID >= 70400
-		ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
 #endif
-	}
 
 	return copy;
 } /* }}} */
