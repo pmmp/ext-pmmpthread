@@ -18,6 +18,39 @@
 
 #include <src/copy.h>
 
+#if PHP_VERSION_ID >= 80000
+static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr) {
+	uint32_t i;
+	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
+
+	for (i = 0; i < attr->argc; i++) {
+		if (pthreads_store_separate(&attr->args[i].value, &copy->args[i].value) == FAILURE) {
+			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
+			zend_error_noreturn(E_CORE_ERROR, "pthreads encountered a non-copyable attribute argument of type %s", zend_get_type_by_const(Z_TYPE(attr->args[i].value)));
+		}
+		copy->args[i].name = attr->args[i].name ? zend_string_new(attr->args[i].name) : NULL;
+	}
+}
+
+/* {{{ */
+HashTable* pthreads_copy_attributes(HashTable *old) {
+	if (!old) {
+		return NULL;
+	}
+
+	zval *v;
+
+	//zend_add_attribute() will allocate this for us with the correct flags and destructor
+	HashTable *new = NULL;
+
+	ZEND_HASH_FOREACH_VAL(old, v) {
+		pthreads_copy_attribute(&new, Z_PTR_P(v));
+	} ZEND_HASH_FOREACH_END();
+
+	return new;
+} /* }}} */
+#endif
+
 /* {{{ */
 static HashTable* pthreads_copy_statics(HashTable *old) {
 	HashTable *statics = NULL;
@@ -363,6 +396,9 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
 		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
+#if PHP_VERSION_ID >= 80000
+		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(op_array->attributes);
+#endif
 	}
 
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)

@@ -79,6 +79,11 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 		memcpy(rc, zc, sizeof(zend_class_constant));
 
+#if PHP_VERSION_ID >= 80000
+		if (zc->attributes) {
+			rc->attributes = pthreads_copy_attributes(zc->attributes);
+		}
+#endif
 		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
 			if (zc->doc_comment != NULL) {
 				rc->doc_comment = zend_string_new(zc->doc_comment);
@@ -222,6 +227,11 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
 			}
 		} ZEND_TYPE_FOREACH_END();
+#endif
+#if PHP_VERSION_ID >= 80000
+		if (info->attributes) {
+			dup->attributes = pthreads_copy_attributes(info->attributes);
+		}
 #endif
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
 			if (dup->doc_comment)
@@ -470,6 +480,11 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	   (candidate->info.user.doc_comment)) {
 			prepared->info.user.doc_comment = zend_string_new(candidate->info.user.doc_comment);
 		} else prepared->info.user.doc_comment = NULL;
+#if PHP_VERSION_ID >= 80000
+	if (candidate->attributes) {
+		prepared->attributes = pthreads_copy_attributes(candidate->attributes);
+	}
+#endif
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
