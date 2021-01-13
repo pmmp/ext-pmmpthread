@@ -27,5 +27,5 @@ $a = new My();
 $a->start();
 $a->join();
 --EXPECTF--
-%d
+%i
 
