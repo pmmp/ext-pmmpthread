@@ -358,12 +358,15 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		if (op_array->literals) op_array->literals = pthreads_copy_literals (literals, op_array->last_literal, literals_memory);
 
 		op_array->opcodes = pthreads_copy_opcodes(op_array, literals, opcodes_memory);
+
+		if (op_array->arg_info) 	op_array->arg_info = pthreads_copy_arginfo(op_array, arg_info, op_array->num_args);
+		if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
+		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
+		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
 	}
 
-	if (op_array->arg_info) 	op_array->arg_info = pthreads_copy_arginfo(op_array, arg_info, op_array->num_args);
-	if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
-	if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
-	if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
+	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
+	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
 #if PHP_VERSION_ID >= 70400
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
