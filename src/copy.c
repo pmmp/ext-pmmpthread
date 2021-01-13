@@ -318,16 +318,16 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		op_array->doc_comment = zend_string_new(op_array->doc_comment);
 	}
 
-#if PHP_VERSION_ID < 80000
 	if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), op_array->filename))) {
 		filename_copy = zend_string_new(op_array->filename);
 		zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 		zend_string_release(filename_copy);
 	}
-#else
-	//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer interned
-	//TODO: explore interning them anyway (but I don't think anyone is going to care ...)
-	filename_copy = zend_string_new(op_array->filename);
+#if PHP_VERSION_ID >= 80000
+	//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer always interned
+	//opcache might intern them, but in the absence of opcache this won't be the case
+	//if this string is interned, the following will be a no-op
+	zend_string_addref(filename_copy);
 #endif
 
 	op_array->filename = filename_copy;

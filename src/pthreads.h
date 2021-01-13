@@ -108,9 +108,7 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	int   signal;
 	zval  this;
 	HashTable resolve;
-#if PHP_VERSION_ID < 80000
 	HashTable filenames;
-#endif
 	HashTable *resources;
 	int hard_copy_interned_strings;
 ZEND_END_MODULE_GLOBALS(pthreads)

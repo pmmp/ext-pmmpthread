@@ -734,9 +734,7 @@ PHP_RINIT_FUNCTION(pthreads) {
 	ZEND_TSRMLS_CACHE_UPDATE();
 
 	zend_hash_init(&PTHREADS_ZG(resolve), 15, NULL, NULL, 0);
-#if PHP_VERSION_ID < 80000
 	zend_hash_init(&PTHREADS_ZG(filenames), 15, NULL, NULL, 0);
-#endif
 
 	PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
@@ -751,9 +749,7 @@ PHP_RINIT_FUNCTION(pthreads) {
 
 PHP_RSHUTDOWN_FUNCTION(pthreads) {
 	zend_hash_destroy(&PTHREADS_ZG(resolve));
-#if PHP_VERSION_ID < 80000
 	zend_hash_destroy(&PTHREADS_ZG(filenames));
-#endif
 
 	return SUCCESS;
 }
