@@ -12,6 +12,6 @@ $task = new class extends Thread {
     }
 };
 $task->start() && $task->join();
---EXPECT--
-object(class@anonymous)#2 (0) {
+--EXPECTF--
+object(%s@anonymous)#2 (0) {
 }

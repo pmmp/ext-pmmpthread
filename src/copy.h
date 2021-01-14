@@ -20,6 +20,12 @@
 
 #include <src/pthreads.h>
 
+#if PHP_VERSION_ID >= 80000
+#include <Zend/zend_attributes.h>
+/* {{{ */
+HashTable* pthreads_copy_attributes(HashTable *attributes); /* }}} */
+#endif
+
 /* {{{ */
 zend_function* pthreads_copy_function(const zend_function *function); /* }}} */
 

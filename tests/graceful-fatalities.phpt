@@ -16,7 +16,7 @@ $test->join();
 var_dump($test->isTerminated());
 ?>
 --EXPECTF--
-Fatal error: Uncaught Error: Class 'MY' not found in %s:5
+Fatal error: Uncaught Error: Class %cMY%c not found in %s:5
 Stack trace:
 #0 [internal function]: TestThread->run()
 #1 {main}

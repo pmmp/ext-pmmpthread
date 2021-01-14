@@ -1,7 +1,7 @@
 --TEST--
 Test that typed properties on copied classes work properly
 --SKIPIF--
-<?php if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+ only"); ?>
+<?php if(PHP_VERSION_ID < 70400 || PHP_VERSION_ID >= 80000) die("skip: this test is for 7.4 only"); ?>
 --FILE--
 <?php
 

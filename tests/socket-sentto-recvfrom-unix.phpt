@@ -64,6 +64,6 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 --EXPECTF--
 string(%d) "Unable to create socket (%d): Protocol not supported"
 bool(false)
-ThreadedSocket::sendto() expects at least 4 parameters, 3 given
+ThreadedSocket::sendto() expects at least 4 %s, 3 given
 bool(false)
 Received Ping!

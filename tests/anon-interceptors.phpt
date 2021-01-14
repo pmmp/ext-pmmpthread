@@ -43,13 +43,13 @@ class Test extends \Thread {
 }
 $thread = new Test();
 $thread->start() && $thread->join();
---EXPECT--
+--EXPECTF--
 string(16) "Foo::__construct"
 string(16) "Bar::__construct"
 string(4) "buzz"
 string(11) "hello world"
 string(11) "hello world"
-object(class@anonymous)#3 (1) {
+object(%s@anonymous)#3 (1) {
   ["buzz"]=>
   string(11) "hello world"
 }

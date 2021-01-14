@@ -33,4 +33,4 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
     $socket->close();
 ?>
 --EXPECTF--
-ThreadedSocket::connect() expects at least 1 parameter, 0 given
+ThreadedSocket::connect() expects at least 1 %s, 0 given

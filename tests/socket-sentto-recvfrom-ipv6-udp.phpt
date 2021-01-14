@@ -60,6 +60,6 @@ require 'ipv6_skipif.inc';
 --EXPECTF--
 bool(false)
 Port must be provided for AF_INET6
-ThreadedSocket::recvfrom() expects at least 4 parameters, 3 given
+ThreadedSocket::recvfrom() expects at least 4 %s, 3 given
 Port must be provided for AF_INET6
 Received Ping! from remote address ::1 and remote port 1223

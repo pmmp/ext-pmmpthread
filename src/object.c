@@ -34,6 +34,8 @@
 #	include <src/prepare.h>
 #endif
 
+#include <src/compat.h>
+
 /* {{{ */
 extern zend_module_entry pthreads_module_entry; /* }}} */
 
@@ -187,18 +189,9 @@ int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *bu
 	if (address->original_zobj != NULL) {
 		address = address->original_zobj;
 	}
-#ifdef _WIN64
-	(*buflen) = snprintf(NULL, 0, ":%I64u:", (unsigned __int64) address);
-#else
-	(*buflen) = snprintf(NULL, 0, ":%lu:", (long unsigned int) address);
-#endif
+	(*buflen) = snprintf(NULL, 0, ":%" PRIuPTR ":", (uintptr_t) address);
 	(*buffer) = emalloc((*buflen) + 1);
-	sprintf(
-#ifdef _WIN64
-		(char*) (*buffer), ":%I64u:", (unsigned __int64) address);
-#else
-		(char*) (*buffer), ":%lu:", (long unsigned int) address);
-#endif
+	sprintf((char*) (*buffer), ":%" PRIuPTR ":", (uintptr_t) address);
 	(*buffer)[(*buflen)] = 0;
 
 	return SUCCESS;
@@ -208,11 +201,7 @@ int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *bu
 int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsigned char *buffer, size_t buflen, zend_unserialize_data *data) {
 	pthreads_zend_object_t *address = NULL;
 
-#ifdef _WIN64
-	if (!sscanf((const char*) buffer, ":%I64u:", (unsigned __int64*)&address)) {
-#else
-	if (!sscanf((const char*) buffer, ":%lu:", (long unsigned int*)&address)) {
-#endif
+	if (!sscanf((const char*) buffer, ":%" PRIuPTR ":", (uintptr_t*)&address)) {
 		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
 			"pthreads detected an attempt to connect to a corrupted object");
 		return FAILURE;
@@ -415,10 +404,10 @@ void pthreads_base_free(zend_object *object) {
 } /* }}} */
 
 /* {{{ */
-HashTable* pthreads_base_gc(zval *object, zval **table, int *n) {
+HashTable* pthreads_base_gc(pthreads_handler_context *object, zval **table, int *n) {
 	*table = NULL;
 	*n = 0;
-	return Z_OBJ_P(object)->properties;
+	return PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object)->properties;
 } /* }}} */
 
 /* {{{ */
@@ -521,7 +510,9 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 				call.fci.size = sizeof(zend_fcall_info);
 				call.fci.retval = &zresult;
 				call.fci.object = &connection->std;
+#if PHP_VERSION_ID < 80000
 				call.fci.no_separation = 1;
+#endif
 				call.fcc.object = &connection->std;
 				call.fcc.calling_scope = connection->std.ce;
 				call.fcc.called_scope = connection->std.ce;
@@ -535,6 +526,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 					zend_try_exception_handler();
 					if (EG(exception)) {
 						zend_exception_error(EG(exception), E_ERROR);
+						pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
 					}
 				}
 			}

@@ -79,6 +79,11 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 		memcpy(rc, zc, sizeof(zend_class_constant));
 
+#if PHP_VERSION_ID >= 80000
+		if (zc->attributes) {
+			rc->attributes = pthreads_copy_attributes(zc->attributes);
+		}
+#endif
 		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
 			if (zc->doc_comment != NULL) {
 				rc->doc_comment = zend_string_new(zc->doc_comment);
@@ -190,13 +195,42 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
-#if PHP_VERSION_ID >= 70400
+#if PHP_VERSION_ID >= 70400 && PHP_VERSION_ID < 80000
 		if (ZEND_TYPE_IS_NAME(info->type)) {
 			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
 		} else if (ZEND_TYPE_IS_CE(info->type)) {
 			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
+		}
+#elif PHP_VERSION_ID >= 80000
+		memcpy(&dup->type, &info->type, sizeof(zend_type));
+
+		//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
+		if (ZEND_TYPE_HAS_LIST(info->type)) {
+			const zend_type_list *old_list = ZEND_TYPE_LIST(info->type);
+			zend_type_list *new_list;
+			if (ZEND_TYPE_USES_ARENA(info->type)) {
+				new_list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(old_list->num_types));
+			} else {
+				new_list = emalloc(ZEND_TYPE_LIST_SIZE(old_list->num_types));
+			}
+			memcpy(new_list, old_list, ZEND_TYPE_LIST_SIZE(old_list->num_types));
+			ZEND_TYPE_SET_PTR(dup->type, new_list);
+		}
+
+		zend_type *single_type;
+		ZEND_TYPE_FOREACH(dup->type, single_type) {
+			if (ZEND_TYPE_HAS_NAME(*single_type)) {
+				ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
+			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
+				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
+			}
+		} ZEND_TYPE_FOREACH_END();
+#endif
+#if PHP_VERSION_ID >= 80000
+		if (info->attributes) {
+			dup->attributes = pthreads_copy_attributes(info->attributes);
 		}
 #endif
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
@@ -279,8 +313,13 @@ while(0)
 	FIND_AND_SET(__isset, "__isset");
 	FIND_AND_SET(__call, "__call");
 	FIND_AND_SET(__callstatic, "__callstatic");
+#if PHP_VERSION_ID >= 80000
+	FIND_AND_SET(__serialize, "__serialize");
+	FIND_AND_SET(__unserialize, "__unserialize");
+#else
 	FIND_AND_SET(serialize_func, "serialize");
 	FIND_AND_SET(unserialize_func, "unserialize");
+#endif
 	FIND_AND_SET(__tostring, "__tostring");
 	FIND_AND_SET(destructor, "__destruct");
 #undef FIND_AND_SET
@@ -441,15 +480,25 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	   (candidate->info.user.doc_comment)) {
 			prepared->info.user.doc_comment = zend_string_new(candidate->info.user.doc_comment);
 		} else prepared->info.user.doc_comment = NULL;
+#if PHP_VERSION_ID >= 80000
+	if (candidate->attributes) {
+		prepared->attributes = pthreads_copy_attributes(candidate->attributes);
+	}
+#endif
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
-
+#if PHP_VERSION_ID < 80000
 		if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), candidate->info.user.filename))) {
 			filename_copy = zend_string_new(candidate->info.user.filename);
 			zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 			zend_string_release(filename_copy);
 		}
+#else
+		//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer interned
+		//TODO: explore interning them anyway (but I don't think anyone is going to care ...)
+		filename_copy = zend_string_new(candidate->info.user.filename);
+#endif
 
 		prepared->info.user.filename = filename_copy;
 	}

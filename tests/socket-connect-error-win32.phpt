@@ -31,8 +31,8 @@ display_errors=1
   try {
     // Test with non integer parameters
     $server = new ThreadedSocket(array(), 1, 1);
-  } catch(Throwable $throwable) {
-    var_dump($throwable->getMessage());
+  } catch(\TypeError $throwable) {
+    echo "bad types for new ThreadedSocket()" . PHP_EOL;
   }
 
   try {
@@ -44,8 +44,7 @@ display_errors=1
   
 ?>
 --EXPECTF--
-ThreadedSocket::__construct() expects exactly 3 parameters, 0 given
-ThreadedSocket::__construct() expects exactly 3 parameters, 2 given
-string(%d) "Argument 1 passed to ThreadedSocket::__construct() must be of the type %s, array given"
-string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used.
-"
+ThreadedSocket::__construct() expects exactly 3 %s, 0 given
+ThreadedSocket::__construct() expects exactly 3 %s, 2 given
+bad types for new ThreadedSocket()
+string(%d) "Unable to create socket (%d): An address incompatible with the requested protocol was used"

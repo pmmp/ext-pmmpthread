@@ -70,6 +70,7 @@
 		char *estr = (eno) != SUCCESS ? \
 			php_socket_strerror((eno), NULL, 0) : \
 			NULL; \
+		pthreads_strip_socket_error(estr); \
 		zend_throw_exception_ex(spl_ce_RuntimeException, (eno), \
 			"%s (%d): %s", (msg), (eno), estr ? estr : "unknown"); \
 		if ((eno) != SUCCESS) { \
@@ -86,6 +87,15 @@
 	PTHREADS_HANDLE_SOCKET_ERROR(eno, msg); \
 } while(0)
 
+static void pthreads_strip_socket_error(char *estr) {
+#ifdef PHP_WIN32
+	if (estr) {
+		size_t offset;
+		for (offset = strlen(estr) - 1; offset >= 0 && (estr[offset] == '\r' || estr[offset] == '\n' || estr[offset] == '.'); offset--);
+		estr[offset + 1] = '\0';
+	}
+#endif
+}
 pthreads_socket_t* pthreads_socket_alloc(void) {
 	return (pthreads_socket_t*) ecalloc(1, sizeof(pthreads_socket_t));
 }
@@ -735,13 +745,9 @@ static int pthreads_sockets_from_fd_set(zval *sockets, fd_set *fds) /* {{{ */
 
 		if (PHP_SAFE_FD_ISSET(threaded->store.sock->fd, fds)) {
 			if (key) {
-				if (!add_assoc_zval_ex(&set, ZSTR_VAL(key), ZSTR_LEN(key), element)) {
-					continue;
-				}
+				add_assoc_zval_ex(&set, ZSTR_VAL(key), ZSTR_LEN(key), element);
 			} else {
-				if (!add_index_zval(&set, idx, element)) {
-					continue;
-				}
+				add_index_zval(&set, idx, element);
 			}
 
 			Z_ADDREF_P(element);
