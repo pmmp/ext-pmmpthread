@@ -270,7 +270,13 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
 	}
 #else
-	op_array->run_time_cache = NULL;
+	if(op_array->fn_flags & ZEND_ACC_NO_RT_ARENA) {
+		//if we don't initialize this, zend will do it for us, but it won't pay any attention to NO_RT_ARENA
+		//which will cause faults later down the line because it _does_ check when it cleans up after itself
+		op_array->run_time_cache = emalloc(op_array->cache_size);
+	} else {
+		op_array->run_time_cache = NULL;
+	}
 #endif
 
 	if (op_array->doc_comment) {
