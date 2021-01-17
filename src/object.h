@@ -29,6 +29,7 @@
 #include <src/compat.h>
 
 /* {{{ */
+zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry);
 zend_object* pthreads_threaded_ctor(zend_class_entry *entry);
 zend_object* pthreads_worker_ctor(zend_class_entry *entry);
 zend_object* pthreads_thread_ctor(zend_class_entry *entry);

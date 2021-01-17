@@ -35,7 +35,7 @@ ZEND_BEGIN_ARG_INFO_EX(Worker_isShutdown, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Worker_stack, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, work, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, work, ThreadedBase, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_unstack, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -76,7 +76,7 @@ zend_function_entry pthreads_worker_methods[] = {
 	PHP_FE_END
 };
 
-/* {{{ proto int Worker::stack(Threaded $work)
+/* {{{ proto int Worker::stack(ThreadedBase $work)
 	Pushes an item onto the stack, returns the size of stack */
 PHP_METHOD(Worker, stack)
 {
@@ -90,7 +90,7 @@ PHP_METHOD(Worker, stack)
 		return;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_base_entry) != SUCCESS) {
 		return;
 	}
 

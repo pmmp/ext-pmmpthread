@@ -635,7 +635,7 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 				break;
 			}
 
-			if (instanceof_function(Z_OBJCE_P(unstore), pthreads_threaded_entry)) {
+			if (instanceof_function(Z_OBJCE_P(unstore), pthreads_threaded_base_entry)) {
 				pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(unstore));
 				if (threaded->original_zobj != NULL) {
 					threaded = threaded->original_zobj;
@@ -778,7 +778,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 		break;
 
 		case IS_OBJECT:
-			if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_entry)) {
+			if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_base_entry)) {
 				pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), NULL, dest);
 				result = SUCCESS;
 			} else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
@@ -929,7 +929,7 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 
 	switch (Z_TYPE_P(from)) {
 		case IS_OBJECT: {
-			if (IS_PTHREADS_OBJECT(from)) {
+			if (IS_PTHREADS_THREADED_CLASS(Z_OBJCE_P(from))) {
 				pthreads_object_t* threaded[2] = {PTHREADS_FETCH_TS_FROM(destination), PTHREADS_FETCH_TS_FROM(Z_OBJ_P(from))};
 
 				if (pthreads_monitor_lock(threaded[0]->monitor)) {
