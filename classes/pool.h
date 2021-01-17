@@ -149,13 +149,6 @@ PHP_METHOD(Pool, submit) {
 		return;
 	}
 
-	if (!instanceof_function(Z_OBJCE_P(task), pthreads_threaded_entry)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException,
-			0, "only Threaded objects may be submitted, %s is not Threaded",
-			ZSTR_VAL(Z_OBJCE_P(task)->name));
-		return;
-	}
-
 	last = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("last"), 1, &tmp[0]);
 	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
 	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[2]);
