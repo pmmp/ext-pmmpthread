@@ -438,7 +438,7 @@ int pthreads_store_shift(zend_object *object, zval *member) {
 		zend_hash_internal_pointer_reset_ex(&ts_obj->store.props->hash, &position);
 		if ((storage = zend_hash_get_current_data_ptr_ex(&ts_obj->store.props->hash, &position))) {
 			zend_hash_get_current_key_zval_ex(&ts_obj->store.props->hash, &key, &position);
-			zend_bool was_pthreads_object = pthreads_store_is_pthreads_object(object, &key);
+			zend_bool was_pthreads_object = storage->type == IS_PTHREADS;
 
 			pthreads_store_convert(storage, member);
 			if (Z_TYPE(key) == IS_LONG) {
@@ -483,7 +483,7 @@ int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve
 			zend_hash_get_current_key_zval_ex(&ts_obj->store.props->hash, &key, &position);
 
 			if (!removed_pthreads_object) {
-				removed_pthreads_object = pthreads_store_is_pthreads_object(object, &key);
+				removed_pthreads_object = storage->type == IS_PTHREADS;
 			}
 			pthreads_store_convert(storage, &zv);
 			if (Z_TYPE(key) == IS_LONG) {
@@ -528,7 +528,7 @@ int pthreads_store_pop(zend_object *object, zval *member) {
 		if ((storage = zend_hash_get_current_data_ptr_ex(&ts_obj->store.props->hash, &position))) {
 			zend_hash_get_current_key_zval_ex(&ts_obj->store.props->hash, &key, &position);
 
-			zend_bool was_pthreads_object = pthreads_store_is_pthreads_object(object, &key);
+			zend_bool was_pthreads_object = storage->type == IS_PTHREADS;
 			pthreads_store_convert(storage, member);
 
 			if (Z_TYPE(key) == IS_LONG) {
