@@ -91,13 +91,6 @@ class ThreadedBase
     public function getRefCount() {}
 
     /**
-     * A default method for marking an object as ready to be destroyed
-     *
-     * @return bool(true) The referenced object can be destroyed
-     */
-    public function isGarbage() : bool{}
-
-    /**
      * Tell if the referenced object is executing
      *
      * @link http://www.php.net/manual/en/threaded.isrunning.php

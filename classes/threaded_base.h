@@ -29,7 +29,6 @@ PHP_METHOD(ThreadedBase, isTerminated);
 
 PHP_METHOD(ThreadedBase, synchronized);
 PHP_METHOD(ThreadedBase, extend);
-PHP_METHOD(ThreadedBase, isGarbage);
 
 PHP_METHOD(ThreadedBase, addRef);
 PHP_METHOD(ThreadedBase, delRef);
@@ -66,9 +65,6 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_getRefCount, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(ThreadedBase_isGarbage, 0, 0, _IS_BOOL, 0)
-ZEND_END_ARG_INFO()
-
 extern zend_function_entry pthreads_threaded_base_methods[];
 #else
 #	ifndef HAVE_PTHREADS_CLASS_THREADED_BASE
@@ -81,7 +77,6 @@ zend_function_entry pthreads_threaded_base_methods[] = {
 	PHP_ME(ThreadedBase, isRunning, ThreadedBase_isRunning, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, isTerminated, ThreadedBase_isTerminated, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, synchronized, ThreadedBase_synchronized, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, isGarbage, ThreadedBase_isGarbage, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, addRef, ThreadedBase_addRef, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, delRef, ThreadedBase_delRef, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, getRefCount, ThreadedBase_getRefCount, ZEND_ACC_PUBLIC)
@@ -185,14 +180,6 @@ PHP_METHOD(ThreadedBase, synchronized)
 	}
 
 	zend_fcall_info_args_clear(&call.fci, 1);
-} /* }}} */
-
-/* {{{ proto ThreadedBase::isGarbage(void) : bool */
-PHP_METHOD(ThreadedBase, isGarbage) {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
-	RETURN_TRUE;
 } /* }}} */
 
 /* {{{ proto bool ThreadedBase::extend(string class) */

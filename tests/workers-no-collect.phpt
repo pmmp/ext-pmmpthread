@@ -10,9 +10,7 @@ class Test extends Thread {
 	}
 	
 	public function run() {
-		$this->worker->collect(function($t){
-			return $t->isGarbage();
-		});
+		$this->worker->collect();
 	}
 }
 
@@ -23,9 +21,9 @@ $test->start();
 $test->join();
 ?>
 --EXPECTF--
-Fatal error: Uncaught RuntimeException: only the creator of this Worker may call collect in %s:10
+Fatal error: Uncaught RuntimeException: only the creator of this Worker may call collect in %s:8
 Stack trace:
-#0 %s(10): Worker->collect(Object(Closure))
+#0 %s(8): Worker->collect()
 #1 [internal function]: Test->run()
 #2 {main}
-  thrown in %s on line 10
+  thrown in %s on line 8

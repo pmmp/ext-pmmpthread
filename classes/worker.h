@@ -217,7 +217,7 @@ PHP_METHOD(Worker, collector) {
 		return;
 	}
 
-	zend_call_method_with_0_params(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(collectable), Z_OBJCE_P(collectable), NULL, "isgarbage", return_value);
+	RETURN_TRUE;
 } /* }}} */
 
 /* {{{ proto int Worker::collect([callable collector]) */
