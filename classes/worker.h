@@ -20,19 +20,11 @@
 
 #include <src/compat.h>
 
-PHP_METHOD(Worker, shutdown);
-PHP_METHOD(Worker, isShutdown);
 PHP_METHOD(Worker, stack);
 PHP_METHOD(Worker, unstack);
 PHP_METHOD(Worker, getStacked);
 PHP_METHOD(Worker, collect);
 PHP_METHOD(Worker, collector);
-
-ZEND_BEGIN_ARG_INFO_EX(Worker_shutdown, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Worker_isShutdown, 0, 0, 0)
-ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Worker_stack, 0, 0, 1)
 	ZEND_ARG_OBJ_INFO(0, work, ThreadedBase, 0)
@@ -66,11 +58,11 @@ extern zend_function_entry pthreads_worker_methods[];
 #	ifndef HAVE_PTHREADS_CLASS_WORKER
 #	define HAVE_PTHREADS_CLASS_WORKER
 zend_function_entry pthreads_worker_methods[] = {
-	PHP_ME(Worker, shutdown, Worker_shutdown, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(Thread, shutdown, join, Thread_join, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, stack, Worker_stack, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, unstack, Worker_unstack, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, getStacked, Worker_getStacked, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, isShutdown, Worker_isShutdown, ZEND_ACC_PUBLIC)
+	PHP_MALIAS(Thread, isShutdown, isJoined, Thread_isJoined, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collect, Worker_collect, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, collector, Worker_collector, ZEND_ACC_PUBLIC)
 	PHP_FE_END
@@ -125,24 +117,6 @@ PHP_METHOD(Worker, getStacked)
 
 	RETURN_LONG(pthreads_stack_size(thread->stack));
 }
-
-/* {{{ proto Worker::isShutdown()
-	Will return true if the Worker has been shutdown */
-PHP_METHOD(Worker, isShutdown)
-{
-	pthreads_object_t* thread = PTHREADS_FETCH_TS;
-
-	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_JOINED));
-} /* }}} */
-
-/* {{{ proto boolean Worker::shutdown()
-		Will wait for execution of all Stackables to complete before shutting down the Worker */
-PHP_METHOD(Worker, shutdown)
-{
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
-
-	RETURN_BOOL(pthreads_join(thread));
-} /* }}} */
 
 /* {{{ */
 static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *collectable) {
