@@ -144,20 +144,6 @@ PHP_METHOD(Worker, shutdown)
 	RETURN_BOOL(pthreads_join(thread));
 } /* }}} */
 
-/* {{{ proto long Worker::getThreadId()
-	Will return the identifier of the referenced Worker */
-PHP_METHOD(Worker, getThreadId)
-{
-	ZVAL_LONG(return_value, PTHREADS_FETCH_TS->local.id);
-} /* }}} */
-
-/* {{{ proto long Worker::getCreatorId()
-	Will return the identifier of the thread ( or process ) that created the referenced Worker */
-PHP_METHOD(Worker, getCreatorId)
-{
-	ZVAL_LONG(return_value, PTHREADS_FETCH_TS->creator.id);
-} /* }}} */
-
 /* {{{ */
 static zend_bool pthreads_worker_running_function(zend_object *std, zval *value) {
 	pthreads_object_t *worker = PTHREADS_FETCH_TS_FROM(std),
