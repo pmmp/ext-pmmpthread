@@ -292,7 +292,6 @@ PHP_METHOD(Pool, collect) {
 			&thread->std,
 			thread->ts_obj->stack,
 			&call,
-			pthreads_worker_running_function,
 			pthreads_worker_collect_function);
 		if (!ZEND_NUM_ARGS())
 			PTHREADS_WORKER_COLLECTOR_DTOR(call);
