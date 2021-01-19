@@ -113,7 +113,9 @@ void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /*
 /* {{{ */
 static inline void _pthreads_store_bump_modcount_nolock(pthreads_zend_object_t *threaded) {
 	if (threaded->local_props_modcount == threaded->ts_obj->store.props->modcount) {
-		/* It's possible we may have caused a modification via a connection whose property table was not in sync. This is OK for writes, because these cases usually cause destruction of outdated caches anyway, but we have to avoid incorrectly marking the local table as in-sync.
+		/* It's possible we may have caused a modification via a connection whose property table was not in sync. This is OK
+		 * for writes, because these cases usually cause destruction of outdated caches anyway, but we have to avoid
+		 * incorrectly marking the local table as in-sync.
 		 */
 		threaded->local_props_modcount++;
 	}
