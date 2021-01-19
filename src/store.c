@@ -272,23 +272,21 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		pthreads_store_sync_local_properties(threaded);
-		pthreads_monitor_unlock(ts_obj->monitor);
-	}
 
-	//lookup threaded objects from local property table cache
-	if (Z_TYPE(member) == IS_LONG) {
-		property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
-	} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
+		//lookup threaded objects from local property table cache
+		if (Z_TYPE(member) == IS_LONG) {
+			property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
+		} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
 
-	if (property && IS_PTHREADS_OBJECT(property)) {
-		ZVAL_COPY(read, property);
-		if (coerced) {
-			zval_ptr_dtor(&member);
+		if (property && IS_PTHREADS_OBJECT(property)) {
+			pthreads_monitor_unlock(ts_obj->monitor);
+			ZVAL_COPY(read, property);
+			if (coerced) {
+				zval_ptr_dtor(&member);
+			}
+			return SUCCESS;
 		}
-		return SUCCESS;
-	}
 
-	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		pthreads_storage *storage;
 
 		if (Z_TYPE(member) == IS_LONG) {
