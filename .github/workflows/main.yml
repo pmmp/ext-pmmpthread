@@ -13,6 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        image: [ubuntu-18.04, ubuntu-20.04]
         php: [7.3.25, 7.4.13, 8.0.0]
         opcache: [0, 1]
         zend-alloc: [0, 1]
@@ -27,7 +28,7 @@ jobs:
             zend-alloc: 1
             jit: 1205
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.image }}
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -38,7 +39,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php--${{ matrix.php }}
+          key: php--${{ matrix.php }}-${{ matrix.image }}
           
       - name: Clone php-build repository
         if: steps.php-build-cache.outputs.cache-hit != 'true'
