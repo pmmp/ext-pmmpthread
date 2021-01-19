@@ -27,7 +27,7 @@ jobs:
             zend-alloc: 1
             jit: 1205
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it

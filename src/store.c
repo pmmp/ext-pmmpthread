@@ -77,34 +77,37 @@ void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /*
 	//TODO: not sure if this is necessary if no modifications
 	rebuild_object_properties(&threaded->std);
 
-	if (threaded->local_props_modcount != ts_obj->store.props->modcount) {
-		ZEND_HASH_FOREACH_KEY_VAL(threaded->std.properties, idx, name, val) {
-			if (!name) {
-				ts_val = zend_hash_index_find_ptr(&ts_obj->store.props->hash, idx);
-			} else {
-				ts_val = zend_hash_find_ptr(&ts_obj->store.props->hash, name);
-			}
 
-			remove = 1;
-			if (ts_val && ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
-				pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
-				pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
-
-				if (threadedStorage->monitor == threadedProperty->monitor) {
-					remove = 0;
-				}
-			}
-
-			if (remove) {
-				if (!name) {
-					zend_hash_index_del(threaded->std.properties, idx);
-				} else {
-					zend_hash_del(threaded->std.properties, name);
-				}
-			}
-		} ZEND_HASH_FOREACH_END();
-		threaded->local_props_modcount = ts_obj->store.props->modcount;
+	if (threaded->local_props_modcount == ts_obj->store.props->modcount) {
+		return;
 	}
+
+	ZEND_HASH_FOREACH_KEY_VAL(threaded->std.properties, idx, name, val) {
+		if (!name) {
+			ts_val = zend_hash_index_find_ptr(&ts_obj->store.props->hash, idx);
+		} else {
+			ts_val = zend_hash_find_ptr(&ts_obj->store.props->hash, name);
+		}
+
+		remove = 1;
+		if (ts_val && ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
+			pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
+			pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
+
+			if (threadedStorage->monitor == threadedProperty->monitor) {
+				remove = 0;
+			}
+		}
+
+		if (remove) {
+			if (!name) {
+				zend_hash_index_del(threaded->std.properties, idx);
+			} else {
+				zend_hash_del(threaded->std.properties, name);
+			}
+		}
+	} ZEND_HASH_FOREACH_END();
+	threaded->local_props_modcount = ts_obj->store.props->modcount;
 } /* }}} */
 
 /* {{{ */
