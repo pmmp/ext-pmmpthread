@@ -34,6 +34,10 @@ PHP_METHOD(ThreadedBase, addRef);
 PHP_METHOD(ThreadedBase, delRef);
 PHP_METHOD(ThreadedBase, getRefCount);
 
+#if PHP_VERSION_ID >= 80000
+PHP_METHOD(ThreadedBase, getIterator);
+#endif
+
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_run, 0, 0, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_wait, 0, 0, 0)
@@ -65,6 +69,11 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_getRefCount, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+#if PHP_VERSION_ID >= 80000
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(ThreadedBase_getIterator, 0, 0, Iterator, 0)
+ZEND_END_ARG_INFO()
+#endif
+
 extern zend_function_entry pthreads_threaded_base_methods[];
 #else
 #	ifndef HAVE_PTHREADS_CLASS_THREADED_BASE
@@ -81,6 +90,9 @@ zend_function_entry pthreads_threaded_base_methods[] = {
 	PHP_ME(ThreadedBase, delRef, ThreadedBase_delRef, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, getRefCount, ThreadedBase_getRefCount, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, extend, ThreadedBase_extend, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+#if PHP_VERSION_ID >= 80000
+	PHP_ME(ThreadedBase, getIterator, ThreadedBase_getIterator, ZEND_ACC_PUBLIC)
+#endif
 	PHP_FE_END
 };
 
@@ -229,6 +241,15 @@ PHP_METHOD(ThreadedBase, extend) {
 
 	RETURN_BOOL(instanceof_function(ce, parent));
 } /* }}} */
+
+#if PHP_VERSION_ID >= 80000
+/* {{{ proto Iterator ThreadedBase::getIterator() */
+PHP_METHOD(ThreadedBase, getIterator)
+{
+	ZEND_PARSE_PARAMETERS_NONE();
+	zend_create_internal_iterator_zval(return_value, getThis());
+} /* }}} */
+#endif
 
 #	endif
 #endif

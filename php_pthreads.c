@@ -150,13 +150,9 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
 	pthreads_threaded_base_entry->serialize = pthreads_threaded_serialize;
 	pthreads_threaded_base_entry->unserialize = pthreads_threaded_unserialize;
-
-	INIT_CLASS_ENTRY(ce, "Threaded", pthreads_threaded_methods);
-	pthreads_threaded_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
-	pthreads_threaded_entry->create_object = pthreads_threaded_ctor;
-	pthreads_threaded_entry->get_iterator = pthreads_object_iterator_create;
+	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
 	zend_class_implements(
-		pthreads_threaded_entry,
+		pthreads_threaded_base_entry,
 		1,
 #if PHP_VERSION_ID >= 80000
 		zend_ce_aggregate
@@ -164,6 +160,9 @@ PHP_MINIT_FUNCTION(pthreads)
 		zend_ce_traversable
 #endif
 	);
+	INIT_CLASS_ENTRY(ce, "Threaded", pthreads_threaded_methods);
+	pthreads_threaded_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+	pthreads_threaded_entry->create_object = pthreads_threaded_ctor;
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
