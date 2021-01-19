@@ -85,6 +85,6 @@ object(Volatile)#4 (0) {
 }
 object(Volatile)#4 (0) {
 }
-object(Node)#6 (0) {
+object(Node)#4 (0) {
 }
 

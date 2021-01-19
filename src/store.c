@@ -70,16 +70,35 @@ void pthreads_store_sync(zend_object *object) { /* {{{ */
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_ulong idx;
 	zend_string *name;
+	zval *val;
+	pthreads_storage *ts_val;
+	zend_bool remove;
 
 	rebuild_object_properties(&threaded->std);
 
-	ZEND_HASH_FOREACH_KEY(threaded->std.properties, idx, name) {
+	ZEND_HASH_FOREACH_KEY_VAL(threaded->std.properties, idx, name, val) {
 		if (!name) {
-			if (!zend_hash_index_exists(ts_obj->store.props, idx))
-				zend_hash_index_del(threaded->std.properties, idx);
+			ts_val = zend_hash_index_find_ptr(ts_obj->store.props, idx);
 		} else {
-			if (!zend_hash_exists(ts_obj->store.props, name))
+			ts_val = zend_hash_find_ptr(ts_obj->store.props, name);
+		}
+
+		remove = 1;
+		if (ts_val && ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
+			pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
+			pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
+
+			if (threadedStorage->monitor == threadedProperty->monitor) {
+				remove = 0;
+			}
+		}
+
+		if (remove) {
+			if (!name) {
+				zend_hash_index_del(threaded->std.properties, idx);
+			} else {
 				zend_hash_del(threaded->std.properties, name);
+			}
 		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
