@@ -76,14 +76,6 @@ class ThreadedBase
     public function delRef() {}
 
     /**
-     * Runtime extending of the Threaded class
-     *
-     * @param string $class The name of the class to extend Threaded
-     * @return bool A boolean indication of success
-     */
-    public static function extend($class) {}
-
-    /**
      * Gets the object's reference count
      *
      * @return int The object's reference count
