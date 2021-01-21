@@ -26,10 +26,6 @@ PHP_METHOD(Threaded, chunk);
 PHP_METHOD(Threaded, pop);
 PHP_METHOD(Threaded, count);
 
-#if PHP_VERSION_ID >= 80000
-PHP_METHOD(Threaded, getIterator);
-#endif
-
 ZEND_BEGIN_ARG_INFO_EX(Threaded_merge, 0, 0, 1)
 	ZEND_ARG_INFO(0, from)
 	ZEND_ARG_INFO(0, overwrite)
