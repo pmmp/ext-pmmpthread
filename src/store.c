@@ -303,7 +303,11 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 		} else storage = zend_hash_find_ptr(ts_obj->store.props, Z_STR(member));
 
 		if (storage) {
-			result = pthreads_store_convert(storage, read);
+			/* strictly only reads are supported */
+			if (storage->type != IS_PTHREADS && type != BP_VAR_R && type != BP_VAR_IS){
+				zend_throw_error(zend_ce_error, "Indirect modification of non-Threaded members of Threaded objects is not supported");
+				result = FAILURE;
+			} else result = pthreads_store_convert(storage, read);
 		}
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
