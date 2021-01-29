@@ -71,7 +71,6 @@ zend_module_entry pthreads_module_entry = {
 
 zend_class_entry *pthreads_threaded_base_entry;
 zend_class_entry *pthreads_threaded_entry;
-zend_class_entry *pthreads_volatile_entry;
 zend_class_entry *pthreads_thread_entry;
 zend_class_entry *pthreads_worker_entry;
 zend_class_entry *pthreads_pool_entry;
@@ -166,9 +165,6 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
-
-	INIT_CLASS_ENTRY(ce, "Volatile", NULL);
-	pthreads_volatile_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
 
 	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
 	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);

@@ -19,16 +19,10 @@ try{
 	echo $e->getMessage() . PHP_EOL;
 }
 
-$threaded->volatile = new \Volatile;
-$threaded->volatile->something = "this is ok";
-echo $threaded->volatile->something . PHP_EOL;
-
-
 $threaded->threaded = new \Threaded;
 $threaded->threaded->something = "this is also ok";
 echo $threaded->threaded->something . PHP_EOL;
 ?>
 --EXPECT--
 Indirect modification of non-Threaded members of Threaded is not supported
-this is ok
 this is also ok

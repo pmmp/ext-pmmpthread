@@ -1,7 +1,7 @@
 --TEST--
 Test Explicit Cast
 --DESCRIPTION--
-Normally, arrays are cast to Volatile objects when set as a member of a Threaded object.
+Normally, arrays are cast to Threaded objects when set as a member of a Threaded object.
 Casting the array as you are setting will override this behaviour, this is useful when passing an array out of a thread.
 For an example of that, see examples/ClosureFuture.php
 --FILE--

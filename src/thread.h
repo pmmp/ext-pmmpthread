@@ -30,9 +30,7 @@
 #	include <src/socket.h>
 #endif
 
-#ifndef HAVE_PTHREADS_STORE_H
-#	include <src/store.h>
-#endif
+#include <src/store_types.h>
 
 typedef struct _pthreads_ident_t {
 	zend_ulong id;
@@ -64,6 +62,7 @@ struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
 	pthreads_ident_t owner;
 	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
+	zend_long local_props_modcount;
 	zend_object std;
 }; /* }}} */
 
