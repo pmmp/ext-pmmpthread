@@ -849,10 +849,9 @@ static HashTable *pthreads_store_copy_hash(HashTable *source) {
 	Bucket *p;
 	zval newzval;
 
-	//TODO: this "works", but isn't suitable for constants (they should be allocated with persistence)
-	//this is an improvement compared to the old serialize hack, but it still needs to be cleaned up...
-	HashTable *ht = (HashTable*) emalloc(sizeof(HashTable));
-	zend_hash_init(ht, source->nNumUsed, NULL, ZVAL_PTR_DTOR, 0);
+	//TODO: what about IS_ARRAY_IMMUTABLE?
+	HashTable *ht = (HashTable*) pemalloc(sizeof(HashTable), GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
+	zend_hash_init(ht, source->nNumUsed, NULL, source->pDestructor, GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 
 	ZEND_HASH_FOREACH_BUCKET(source, p){
 		if(pthreads_store_copy_zval(&newzval, &p->val) == FAILURE){
