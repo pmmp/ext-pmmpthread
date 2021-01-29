@@ -29,6 +29,6 @@ $threaded->threaded->something = "this is also ok";
 echo $threaded->threaded->something . PHP_EOL;
 ?>
 --EXPECT--
-Indirect modification of non-Threaded members of Threaded objects is not supported
+Indirect modification of non-Threaded members of Threaded is not supported
 this is ok
 this is also ok
