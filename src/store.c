@@ -204,39 +204,40 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 					case IS_TRUE:
 					case IS_FALSE:
 						if (storage->simple.lval == 0)
-						isset = 0;
-					break;
+							isset = 0;
+						break;
 
 					case IS_ARRAY:
 						if (storage->exists == 0)
-						isset = 0;
-					break;
-
-					case IS_STRING: switch (storage->length) {
-						case 0:
-						isset = 0;
-						break;
-
-						case 1:
-						if (memcmp(storage->data, "0", 1) == SUCCESS)
 							isset = 0;
 						break;
-					} break;
+
+					case IS_STRING:
+						switch (storage->length) {
+							case 0:
+								isset = 0;
+								break;
+
+							case 1:
+								if (memcmp(storage->data, "0", 1) == SUCCESS)
+									isset = 0;
+								break;
+						} break;
 
 					case IS_DOUBLE:
 						if (storage->simple.dval == 0.0)
-						isset = 0;
-					break;
+							isset = 0;
+						break;
 
 					case IS_NULL:
 						isset = 0;
-					break;
+						break;
 				}
 			} else if (has_set_exists == ZEND_PROPERTY_ISSET) {
 				switch (storage->type) {
 					case IS_NULL:
 						isset = 0;
-					break;
+						break;
 				}
 			} else if (has_set_exists != ZEND_PROPERTY_EXISTS) {
 				ZEND_ASSERT(0);
