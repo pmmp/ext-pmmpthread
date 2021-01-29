@@ -1,5 +1,5 @@
 --TEST--
-Tests that 7.4 property typehints don't break iteration of Threaded/Volatile
+Tests that 7.4 property typehints don't break iteration of Threaded
 --SKIPIF--
 <?php if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+ only"); ?>
 --FILE--
@@ -25,14 +25,14 @@ class Test2 extends \Threaded {
 }
 
 $packet = new Test1();
-$packet->players = new Volatile();
+$packet->players = new Threaded();
 $packet->players[] = "test";
 echo ("Running Test-1.." . PHP_EOL);
 $packet->encode();
 echo("Test-1 completed" . PHP_EOL);
 
 $packet = new Test2();
-$packet->players = new Volatile();
+$packet->players = new Threaded();
 $packet->players[] = "test";
 echo ("Running Test-2.." . PHP_EOL);
 $packet->encode();

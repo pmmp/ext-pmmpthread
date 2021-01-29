@@ -338,9 +338,9 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 	if (Z_TYPE_P(write) == IS_ARRAY) {
 		if (!pthreads_check_opline_ex(EG(current_execute_data), -1, ZEND_CAST, IS_ARRAY) &&
 			!pthreads_check_opline_ex(EG(current_execute_data), -2, ZEND_CAST, IS_ARRAY)) {
-			/* coerce arrays into volatile objects unless explicitly cast as array */
+			/* coerce arrays into threaded objects unless explicitly cast as array */
 			object_init_ex(
-				&vol, pthreads_volatile_entry);
+				&vol, pthreads_threaded_entry);
 			pthreads_store_merge(Z_OBJ(vol), write, 1);
 			/* this will be addref'd when caching the object */
 			Z_SET_REFCOUNT(vol, 0);

@@ -202,19 +202,6 @@ class Threaded extends ThreadedBase implements Traversable, Countable, ArrayAcce
 }
 
 /**
- * Volatile class
- *
- * The Volatile class is new to pthreads v3. Its introduction is a consequence of the new immutability semantics of
- * Threaded members of Threaded classes. The Volatile class enables for mutability of its Threaded members, and is also
- * used to store PHP arrays in Threaded contexts.
- *
- * @link http://php.net/manual/en/class.volatile.php
- * @since 3.0.0
- */
-class Volatile extends Threaded{
-}
-
-/**
  * Basic thread implementation
  *
  * An implementation of a Thread should extend this declaration, implementing the run method.

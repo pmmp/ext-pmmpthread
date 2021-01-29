@@ -1,12 +1,12 @@
 --TEST--
-Test Volatile Arrays
+Test Threaded behaviour when used as n array
 --DESCRIPTION--
 Arrays were difficult to use in pthreads, their behaviour was strange and inconsistent with Zend arrays.
 
-pthreads v3 will coerce arrays to Volatile objects when they are set as members of Threaded objects.
+pthreads will coerce arrays to Threaded objects when they are set as members of Threaded objects.
 
 Threaded objects have been made consistent with PHP arrays, so there should be no noticable difference between an array
-and a volatile object.
+and a Threaded object.
 --FILE--
 <?php
 $threaded = new Threaded();
@@ -50,25 +50,25 @@ var_dump($threaded);
 --EXPECTF--
 object(Threaded)#%d (%d) {
   ["test"]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(Volatile)#%d (%d) {
+    object(Threaded)#%d (%d) {
       ["of"]=>
       string(4) "mine"
       ["grandchild"]=>
-      object(Volatile)#%d (%d) {
+      object(Threaded)#%d (%d) {
         ["of"]=>
         string(7) "parents"
       }
     }
   }
   [0]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
   }
   [1]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
   }
   [2]=>
   string(3) "foo"
@@ -85,25 +85,25 @@ string(8) "null key"
 string(8) "appended"
 object(Threaded)#%d (%d) {
   ["test"]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(Volatile)#%d (%d) {
+    object(Threaded)#%d (%d) {
       ["of"]=>
       string(5) "yours"
       ["grandchild"]=>
-      object(Volatile)#%d (%d) {
+      object(Threaded)#%d (%d) {
         ["of"]=>
         string(5) "devil"
       }
     }
   }
   [0]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
   }
   [1]=>
-  object(Volatile)#%d (%d) {
+  object(Threaded)#%d (%d) {
   }
 }
 

@@ -1,15 +1,15 @@
 --TEST--
-Test nested volatile variables
+Test nested Threaded objects
 --DESCRIPTION--
-This test verifies the possibility to nest volatile variables
+This test verifies the possibility to nest Threaded objects
 --FILE--
 <?php
-class Node extends Volatile {}
+class Node extends Threaded {}
 
 class TestNestedWrite extends Thread {
     private $shared;
 
-    public function __construct(Volatile $shared) {
+    public function __construct(Threaded $shared) {
         $this->shared = $shared;
     }
 
@@ -23,7 +23,7 @@ class TestNestedWrite extends Thread {
         //unset($this->shared['queue'][0]);
 
         // or replace ref
-        $this->shared['queue'][0] = new Volatile();
+        $this->shared['queue'][0] = new Threaded();
 
         $this->shared['lock'] = true;
 
@@ -38,7 +38,7 @@ class TestNestedWrite extends Thread {
 class TestNestedRead extends Thread {
     private $shared;
 
-    public function __construct(Volatile $shared) {
+    public function __construct(Threaded $shared) {
         $this->shared = $shared;
     }
 
@@ -56,10 +56,10 @@ class TestNestedRead extends Thread {
 
 class Test extends Thread {
     public function run() {
-        $queue = new Volatile();
-        $queue[0] = new Volatile();
+        $queue = new Threaded();
+        $queue[0] = new Threaded();
 
-        $shared = new Volatile();
+        $shared = new Threaded();
         $shared['queue'] = $queue;
 
         $thread = new TestNestedWrite($shared);
@@ -81,9 +81,9 @@ $thread->start();
 $thread->join();
 ?>
 --EXPECT--
-object(Volatile)#4 (0) {
+object(Threaded)#4 (0) {
 }
-object(Volatile)#4 (0) {
+object(Threaded)#4 (0) {
 }
 object(Node)#4 (0) {
 }
