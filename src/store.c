@@ -196,47 +196,51 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 			storage = zend_hash_index_find_ptr(ts_obj->store.props, Z_LVAL(member));
 		} else storage = zend_hash_find_ptr(ts_obj->store.props, Z_STR(member));
 
-		isset = storage != NULL;
+		if (storage) {
+			isset = 1;
+			if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
+				switch (storage->type) {
+					case IS_LONG:
+					case IS_TRUE:
+					case IS_FALSE:
+						if (storage->simple.lval == 0)
+							isset = 0;
+						break;
 
-		if (has_set_exists && storage) {
-			switch (storage->type) {
-				case IS_LONG:
-				case IS_TRUE:
-				case IS_FALSE:
-					if (storage->simple.lval == 0)
-					isset = 0;
-				break;
+					case IS_ARRAY:
+						if (storage->exists == 0)
+							isset = 0;
+						break;
 
-				case IS_ARRAY:
-					if (storage->exists == 0)
-					isset = 0;
-				break;
+					case IS_STRING:
+						switch (storage->length) {
+							case 0:
+								isset = 0;
+								break;
 
-				case IS_STRING: switch (storage->length) {
-					case 0:
-					isset = 0;
-					break;
+							case 1:
+								if (memcmp(storage->data, "0", 1) == SUCCESS)
+									isset = 0;
+								break;
+						} break;
 
-					case 1:
-					if (memcmp(storage->data, "0", 1) == SUCCESS)
+					case IS_DOUBLE:
+						if (storage->simple.dval == 0.0)
+							isset = 0;
+						break;
+
+					case IS_NULL:
 						isset = 0;
-					break;
-				} break;
-
-				case IS_DOUBLE:
-					if (storage->simple.dval == 0.0)
-					isset = 0;
-				break;
-
-				case IS_NULL:
-					isset = 0;
-				break;
-			}
-		} else if (isset) {
-			switch (storage->type) {
-				case IS_NULL:
-					isset = 0;
-				break;
+						break;
+				}
+			} else if (has_set_exists == ZEND_PROPERTY_ISSET) {
+				switch (storage->type) {
+					case IS_NULL:
+						isset = 0;
+						break;
+				}
+			} else if (has_set_exists != ZEND_PROPERTY_EXISTS) {
+				ZEND_ASSERT(0);
 			}
 		}
 		pthreads_monitor_unlock(ts_obj->monitor);
@@ -303,7 +307,11 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 		} else storage = zend_hash_find_ptr(ts_obj->store.props, Z_STR(member));
 
 		if (storage) {
-			result = pthreads_store_convert(storage, read);
+			/* strictly only reads are supported */
+			if (storage->type != IS_PTHREADS && type != BP_VAR_R && type != BP_VAR_IS){
+				zend_throw_error(zend_ce_error, "Indirect modification of non-Threaded members of %s is not supported", ZSTR_VAL(object->ce->name));
+				result = FAILURE;
+			} else result = pthreads_store_convert(storage, read);
 		}
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}

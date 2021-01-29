@@ -134,6 +134,9 @@ static zend_string *zend_string_new(zend_string *s)
 {
 	zend_string *ret;
 	if (ZSTR_IS_INTERNED(s)) {
+		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
+			return s;
+		}
 		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
 			return s;
 		}
