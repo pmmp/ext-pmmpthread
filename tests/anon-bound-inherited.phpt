@@ -16,7 +16,7 @@ $collectable = new class extends Threaded {
 
 	public function run() {
 		var_dump(
-			$this instanceof Collectable,
+			$this instanceof Threaded,
 			self::Z,
 			self::$a,
 			$this->c

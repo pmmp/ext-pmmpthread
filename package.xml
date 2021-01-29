@@ -257,7 +257,6 @@
 	<file name="src/store.c" role="src" />
 	<file name="src/store.h" role="src" />
 	<file name="src/thread.h" role="src" />
-   	<file name="classes/collectable.h" role="src" />
 	<file name="classes/pool.h" role="src" />
 	<file name="classes/socket.h" role="src" />
 	<file name="classes/thread.h" role="src" />

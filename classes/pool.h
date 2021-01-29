@@ -38,12 +38,12 @@ ZEND_BEGIN_ARG_INFO_EX(Pool_resize, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_submit, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, task, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, task, ThreadedBase, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_submitTo, 0, 0, 2)
 	ZEND_ARG_TYPE_INFO(0, worker, IS_LONG, 0)
-	ZEND_ARG_OBJ_INFO(0, task, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, task, ThreadedBase, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_collect, 0, 0, 0)
@@ -130,7 +130,7 @@ PHP_METHOD(Pool, resize) {
 	ZVAL_LONG(size, newsize);
 } /* }}} */
 
-/* {{{ proto integer Pool::submit(Threaded task)
+/* {{{ proto integer Pool::submit(ThreadedBase task)
 	Will submit the given task to the next worker in the pool, by default workers are selected round robin */
 PHP_METHOD(Pool, submit) {
 	zval tmp[5];
@@ -145,7 +145,7 @@ PHP_METHOD(Pool, submit) {
 
 	zend_class_entry *ce = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &task, pthreads_threaded_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &task, pthreads_threaded_base_entry) != SUCCESS) {
 		return;
 	}
 
@@ -234,7 +234,7 @@ PHP_METHOD(Pool, submit) {
 	Z_LVAL_P(last)++;
 } /* }}} */
 
-/* {{{ proto integer Pool::submitTo(integer $worker, Threaded task)
+/* {{{ proto integer Pool::submitTo(integer $worker, ThreadedBase task)
 	Will submit the given task to the specified worker */
 PHP_METHOD(Pool, submitTo) {
 	zval tmp;
@@ -243,7 +243,7 @@ PHP_METHOD(Pool, submitTo) {
 	zend_long worker = 0;
 	zval *selected = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lO", &worker, &task, pthreads_threaded_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lO", &worker, &task, pthreads_threaded_base_entry) != SUCCESS) {
 		return;
 	}
 
@@ -292,7 +292,6 @@ PHP_METHOD(Pool, collect) {
 			&thread->std,
 			thread->ts_obj->stack,
 			&call,
-			pthreads_worker_running_function,
 			pthreads_worker_collect_function);
 		if (!ZEND_NUM_ARGS())
 			PTHREADS_WORKER_COLLECTOR_DTOR(call);

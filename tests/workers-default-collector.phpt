@@ -9,17 +9,7 @@ $worker->start();
 
 $i = 0;
 while ($i<10) {
-	$worker->stack(new class extends Threaded {
-		public function run() {
-			$this->g = true;
-		}
-		
-		public function isGarbage() : bool {
-			return $this->g;
-		}
-
-		public $g = false;
-	});
+	$worker->stack(new Threaded());
 	$i++;
 }
 

@@ -27,7 +27,7 @@ PHP_METHOD(Worker, collect);
 PHP_METHOD(Worker, collector);
 
 ZEND_BEGIN_ARG_INFO_EX(Worker_stack, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, work, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, work, ThreadedBase, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_unstack, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -37,7 +37,7 @@ ZEND_BEGIN_ARG_INFO_EX(Worker_collect, 0, 0, 0)
 	ZEND_ARG_CALLABLE_INFO(0, function, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_collector, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, collectable, Collectable, 0)
+	ZEND_ARG_OBJ_INFO(0, collectable, Threaded, 0)
 ZEND_END_ARG_INFO()
 
 extern zend_function_entry pthreads_worker_methods[];
@@ -68,7 +68,7 @@ zend_function_entry pthreads_worker_methods[] = {
 	PHP_FE_END
 };
 
-/* {{{ proto int Worker::stack(Threaded $work)
+/* {{{ proto int Worker::stack(ThreadedBase $work)
 	Pushes an item onto the stack, returns the size of stack */
 PHP_METHOD(Worker, stack)
 {
@@ -82,14 +82,14 @@ PHP_METHOD(Worker, stack)
 		return;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_base_entry) != SUCCESS) {
 		return;
 	}
 
 	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
 } /* }}} */
 
-/* {{{ proto Collectable Worker::unstack()
+/* {{{ proto Threaded Worker::unstack()
 	Removes the first item from the stack */
 PHP_METHOD(Worker, unstack)
 {
@@ -117,27 +117,6 @@ PHP_METHOD(Worker, getStacked)
 
 	RETURN_LONG(pthreads_stack_size(thread->stack));
 }
-
-/* {{{ */
-static zend_bool pthreads_worker_running_function(zend_object *std, zval *value) {
-	pthreads_object_t *worker = PTHREADS_FETCH_TS_FROM(std),
-					  *running = NULL,
-					  *checking = NULL;
-	zend_bool result = 0;
-
-	if (pthreads_monitor_lock(worker->monitor)) {
-		if (*worker->running) {
-			running = PTHREADS_FETCH_TS_FROM(*worker->running);
-			checking = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(value));
-
-			if (running->monitor == checking->monitor)
-				result = 1;
-		}
-		pthreads_monitor_unlock(worker->monitor);
-	}
-
-	return result;
-} /* }}} */
 
 /* {{{ */
 static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *collectable) {
@@ -169,15 +148,15 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 	return remove;
 } /* }}} */
 
-/* {{{ proto bool Worker::collector(Collectable collectable) */
+/* {{{ proto bool Worker::collector(Threaded collectable) */
 PHP_METHOD(Worker, collector) {
 	zval *collectable;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_collectable_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_threaded_entry) != SUCCESS) {
 		return;
 	}
 
-	zend_call_method_with_0_params(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(collectable), Z_OBJCE_P(collectable), NULL, "isgarbage", return_value);
+	RETURN_TRUE;
 } /* }}} */
 
 /* {{{ proto int Worker::collect([callable collector]) */
@@ -199,7 +178,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->ts_obj->stack, &call, pthreads_worker_running_function, pthreads_worker_collect_function));
+	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->ts_obj->stack, &call, pthreads_worker_collect_function));
 
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_DTOR(call);

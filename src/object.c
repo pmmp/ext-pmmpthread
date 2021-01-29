@@ -145,7 +145,7 @@ zend_object* pthreads_thread_ctor(zend_class_entry *entry) {
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
 	pthreads_base_ctor(thread, entry, PTHREADS_SCOPE_THREAD);
-	thread->std.handlers = &pthreads_handlers;
+	thread->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &thread->std;
 } /* }}} */
@@ -156,9 +156,20 @@ zend_object* pthreads_worker_ctor(zend_class_entry *entry) {
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
 	pthreads_base_ctor(worker, entry, PTHREADS_SCOPE_WORKER);
-	worker->std.handlers = &pthreads_handlers;
+	worker->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &worker->std;
+} /* }}} */
+
+/* {{{ */
+zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry) {
+	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
+		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
+
+	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_THREADED);
+	threaded->std.handlers = &pthreads_threaded_base_handlers;
+
+	return &threaded->std;
 } /* }}} */
 
 /* {{{ */
@@ -333,7 +344,6 @@ static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 	ts_obj->options = PTHREADS_INHERIT_ALL;
 	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
 		ts_obj->store.props   = pthreads_store_alloc();
-		ts_obj->running = malloc(sizeof(pthreads_zend_object_t**));
 
 		if (scope & PTHREADS_SCOPE_WORKER) {
 			ts_obj->stack = pthreads_stack_alloc(ts_obj->monitor);
@@ -368,10 +378,6 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 				pthreads_stack_free(ts_obj->stack);
 			}
 			pthreads_monitor_unlock(ts_obj->monitor);
-		}
-
-		if (ts_obj->running) {
-			free(ts_obj->running);
 		}
 	} else {
 		pthreads_socket_free(ts_obj->store.sock, 1);
@@ -559,13 +565,15 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 
 			if (PTHREADS_IS_WORKER(thread)) {
 				zval stacked;
+				pthreads_stack_item_t *item;
 
-				while (pthreads_stack_next(ts_obj->stack, &stacked, ts_obj->running) != PTHREADS_MONITOR_JOINED) {
+				while (pthreads_stack_next(ts_obj->stack, &stacked, &item) != PTHREADS_MONITOR_JOINED) {
 					zval that;
 					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(stacked));
 					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
 					zval_ptr_dtor(&that);
+					pthreads_stack_add_garbage(ts_obj->stack, item);
 				}
 			}
 

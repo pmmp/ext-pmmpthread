@@ -15,11 +15,12 @@ This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjo
 This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
 
 ## Changes compared to the original
-- PHP 7.4 support
+- PHP 7.4 and 8.0 support
 - Many bug fixes which were never merged upstream
 - Performance improvements
 - Memory usage improvements
 - Integration with [OPcache](https://www.php.net/manual/en/book.opcache.php) on PHP 7.4+ (pthreads leverages opcache SHM to reuse classes and functions, saving lots of memory)
+- OPcache JIT support on PHP 8.0.2+
 
 ## [OPcache](https://www.php.net/manual/en/book.opcache.php) compatibility
 Despite popular belief, OPcache is still useful in a CLI environment - as long as it's a threaded one :)

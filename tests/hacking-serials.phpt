@@ -19,7 +19,7 @@ class Wrapper {
         $this->worker->start();
     }
 
-    public function stack(Collectable $work) {
+    public function stack(Threaded $work) {
         $this->worker->stack($work);
     }
 

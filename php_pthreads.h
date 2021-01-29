@@ -27,16 +27,14 @@ PHP_RSHUTDOWN_FUNCTION(pthreads);
 PHP_MINFO_FUNCTION(pthreads);
 ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
 
+#include <classes/threaded_base.h>
+
 #ifndef HAVE_PTHREADS_CLASS_THREADED_H
 #	include <classes/threaded.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_THREAD_H
 #	include <classes/thread.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_COLLECTABLE_H
-#	include <classes/collectable.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_WORKER_H

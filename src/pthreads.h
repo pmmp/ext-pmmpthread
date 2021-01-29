@@ -75,6 +75,7 @@
 #include <dmalloc.h>
 #endif
 
+extern zend_class_entry *pthreads_threaded_base_entry;
 extern zend_class_entry *pthreads_threaded_entry;
 extern zend_class_entry *pthreads_volatile_entry;
 extern zend_class_entry *pthreads_thread_entry;
@@ -83,10 +84,13 @@ extern zend_class_entry *pthreads_socket_entry;
 extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
 #define IS_PTHREADS_CLASS(c) \
-	(instanceof_function(c, pthreads_threaded_entry))
+	(instanceof_function(c, pthreads_threaded_base_entry))
 
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
+
+#define IS_PTHREADS_THREADED_CLASS(o) \
+	instanceof_function(o, pthreads_threaded_entry)
 
 #define IS_PTHREADS_VOLATILE_CLASS(o)   \
         instanceof_function(o, pthreads_volatile_entry)
@@ -94,6 +98,7 @@ extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
 
+extern zend_object_handlers pthreads_threaded_base_handlers;
 extern zend_object_handlers pthreads_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
 extern zend_object_handlers *zend_handlers;
@@ -129,6 +134,9 @@ static zend_string *zend_string_new(zend_string *s)
 {
 	zend_string *ret;
 	if (ZSTR_IS_INTERNED(s)) {
+		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
+			return s;
+		}
 		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
 			return s;
 		}

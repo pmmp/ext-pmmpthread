@@ -26,7 +26,6 @@
 #	include <src/pthreads.h>
 #endif
 
-#define PTHREADS_STACK_GARBAGE 2
 #define PTHREADS_STACK_FREE    1
 #define PTHREADS_STACK_NOTHING 0
 
@@ -130,6 +129,15 @@ zend_long pthreads_stack_add(pthreads_stack_t *stack, zval *value) {
 	return size;
 }
 
+void pthreads_stack_add_garbage(pthreads_stack_t *stack, pthreads_stack_item_t *item) {
+	if (pthreads_monitor_lock(stack->monitor)) {
+		pthreads_stack_add_item(stack->gc, item);
+		pthreads_monitor_unlock(stack->monitor);
+	} else {
+		ZEND_ASSERT(0);
+	}
+}
+
 static inline zend_long pthreads_stack_remove(pthreads_stack_t *stack, pthreads_stack_item_t *item, zval *value, int garbage) {
 	if (!item) {
 		value = NULL;
@@ -160,10 +168,6 @@ static inline zend_long pthreads_stack_remove(pthreads_stack_t *stack, pthreads_
 	}
 
 	switch (garbage) {
-		case PTHREADS_STACK_GARBAGE:
-			pthreads_stack_add_item(stack->gc, item);
-		break;
-
 		case PTHREADS_STACK_FREE:
 			efree(item);
 		break;
@@ -184,7 +188,7 @@ zend_long pthreads_stack_del(pthreads_stack_t *stack, zval *value) {
 	return size;
 }
 
-zend_long pthreads_stack_collect(zend_object *std, pthreads_stack_t *stack, pthreads_call_t *call, pthreads_stack_running_function_t running, pthreads_stack_collect_function_t collect) {
+zend_long pthreads_stack_collect(zend_object *std, pthreads_stack_t *stack, pthreads_call_t *call, pthreads_stack_collect_function_t collect) {
 	zend_long size = 0, offset = 0;
 
 	if (pthreads_monitor_lock(stack->monitor)) {
@@ -193,14 +197,6 @@ zend_long pthreads_stack_collect(zend_object *std, pthreads_stack_t *stack, pthr
 		if (stack->gc) {
 			item = stack->gc->head;
 			while (item) {
-				if (running(std, &item->value)) {
-					offset++;
-					/* we break out of gc if the worker is executing something on the stack */
-					/* this means gc is only performed while the worker is idle */
-					/* this means we avoid contention for locks on objects the programmer thinks are executing */
-					break;
-				}
-
 				if (collect(call, &item->value)) {
 					pthreads_stack_item_t *garbage = item;
 
@@ -224,27 +220,25 @@ zend_long pthreads_stack_collect(zend_object *std, pthreads_stack_t *stack, pthr
 	return size;
 }
 
-pthreads_monitor_state_t pthreads_stack_next(pthreads_stack_t *stack, zval *value, zend_object **running) {
+pthreads_monitor_state_t pthreads_stack_next(pthreads_stack_t *stack, zval *value, pthreads_stack_item_t **item) {
 	pthreads_monitor_state_t state = PTHREADS_MONITOR_RUNNING;
 	if (pthreads_monitor_lock(stack->monitor)) {
-#define SET_RUNNING_TO(t) *running = t
 		do {
 			if (!stack->head) {
 				if (pthreads_monitor_check(stack->monitor, PTHREADS_MONITOR_JOINED)) {
 					state = PTHREADS_MONITOR_JOINED;
-					SET_RUNNING_TO(NULL);
+					*item = NULL;
 					break;
 				}
 
-				SET_RUNNING_TO(NULL);
+				*item  = NULL;
 				pthreads_monitor_wait(stack->monitor, 0);
 			} else {
-				pthreads_stack_remove(stack, stack->head, value, PTHREADS_STACK_GARBAGE);
-				SET_RUNNING_TO(Z_OBJ_P(value));
+				*item = stack->head; //this is allocated on the creator thread's ZMM, so we can't free it
+				pthreads_stack_remove(stack, stack->head, value, PTHREADS_STACK_NOTHING);
 				break;
 			}
 		} while (state != PTHREADS_MONITOR_JOINED);
-#undef SET_RUNNING_TO
 		pthreads_monitor_unlock(stack->monitor);
 	}
 
