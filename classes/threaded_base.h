@@ -29,10 +29,6 @@ PHP_METHOD(ThreadedBase, isTerminated);
 
 PHP_METHOD(ThreadedBase, synchronized);
 
-PHP_METHOD(ThreadedBase, addRef);
-PHP_METHOD(ThreadedBase, delRef);
-PHP_METHOD(ThreadedBase, getRefCount);
-
 #if PHP_VERSION_ID >= 80000
 PHP_METHOD(ThreadedBase, getIterator);
 #endif
@@ -55,15 +51,6 @@ ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_synchronized, 0, 0, 1)
 	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_addRef, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_delRef, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_getRefCount, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
 #if PHP_VERSION_ID >= 80000
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(ThreadedBase_getIterator, 0, 0, Iterator, 0)
 ZEND_END_ARG_INFO()
@@ -81,9 +68,6 @@ zend_function_entry pthreads_threaded_base_methods[] = {
 	PHP_ME(ThreadedBase, isRunning, ThreadedBase_isRunning, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, isTerminated, ThreadedBase_isTerminated, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, synchronized, ThreadedBase_synchronized, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, addRef, ThreadedBase_addRef, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, delRef, ThreadedBase_delRef, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, getRefCount, ThreadedBase_getRefCount, ZEND_ACC_PUBLIC)
 #if PHP_VERSION_ID >= 80000
 	PHP_ME(ThreadedBase, getIterator, ThreadedBase_getIterator, ZEND_ACC_PUBLIC)
 #endif
@@ -92,11 +76,6 @@ zend_function_entry pthreads_threaded_base_methods[] = {
 
 /* {{{ */
 PHP_METHOD(ThreadedBase, run) {} /* }}} */
-
-/* {{{{ */
-PHP_METHOD(ThreadedBase, addRef) 		{ Z_ADDREF_P(getThis()); }
-PHP_METHOD(ThreadedBase, delRef) 		{ zval_ptr_dtor(getThis()); }
-PHP_METHOD(ThreadedBase, getRefCount) 	{ RETURN_LONG(Z_REFCOUNT_P(getThis())); } /* }}} */
 
 /* {{{ proto boolean ThreadedBase::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object

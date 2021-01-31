@@ -66,23 +66,6 @@ define('PTHREADS_ALLOW_HEADERS', 0x1000000);
 class ThreadedBase
 {
     /**
-     * Increments the object's reference count
-     */
-    public function addRef() {}
-
-    /**
-     * Decrements the object's reference count
-     */
-    public function delRef() {}
-
-    /**
-     * Gets the object's reference count
-     *
-     * @return int The object's reference count
-     */
-    public function getRefCount() {}
-
-    /**
      * Tell if the referenced object is executing
      *
      * @link http://www.php.net/manual/en/threaded.isrunning.php
