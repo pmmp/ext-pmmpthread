@@ -169,6 +169,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
 	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
 	pthreads_thread_entry->create_object = pthreads_thread_ctor;
+	pthreads_thread_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
 	INIT_CLASS_ENTRY(ce, "Worker", pthreads_worker_methods);
 	pthreads_worker_entry=zend_register_internal_class_ex(&ce, pthreads_thread_entry);
