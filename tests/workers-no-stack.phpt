@@ -4,7 +4,8 @@ Test pthreads workers rules (stack)
 This test verifies that workers cannot be misused (stack)
 --FILE--
 <?php
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
+	public function run() {}
 }
 
 class Test extends Thread {
