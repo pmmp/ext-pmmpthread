@@ -28,13 +28,16 @@
 #define IS_CLOSURE  (IS_PTR + 1)
 #define IS_PTHREADS (IS_PTR + 2)
 
+#define PTHREADS_STORE_COERCE_ARRAY 1
+#define PTHREADS_STORE_NO_COERCE_ARRAY 0
+
 pthreads_store_t* pthreads_store_alloc();
 void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
-int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite);
+int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
 zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists);
-int pthreads_store_write(zend_object *object, zval *key, zval *write);
+int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded);
 int pthreads_store_separate(zval *pzval, zval *seperated);
 void pthreads_store_tohash(zend_object *object, HashTable *hash);
 int pthreads_store_shift(zend_object *object, zval *member);

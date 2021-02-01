@@ -326,7 +326,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_write(zend_object *object, zval *key, zval *write) {
+int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded) {
 	int result = FAILURE;
 	pthreads_storage *storage;
 	zval vol, member;
@@ -335,17 +335,14 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = 0;
 
-	if (Z_TYPE_P(write) == IS_ARRAY) {
-		if (!pthreads_check_opline_ex(EG(current_execute_data), -1, ZEND_CAST, IS_ARRAY) &&
-			!pthreads_check_opline_ex(EG(current_execute_data), -2, ZEND_CAST, IS_ARRAY)) {
-			/* coerce arrays into threaded objects unless explicitly cast as array */
-			object_init_ex(
-				&vol, pthreads_threaded_entry);
-			pthreads_store_merge(Z_OBJ(vol), write, 1);
-			/* this will be addref'd when caching the object */
-			Z_SET_REFCOUNT(vol, 0);
-			write = &vol;
-		}
+	if (Z_TYPE_P(write) == IS_ARRAY && coerce_array_to_threaded == PTHREADS_STORE_COERCE_ARRAY) {
+		/* coerce arrays into threaded objects */
+		object_init_ex(
+			&vol, pthreads_threaded_entry);
+		pthreads_store_merge(Z_OBJ(vol), write, 1, PTHREADS_STORE_COERCE_ARRAY);
+		/* this will be addref'd when caching the object */
+		Z_SET_REFCOUNT(vol, 0);
+		write = &vol;
 	}
 
 	if (Z_TYPE_P(write) == IS_OBJECT) {
@@ -956,7 +953,7 @@ static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite) {
+int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded) {
 	if (Z_TYPE_P(from) != IS_ARRAY &&
 		Z_TYPE_P(from) != IS_OBJECT) {
 		return FAILURE;
@@ -1068,14 +1065,14 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 							if (!overwrite && zend_hash_index_exists(&ts_obj->store.props->hash, Z_LVAL(key))) {
 								goto next;
 							}
-							pthreads_store_write(destination, &key, pzval);
+							pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded);
 						break;
 
 						case IS_STRING:
 							if (!overwrite && zend_hash_exists(&ts_obj->store.props->hash, Z_STR(key))) {
 								goto next;
 							}
-							pthreads_store_write(destination, &key, pzval);
+							pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded);
 						break;
 					}
 

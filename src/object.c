@@ -328,7 +328,9 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
 		pthreads_store_write(
 			&base->std, &key,
-			&base->std.ce->default_properties_table[offset]);
+			&base->std.ce->default_properties_table[offset],
+			PTHREADS_STORE_COERCE_ARRAY
+		);
 		zval_ptr_dtor(&key);
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
@@ -506,7 +508,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 	pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
 
 	if (work)
-		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this));
+		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this), PTHREADS_STORE_NO_COERCE_ARRAY);
 
 	zend_try {
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {

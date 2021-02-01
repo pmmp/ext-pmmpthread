@@ -69,7 +69,7 @@ PHP_METHOD(Threaded, merge)
 		return;
 	}
 
-	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite)==SUCCESS));
+	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite, PTHREADS_STORE_COERCE_ARRAY)==SUCCESS));
 } /* }}} */
 
 /* {{{ proto mixed Threaded::shift()
