@@ -192,14 +192,7 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 				zval_dtor(&rv);
 			zend_fcall_info_args_clear(&fci, 1);
 		} else {
-			zend_bool coerce_array = PTHREADS_STORE_COERCE_ARRAY;
-			if (Z_TYPE_P(value) == IS_ARRAY && (
-				pthreads_check_opline_ex(EG(current_execute_data), -1, ZEND_CAST, IS_ARRAY) ||
-				pthreads_check_opline_ex(EG(current_execute_data), -2, ZEND_CAST, IS_ARRAY)
-			)) {
-				coerce_array = PTHREADS_STORE_NO_COERCE_ARRAY;
-			}
-			pthreads_store_write(&threaded->std, member, value, coerce_array);
+			pthreads_store_write(&threaded->std, member, value, PTHREADS_STORE_NO_COERCE_ARRAY);
 		}
 	}
 }

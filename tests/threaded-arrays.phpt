@@ -3,15 +3,13 @@ Test Threaded behaviour when used as n array
 --DESCRIPTION--
 Arrays were difficult to use in pthreads, their behaviour was strange and inconsistent with Zend arrays.
 
-pthreads will coerce arrays to Threaded objects when they are set as members of Threaded objects.
-
-Threaded objects have been made consistent with PHP arrays, so there should be no noticable difference between an array
-and a Threaded object.
+Threaded objects have been made consistent with PHP arrays, so a Threaded object can mostly serve as a
+drop-in replacement for an array, with similar behaviour.
 --FILE--
 <?php
 $threaded = new Threaded();
 
-$threaded->test = [
+$threaded->test = Threaded::fromArray([
 	"greeting" => "Hello World", 
 	"child" => [
 		"of" => "mine",
@@ -19,7 +17,7 @@ $threaded->test = [
 			"of" => "parents"
 		]
 	]
-];
+]);
 
 /*
  This looks strange, but needs to be consistent with zend, so we'll test here ... 
@@ -65,10 +63,10 @@ object(Threaded)#%d (%d) {
     }
   }
   [0]=>
-  object(Threaded)#%d (%d) {
+  array(0) {
   }
   [1]=>
-  object(Threaded)#%d (%d) {
+  array(0) {
   }
   [2]=>
   string(3) "foo"
@@ -100,10 +98,10 @@ object(Threaded)#%d (%d) {
     }
   }
   [0]=>
-  object(Threaded)#%d (%d) {
+  array(0) {
   }
   [1]=>
-  object(Threaded)#%d (%d) {
+  array(0) {
   }
 }
 
