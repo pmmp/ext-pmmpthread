@@ -66,22 +66,6 @@ define('PTHREADS_ALLOW_HEADERS', 0x1000000);
 class ThreadedBase
 {
     /**
-     * Tell if the referenced object is executing
-     *
-     * @link http://www.php.net/manual/en/threaded.isrunning.php
-     * @return bool A boolean indication of state
-     */
-    public function isRunning() {}
-
-    /**
-     * Tell if the referenced object exited, suffered fatal errors, or threw uncaught exceptions during execution
-     *
-     * @link http://www.php.net/manual/en/threaded.isterminated.php
-     * @return bool A boolean indication of state
-     */
-    public function isTerminated() {}
-
-    /**
      * Send notification to the referenced object
      *
      * @link http://www.php.net/manual/en/threaded.notify.php
@@ -95,14 +79,6 @@ class ThreadedBase
      * @return bool A boolean indication of success
      */
     public function notifyOne() {}
-
-    /**
-     * The programmer should always implement the run method for objects that are intended for execution.
-     *
-     * @link http://www.php.net/manual/en/threaded.run.php
-     * @return void The methods return value, if used, will be ignored
-     */
-    public function run() {}
 
     /**
      * Executes the block while retaining the synchronization lock for the current context.
