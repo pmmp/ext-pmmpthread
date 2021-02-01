@@ -165,6 +165,14 @@ class Threaded extends ThreadedBase implements Traversable, Countable, ArrayAcce
     public function count() {}
 
     /**
+     * Converts the given array into a Threaded object (recursively)
+     * @param array $array
+     *
+     * @return Threaded A Threaded object created from the provided array
+     */
+    public static function fromArray(array $array) : Threaded {}
+
+    /**
      * Merges data into the current object
      *
      * @param mixed $from The data to merge

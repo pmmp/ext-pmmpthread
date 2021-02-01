@@ -25,6 +25,7 @@ PHP_METHOD(Threaded, shift);
 PHP_METHOD(Threaded, chunk);
 PHP_METHOD(Threaded, pop);
 PHP_METHOD(Threaded, count);
+PHP_METHOD(Threaded, fromArray);
 
 ZEND_BEGIN_ARG_INFO_EX(Threaded_merge, 0, 0, 1)
 	ZEND_ARG_INFO(0, from)
@@ -45,6 +46,10 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Threaded_count, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(Threaded_fromArray, 0, 1, Threaded, 0)
+	ZEND_ARG_ARRAY_INFO(0, array, 0)
+ZEND_END_ARG_INFO()
+
 extern zend_function_entry pthreads_threaded_methods[];
 #else
 #	ifndef HAVE_PTHREADS_CLASS_THREADED
@@ -55,6 +60,7 @@ zend_function_entry pthreads_threaded_methods[] = {
 	PHP_ME(Threaded, chunk, Threaded_chunk, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, pop, Threaded_pop, ZEND_ACC_PUBLIC)
 	PHP_ME(Threaded, count, Threaded_count, ZEND_ACC_PUBLIC)
+	PHP_ME(Threaded, fromArray, Threaded_fromArray, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
 	PHP_FE_END
 };
 
@@ -120,6 +126,20 @@ PHP_METHOD(Threaded, count)
 
 	pthreads_store_count(
 		Z_OBJ_P(getThis()), &Z_LVAL_P(return_value));
+} /* }}} */
+
+/* {{{ proto Threaded Threaded::fromArray(array $array)
+	Converts the given array to a Threaded object (recursively) */
+PHP_METHOD(Threaded, fromArray)
+{
+	zval *input;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_ARRAY(input)
+	ZEND_PARSE_PARAMETERS_END();
+
+	object_init_ex(return_value, pthreads_threaded_entry);
+	pthreads_store_merge(Z_OBJ_P(return_value), input, 1, PTHREADS_STORE_COERCE_ARRAY);
 } /* }}} */
 
 #	endif
