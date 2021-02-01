@@ -75,14 +75,14 @@ PHP_METHOD(Worker, stack)
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zval *work;
 
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_entry) != SUCCESS) {
+		return;
+	}
+
 	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call stack",
 			thread->std.ce->name->val);
-		return;
-	}
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_entry) != SUCCESS) {
 		return;
 	}
 
