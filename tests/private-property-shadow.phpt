@@ -30,7 +30,7 @@ class B extends A{
 $t = new \Worker();
 
 $t->start();
-$t->stack(new class extends \Threaded{
+$t->stack(new class extends \ThreadedRunnable{
 	public function run(){
 		$b = new B;
 		$b->run();

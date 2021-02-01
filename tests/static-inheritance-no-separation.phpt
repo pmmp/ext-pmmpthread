@@ -6,8 +6,10 @@ property with the same name.
 --FILE--
 <?php
 
-class A extends \Threaded{
+class A extends \ThreadedRunnable{
 	public static $a = [];
+
+	public function run() {}
 }
 class B extends A{
 

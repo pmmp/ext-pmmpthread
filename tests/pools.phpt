@@ -12,7 +12,7 @@ class WebWorker extends Worker {
 	protected $logger;	
 }
 
-class WebWork extends Threaded {
+class WebWork extends ThreadedRunnable {
 	public function __construct(int $id) {
 		$this->id = $id;
 	}

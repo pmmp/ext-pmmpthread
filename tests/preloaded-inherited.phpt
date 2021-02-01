@@ -22,7 +22,7 @@ class ChildClass extends SomeClass{
 
 $w = new \Worker();
 $w->start(PTHREADS_INHERIT_ALL);
-$w->stack(new class extends \Threaded{
+$w->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		(new ChildClass())->inheritedFunc();
 	}

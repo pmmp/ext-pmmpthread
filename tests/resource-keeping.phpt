@@ -47,7 +47,7 @@ class myWorker extends Worker {
 
 }
 
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
 
     public function run () {
 	$foreignResource = $this->worker->foreignResource;

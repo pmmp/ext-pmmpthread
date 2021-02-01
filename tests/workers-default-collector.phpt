@@ -9,7 +9,9 @@ $worker->start();
 
 $i = 0;
 while ($i<10) {
-	$worker->stack(new Threaded());
+	$worker->stack(new class extends ThreadedRunnable{
+		public function run(){}
+	});
 	$i++;
 }
 

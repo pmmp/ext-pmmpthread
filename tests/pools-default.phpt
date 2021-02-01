@@ -4,7 +4,7 @@ Test pool defaults
 This test verifies pool defaults
 --FILE--
 <?php
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
 	public function run() {
 		var_dump($this);
 	}

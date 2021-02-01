@@ -6,7 +6,7 @@ This test verifies that anonymous Threaded objects work as expected
 <?php
 $worker = new Worker();
 
-$collectable = new class extends Threaded {
+$collectable = new class extends ThreadedRunnable {
 	/** z */
 	const Z = 1;
 	/** a */
@@ -16,7 +16,7 @@ $collectable = new class extends Threaded {
 
 	public function run() {
 		var_dump(
-			$this instanceof Threaded,
+			$this instanceof ThreadedRunnable,
 			self::Z,
 			self::$a,
 			$this->c

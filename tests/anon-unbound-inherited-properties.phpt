@@ -9,10 +9,12 @@ $worker = new Worker();
 
 $worker->start();
 
-class Base extends Threaded {
+class Base extends ThreadedRunnable {
 	public static $staticProp = "staticProp";
 
 	public $prop = "prop";
+
+	public function run() {}
 }
 
 class Base2 extends Base {

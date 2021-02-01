@@ -17,7 +17,7 @@ interface Dummy2 {
 	public const A_CONSTANT_2 = 2;
 }
 
-class Base extends Threaded implements Dummy {
+abstract class Base extends ThreadedRunnable implements Dummy {
 	public const BASE_CONSTANT = 3;
 }
 

@@ -13,6 +13,8 @@ class baseTest extends \Thread {
             var_dump("Constant: " . self::TEST_CONSTANT);
         });
     }
+
+    public function run() {}
 }
 
 class testClass extends baseTest {

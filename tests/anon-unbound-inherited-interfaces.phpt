@@ -16,7 +16,9 @@ interface Dummy {
 interface Dummy2 {
 }
 
-class Base extends Threaded implements Dummy {}
+class Base extends ThreadedRunnable implements Dummy {
+	public function run() {}
+}
 $collectable = new class extends Base implements Dummy2 {
 	public function run() {
 		var_dump($this instanceof Dummy);

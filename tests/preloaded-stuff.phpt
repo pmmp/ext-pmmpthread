@@ -14,7 +14,7 @@ opcache.enable_cli=1
 
 $w = new Worker;
 $w->start(PTHREADS_INHERIT_NONE);
-$w->stack(new class extends \Threaded{
+$w->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		var_dump(class_exists(SomeClass::class));
 		iAmPreloaded();

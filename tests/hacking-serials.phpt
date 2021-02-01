@@ -19,7 +19,7 @@ class Wrapper {
         $this->worker->start();
     }
 
-    public function stack(Threaded $work) {
+    public function stack(ThreadedRunnable $work) {
         $this->worker->stack($work);
     }
 
@@ -28,7 +28,7 @@ class Wrapper {
 	}
 }
 
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
     public $wrapper;
     public function __construct(Wrapper $wrapper) {
         $this->wrapper = $wrapper;

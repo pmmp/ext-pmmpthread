@@ -7,7 +7,7 @@ work as expected
 <?php
 
 /** c */
-class C extends Threaded
+class C extends ThreadedRunnable
 {
     use T1, T2 {
         T2::t insteadof T1;

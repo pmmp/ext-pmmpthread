@@ -20,6 +20,7 @@
 
 #include <src/compat.h>
 
+PHP_METHOD(Worker, run);
 PHP_METHOD(Worker, stack);
 PHP_METHOD(Worker, unstack);
 PHP_METHOD(Worker, getStacked);
@@ -27,7 +28,7 @@ PHP_METHOD(Worker, collect);
 PHP_METHOD(Worker, collector);
 
 ZEND_BEGIN_ARG_INFO_EX(Worker_stack, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, work, ThreadedBase, 0)
+	ZEND_ARG_OBJ_INFO(0, work, ThreadedRunnable, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_unstack, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -37,7 +38,7 @@ ZEND_BEGIN_ARG_INFO_EX(Worker_collect, 0, 0, 0)
 	ZEND_ARG_CALLABLE_INFO(0, function, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(Worker_collector, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, collectable, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, collectable, ThreadedRunnable, 0)
 ZEND_END_ARG_INFO()
 
 extern zend_function_entry pthreads_worker_methods[];
@@ -59,6 +60,7 @@ extern zend_function_entry pthreads_worker_methods[];
 #	define HAVE_PTHREADS_CLASS_WORKER
 zend_function_entry pthreads_worker_methods[] = {
 	PHP_MALIAS(Thread, shutdown, join, Thread_join, ZEND_ACC_PUBLIC)
+	PHP_ME(Worker, run, ThreadedRunnable_run, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, stack, Worker_stack, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, unstack, Worker_unstack, ZEND_ACC_PUBLIC)
 	PHP_ME(Worker, getStacked, Worker_getStacked, ZEND_ACC_PUBLIC)
@@ -68,7 +70,10 @@ zend_function_entry pthreads_worker_methods[] = {
 	PHP_FE_END
 };
 
-/* {{{ proto int Worker::stack(ThreadedBase $work)
+/* {{{ */
+PHP_METHOD(Worker, run) {} /* }}} */
+
+/* {{{ proto int Worker::stack(ThreadedRunnable $work)
 	Pushes an item onto the stack, returns the size of stack */
 PHP_METHOD(Worker, stack)
 {
@@ -82,14 +87,14 @@ PHP_METHOD(Worker, stack)
 		return;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_base_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_runnable_entry) != SUCCESS) {
 		return;
 	}
 
 	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
 } /* }}} */
 
-/* {{{ proto Threaded Worker::unstack()
+/* {{{ proto ThreadedRunnable Worker::unstack()
 	Removes the first item from the stack */
 PHP_METHOD(Worker, unstack)
 {
@@ -148,11 +153,11 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 	return remove;
 } /* }}} */
 
-/* {{{ proto bool Worker::collector(Threaded collectable) */
+/* {{{ proto bool Worker::collector(ThreadedRunnable collectable) */
 PHP_METHOD(Worker, collector) {
 	zval *collectable;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_threaded_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_threaded_runnable_entry) != SUCCESS) {
 		return;
 	}
 

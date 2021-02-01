@@ -28,6 +28,7 @@ PHP_MINFO_FUNCTION(pthreads);
 ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
 
 #include <classes/threaded_base.h>
+#include <classes/threaded_runnable.h>
 
 #ifndef HAVE_PTHREADS_CLASS_THREADED_H
 #	include <classes/threaded.h>

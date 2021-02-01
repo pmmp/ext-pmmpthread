@@ -127,6 +127,38 @@ class ThreadedBase
 }
 
 /**
+ * ThreadedRunnable class
+ *
+ * ThreadedRunnable represents a unit of work. It provides methods to determine its execution state.
+ */
+abstract class ThreadedRunnable extends ThreadedBase
+{
+    /**
+     * Tell if the referenced object is executing
+     *
+     * @link http://www.php.net/manual/en/threaded.isrunning.php
+     * @return bool A boolean indication of state
+     */
+    public function isRunning() {}
+
+    /**
+     * Tell if the referenced object exited, suffered fatal errors, or threw uncaught exceptions during execution
+     *
+     * @link http://www.php.net/manual/en/threaded.isterminated.php
+     * @return bool A boolean indication of state
+     */
+    public function isTerminated() {}
+
+    /**
+     * The programmer should always implement the run method for objects that are intended for execution.
+     *
+     * @link http://www.php.net/manual/en/threaded.run.php
+     * @return void The methods return value, if used, will be ignored
+     */
+    abstract public function run() {}
+}
+
+/**
  * Threaded class
  *
  * Threaded objects form the basis of pthreads ability to execute user code in parallel;
@@ -192,7 +224,7 @@ class Threaded extends ThreadedBase implements Traversable, Countable, ArrayAcce
  *
  * @link http://www.php.net/manual/en/class.thread.php
  */
-class Thread extends ThreadedBase
+abstract class Thread extends ThreadedRunnable
 {
     /**
      * Will return the identity of the Thread that created the referenced Thread
@@ -334,6 +366,14 @@ class Worker extends Thread
      * @return Threaded|null The item removed from the stack
      */
     public function unstack() {}
+
+    /**
+     * Performs initialization actions when the Worker is started.
+     * Override this to do actions on Worker start; an empty default implementation is provided.
+     *
+     * @return void
+     */
+    public function run(){}
 }
 
 /**

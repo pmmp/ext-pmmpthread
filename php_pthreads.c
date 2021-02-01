@@ -71,6 +71,7 @@ zend_module_entry pthreads_module_entry = {
 
 zend_class_entry *pthreads_threaded_base_entry;
 zend_class_entry *pthreads_threaded_entry;
+zend_class_entry *pthreads_threaded_runnable_entry;
 zend_class_entry *pthreads_thread_entry;
 zend_class_entry *pthreads_worker_entry;
 zend_class_entry *pthreads_pool_entry;
@@ -166,8 +167,12 @@ PHP_MINIT_FUNCTION(pthreads)
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
 
+	INIT_CLASS_ENTRY(ce, "ThreadedRunnable", pthreads_threaded_runnable_methods);
+	pthreads_threaded_runnable_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+	pthreads_threaded_runnable_entry->ce_flags |= ZEND_ACC_ABSTRACT;
+
 	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
-	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_runnable_entry);
 	pthreads_thread_entry->create_object = pthreads_thread_ctor;
 	pthreads_thread_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
@@ -761,6 +766,7 @@ PHP_MINFO_FUNCTION(pthreads)
 }
 
 #include <classes/threaded_base.h>
+#include <classes/threaded_runnable.h>
 
 #ifndef HAVE_PTHREADS_CLASS_THREADED
 #	include <classes/threaded.h>

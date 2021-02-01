@@ -7,7 +7,7 @@ Unstacking a task would cause it to be freed from the worker stack, but a curren
 $w = new Worker();
 $w->start();
 
-class Task extends Threaded{
+class Task extends ThreadedRunnable{
     public function run() : void{
         sleep(1);
     }

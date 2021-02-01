@@ -21,7 +21,7 @@ class TestAsyncTask extends ManInTheMiddle {
 	}
 }
 
-abstract class ManInTheMiddle extends \Threaded{}
+abstract class ManInTheMiddle extends \ThreadedRunnable{}
 
 error_reporting(-1);
 

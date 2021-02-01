@@ -77,7 +77,7 @@ echo "--- main thread end ---\n";
 
 $w = new Worker;
 $w->start();
-$w->stack(new class extends \Threaded{
+$w->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";
 		testStatics();

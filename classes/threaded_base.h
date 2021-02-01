@@ -20,12 +20,9 @@
 
 #include <src/compat.h>
 
-PHP_METHOD(ThreadedBase, run);
 PHP_METHOD(ThreadedBase, wait);
 PHP_METHOD(ThreadedBase, notify);
 PHP_METHOD(ThreadedBase, notifyOne);
-PHP_METHOD(ThreadedBase, isRunning);
-PHP_METHOD(ThreadedBase, isTerminated);
 
 PHP_METHOD(ThreadedBase, synchronized);
 
@@ -33,17 +30,10 @@ PHP_METHOD(ThreadedBase, synchronized);
 PHP_METHOD(ThreadedBase, getIterator);
 #endif
 
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_run, 0, 0, 0)
-ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_wait, 0, 0, 0)
 	ZEND_ARG_TYPE_INFO(0, timeout, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_notify, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_isRunning, 0, 0, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_isTerminated, 0, 0, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_synchronized, 0, 0, 1)
@@ -61,21 +51,15 @@ extern zend_function_entry pthreads_threaded_base_methods[];
 #	ifndef HAVE_PTHREADS_CLASS_THREADED_BASE
 #	define HAVE_PTHREADS_CLASS_THREADED_BASE
 zend_function_entry pthreads_threaded_base_methods[] = {
-	PHP_ME(ThreadedBase, run, ThreadedBase_run, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, wait, ThreadedBase_wait, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, notify, ThreadedBase_notify, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, notifyOne, ThreadedBase_notify, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, isRunning, ThreadedBase_isRunning, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, isTerminated, ThreadedBase_isTerminated, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, synchronized, ThreadedBase_synchronized, ZEND_ACC_PUBLIC)
 #if PHP_VERSION_ID >= 80000
 	PHP_ME(ThreadedBase, getIterator, ThreadedBase_getIterator, ZEND_ACC_PUBLIC)
 #endif
 	PHP_FE_END
 };
-
-/* {{{ */
-PHP_METHOD(ThreadedBase, run) {} /* }}} */
 
 /* {{{ proto boolean ThreadedBase::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object
@@ -109,24 +93,6 @@ PHP_METHOD(ThreadedBase, notifyOne)
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
 	RETURN_BOOL(pthreads_monitor_notify_one(threaded->monitor) == SUCCESS);
-} /* }}} */
-
-/* {{{ proto boolean ThreadedBase::isRunning()
-	Will return true while the referenced ThreadedBase is being executed by a Worker */
-PHP_METHOD(ThreadedBase, isRunning)
-{
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
-
-	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_RUNNING));
-} /* }}} */
-
-/* {{{ proto boolean ThreadedBase::isTerminated()
-	Will return true if the referenced ThreadedBase suffered fatal errors or uncaught exceptions */
-PHP_METHOD(ThreadedBase, isTerminated)
-{
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
-
-	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */
 
 /* {{{ proto void ThreadedBase::synchronized(Callable function, ...)
