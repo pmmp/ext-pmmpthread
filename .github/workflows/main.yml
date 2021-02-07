@@ -13,16 +13,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3.25, 7.4.13, 8.0.0]
+        php: [7.3.27, 7.4.15, 8.0.2]
         opcache: [0, 1]
         zend-alloc: [0, 1]
         jit: [0]
         include:
-          - php: 8.0.0
+          - php: 8.0.2
             opcache: 1
             zend-alloc: 0
             jit: 1205
-          - php: 8.0.0
+          - php: 8.0.2
             opcache: 1
             zend-alloc: 1
             jit: 1205
