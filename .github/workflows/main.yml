@@ -81,4 +81,4 @@ jobs:
 
       - name: Run PHPT tests
         run: |
-          $GITHUB_WORKSPACE/php/bin/php ./run-tests.php -P -q --show-diff -n -c $TEST_PHP_ARGS $GITHUB_WORKSPACE/php.ini
+          $GITHUB_WORKSPACE/php/bin/php ./run-tests.php $TEST_PHP_ARGS -P -q --show-diff -n -c $GITHUB_WORKSPACE/php.ini
