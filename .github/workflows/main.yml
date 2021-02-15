@@ -82,3 +82,12 @@ jobs:
       - name: Run PHPT tests
         run: |
           $GITHUB_WORKSPACE/php/bin/php ./run-tests.php $TEST_PHP_ARGS -P -q --show-diff -n -c $GITHUB_WORKSPACE/php.ini
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}
+          path: |
+            ${{ github.workspace }}/tests/*
+            !${{ github.workspace }}/tests/*.phpt
