@@ -81,4 +81,4 @@ jobs:
 
       - name: Run PHPT tests
         run: |
-          USE_ZEND_ALLOC=${{ matrix.zend-alloc }} $GITHUB_WORKSPACE/php/bin/php ./run-tests.php -P -q --show-diff -n -c $TEST_PHP_ARGS $GITHUB_WORKSPACE/php.ini
+          $GITHUB_WORKSPACE/php/bin/php ./run-tests.php -P -q --show-diff -n -c $TEST_PHP_ARGS $GITHUB_WORKSPACE/php.ini
