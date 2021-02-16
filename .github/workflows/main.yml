@@ -36,7 +36,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php--${{ matrix.php }}
+          key: php-debug-${{ matrix.php }}
           
       - name: Clone php-build repository
         if: steps.php-build-cache.outputs.cache-hit != 'true'
@@ -50,7 +50,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/php-build
           ./install-dependencies.sh
-          PHP_BUILD_ZTS_ENABLE=on ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS='--enable-debug' ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
