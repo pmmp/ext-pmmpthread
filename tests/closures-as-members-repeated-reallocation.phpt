@@ -19,7 +19,9 @@ $worker->start();
 while ($count++ < 1000) {
     $function = new TestClosure(function() {});
     $worker->stack($function);
-    while($worker->collect());
+    while($worker->collect()){
+        usleep(1);
+    }
 }
 var_dump('ok');
 --EXPECTF--
