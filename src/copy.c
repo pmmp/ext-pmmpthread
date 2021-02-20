@@ -371,11 +371,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 
 	op_array->filename = filename_copy;
 
-	if (PHP_VERSION_ID < 80000 || op_array->refcount) {
-		//JIT opcodes are allocated on SHM and we don't want to mess with those
-		//the issue is that non-immutable functions can be JIT-compiled
-		//the non-copying of opcodes/literals may apply to <8.0 too, but since we
-		//only currently need it for JIT compatibility I'm playing it safe for now.
+	if (op_array->refcount) {
+		//NULL refcount means this op_array's parts are allocated on SHM, don't mess with it
+		//sometimes opcache caches part of an op_array without marking it as immutable
+		//in these cases we can (and should) use the opcache version directly without copying it
 		void *opcodes_memory;
 		void *literals_memory = NULL;
 #if !ZEND_USE_ABS_CONST_ADDR
@@ -440,7 +439,7 @@ zend_function* pthreads_copy_function(const zend_function *function) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
 
 		if (copy) {
-			if (copy->type == ZEND_USER_FUNCTION && copy->op_array.refcount) { //TODO: check under what circumstances the refcount is not allocated
+			if (copy->type == ZEND_USER_FUNCTION && copy->op_array.refcount) {
 				(*copy->op_array.refcount)++;
 			}
 #if PHP_VERSION_ID >= 80000
