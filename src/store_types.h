@@ -31,10 +31,6 @@ typedef struct _pthreads_storage {
 	zend_uchar 	type;
 	size_t 	length;
 	zend_bool 	exists;
-	union {
-		zend_long   lval;
-		double     dval;
-	} simple;
 	void    	*data;
 } pthreads_storage;
 

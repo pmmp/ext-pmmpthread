@@ -796,10 +796,10 @@ static inline void pthreads_prepare_includes(pthreads_object_t* thread) {
 
 /* {{{ */
 static inline void pthreads_prepare_exception_handler(pthreads_object_t* thread) {
-	if (thread->user_exception_handler != NULL) {
-		pthreads_store_convert(thread->user_exception_handler, &EG(user_exception_handler));
-		pthreads_store_storage_dtor(thread->user_exception_handler);
-		thread->user_exception_handler = NULL;
+	if (Z_TYPE(thread->user_exception_handler) != IS_UNDEF) {
+		pthreads_store_restore_zval(&EG(user_exception_handler), &thread->user_exception_handler);
+		pthreads_store_storage_dtor(&thread->user_exception_handler);
+		ZVAL_UNDEF(&thread->user_exception_handler);
 	}
 } /* }}} */
 
@@ -836,6 +836,7 @@ static inline void pthreads_rebuild_object(zval *zv) {
 void pthreads_prepare_parent(pthreads_object_t *thread) {
 	zval *handler = &EG(user_exception_handler);
 
+	ZVAL_UNDEF(&thread->user_exception_handler);
 	if (thread->options & (PTHREADS_INHERIT_CLASSES | PTHREADS_INHERIT_FUNCTIONS)) {
 		if (Z_TYPE_P(handler) != IS_UNDEF) {
 			pthreads_rebuild_object(handler);
@@ -849,7 +850,7 @@ void pthreads_prepare_parent(pthreads_object_t *thread) {
 				}
 			}
 
-			thread->user_exception_handler = pthreads_store_create(handler);
+			pthreads_store_save_zval(&thread->user_exception_handler, handler);
 		}
 	}
 } /* }}} */
