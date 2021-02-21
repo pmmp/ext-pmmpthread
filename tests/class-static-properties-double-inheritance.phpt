@@ -26,7 +26,6 @@ abstract class ManInTheMiddle extends \Threaded{}
 error_reporting(-1);
 
 $worker->stack(new TestAsyncTask());
-while($worker->collect());
 $worker->shutdown();
 --EXPECT--
 bool(false)
