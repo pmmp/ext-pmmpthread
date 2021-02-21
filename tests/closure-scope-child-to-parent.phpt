@@ -5,6 +5,8 @@ User classes on a child thread won't be available to use as a scope when a child
 Therefore, we need to reference the scope classes in a safe way that won't be affected by origin thread death.
 --XFAIL--
 This bug has not been fixed yet
+--XLEAK--
+This bug has not been fixed yet
 --FILE--
 <?php
 
