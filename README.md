@@ -50,13 +50,6 @@ Some specific nitpicks which were deal-breakers for parallel usage in PocketMine
 
 Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the benefits of PHP 7.4 without needing to suffer API breaks that would affect plugins. In addition, PHP 7.4 introduced various new internal features which are highly beneficial specifically to pthreads, such as immutable classes and op_arrays.
 
-## Highlights
-
-* An easy to use, quick to learn OO Threading API for PHP 7.3+
-* Execute any and all predefined and user declared methods and functions, including closures.
-* Ready made synchronization included
-* A world of possibilities ...
-
 ## Requirements
 
 * PHP 7.3+
