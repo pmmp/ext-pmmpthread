@@ -13,6 +13,5 @@ interface A {}
 class task extends Threaded implements A {}
 
 $worker->stack(new task());
-while($worker->collect());
 $worker->shutdown();
 --EXPECT--
