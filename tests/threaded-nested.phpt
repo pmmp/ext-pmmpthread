@@ -26,12 +26,22 @@ class TestNestedWrite extends Thread {
         $this->shared['queue'][0] = new Threaded();
 
         $this->shared['lock'] = true;
+        $this->shared->synchronized(function() : void{
+            $this->shared->notify();
+        });
 
-        while(!isset($this->shared['lock2'])) {}
+        $this->shared->synchronized(function() : void{
+            while(!isset($this->shared['lock2'])) {
+                $this->shared->wait();
+            }
+        });
 
         var_dump($this->shared['queue'][1]);
 
         $this->shared['lock3'] = true;
+        $this->shared->synchronized(function() : void{
+            $this->shared->notify();
+        });
     }
 }
 
@@ -43,14 +53,25 @@ class TestNestedRead extends Thread {
     }
 
     public function run() {
-        while(!isset($this->shared['lock']));
+        $this->shared->synchronized(function() : void{
+            while(!isset($this->shared['lock'])){
+                $this->shared->wait();
+            }
+        });
 
         var_dump($this->shared['queue'][1]);
 
         $this->shared['queue'][1] = new Node();
         $this->shared['lock2'] = true;
+        $this->shared->synchronized(function() : void{
+            $this->shared->notify();
+        });
 
-        while(!isset($this->shared['quit']));
+        $this->shared->synchronized(function() : void{
+            while(!isset($this->shared['quit'])){
+                $this->shared->wait();
+            }
+        });
     }
 }
 
@@ -68,9 +89,16 @@ class Test extends Thread {
         $thread2 = new TestNestedRead($shared);
         $thread2->start();
 
-        while(!isset($shared['lock3']));
+        $shared->synchronized(function() use ($shared) : void{
+            while(!isset($shared['lock3'])){
+                $shared->wait();
+            }
+        });
 
         $shared['quit'] = true;
+        $shared->synchronized(function() use ($shared) : void{
+            $shared->notify();
+        });
 
         $thread2->join();
         $thread->join();

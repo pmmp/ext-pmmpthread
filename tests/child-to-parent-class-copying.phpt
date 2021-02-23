@@ -15,8 +15,15 @@ class Foo extends Thread
 		require __DIR__ . '/child-to-parent-class-copying-helper.php';
 
 		$this->shared['baseClass'] = new ExternalBaseClass();
+		$this->synchronized(function() : void{
+			$this->notify();
+		});
 
-		while($this->running);
+		$this->synchronized(function() : void{
+			while($this->running){
+				$this->wait();
+			}
+		});
 	}
 }
 
@@ -24,10 +31,17 @@ $foo = new Foo();
 $foo->shared = new Threaded();
 $foo->start();
 
-while(!isset($foo->shared['baseClass']));
+$foo->synchronized(function() use ($foo) : void{
+	while(!isset($foo->shared['baseClass'])){
+		$foo->wait();
+	}
+});
 
 $baseClass = $foo->shared['baseClass']; // copy zend_class_entry
 $foo->running = false;
+$foo->synchronized(function() use ($foo) : void{
+	$foo->notify();
+});
 
 $foo->join();
 echo "OK\n";

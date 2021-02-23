@@ -216,10 +216,6 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 						opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
 					}
 					break;
-#if PHP_VERSION_ID < 70400
-				case ZEND_DECLARE_ANON_CLASS:
-				case ZEND_DECLARE_ANON_INHERITED_CLASS:
-#endif
 				case ZEND_FE_FETCH_R:
 				case ZEND_FE_FETCH_RW:
 				case ZEND_SWITCH_LONG:
@@ -329,7 +325,6 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		(*op_array->refcount) = 1;
 	}
 	/* we never want to share the same runtime cache */
-#if PHP_VERSION_ID >= 70400
 	if (op_array->fn_flags & ZEND_ACC_HEAP_RT_CACHE) {
 		//TODO: we really shouldn't need to initialize this here, but right now it's the most convenient way to do it.
 		//the primary problem is zend_create_closure(), which doesn't like being given an op_array that has a NULL
@@ -343,15 +338,6 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
 		ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
 	}
-#else
-	if(op_array->fn_flags & ZEND_ACC_NO_RT_ARENA) {
-		//if we don't initialize this, zend will do it for us, but it won't pay any attention to NO_RT_ARENA
-		//which will cause faults later down the line because it _does_ check when it cleans up after itself
-		op_array->run_time_cache = emalloc(op_array->cache_size);
-	} else {
-		op_array->run_time_cache = NULL;
-	}
-#endif
 
 	if (op_array->doc_comment) {
 		op_array->doc_comment = zend_string_new(op_array->doc_comment);
@@ -409,9 +395,7 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
 	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
-#if PHP_VERSION_ID >= 70400
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
-#endif
 
 	return copy;
 } /* }}} */
@@ -428,12 +412,10 @@ static inline zend_function* pthreads_copy_internal_function(const zend_function
 zend_function* pthreads_copy_function(const zend_function *function) {
 	zend_function *copy;
 
-#if PHP_VERSION_ID >= 70400
 	if (function->common.fn_flags & ZEND_ACC_IMMUTABLE) {
 		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
 		return function;
 	}
-#endif
 
 	if (!(function->op_array.fn_flags & ZEND_ACC_CLOSURE)) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
