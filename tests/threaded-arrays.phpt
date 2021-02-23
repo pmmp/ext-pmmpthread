@@ -1,15 +1,14 @@
 --TEST--
-Test Threaded behaviour when used as n array
+Test ThreadedArray behaviour
 --DESCRIPTION--
 Arrays were difficult to use in pthreads, their behaviour was strange and inconsistent with Zend arrays.
 
-Threaded objects have been made consistent with PHP arrays, so a Threaded object can mostly serve as a
-drop-in replacement for an array, with similar behaviour.
+ThreadedArray objects can mostly serve as a drop-in replacement for an array, with similar behaviour.
 --FILE--
 <?php
-$threaded = new Threaded();
+$threaded = new ThreadedArray();
 
-$threaded["test"] = Threaded::fromArray([
+$threaded["test"] = ThreadedArray::fromArray([
 	"greeting" => "Hello World", 
 	"child" => [
 		"of" => "mine",
@@ -46,17 +45,17 @@ $threaded["test"]["child"]["grandchild"]["of"] = "devil";
 var_dump($threaded);
 ?>
 --EXPECTF--
-object(Threaded)#%d (%d) {
+object(ThreadedArray)#%d (%d) {
   ["test"]=>
-  object(Threaded)#%d (%d) {
+  object(ThreadedArray)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(Threaded)#%d (%d) {
+    object(ThreadedArray)#%d (%d) {
       ["of"]=>
       string(4) "mine"
       ["grandchild"]=>
-      object(Threaded)#%d (%d) {
+      object(ThreadedArray)#%d (%d) {
         ["of"]=>
         string(7) "parents"
       }
@@ -81,17 +80,17 @@ bool(true)
 bool(true)
 string(8) "null key"
 string(8) "appended"
-object(Threaded)#%d (%d) {
+object(ThreadedArray)#%d (%d) {
   ["test"]=>
-  object(Threaded)#%d (%d) {
+  object(ThreadedArray)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(Threaded)#%d (%d) {
+    object(ThreadedArray)#%d (%d) {
       ["of"]=>
       string(5) "yours"
       ["grandchild"]=>
-      object(Threaded)#%d (%d) {
+      object(ThreadedArray)#%d (%d) {
         ["of"]=>
         string(5) "devil"
       }

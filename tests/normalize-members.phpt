@@ -5,7 +5,7 @@ This tests that normalizing members works without effort
 --FILE--
 <?php
 
-$t = new Threaded();
+$t = new ThreadedArray();
 $t[] = "one";
 $t[] = "two";
 $t["three"] = "three";

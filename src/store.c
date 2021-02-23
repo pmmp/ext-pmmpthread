@@ -338,7 +338,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	if (Z_TYPE_P(write) == IS_ARRAY && coerce_array_to_threaded == PTHREADS_STORE_COERCE_ARRAY) {
 		/* coerce arrays into threaded objects */
 		object_init_ex(
-			&vol, pthreads_threaded_entry);
+			&vol, pthreads_threaded_array_entry);
 		pthreads_store_merge(Z_OBJ(vol), write, 1, PTHREADS_STORE_COERCE_ARRAY);
 		/* this will be addref'd when caching the object */
 		Z_SET_REFCOUNT(vol, 0);
@@ -961,7 +961,7 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 
 	switch (Z_TYPE_P(from)) {
 		case IS_OBJECT: {
-			if (IS_PTHREADS_THREADED_CLASS(Z_OBJCE_P(from))) {
+			if (IS_PTHREADS_THREADED_ARRAY(Z_OBJCE_P(from))) {
 				pthreads_object_t* threaded[2] = {PTHREADS_FETCH_TS_FROM(destination), PTHREADS_FETCH_TS_FROM(Z_OBJ_P(from))};
 
 				if (pthreads_monitor_lock(threaded[0]->monitor)) {

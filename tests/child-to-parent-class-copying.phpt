@@ -28,7 +28,7 @@ class Foo extends Thread
 }
 
 $foo = new Foo();
-$foo->shared = new Threaded();
+$foo->shared = new ThreadedArray();
 $foo->start();
 
 $foo->synchronized(function() use ($foo) : void{

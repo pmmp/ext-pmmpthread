@@ -5,7 +5,7 @@ This tests that merging members works as expected
 --FILE--
 <?php
 
-$stores = array(new Threaded(), new Threaded());
+$stores = array(new ThreadedArray(), new ThreadedArray());
 
 $stores[0]["test"] = "one";
 $stores[1]["other"] = "when";
@@ -26,7 +26,7 @@ $stores[0]->merge($stores[1], false);
 var_dump($stores[0]);
 ?>
 --EXPECT--
-object(Threaded)#1 (3) {
+object(ThreadedArray)#1 (3) {
   ["test"]=>
   string(3) "two"
   ["other"]=>
@@ -34,7 +34,7 @@ object(Threaded)#1 (3) {
   ["next"]=>
   float(0.01)
 }
-object(Threaded)#1 (3) {
+object(ThreadedArray)#1 (3) {
   ["test"]=>
   string(3) "one"
   ["other"]=>

@@ -14,7 +14,7 @@ $array = [
 ];
 var_dump($array);
 
-$threaded = Threaded::fromArray($array);
+$threaded = ThreadedArray::fromArray($array);
 var_dump($threaded);
 ?>
 --EXPECTF--
@@ -32,15 +32,15 @@ array(2) {
     }
   }
 }
-object(Threaded)#1 (2) {
+object(ThreadedArray)#1 (2) {
   ["greeting"]=>
   string(11) "Hello World"
   ["child"]=>
-  object(Threaded)#2 (2) {
+  object(ThreadedArray)#2 (2) {
     ["of"]=>
     string(4) "mine"
     ["grandchild"]=>
-    object(Threaded)#3 (1) {
+    object(ThreadedArray)#3 (1) {
       ["of"]=>
       string(7) "parents"
     }

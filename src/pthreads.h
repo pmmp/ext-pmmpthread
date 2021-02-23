@@ -76,7 +76,7 @@
 #endif
 
 extern zend_class_entry *pthreads_threaded_base_entry;
-extern zend_class_entry *pthreads_threaded_entry;
+extern zend_class_entry *pthreads_threaded_array_entry;
 extern zend_class_entry *pthreads_threaded_runnable_entry;
 extern zend_class_entry *pthreads_thread_entry;
 extern zend_class_entry *pthreads_worker_entry;
@@ -89,14 +89,14 @@ extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
 
-#define IS_PTHREADS_THREADED_CLASS(o) \
-	instanceof_function(o, pthreads_threaded_entry)
+#define IS_PTHREADS_THREADED_ARRAY(o) \
+	instanceof_function(o, pthreads_threaded_array_entry)
 
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
 
 extern zend_object_handlers pthreads_threaded_base_handlers;
-extern zend_object_handlers pthreads_handlers;
+extern zend_object_handlers pthreads_threaded_array_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
 extern zend_object_handlers *zend_handlers;
 

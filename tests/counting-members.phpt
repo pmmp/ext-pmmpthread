@@ -4,7 +4,7 @@ Testing member count
 This test verifies that getting member counts works
 --FILE--
 <?php
-$t = new Threaded();
+$t = new ThreadedArray();
 $t[] = "one";
 $t[] = "two";
 $t["three"] = "three";

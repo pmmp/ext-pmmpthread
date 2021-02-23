@@ -9,7 +9,7 @@ class Node extends ThreadedBase {}
 class TestNestedWrite extends Thread {
     private $shared;
 
-    public function __construct(Threaded $shared) {
+    public function __construct(ThreadedArray $shared) {
         $this->shared = $shared;
     }
 
@@ -23,7 +23,7 @@ class TestNestedWrite extends Thread {
         //unset($this->shared['queue'][0]);
 
         // or replace ref
-        $this->shared['queue'][0] = new Threaded();
+        $this->shared['queue'][0] = new ThreadedArray();
 
         $this->shared['lock'] = true;
         $this->shared->synchronized(function() : void{
@@ -48,7 +48,7 @@ class TestNestedWrite extends Thread {
 class TestNestedRead extends Thread {
     private $shared;
 
-    public function __construct(Threaded $shared) {
+    public function __construct(ThreadedArray $shared) {
         $this->shared = $shared;
     }
 
@@ -77,10 +77,10 @@ class TestNestedRead extends Thread {
 
 class Test extends Thread {
     public function run() {
-        $queue = new Threaded();
-        $queue[0] = new Threaded();
+        $queue = new ThreadedArray();
+        $queue[0] = new ThreadedArray();
 
-        $shared = new Threaded();
+        $shared = new ThreadedArray();
         $shared['queue'] = $queue;
 
         $thread = new TestNestedWrite($shared);
@@ -109,9 +109,9 @@ $thread->start();
 $thread->join();
 ?>
 --EXPECT--
-object(Threaded)#4 (0) {
+object(ThreadedArray)#4 (0) {
 }
-object(Threaded)#4 (0) {
+object(ThreadedArray)#4 (0) {
 }
 object(Node)#4 (0) {
 }

@@ -30,7 +30,7 @@
 
 /* {{{ */
 zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry);
-zend_object* pthreads_threaded_ctor(zend_class_entry *entry);
+zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry);
 zend_object* pthreads_worker_ctor(zend_class_entry *entry);
 zend_object* pthreads_thread_ctor(zend_class_entry *entry);
 zend_object* pthreads_socket_ctor(zend_class_entry *entry);

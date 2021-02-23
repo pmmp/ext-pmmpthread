@@ -30,8 +30,8 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
 #include <classes/threaded_base.h>
 #include <classes/threaded_runnable.h>
 
-#ifndef HAVE_PTHREADS_CLASS_THREADED_H
-#	include <classes/threaded.h>
+#ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
+#	include <classes/threaded_array.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_THREAD_H

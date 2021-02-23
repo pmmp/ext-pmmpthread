@@ -25,7 +25,7 @@ class Test extends ThreadedBase {
    public static $prop9;
 }
 
-Test::$prop4 = new Threaded;
+Test::$prop4 = new ThreadedArray;
 Test::$prop5 = new stdClass; /* will be null */
 Test::$prop6 = function() { /* will be copied with voodoo */
 	return [1,2,3];
@@ -33,9 +33,9 @@ Test::$prop6 = function() { /* will be copied with voodoo */
 
 Test::$prop7 = fopen("php://stdin", "r");
 Test::$prop8 = [fopen("php://stdin", "r")];
-Test::$prop9 = [new Threaded, new stdClass, [
-	new Threaded, new stdClass, [
-		new Threaded, new stdClass
+Test::$prop9 = [new ThreadedArray, new stdClass, [
+	new ThreadedArray, new stdClass, [
+		new ThreadedArray, new stdClass
 	]
 ]];
 
@@ -84,7 +84,7 @@ array(2) {
     int(6)
   }
 }
-object(Threaded)#5 (0) {
+object(ThreadedArray)#5 (0) {
 }
 NULL
 object(Closure)#4 (0) {
@@ -102,17 +102,17 @@ array(0) {
 }
 array(2) {
   [0]=>
-  object(Threaded)#1 (0) {
+  object(ThreadedArray)#1 (0) {
   }
   [2]=>
   array(2) {
     [0]=>
-    object(Threaded)#2 (0) {
+    object(ThreadedArray)#2 (0) {
     }
     [2]=>
     array(1) {
       [0]=>
-      object(Threaded)#3 (0) {
+      object(ThreadedArray)#3 (0) {
       }
     }
   }

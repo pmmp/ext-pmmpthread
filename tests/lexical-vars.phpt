@@ -34,7 +34,7 @@ class TestThread extends \Thread
 $scalar = 1; # will work
 $string = "thing"; # will work
 $res = fopen("php://stdin", "r"); # won't work
-$threaded = new Threaded(); # will work
+$threaded = new ThreadedArray(); # will work
 $closure = function() { # will work
 	echo "hi";
 };
@@ -49,7 +49,7 @@ $thread->start();
 int(1)
 string(5) "thing"
 NULL
-object(Threaded)#2 (0) {
+object(ThreadedArray)#2 (0) {
 }
 object(Closure)#3 (0) {
 }

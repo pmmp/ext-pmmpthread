@@ -9,7 +9,7 @@ class T extends Thread {
 	public $o;
 
 	public function run() {
-		$this->o = new Threaded();
+		$this->o = new ThreadedArray();
 		/* this will disappear with this context */
 		$this->o["data"] = true;
 	}

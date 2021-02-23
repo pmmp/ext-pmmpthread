@@ -9,10 +9,10 @@ class Foo extends \Thread {
     /** @var bool */
     public $running;
 
-    /** @var \Threaded */
+    /** @var \ThreadedArray */
     private $shared;
 
-    public function __construct(\Threaded $shared) {
+    public function __construct(\ThreadedArray $shared) {
         $this->shared = $shared;
     }
 
@@ -33,7 +33,7 @@ class Foo extends \Thread {
     }
 }
 
-$shared = new \Threaded();
+$shared = new ThreadedArray();
 
 $foo = new Foo($shared);
 $foo->start();
