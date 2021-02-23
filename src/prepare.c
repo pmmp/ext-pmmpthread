@@ -41,12 +41,6 @@
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
-#if PHP_VERSION_ID >= 70400
-#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_LINKED
-#else
-#define PTHREADS_ACC_ANON_BOUND ZEND_ACC_ANON_BOUND
-#endif
-
 /* {{{ */
 static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate);
 static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings);
@@ -102,11 +96,7 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 	if (candidate->default_static_members_count) {
 		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
 		int i, end;
-#if PHP_VERSION_ID >= 70400
 		zend_class_entry *parent = !(prepared->ce_flags & ZEND_ACC_LINKED) ? NULL : prepared->parent;
-#else
-		zend_class_entry *parent = prepared->parent;
-#endif
 
 		if (prepared->default_static_members_table) {
 			//if this is an anonymous class, we may have already copied declared statics for this class (but not inherited ones)
@@ -141,12 +131,7 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 
 			parent = parent->parent;
 		}
-#if PHP_VERSION_ID < 70400
-		//we realloc'd the table
-		prepared->static_members_table = prepared->default_static_members_table;
-#else
-		//zend_initialize_class_data() already inits the map_ptr, which is ptr(default_static_members_table), so nothing to do here
-#endif
+		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
 
@@ -195,7 +180,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
 		}
 
-#if PHP_VERSION_ID >= 70400 && PHP_VERSION_ID < 80000
+#if PHP_VERSION_ID < 80000
 		if (ZEND_TYPE_IS_NAME(info->type)) {
 			zend_string *type_name = zend_string_new(ZEND_TYPE_NAME(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CLASS(type_name, ZEND_TYPE_ALLOW_NULL(info->type));
@@ -203,7 +188,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			zend_class_entry *type_ce = pthreads_prepared_entry(thread, ZEND_TYPE_CE(info->type));
 			dup->type = ZEND_TYPE_ENCODE_CE(type_ce, ZEND_TYPE_ALLOW_NULL(info->type));
 		}
-#elif PHP_VERSION_ID >= 80000
+#else
 		memcpy(&dup->type, &info->type, sizeof(zend_type));
 
 		//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
@@ -261,7 +246,6 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 			}
 		}
 		prepared->default_properties_count = candidate->default_properties_count;
-#if PHP_VERSION_ID >= 70400
 		if (prepared->ce_flags & ZEND_ACC_LINKED) {
 			prepared->properties_info_table = zend_arena_alloc(&CG(arena), sizeof(zend_property_info *) * candidate->default_properties_count);
 			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
@@ -270,7 +254,6 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 				}
 			} ZEND_HASH_FOREACH_END();
 		} else prepared->properties_info_table = NULL;
-#endif
 	} else prepared->default_properties_count = 0;
 } /* }}} */
 
@@ -351,17 +334,11 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 	if (candidate->num_traits) {
 		unsigned int trait;
 
-#if PHP_VERSION_ID >= 70400
 		prepared->trait_names = emalloc(sizeof(zend_class_name) * candidate->num_traits);
 		for (trait = 0; trait < candidate->num_traits; trait++) {
 			prepared->trait_names[trait].lc_name = zend_string_new(candidate->trait_names[trait].lc_name);
 			prepared->trait_names[trait].name = zend_string_new(candidate->trait_names[trait].name);
 		}
-#else
-		prepared->traits = emalloc(sizeof(zend_class_entry*) * candidate->num_traits);
-		for (trait = 0; trait < candidate->num_traits; trait++)
-			prepared->traits[trait] = pthreads_prepared_entry(thread, candidate->traits[trait]);
-#endif
 		prepared->num_traits = candidate->num_traits;
 	} else prepared->num_traits = 0;
 
@@ -407,28 +384,21 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 
 /* {{{ */
 static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
-#if PHP_VERSION_ID >= 70400
 	int old_ce_flags = prepared->ce_flags;
-#endif
 	prepared->ce_flags = candidate->ce_flags;
-#if PHP_VERSION_ID >= 70400
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
 		if(!(old_ce_flags & ZEND_ACC_LINKED) && prepared->parent_name){ //we're updating an unlinked copy with information from a newly linked copy
 			zend_string_release(prepared->parent_name);
 		}
-#endif
 		if (candidate->parent) {
 			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
 		}
-#if PHP_VERSION_ID >= 70400
 	} else if (candidate->parent_name) {
 		prepared->parent_name = zend_string_new(candidate->parent_name);
 	}
-#endif
 
 	if (candidate->num_interfaces) {
 		unsigned int interface;
-#if PHP_VERSION_ID >= 70400
 		if (candidate->ce_flags & ZEND_ACC_LINKED) {
 			if(!(old_ce_flags & ZEND_ACC_LINKED)){
 				for (interface = 0; interface < prepared->num_interfaces; interface++) {
@@ -437,11 +407,9 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 				}
 				efree(prepared->interfaces);
 			}
-#endif
 			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++)
 				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
-#if PHP_VERSION_ID >= 70400
 		} else {
 			prepared->interface_names = emalloc(sizeof(zend_class_name) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++) {
@@ -449,7 +417,6 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 				prepared->interface_names[interface].lc_name = zend_string_new(candidate->interface_names[interface].lc_name);
 			}
 		}
-#endif
 		prepared->num_interfaces = candidate->num_interfaces;
 	} else prepared->num_interfaces = 0;
 
@@ -555,10 +522,8 @@ static inline void pthreads_prepare_closures(pthreads_object_t *thread) {
 
 /* {{{ */
 zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate) {
-#if PHP_VERSION_ID >= 70400
 	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
 	zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
-#endif
 	return pthreads_prepared_entry(thread, candidate);
 } /* }}} */
 
@@ -577,9 +542,7 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 	}
 
 	if (candidate->type == ZEND_INTERNAL_CLASS
-#if PHP_VERSION_ID >= 70400
 		|| candidate->ce_flags & ZEND_ACC_PRELOADED
-#endif
 	) {
 		return zend_lookup_class(candidate->name);
 	}
@@ -591,12 +554,10 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		zend_string_release(lookup);
 
 		if(
-			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == ZEND_ACC_ANON_CLASS &&
-			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)) == (ZEND_ACC_ANON_CLASS|PTHREADS_ACC_ANON_BOUND)
+			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == ZEND_ACC_ANON_CLASS &&
+			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
 		){
-#if PHP_VERSION_ID >= 70400
 			ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE) && !(prepared->ce_flags & ZEND_ACC_IMMUTABLE));
-#endif
 			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 			pthreads_complete_entry(thread, candidate, prepared);
 			if (do_late_bindings) {
@@ -607,14 +568,12 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		return prepared;
 	}
 
-#if PHP_VERSION_ID >= 70400
 	if (candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		//IMMUTABLE classes don't need to be copied and should not be modified
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
 		return candidate;
 	}
-#endif
 
 	if (!(prepared = pthreads_copy_entry(thread, candidate))) {
 		zend_string_release(lookup);
@@ -892,9 +851,7 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		if (thread->options & PTHREADS_INHERIT_CONSTANTS)
 			pthreads_prepare_constants(thread);
 
-#if PHP_VERSION_ID >= 70400
 		zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
-#endif
 
 		if (thread->options & PTHREADS_INHERIT_FUNCTIONS)
 			pthreads_prepare_functions(thread);

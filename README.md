@@ -52,7 +52,7 @@ Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the
 
 ## Requirements
 
-* PHP 7.3+
+* PHP 7.4+
 * ZTS Enabled ( Thread Safety )
 * Posix Threads Implementation (pthread-w32 / pthreads4w on Windows)
 
