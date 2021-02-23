@@ -4,11 +4,8 @@ Testing isset unset
 This tests that isset and unset are working properly
 --FILE--
 <?php
-class Storage extends Threaded {
-    public function run(){}
-}
 
-$storage = new Storage();
+$storage = new Threaded();
 $storage->merge(range(1, 10));
 var_dump($storage);
 
@@ -21,7 +18,7 @@ for($i = 0; $i < 10; $i ++) {
 }
 ?>
 --EXPECT--
-object(Storage)#1 (10) {
+object(Threaded)#1 (10) {
   [0]=>
   int(1)
   [1]=>

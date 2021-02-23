@@ -14,7 +14,7 @@ class standard {
     public $t_notEmpty = true;
 }
 
-class threadedObject extends \Threaded {
+class threadedObject extends \ThreadedBase {
     public $t_false = false;
     public $t_null = null;
     public $t_emptyStr = "";

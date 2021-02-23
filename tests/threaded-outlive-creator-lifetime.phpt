@@ -48,7 +48,7 @@ $t->join();
 var_dump($chan);
 var_dump($chan->shift());
 var_dump($chan);
-var_dump($chan->property = "test");
+var_dump($chan["property"] = "test");
 var_dump($chan);
 var_dump($chan->count());
 $chan->synchronized(function() : void{

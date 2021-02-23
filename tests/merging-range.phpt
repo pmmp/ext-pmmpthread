@@ -4,11 +4,7 @@ Testing merging members (long keys)
 This tests that merging ranges works as expected (long keys)
 --FILE--
 <?php
-class Storage extends Threaded {
-    public function run() {}
-}
-
-$storage = new Storage();
+$storage = new Threaded();
 $storage->merge(range("0", "3"));
 var_dump(count($storage));
 ?>

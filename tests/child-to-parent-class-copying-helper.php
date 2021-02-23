@@ -1,3 +1,3 @@
 <?php
 
-class ExternalBaseClass extends \Threaded {}
+class ExternalBaseClass extends \ThreadedBase {}

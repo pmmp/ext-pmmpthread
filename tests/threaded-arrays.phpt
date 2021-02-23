@@ -9,7 +9,7 @@ drop-in replacement for an array, with similar behaviour.
 <?php
 $threaded = new Threaded();
 
-$threaded->test = Threaded::fromArray([
+$threaded["test"] = Threaded::fromArray([
 	"greeting" => "Hello World", 
 	"child" => [
 		"of" => "mine",
@@ -40,8 +40,8 @@ unset($threaded["2"], $threaded[3], $threaded[null], $threaded[4]);
 /*
  This kind of thing would simply fail before, creating really unexpected results
 */
-$threaded->test["child"]["of"] = "yours";
-$threaded->test["child"]["grandchild"]["of"] = "devil";
+$threaded["test"]["child"]["of"] = "yours";
+$threaded["test"]["child"]["grandchild"]["of"] = "devil";
 
 var_dump($threaded);
 ?>

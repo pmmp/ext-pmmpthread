@@ -12,7 +12,7 @@ We are back to the original rules, that complex unsafe members will be removed f
 	array: remains, rules above applied
 --FILE--
 <?php
-class Test extends Threaded {
+class Test extends ThreadedBase {
 
    public static $prop1 = "one";
    public static $prop2 = [1, 2, 3];

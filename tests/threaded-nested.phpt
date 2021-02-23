@@ -4,7 +4,7 @@ Test nested Threaded objects
 This test verifies the possibility to nest Threaded objects
 --FILE--
 <?php
-class Node extends Threaded {}
+class Node extends ThreadedBase {}
 
 class TestNestedWrite extends Thread {
     private $shared;

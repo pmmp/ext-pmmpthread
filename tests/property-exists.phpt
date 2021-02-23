@@ -12,7 +12,7 @@ function test(object $t) : void{
 }
 
 test(new \stdClass);
-test(new \Threaded);
+test(new \ThreadedBase);
 ?>
 --EXPECT--
 bool(true)

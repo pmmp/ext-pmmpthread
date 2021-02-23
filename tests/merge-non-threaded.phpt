@@ -17,7 +17,7 @@ $stdClass->baz = "baz";
 $safe = new Threaded();
 $safe->merge($array);
 
-$safe->foo = "bar";
+$safe["foo"] = "bar";
 $safe->merge($stdClass, false);
 
 var_dump($safe);

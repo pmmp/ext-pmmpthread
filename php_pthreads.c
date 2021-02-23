@@ -163,6 +163,10 @@ PHP_MINIT_FUNCTION(pthreads)
 	INIT_CLASS_ENTRY(ce, "Threaded", pthreads_threaded_methods);
 	pthreads_threaded_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
 	pthreads_threaded_entry->create_object = pthreads_threaded_ctor;
+	pthreads_threaded_entry->ce_flags |= ZEND_ACC_FINAL;
+#if PHP_VERSION_ID >= 80000
+	pthreads_threaded_entry->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+#endif
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
@@ -669,6 +673,10 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_handlers.write_dimension = pthreads_write_dimension;
 	pthreads_handlers.has_dimension = pthreads_has_dimension;
 	pthreads_handlers.unset_dimension = pthreads_unset_dimension;
+	pthreads_handlers.read_property = pthreads_read_property_disallow;
+	pthreads_handlers.write_property = pthreads_write_property_disallow;
+	pthreads_handlers.has_property = pthreads_has_property_disallow;
+	pthreads_handlers.unset_property = pthreads_unset_property_disallow;
 
 	memcpy(&pthreads_socket_handlers, &pthreads_threaded_base_handlers, sizeof(zend_object_handlers));
 
