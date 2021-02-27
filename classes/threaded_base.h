@@ -70,9 +70,12 @@ PHP_METHOD(ThreadedBase, wait)
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 	zend_long timeout = 0L;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|l", &timeout)==SUCCESS) {
-		RETURN_BOOL(pthreads_monitor_wait(threaded->monitor, timeout) == SUCCESS);
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_LONG(timeout)
+	ZEND_PARSE_PARAMETERS_END();
+	
+	RETURN_BOOL(pthreads_monitor_wait(threaded->monitor, timeout) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto boolean ThreadedBase::notify()
@@ -81,6 +84,8 @@ PHP_METHOD(ThreadedBase, wait)
 PHP_METHOD(ThreadedBase, notify)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+
+	zend_parse_parameters_none_throw();
 
 	RETURN_BOOL(pthreads_monitor_notify(threaded->monitor) == SUCCESS);
 } /* }}} */
@@ -91,6 +96,8 @@ PHP_METHOD(ThreadedBase, notify)
 PHP_METHOD(ThreadedBase, notifyOne)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+
+	zend_parse_parameters_none_throw();
 
 	RETURN_BOOL(pthreads_monitor_notify_one(threaded->monitor) == SUCCESS);
 } /* }}} */
@@ -105,9 +112,11 @@ PHP_METHOD(ThreadedBase, synchronized)
 	zval *argv = NULL;
 	pthreads_object_t* threaded= PTHREADS_FETCH_TS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "f|+", &call.fci, &call.fcc, &argv, &argc) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, -1)
+		Z_PARAM_FUNC(call.fci, call.fcc)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_VARIADIC('+', argv, argc)
+	ZEND_PARSE_PARAMETERS_END();
 
 	zend_fcall_info_argp(&call.fci, argc, argv);
 

@@ -80,9 +80,9 @@ PHP_METHOD(Worker, stack)
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zval *work;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &work, pthreads_threaded_runnable_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_OBJECT_OF_CLASS(work, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
 	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
@@ -100,9 +100,7 @@ PHP_METHOD(Worker, unstack)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
@@ -119,6 +117,8 @@ PHP_METHOD(Worker, unstack)
 PHP_METHOD(Worker, getStacked)
 {
 	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+
+	zend_parse_parameters_none_throw();
 
 	RETURN_LONG(pthreads_stack_size(thread->stack));
 }
@@ -157,9 +157,9 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 PHP_METHOD(Worker, collector) {
 	zval *collectable;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_threaded_runnable_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_OBJECT_OF_CLASS(collectable, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
 	RETURN_TRUE;
 } /* }}} */
@@ -170,10 +170,13 @@ PHP_METHOD(Worker, collect)
 	pthreads_zend_object_t *thread = PTHREADS_FETCH;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_FUNC(call.fci, call.fcc)
+	ZEND_PARSE_PARAMETERS_END();
+
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(getThis()));
-	} else if (zend_parse_parameters(ZEND_NUM_ARGS(), "f", &call.fci, &call.fcc) != SUCCESS) {
-		return;
 	}
 
 	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
