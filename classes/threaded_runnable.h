@@ -49,6 +49,8 @@ PHP_METHOD(ThreadedRunnable, isRunning)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
+	zend_parse_parameters_none_throw();
+
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_RUNNING));
 } /* }}} */
 
@@ -57,6 +59,8 @@ PHP_METHOD(ThreadedRunnable, isRunning)
 PHP_METHOD(ThreadedRunnable, isTerminated)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+
+	zend_parse_parameters_none_throw();
 
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */

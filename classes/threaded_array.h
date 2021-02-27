@@ -71,9 +71,11 @@ PHP_METHOD(ThreadedArray, merge)
 	zval *from;
 	zend_bool overwrite = 1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z|b", &from, &overwrite) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+		Z_PARAM_ZVAL(from)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_BOOL(overwrite)
+	ZEND_PARSE_PARAMETERS_END();
 
 	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite, PTHREADS_STORE_COERCE_ARRAY)==SUCCESS));
 } /* }}} */
@@ -82,9 +84,7 @@ PHP_METHOD(ThreadedArray, merge)
 	Will shift the first member from the object */
 PHP_METHOD(ThreadedArray, shift)
 {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	pthreads_store_shift(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
@@ -96,9 +96,11 @@ PHP_METHOD(ThreadedArray, chunk)
 	zend_long size;
 	zend_bool preserve = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|b", &size, &preserve) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
+		Z_PARAM_LONG(size)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_BOOL(preserve)
+	ZEND_PARSE_PARAMETERS_END();
 
 	pthreads_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
 } /* }}} */
@@ -107,9 +109,7 @@ PHP_METHOD(ThreadedArray, chunk)
 	Will pop the last member from the object */
 PHP_METHOD(ThreadedArray, pop)
 {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	pthreads_store_pop(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
@@ -118,9 +118,7 @@ PHP_METHOD(ThreadedArray, pop)
 	Will return the size of the properties table */
 PHP_METHOD(ThreadedArray, count)
 {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	ZVAL_LONG(return_value, 0);
 
