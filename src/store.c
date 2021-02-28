@@ -679,12 +679,25 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 
 /* {{{ */
 void pthreads_store_save_zval(zval *zstorage, zval *write) {
-	if (!Z_REFCOUNTED_P(write)) {
-		ZVAL_COPY(zstorage, write);
-	} else if (Z_TYPE_P(write) == IS_STRING) {
-		ZVAL_STR(zstorage, zend_string_init(Z_STRVAL_P(write), Z_STRLEN_P(write), 1));
-	} else {
-		ZVAL_PTR(zstorage, pthreads_store_create(write));
+	switch (Z_TYPE_P(write)) {
+		case IS_NULL:
+		case IS_FALSE:
+		case IS_TRUE:
+		case IS_LONG:
+		case IS_DOUBLE:
+			ZVAL_COPY(zstorage, write);
+			break;
+		case IS_STRING:
+			if (GC_FLAGS(Z_STR_P(write)) & IS_STR_PERMANENT) { //interned by OPcache, or provided by builtin class
+				ZVAL_STR(zstorage, Z_STR_P(write));
+			} else {
+				ZVAL_STR(zstorage, zend_string_init(Z_STRVAL_P(write), Z_STRLEN_P(write), 1));
+			}
+			break;
+		default:
+			//TODO: what if this fails?
+			ZVAL_PTR(zstorage, pthreads_store_create(write));
+			break;
 	}
 } /* }}} */
 
@@ -770,18 +783,34 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 /* {{{ */
 void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage) {
 	*was_pthreads_storage = 0;
-	if (Z_TYPE_P(zstorage) == IS_PTR) {
-		/* threaded object, serialized object, resource, serialized array */
-		pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
-		*was_pthreads_storage = storage->type == IS_PTHREADS;
-		pthreads_store_convert(storage, unstore);
-	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
-		/* we can't use this directly because it's not permanent and races could occur on refcounts if we did */
-		ZVAL_STR(unstore, zend_string_init(Z_STRVAL_P(zstorage), Z_STRLEN_P(zstorage), 0));
-	} else {
-		/* simple values are stored directly */
-		ZEND_ASSERT(!Z_REFCOUNTED_P(zstorage));
-		ZVAL_COPY(unstore, zstorage);
+	switch (Z_TYPE_P(zstorage)) {
+		case IS_NULL:
+		case IS_FALSE:
+		case IS_TRUE:
+		case IS_LONG:
+		case IS_DOUBLE:
+			/* simple values are stored directly */
+			ZVAL_COPY(unstore, zstorage);
+			break;
+		case IS_STRING:
+			if (GC_FLAGS(Z_STR_P(zstorage)) & IS_STR_PERMANENT) {
+				/* string from OPcache or internal class */
+				ZVAL_STR(unstore, Z_STR_P(zstorage));
+			} else {
+				/* we can't use this directly (it would cause refcount races) */
+				ZVAL_STR(unstore, zend_string_init(Z_STRVAL_P(zstorage), Z_STRLEN_P(zstorage), 0));
+			}
+			break;
+		case IS_PTR:
+			{
+				/* threaded object, serialized object, resource, serialized array */
+				pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
+				*was_pthreads_storage = storage->type == IS_PTHREADS;
+				pthreads_store_convert(storage, unstore);
+			}
+			break;
+		default:
+			ZEND_ASSERT(0);
 	}
 } /* }}} */
 
