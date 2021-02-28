@@ -22,13 +22,21 @@
 #	include <config.h>
 #endif
 
+typedef enum _pthreads_store_type {
+	STORE_TYPE_CLOSURE,
+	STORE_TYPE_PTHREADS,
+	STORE_TYPE_RESOURCE,
+	STORE_TYPE_OBJECT,
+	STORE_TYPE_ARRAY
+} pthreads_store_type;
+
 typedef struct _pthreads_store_t {
 	HashTable hash;
 	zend_long modcount;
 } pthreads_store_t;
 
 typedef struct _pthreads_storage {
-	zend_uchar 	type;
+	pthreads_store_type type;
 	size_t 	length;
 	zend_bool 	exists;
 	void    	*data;

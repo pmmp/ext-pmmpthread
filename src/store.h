@@ -25,9 +25,6 @@
 #include <src/store_types.h>
 #include <src/thread.h>
 
-#define IS_CLOSURE  (IS_PTR + 1)
-#define IS_PTHREADS (IS_PTR + 2)
-
 #define PTHREADS_STORE_COERCE_ARRAY 1
 #define PTHREADS_STORE_NO_COERCE_ARRAY 0
 

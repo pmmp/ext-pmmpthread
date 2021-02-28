@@ -42,6 +42,7 @@
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
+
 /* {{{ */
 static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength);
 static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength);
@@ -139,7 +140,7 @@ static inline zend_bool pthreads_store_coerce(zval *key, zval *member) {
 /* {{{ */
 static inline zend_bool pthreads_store_storage_is_pthreads_object(zval *zstorage) {
 	pthreads_storage *storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
-	return storage && storage->type == IS_PTHREADS;
+	return storage && storage->type == STORE_TYPE_PTHREADS;
 } /* }}} */
 
 /* {{{ */
@@ -231,7 +232,7 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 					case IS_PTR: {
 							/* serialized array, serialized object, Threaded object, or resource */
 							pthreads_storage *serialized = (pthreads_storage *) Z_PTR_P(zstorage);
-							if (serialized->type == IS_ARRAY && serialized->exists == 0) {
+							if (serialized->type == STORE_TYPE_ARRAY && serialized->exists == 0) {
 								isset = 0;
 							}
 						} break;
@@ -296,7 +297,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 		if (zstorage) {
 			pthreads_storage *serialized = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
 			/* strictly only reads are supported */
-			if ((serialized == NULL || serialized->type != IS_PTHREADS) && type != BP_VAR_R && type != BP_VAR_IS){
+			if ((serialized == NULL || serialized->type != STORE_TYPE_PTHREADS) && type != BP_VAR_R && type != BP_VAR_IS){
 				zend_throw_error(zend_ce_error, "Indirect modification of non-Threaded members of %s is not supported", ZSTR_VAL(object->ce->name));
 				result = FAILURE;
 			} else {
@@ -631,9 +632,11 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 
 	storage = (pthreads_storage*) calloc(1, sizeof(pthreads_storage));
 
-	switch((storage->type = Z_TYPE_P(unstore))){
+
+	switch(Z_TYPE_P(unstore)){
 		case IS_RESOURCE: {
 			pthreads_resource resource = malloc(sizeof(*resource));
+			storage->type = STORE_TYPE_RESOURCE;
 			if (resource) {
 				resource->original = Z_RES_P(unstore);
 				resource->ls = TSRMLS_CACHE;
@@ -647,7 +650,7 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 			if (instanceof_function(Z_OBJCE_P(unstore), zend_ce_closure)) {
 				const zend_function *def =
 					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(unstore));
-				storage->type = IS_CLOSURE;
+				storage->type = STORE_TYPE_CLOSURE;
 				storage->data =
 					(zend_function*) malloc(sizeof(zend_op_array));
 				memcpy(storage->data, def, sizeof(zend_op_array));
@@ -659,15 +662,18 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 				if (threaded->original_zobj != NULL) {
 					threaded = threaded->original_zobj;
 				}
-				storage->type = IS_PTHREADS;
+				storage->type = STORE_TYPE_PTHREADS;
 				storage->data = threaded;
 				break;
 			}
+			storage->type = STORE_TYPE_OBJECT;
 
 		/* break intentionally omitted */
 		case IS_ARRAY: if (pthreads_store_tostring(unstore, (char**) &storage->data, &storage->length)==SUCCESS) {
-			if (Z_TYPE_P(unstore) == IS_ARRAY)
+			if (Z_TYPE_P(unstore) == IS_ARRAY) {
 				storage->exists = zend_hash_num_elements(Z_ARRVAL_P(unstore));
+				storage->type = STORE_TYPE_ARRAY;
+			}
 		} break;
 		default:
 			ZEND_ASSERT(0);
@@ -706,7 +712,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 	int result = SUCCESS;
 
 	switch(storage->type) {
-		case IS_RESOURCE: {
+		case STORE_TYPE_RESOURCE: {
 			pthreads_resource stored = (pthreads_resource) storage->data;
 
 			if (stored->ls != TSRMLS_CACHE) {
@@ -734,7 +740,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			}
 		} break;
 
-		case IS_CLOSURE: {
+		case STORE_TYPE_CLOSURE: {
 			char *name;
 			size_t name_len;
 			zend_string *zname;
@@ -753,7 +759,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			zend_string_release(zname);
 		} break;
 
-		case IS_PTHREADS: {
+		case STORE_TYPE_PTHREADS: {
 			pthreads_zend_object_t* threaded = storage->data;
 
 			if (!pthreads_globals_object_connect(threaded, NULL, pzval)) {
@@ -764,8 +770,8 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			}
 		} break;
 
-		case IS_OBJECT:
-		case IS_ARRAY:
+		case STORE_TYPE_OBJECT:
+		case STORE_TYPE_ARRAY:
 			result = pthreads_store_tozval(pzval, (char*) storage->data, storage->length);
 		break;
 
@@ -805,7 +811,7 @@ void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *wa
 			{
 				/* threaded object, serialized object, resource, serialized array */
 				pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
-				*was_pthreads_storage = storage->type == IS_PTHREADS;
+				*was_pthreads_storage = storage->type == STORE_TYPE_PTHREADS;
 				pthreads_store_convert(storage, unstore);
 			}
 			break;
@@ -829,8 +835,8 @@ static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage)
 		memcpy(copy, storage, sizeof(pthreads_storage));
 
 		switch (copy->type) {
-			case IS_OBJECT:
-			case IS_ARRAY: if (storage->length) {
+			case STORE_TYPE_OBJECT:
+			case STORE_TYPE_ARRAY: if (storage->length) {
 				copy->data = (char*) malloc(copy->length+1);
 				if (!copy->data) {
 					break;
@@ -838,6 +844,7 @@ static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage)
 				memcpy(copy->data, (const void*) storage->data, copy->length);
 				((char *)copy->data)[copy->length] = 0;
 			} break;
+			default: break;
 		}
 		ZVAL_PTR(new_zstorage, copy);
 	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
@@ -1146,14 +1153,15 @@ void pthreads_store_storage_dtor (zval *zstorage){
 	if (Z_TYPE_P(zstorage) == IS_PTR) {
 		pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
 		switch (storage->type) {
-			case IS_CLOSURE:
-			case IS_OBJECT:
-			case IS_ARRAY:
-			case IS_RESOURCE:
+			case STORE_TYPE_CLOSURE:
+			case STORE_TYPE_OBJECT:
+			case STORE_TYPE_ARRAY:
+			case STORE_TYPE_RESOURCE:
 				if (storage->data) {
 					free(storage->data);
 				}
 			break;
+			default: break;
 		}
 		free(storage);
 	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
