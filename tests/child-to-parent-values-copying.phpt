@@ -1,5 +1,5 @@
 --TEST--
-This test ensures that values are hard-copied when necessary
+Test that values are hard-copied when necessary
 --DESCRIPTION--
 Some values like interned strings and immutable arrays are not refcounted, but still have to be copied.
 This test ensures that we still copy interned stuff when needed to avoid UAF.
