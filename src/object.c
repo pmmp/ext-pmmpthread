@@ -582,7 +582,7 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
 					zval_ptr_dtor(&that);
-					pthreads_stack_add_garbage(ts_obj->stack, item);
+					pthreads_stack_add_garbage(thread->stack, item);
 				}
 			}
 
