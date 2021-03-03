@@ -91,7 +91,7 @@ PHP_METHOD(Worker, stack)
 		return;
 	}
 
-	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
+	RETURN_LONG(pthreads_stack_add(thread->stack, work));
 } /* }}} */
 
 /* {{{ proto ThreadedRunnable Worker::unstack()
@@ -111,14 +111,14 @@ PHP_METHOD(Worker, unstack)
 		return;
 	}
 
-	pthreads_stack_del(thread->ts_obj->stack, return_value);
+	pthreads_stack_del(thread->stack, return_value);
 }
 
 /* {{{ proto int Worker::getStacked()
 	Returns the current size of the stack */
 PHP_METHOD(Worker, getStacked)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
 	RETURN_LONG(pthreads_stack_size(thread->stack));
 }
@@ -183,7 +183,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->ts_obj->stack, &call, pthreads_worker_collect_function));
+	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->stack, &call, pthreads_worker_collect_function));
 
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_DTOR(call);
