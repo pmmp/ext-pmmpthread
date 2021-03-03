@@ -86,7 +86,7 @@ PHP_METHOD(Worker, stack)
 		return;
 	}
 
-	RETURN_LONG(pthreads_stack_add(thread->ts_obj->stack, work));
+	RETURN_LONG(pthreads_stack_add(thread->stack, work));
 } /* }}} */
 
 /* {{{ proto Collectable Worker::unstack()
@@ -106,28 +106,29 @@ PHP_METHOD(Worker, unstack)
 		return;
 	}
 
-	pthreads_stack_del(thread->ts_obj->stack, return_value);
+	pthreads_stack_del(thread->stack, return_value);
 }
 
 /* {{{ proto int Worker::getStacked()
 	Returns the current size of the stack */
 PHP_METHOD(Worker, getStacked)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
 	RETURN_LONG(pthreads_stack_size(thread->stack));
 }
 
 /* {{{ */
 static zend_bool pthreads_worker_running_function(zend_object *std, zval *value) {
-	pthreads_object_t *worker = PTHREADS_FETCH_TS_FROM(std),
+	pthreads_zend_object_t *zpthreads = PTHREADS_FETCH_FROM(std);
+	pthreads_object_t *worker = zpthreads->ts_obj,
 					  *running = NULL,
 					  *checking = NULL;
 	zend_bool result = 0;
 
 	if (pthreads_monitor_lock(worker->monitor)) {
-		if (*worker->running) {
-			running = PTHREADS_FETCH_TS_FROM(*worker->running);
+		if (zpthreads->running) {
+			running = PTHREADS_FETCH_TS_FROM(zpthreads->running);
 			checking = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(value));
 
 			if (running->monitor == checking->monitor)
@@ -199,7 +200,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->ts_obj->stack, &call, pthreads_worker_running_function, pthreads_worker_collect_function));
+	RETVAL_LONG(pthreads_stack_collect(&thread->std, thread->stack, &call, pthreads_worker_running_function, pthreads_worker_collect_function));
 
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_DTOR(call);

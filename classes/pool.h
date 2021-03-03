@@ -290,7 +290,7 @@ PHP_METHOD(Pool, collect) {
 			PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
 		collectable += pthreads_stack_collect(
 			&thread->std,
-			thread->ts_obj->stack,
+			thread->stack,
 			&call,
 			pthreads_worker_running_function,
 			pthreads_worker_collect_function);
