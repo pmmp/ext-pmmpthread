@@ -7,10 +7,13 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 $task = new class extends Thread {
     public function run()
     {
-        $this->prop = new class {};
-		var_dump($this->prop); /* we do expect null: anon classes cannot be serialized */
+        try {
+            $this->prop = new class {};
+        } catch (\Throwable $e) {
+            var_dump($e->getMessage());
+        }
     }
 };
 $task->start() && $task->join();
---EXPECT--
-NULL
+--EXPECTF--
+string(%d) "Serialization of '%s' is not allowed"
