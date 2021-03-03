@@ -14,16 +14,16 @@ $stdClass->foo = "foo";
 $stdClass->bar = "bar";
 $stdClass->baz = "baz";
 
-$safe = new Threaded();
+$safe = new ThreadedArray();
 $safe->merge($array);
 
-$safe->foo = "bar";
+$safe["foo"] = "bar";
 $safe->merge($stdClass, false);
 
 var_dump($safe);
 ?>
 --EXPECTF--
-object(Threaded)#%d (%d) {
+object(ThreadedArray)#%d (%d) {
   [0]=>
   int(0)
   [1]=>

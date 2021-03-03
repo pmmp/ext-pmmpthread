@@ -11,7 +11,7 @@ This test verifies that these cases actually throw errors like they are supposed
 $std = new \stdClass;
 $std->something = new \stdClass;
 
-$threaded = new \Threaded;
+$threaded = new \ThreadedBase;
 $threaded->std = $std;
 try{
 	$threaded->std->something = "this won't work";
@@ -19,10 +19,10 @@ try{
 	echo $e->getMessage() . PHP_EOL;
 }
 
-$threaded->threaded = new \Threaded;
+$threaded->threaded = new \ThreadedBase;
 $threaded->threaded->something = "this is also ok";
 echo $threaded->threaded->something . PHP_EOL;
 ?>
 --EXPECT--
-Indirect modification of non-Threaded members of Threaded is not supported
+Indirect modification of non-Threaded members of ThreadedBase is not supported
 this is also ok

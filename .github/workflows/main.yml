@@ -7,22 +7,22 @@ on:
 
 jobs:
   build:
-    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, ZMM ${{ matrix.zend-alloc }}, JIT ${{ matrix.jit }})
+    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}, JIT ${{ matrix.jit }})
     strategy:
       fail-fast: false
       matrix:
-        php: [7.3.27, 7.4.15, 8.0.2]
+        php: [7.4.15, 8.0.2]
         opcache: [0, 1]
-        zend-alloc: [0, 1]
+        valgrind: [0, 1]
         jit: [0]
         include:
           - php: 8.0.2
             opcache: 1
-            zend-alloc: 0
+            valgrind: 0
             jit: 1205
           - php: 8.0.2
             opcache: 1
-            zend-alloc: 1
+            valgrind: 1
             jit: 1205
 
     runs-on: ubuntu-18.04
@@ -31,12 +31,19 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
+      - name: Install Valgrind
+        if: matrix.valgrind == '1'
+        run: |
+          sudo apt-get update && sudo apt-get install valgrind
+          echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
+          echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
+
       - name: Restore PHP build cache
         uses: actions/cache@v2
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-debug-${{ matrix.php }}
+          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}
           
       - name: Clone php-build repository
         if: steps.php-build-cache.outputs.cache-hit != 'true'
@@ -50,7 +57,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/php-build
           ./install-dependencies.sh
-          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS='--enable-debug' ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
@@ -74,4 +81,13 @@ jobs:
 
       - name: Run PHPT tests
         run: |
-          USE_ZEND_ALLOC=${{ matrix.zend-alloc }} $GITHUB_WORKSPACE/php/bin/php ./run-tests.php -P -q --show-diff -n -c $GITHUB_WORKSPACE/php.ini
+          $GITHUB_WORKSPACE/php/bin/php ./run-tests.php $TEST_PHP_ARGS -P -q --show-diff --show-slow 30000 -n -c $GITHUB_WORKSPACE/php.ini
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}
+          path: |
+            ${{ github.workspace }}/tests/*
+            !${{ github.workspace }}/tests/*.phpt

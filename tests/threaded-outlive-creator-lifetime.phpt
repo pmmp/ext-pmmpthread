@@ -17,8 +17,8 @@ $t = new class extends \Thread{
 	public $shutdown = false;
 
 	public function run() : void{
-		$chan = $this->synchronized(function() : \Threaded{
-			$chan = new \Threaded;
+		$chan = $this->synchronized(function() : \ThreadedArray{
+			$chan = new \ThreadedArray;
 			$chan[] = 1;
 			$this->chan = serialize($chan);
 			$this->notify();
@@ -34,7 +34,7 @@ $t = new class extends \Thread{
 };
 
 $t->start();
-$chan = $t->synchronized(function() use($t) : \Threaded{
+$chan = $t->synchronized(function() use($t) : \ThreadedArray{
 	while($t->chan === null){
 		$t->wait();
 	}
@@ -48,7 +48,7 @@ $t->join();
 var_dump($chan);
 var_dump($chan->shift());
 var_dump($chan);
-var_dump($chan->property = "test");
+var_dump($chan["property"] = "test");
 var_dump($chan);
 var_dump($chan->count());
 $chan->synchronized(function() : void{
@@ -57,15 +57,15 @@ $chan->synchronized(function() : void{
 echo "ok\n";
 ?>
 --EXPECTF--
-object(Threaded)#%d (1) {
+object(ThreadedArray)#%d (1) {
   [0]=>
   int(1)
 }
 int(1)
-object(Threaded)#%d (0) {
+object(ThreadedArray)#%d (0) {
 }
 string(4) "test"
-object(Threaded)#%d (1) {
+object(ThreadedArray)#%d (1) {
   ["property"]=>
   string(4) "test"
 }

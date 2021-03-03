@@ -47,7 +47,6 @@ typedef struct _pthreads_object_t {
 		pthreads_socket_t *sock;
 	} store;
 	zval user_exception_handler;
-	pthreads_stack_t *stack;
 	pthreads_ident_t creator;
 	pthreads_ident_t local;
 } pthreads_object_t; /* }}} */
@@ -61,6 +60,7 @@ struct _pthreads_zend_object_t {
 	pthreads_ident_t owner;
 	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
 	zend_long local_props_modcount;
+	pthreads_stack_t *stack;
 	zend_object std;
 }; /* }}} */
 

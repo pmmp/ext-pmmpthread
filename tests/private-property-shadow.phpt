@@ -9,7 +9,7 @@ This bug has not been fixed yet
 --FILE--
 <?php
 
-class A extends \Threaded{
+class A extends \ThreadedBase{
 	private $test = 1;
 
 	protected function dump() : void{

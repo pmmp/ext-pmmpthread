@@ -12,7 +12,7 @@ for ($i = 0; $i < 10; ++$i) {
         $obj->a = $a;
         $a->b[] = $obj;
     }
-    new class($obj) extends \Threaded {
+    new class($obj) extends \ThreadedBase {
         public function __construct($faction) {
             $this->fraction = $faction;
 

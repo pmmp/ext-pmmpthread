@@ -27,7 +27,7 @@ object(Test)#%d (%d) {
   ["string"]=>
   string(11) "dlrow olleh"
   ["array"]=>
-  object(Threaded)#%d (%d) {
+  object(ThreadedArray)#%d (%d) {
     [0]=>
     int(1)
     [1]=>
@@ -38,7 +38,7 @@ object(Test)#%d (%d) {
   ["pstring"]=>
   string(11) "world hello"
   ["parray"]=>
-  object(Threaded)#%d (%d) {
+  object(ThreadedArray)#%d (%d) {
     [0]=>
     int(3)
     [1]=>

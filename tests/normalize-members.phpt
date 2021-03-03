@@ -4,12 +4,8 @@ Testing normalizing members
 This tests that normalizing members works without effort
 --FILE--
 <?php
-class Test extends Threaded {
-	public function run() { 
-	}
-}
 
-$t = new Test();
+$t = new ThreadedArray();
 $t[] = "one";
 $t[] = "two";
 $t["three"] = "three";

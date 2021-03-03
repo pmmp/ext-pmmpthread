@@ -197,7 +197,7 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 	}
 }
 
-PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
+zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 #if PHP_VERSION_ID >= 80000
 	zval zmember;
 	ZVAL_STR(&zmember, member);
@@ -205,18 +205,14 @@ PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property) {
 #else
 	pthreads_write_dimension(object, member, value);
 #endif
-#if PHP_VERSION_ID >= 70400
 	return EG(exception) ? &EG(error_zval) : value;
-#endif
 }
 /* }}} */
 
 /* {{{ */
-PTHREADS_DEFINE_WRITE_PROPERTY(pthreads_write_property_disallow) {
+zval* pthreads_write_property_disallow(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 	PTHREADS_NO_PROPERTIES(object);
-#if PHP_VERSION_ID >= 70400
 	return &EG(error_zval);
-#endif
 }
 
 void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { PTHREADS_NO_PROPERTIES(object); }

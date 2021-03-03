@@ -128,6 +128,7 @@ void pthreads_globals_shutdown() {
 		PTHREADS_G(failed)=0;
 		/* we allow proc shutdown to destroy tables, and global strings */
 		pthreads_monitor_free(PTHREADS_G(monitor));
+		zend_hash_destroy(&PTHREADS_G(objects));
 	}
 } /* }}} */
 #endif

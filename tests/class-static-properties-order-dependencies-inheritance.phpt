@@ -6,7 +6,7 @@ If a inherited static property holds a reference to a threaded object, the order
 <?php
 
 class SecondClass extends FirstClass {}
-class FirstClass extends \Threaded
+class FirstClass extends \ThreadedBase
 {
 	public static $prop = [];
 }

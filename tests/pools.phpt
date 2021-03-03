@@ -27,7 +27,7 @@ class WebWork extends ThreadedRunnable {
 	protected $id;
 }
 
-class SafeLog extends Threaded {
+class SafeLog extends ThreadedBase {
 	public function log($message, ... $args) {
 		$this->synchronized(function($message, ... $args) {
 			echo vsprintf("{$message}\n", ...$args);

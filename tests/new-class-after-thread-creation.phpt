@@ -15,6 +15,5 @@ class task extends ThreadedRunnable implements A {
 }
 
 $worker->stack(new task());
-while($worker->collect());
 $worker->shutdown();
 --EXPECT--

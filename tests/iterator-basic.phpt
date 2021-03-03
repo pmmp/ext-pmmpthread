@@ -4,7 +4,7 @@ Test iterating on Threaded
 Regression test for bugs introduced with Threaded iteration in PHP 7.3
 --FILE--
 <?php
-$threaded = new Threaded();
+$threaded = new ThreadedArray();
 
 var_dump($threaded->count());
 foreach($threaded as $k => $prop){
