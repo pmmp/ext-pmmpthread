@@ -890,21 +890,18 @@ static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength)
 		smart_str smart;
 		memset(&smart, 0, sizeof(smart_str));
 
-		if ((Z_TYPE_P(pzval) != IS_OBJECT) ||
-			(Z_OBJCE_P(pzval)->serialize != zend_class_serialize_deny)) {
-			php_serialize_data_t vars;
+		php_serialize_data_t vars;
 
-			PHP_VAR_SERIALIZE_INIT(vars);
-			php_var_serialize(&smart, pzval, &vars);
-			PHP_VAR_SERIALIZE_DESTROY(vars);
+		PHP_VAR_SERIALIZE_INIT(vars);
+		php_var_serialize(&smart, pzval, &vars);
+		PHP_VAR_SERIALIZE_DESTROY(vars);
 
-			if (EG(exception)) {
-				smart_str_free(&smart);
+		if (EG(exception)) {
+			smart_str_free(&smart);
 
-				*pstring = NULL;
-				*slength = 0;
-				return FAILURE;
-			}
+			*pstring = NULL;
+			*slength = 0;
+			return FAILURE;
 		}
 
 		if (smart.s) {
