@@ -76,9 +76,12 @@ PHP_METHOD(Pool, __construct)
 	zend_class_entry *clazz = NULL;
 	zval *ctor = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|Ca", &size, &clazz, &ctor) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 3)
+		Z_PARAM_LONG(size)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_CLASS(clazz)
+		Z_PARAM_ARRAY(ctor)
+	ZEND_PARSE_PARAMETERS_END();
 
 	if (clazz == NULL) clazz = pthreads_worker_entry;
 
@@ -99,13 +102,13 @@ PHP_METHOD(Pool, __construct)
 	then the last workers started will be shutdown until the pool is the requested size */
 PHP_METHOD(Pool, resize) {
 	zval tmp[2];
-	uint32_t newsize = 0;
+	zend_long newsize = 0;
 	zval *workers = NULL;
 	zval *size = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &newsize) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(newsize)
+	ZEND_PARSE_PARAMETERS_END();
 
 	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[0]);
 	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
@@ -145,9 +148,9 @@ PHP_METHOD(Pool, submit) {
 
 	zend_class_entry *ce = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &task, pthreads_threaded_runnable_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
 	last = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("last"), 1, &tmp[0]);
 	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
@@ -243,9 +246,10 @@ PHP_METHOD(Pool, submitTo) {
 	zend_long worker = 0;
 	zval *selected = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lO", &worker, &task, pthreads_threaded_runnable_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
+		Z_PARAM_LONG(worker)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
 	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
 
@@ -274,9 +278,10 @@ PHP_METHOD(Pool, collect) {
 	     *worker = NULL;
 	zend_long collectable = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|f", &call.fci, &call.fcc) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_FUNC(call.fci, call.fcc)
+	ZEND_PARSE_PARAMETERS_END();
 
 	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
 
@@ -333,9 +338,7 @@ static inline void pthreads_pool_shutdown(zval *pool) {
 /* {{{ proto void Pool::shutdown(void)
 	Will cause all the workers to finish executing their stacks and shutdown */
 PHP_METHOD(Pool, shutdown) {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	pthreads_pool_shutdown(getThis());
 } /* }}} */
