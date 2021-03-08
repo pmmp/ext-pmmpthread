@@ -25,11 +25,10 @@
 #include <src/store_types.h>
 #include <src/thread.h>
 
-#define IS_CLOSURE  (IS_PTR + 1)
-#define IS_PTHREADS (IS_PTR + 2)
-
 #define PTHREADS_STORE_COERCE_ARRAY 1
 #define PTHREADS_STORE_NO_COERCE_ARRAY 0
+
+#define TRY_PTHREADS_STORAGE_PTR_P(zval) ((zval) != NULL && Z_TYPE_P(zval) == IS_PTR ? (pthreads_storage *) Z_PTR_P(zval) : NULL)
 
 pthreads_store_t* pthreads_store_alloc();
 void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
@@ -52,8 +51,10 @@ void pthreads_store_key(zend_object *object, zval *key, HashPosition *position);
 void pthreads_store_data(zend_object *object, zval *value, HashPosition *position);
 void pthreads_store_forward(zend_object *object, HashPosition *position); /* }}} */
 
-pthreads_storage* pthreads_store_create(zval *pzval);
-int pthreads_store_convert(pthreads_storage *storage, zval *pzval);
-void pthreads_store_storage_dtor(pthreads_storage *element);
+/* {{{ */
+void pthreads_store_save_zval(zval *zstorage, zval *write);
+void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage);
+void pthreads_store_restore_zval(zval *unstore, zval *zstorage); /* }}} */
+void pthreads_store_storage_dtor(zval *element);
 
 #endif
