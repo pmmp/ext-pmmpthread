@@ -377,6 +377,20 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 } /* }}} */
 
 /* {{{ */
+void pthreads_base_dtor(zend_object *object) {
+	//TODO: how does this play with __destruct() calls (e.g. adding a ref to self)?
+	pthreads_zend_object_t* base = PTHREADS_FETCH_FROM(object);
+
+	if (base->original_zobj == NULL && PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
+		pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
+		!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
+		pthreads_join(base);
+	}
+
+	zend_objects_destroy_object(object);
+} /* }}} */
+
+/* {{{ */
 static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 	pthreads_object_t *ts_obj = base->ts_obj;
 	if (!PTHREADS_IS_SOCKET(base)) {
@@ -396,12 +410,6 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 /* {{{ */
 void pthreads_base_free(zend_object *object) {
 	pthreads_zend_object_t* base = PTHREADS_FETCH_FROM(object);
-
-	if (base->original_zobj == NULL && PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
-		pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
-		!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
-		pthreads_join(base);
-	}
 
 	if (base->stack) {
 		pthreads_stack_free(base->stack);

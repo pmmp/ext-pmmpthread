@@ -642,6 +642,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_base_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
 
 	pthreads_threaded_base_handlers.free_obj = pthreads_base_free;
+	pthreads_threaded_base_handlers.dtor_obj = pthreads_base_dtor;
 	pthreads_threaded_base_handlers.cast_object = pthreads_cast_object;
 
 	pthreads_threaded_base_handlers.get_debug_info = pthreads_read_debug;
