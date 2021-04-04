@@ -84,12 +84,20 @@ void pthreads_store_sync(zend_object *object) { /* {{{ */
 		}
 
 		remove = 1;
-		if (ts_val && ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
-			pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
-			pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
+		if (ts_val) {
+			if (ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
+				pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
+				pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
 
-			if (threadedStorage->monitor == threadedProperty->monitor) {
-				remove = 0;
+				if (threadedStorage->monitor == threadedProperty->monitor) {
+					remove = 0;
+				}
+			} else if (ts_val->type == IS_CLOSURE && IS_PTHREADS_CLOSURE_OBJECT(val)) {
+				zend_function *shared = (zend_function *) ts_val->data;
+				zend_function *local = zend_get_closure_method_def(Z_OBJ_P(val));
+				if (shared == local) {
+					remove = 0;
+				}
 			}
 		}
 
@@ -262,45 +270,39 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 
 	rebuild_object_properties(&threaded->std);
 
-	if (Z_TYPE(member) == IS_LONG) {
-		property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
-	} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
+	if (!IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
+		//fast path for non-Volatile object - their Threaded members are immutable
+		if (Z_TYPE(member) == IS_LONG) {
+			property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
+		} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
 
-	if (property && IS_PTHREADS_OBJECT(property) && IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
-		if (pthreads_monitor_lock(ts_obj->monitor)) {
-			pthreads_storage *storage;
-
-			if (Z_TYPE(member) == IS_LONG) {
-				storage = zend_hash_index_find_ptr(ts_obj->store.props, Z_LVAL(member));
-			} else storage = zend_hash_find_ptr(ts_obj->store.props, Z_STR(member));
-
-			if (storage && storage->type == IS_PTHREADS) {
-				pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) storage->data)->ts_obj;
-				pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(property));
-
-				if (threadedStorage->monitor != threadedProperty->monitor) {
-					property = NULL;
-				}
-			} else {
-				property = NULL;
+		if (property && IS_PTHREADS_OBJECT(property)) {
+			ZVAL_COPY(read, property);
+			if (coerced) {
+				zval_ptr_dtor(&member);
 			}
-			pthreads_monitor_unlock(ts_obj->monitor);
+			return SUCCESS;
 		}
-	}
-
-	if (property && IS_PTHREADS_OBJECT(property)) {
-		ZVAL_COPY(read, property);
-		if (coerced) {
-			zval_ptr_dtor(&member);
-		}
-		return SUCCESS;
 	}
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
-		pthreads_storage *storage;
-
-		/* synchronize property stores */
 		pthreads_store_sync(object);
+
+		/* check if there's still a ref in local cache after sync - this ensures ref reuse for Threaded and Closure objects */
+		if (Z_TYPE(member) == IS_LONG) {
+			property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
+		} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
+
+		if (property) {
+			pthreads_monitor_unlock(ts_obj->monitor);
+			ZVAL_COPY(read, property);
+			if (coerced) {
+				zval_ptr_dtor(&member);
+			}
+			return SUCCESS;
+		}
+
+		pthreads_storage *storage;
 
 		if (Z_TYPE(member) == IS_LONG) {
 			storage = zend_hash_index_find_ptr(ts_obj->store.props, Z_LVAL(member));
@@ -390,9 +392,9 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 				}
 				zend_string_release(keyed);
 			}
-			if (IS_PTHREADS_VOLATILE_CLASS(object->ce)) {
+			if (IS_PTHREADS_VOLATILE_CLASS(object->ce) || IS_PTHREADS_CLOSURE_OBJECT(write)) {
 				//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
-				//cached Threaded references that are dead, we have to take the opportunity
+				//cached Threaded and Closure references that are dead, we have to take the opportunity
 				pthreads_store_sync(object);
 			}
 		}
@@ -578,8 +580,9 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 			zval pzval;
 			zend_string *rename;
 
-			/* don't overwrite pthreads objects for non volatile objects */
-			if (!IS_PTHREADS_VOLATILE_CLASS(object->ce) && storage->type == IS_PTHREADS) {
+			/* don't overwrite pthreads objects or closures if they are already locally cached
+			 * we just synced local cache above, so they are guaranteed to match if  they exist locally */
+			if (storage->type == IS_PTHREADS || storage->type == IS_CLOSURE) {
 				if (!name) {
 					if (zend_hash_index_exists(hash, idx))
 						continue;
@@ -656,9 +659,11 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 				const zend_function *def =
 					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(unstore));
 				storage->type = IS_CLOSURE;
-				storage->data =
-					(zend_function*) malloc(sizeof(zend_op_array));
-				memcpy(storage->data, def, sizeof(zend_op_array));
+				//TODO: this might result in faults because it's not copied properly
+				//since we aren't copying this to persistent memory, a fault is going to
+				//happen if it's dereferenced after the original closure is destroyed
+				//(for what it's worth, this was always a problem.)
+				storage->data = def;
 				break;
 			}
 
@@ -1079,7 +1084,6 @@ next:
 void pthreads_store_storage_dtor (pthreads_storage *storage){
 	if (storage) {
 		switch (storage->type) {
-			case IS_CLOSURE:
 			case IS_OBJECT:
 			case IS_STRING:
 			case IS_ARRAY:
