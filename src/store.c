@@ -740,7 +740,8 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			const zend_closure *closure_obj = (const zend_closure *) storage->data;
 			zend_function *closure = pthreads_copy_function(&closure_obj->func);
 
-			zend_create_closure(pzval, closure, zend_get_executed_scope(), closure->common.scope, NULL);
+			//TODO: scopes aren't copied here - this will lead to faults if this is being copied from child -> parent
+			zend_create_closure(pzval, closure, closure->common.scope, closure_obj->called_scope, NULL);
 
 			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(pzval)));
 			zname = zend_string_init(name, name_len, 0);
@@ -814,16 +815,15 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 				pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), NULL, dest);
 				result = SUCCESS;
 			} else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
-				const zend_function *def =
-					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(source));
+				const zend_closure *closure_obj = (const zend_closure *) Z_OBJ_P(source);
 
 				char *name;
 				size_t name_len;
 				zend_string *zname;
-				zend_function *closure = pthreads_copy_function(def);
+				zend_function *closure = pthreads_copy_function(&closure_obj->func);
 
-				//TODO: executed_scope() doesn't seem appropriate here, especially not during initial bootup ...
-				zend_create_closure(dest, closure, zend_get_executed_scope(), closure->common.scope, NULL);
+				//TODO: scopes aren't being copied here - this will lead to faults if we're copying from child -> parent
+				zend_create_closure(dest, closure, closure->common.scope, closure_obj->called_scope, NULL);
 
 				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(dest)));
 				zname = zend_string_init(name, name_len, 0);
