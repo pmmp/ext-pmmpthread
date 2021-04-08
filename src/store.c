@@ -93,8 +93,8 @@ void pthreads_store_sync(zend_object *object) { /* {{{ */
 					remove = 0;
 				}
 			} else if (ts_val->type == IS_CLOSURE && IS_PTHREADS_CLOSURE_OBJECT(val)) {
-				zend_function *shared = (zend_function *) ts_val->data;
-				zend_function *local = zend_get_closure_method_def(Z_OBJ_P(val));
+				zend_closure *shared = (zend_closure *) ts_val->data;
+				zend_closure *local = (zend_closure *) Z_OBJ_P(val);
 				if (shared == local) {
 					remove = 0;
 				}
@@ -656,14 +656,13 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 
 		case IS_OBJECT:
 			if (instanceof_function(Z_OBJCE_P(unstore), zend_ce_closure)) {
-				const zend_function *def =
-					zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(unstore));
+				const zend_closure *closure = (const zend_closure *) Z_OBJ_P(unstore);
 				storage->type = IS_CLOSURE;
 				//TODO: this might result in faults because it's not copied properly
 				//since we aren't copying this to persistent memory, a fault is going to
 				//happen if it's dereferenced after the original closure is destroyed
 				//(for what it's worth, this was always a problem.)
-				storage->data = def;
+				storage->data = closure;
 				break;
 			}
 
@@ -738,7 +737,8 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			char *name;
 			size_t name_len;
 			zend_string *zname;
-			zend_function *closure = pthreads_copy_function((zend_function*) storage->data);
+			const zend_closure *closure_obj = (const zend_closure *) storage->data;
+			zend_function *closure = pthreads_copy_function(&closure_obj->func);
 
 			zend_create_closure(pzval, closure, zend_get_executed_scope(), closure->common.scope, NULL);
 

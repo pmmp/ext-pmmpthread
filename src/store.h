@@ -38,6 +38,15 @@ typedef struct _pthreads_storage {
 	void    	*data;
 } pthreads_storage;
 
+/* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
+typedef struct _zend_closure {
+	zend_object       std;
+	zend_function     func;
+	zval              this_ptr;
+	zend_class_entry *called_scope;
+	zif_handler       orig_internal_handler;
+} zend_closure;
+
 pthreads_store_t* pthreads_store_alloc();
 void pthreads_store_sync(zend_object *object);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite);
