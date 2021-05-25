@@ -22,8 +22,11 @@
 #	include <config.h>
 #endif
 
+#include <src/pthreads.h>
+
 #define IS_CLOSURE  (IS_PTR + 1)
 #define IS_PTHREADS (IS_PTR + 2)
+#define IS_SOCKET (IS_PTR + 3)
 
 typedef HashTable pthreads_store_t;
 
@@ -37,6 +40,15 @@ typedef struct _pthreads_storage {
 	} simple;
 	void    	*data;
 } pthreads_storage;
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+typedef struct _pthreads_storage_socket {
+        PHP_SOCKET bsd_socket;
+        int        type;
+        int        error;
+        int        blocking;
+} pthreads_storage_socket;
+#endif
 
 /* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
 typedef struct _zend_closure {

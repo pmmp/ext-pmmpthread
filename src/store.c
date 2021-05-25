@@ -39,6 +39,7 @@
 #endif
 
 #include <src/compat.h>
+#include <src/globals.h>
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
@@ -64,6 +65,10 @@ pthreads_store_t* pthreads_store_alloc() {
 
 	return store;
 } /* }}} */
+
+static inline zend_bool pthreads_store_retain_in_local_cache(zval *val) {
+	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val);
+}
 
 void pthreads_store_sync(zend_object *object) { /* {{{ */
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
@@ -98,6 +103,14 @@ void pthreads_store_sync(zend_object *object) { /* {{{ */
 				if (shared == local) {
 					remove = 0;
 				}
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+			} else if (ts_val->type == IS_SOCKET && IS_EXT_SOCKETS_OBJECT(val)) {
+				pthreads_storage_socket *shared = (pthreads_storage_socket *) ts_val->data;
+				php_socket *local = Z_SOCKET_P(val);
+				if (shared->bsd_socket == local->bsd_socket) {
+					remove = 0;
+				}
+#endif
 			}
 		}
 
@@ -321,7 +334,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	if (result != SUCCESS) {
 		ZVAL_NULL(read);
 	} else {
-		if (IS_PTHREADS_OBJECT(read)) {
+		if (pthreads_store_retain_in_local_cache(read)) {
 			rebuild_object_properties(&threaded->std);
 			if (Z_TYPE(member) == IS_LONG) {
 				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), read);
@@ -392,11 +405,9 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 				}
 				zend_string_release(keyed);
 			}
-			if (IS_PTHREADS_VOLATILE_CLASS(object->ce) || IS_PTHREADS_CLOSURE_OBJECT(write)) {
-				//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
-				//cached Threaded and Closure references that are dead, we have to take the opportunity
-				pthreads_store_sync(object);
-			}
+			//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
+			//cached Threaded and Closure references that are dead, we have to take the opportunity
+			pthreads_store_sync(object);
 		}
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
@@ -404,7 +415,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 	if (result != SUCCESS) {
 		pthreads_store_storage_dtor(storage);
 	} else {
-		if (IS_PTHREADS_OBJECT(write) || IS_PTHREADS_CLOSURE_OBJECT(write)) {
+		if (pthreads_store_retain_in_local_cache(write)) {
 			/*
 				This could be a volatile object, but, we don't want to break
 				normal refcounting, we'll read the reference only at volatile objects
@@ -676,6 +687,29 @@ pthreads_storage* pthreads_store_create(zval *unstore){
 				break;
 			}
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+			if (instanceof_function(Z_OBJCE_P(unstore), socket_ce)) {
+				php_socket *socket = Z_SOCKET_P(unstore);
+				if (!Z_ISUNDEF(socket->zstream)) {
+					break; // we can't handle these; resources can't be shared safely
+				}
+				if (!IS_INVALID_SOCKET(socket)) {
+					//we still copy invalid sockets, for consistency with normal objects
+					pthreads_globals_shared_socket_track(socket->bsd_socket);
+				}
+
+				pthreads_storage_socket *stored_socket = malloc(sizeof(pthreads_storage_socket));
+				stored_socket->bsd_socket = socket->bsd_socket;
+				stored_socket->type = socket->type;
+				stored_socket->error = socket->error;
+				stored_socket->blocking = socket->blocking;
+
+				storage->type = IS_SOCKET;
+				storage->data = stored_socket;
+				break;
+			}
+#endif
+
 		/* break intentionally omitted */
 		case IS_ARRAY: if (pthreads_store_tostring(unstore, (char**) &storage->data, &storage->length)==SUCCESS) {
 			if (Z_TYPE_P(unstore) == IS_ARRAY)
@@ -764,6 +798,20 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 				result = FAILURE;
 			}
 		} break;
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+		case IS_SOCKET: {
+			pthreads_storage_socket *stored_socket = storage->data;
+
+			object_init_ex(pzval, socket_ce);
+			php_socket *socket = Z_SOCKET_P(pzval);
+			socket->bsd_socket = stored_socket->bsd_socket;
+			socket->type = stored_socket->type;
+			socket->error = stored_socket->error;
+			socket->blocking = stored_socket->blocking;
+			result = SUCCESS;
+		} break;
+#endif
 
 		case IS_OBJECT:
 		case IS_ARRAY:
@@ -1088,6 +1136,7 @@ void pthreads_store_storage_dtor (pthreads_storage *storage){
 			case IS_STRING:
 			case IS_ARRAY:
 			case IS_RESOURCE:
+			case IS_SOCKET:
 				if (storage->data) {
 					free(storage->data);
 				}
