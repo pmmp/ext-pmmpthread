@@ -60,7 +60,7 @@ build_script:
 
     buildconf.bat
 
-    configure.bat --disable-all --enable-cli --enable-zts --with-pthreads=shared --with-prefix=C:\projects\pthreads\bin --with-php-build=deps --enable-ipv6 --enable-debug
+    configure.bat --disable-all --enable-cli --enable-zts --with-pthreads=shared --enable-sockets --with-prefix=C:\projects\pthreads\bin --with-php-build=deps --enable-ipv6 --enable-debug
 
     nmake
 

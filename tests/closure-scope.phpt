@@ -3,8 +3,6 @@ Tests that copied closures have the correct scope
 --DESCRIPTION--
 pthreads was incorrectly assigning the current class scope to closures when copying them, resulting in some broken behaviour.
 In addition, the called scope and original scope were the wrong way round.
---XFAIL--
-This bug has not been fixed yet
 --FILE--
 <?php
 

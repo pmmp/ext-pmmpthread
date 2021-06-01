@@ -24,11 +24,30 @@
 
 #include <src/store_types.h>
 #include <src/thread.h>
+#include <src/pthreads.h>
 
 #define PTHREADS_STORE_COERCE_ARRAY 1
 #define PTHREADS_STORE_NO_COERCE_ARRAY 0
 
 #define TRY_PTHREADS_STORAGE_PTR_P(zval) ((zval) != NULL && Z_TYPE_P(zval) == IS_PTR ? (pthreads_storage *) Z_PTR_P(zval) : NULL)
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+typedef struct _pthreads_storage_socket {
+        PHP_SOCKET bsd_socket;
+        int        type;
+        int        error;
+        int        blocking;
+} pthreads_storage_socket;
+#endif
+
+/* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
+typedef struct _zend_closure {
+	zend_object       std;
+	zend_function     func;
+	zval              this_ptr;
+	zend_class_entry *called_scope;
+	zif_handler       orig_internal_handler;
+} zend_closure;
 
 pthreads_store_t* pthreads_store_alloc();
 void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);

@@ -47,8 +47,15 @@
 #	include <src/globals.h>
 #endif
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#include <src/ext_sockets_hacks.h>
+#endif
+
 static const zend_module_dep pthreads_module_deps[] = {
 	ZEND_MOD_REQUIRED("spl")
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	ZEND_MOD_REQUIRED("sockets")
+#endif
 	ZEND_MOD_END
 };
 
@@ -697,6 +704,10 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	pthreads_ext_sockets_hacks_init();
+#endif
+
 	if (pthreads_globals_init()) {
 		TSRMLS_CACHE_UPDATE();
 
@@ -750,6 +761,10 @@ PHP_RINIT_FUNCTION(pthreads) {
 	zend_hash_init(&PTHREADS_ZG(filenames), 15, NULL, NULL, 0);
 
 	PTHREADS_ZG(hard_copy_interned_strings) = 0;
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	PTHREADS_ZG(original_socket_object_handlers) = NULL;
+#endif
 
 	if (pthreads_instance != TSRMLS_CACHE) {
 		if (memcmp(sapi_module.name, ZEND_STRL("cli")) == SUCCESS) {

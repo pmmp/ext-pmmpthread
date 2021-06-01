@@ -11,16 +11,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [7.4.15, 8.0.2]
+        php: [7.4.19, 8.0.6]
         opcache: [0, 1]
         valgrind: [0, 1]
         jit: [0]
         include:
-          - php: 8.0.2
+          - php: 8.0.6
             opcache: 1
             valgrind: 0
             jit: 1205
-          - php: 8.0.2
+          - php: 8.0.6
             opcache: 1
             valgrind: 1
             jit: 1205

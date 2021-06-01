@@ -22,6 +22,8 @@
 # include "config.h"
 #endif
 
+#define HAVE_PTHREADS_EXT_SOCKETS_SUPPORT (HAVE_SOCKETS && PHP_VERSION_ID >= 80000)
+
 #include <stdio.h>
 #ifndef _WIN32
 #include <pthread.h>
@@ -54,6 +56,9 @@
 #include <ext/standard/php_var.h>
 #include <ext/spl/spl_exceptions.h>
 #include <ext/spl/spl_iterators.h>
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#include <ext/sockets/php_sockets.h>
+#endif
 #include <Zend/zend.h>
 #include <Zend/zend_closures.h>
 #include <Zend/zend_compile.h>
@@ -95,6 +100,13 @@ extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#define IS_EXT_SOCKETS_OBJECT(z) \
+	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), socket_ce))
+#else
+#define IS_EXT_SOCKETS_OBJECT(z) 0
+#endif
+
 extern zend_object_handlers pthreads_threaded_base_handlers;
 extern zend_object_handlers pthreads_threaded_array_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
@@ -113,6 +125,10 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	HashTable filenames;
 	HashTable *resources;
 	int hard_copy_interned_strings;
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	zend_object_handlers *original_socket_object_handlers;
+	zend_object_handlers custom_socket_object_handlers;
+#endif
 ZEND_END_MODULE_GLOBALS(pthreads)
 #	define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
 #   define PTHREADS_PID() PTHREADS_ZG(pid) ? PTHREADS_ZG(pid) : (PTHREADS_ZG(pid)=getpid())

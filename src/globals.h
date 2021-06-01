@@ -49,6 +49,13 @@ struct _pthreads_globals {
 	*/
 	HashTable objects;
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	/*
+	* Sockets which have been shared between threads, and so musn't be closed by the destructor
+	*/
+	HashTable shared_sockets;
+#endif
+
 	/*
 	* High Frequency Strings
 	*/
@@ -75,6 +82,12 @@ zend_bool pthreads_globals_object_valid(pthreads_zend_object_t *address); /* }}}
 
 /* {{{ */
 zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address); /* }}} */
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+void pthreads_globals_shared_socket_track(PHP_SOCKET socket);
+
+zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket);
+#endif
 
 /* {{{ */
 pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length); /* }}} */
