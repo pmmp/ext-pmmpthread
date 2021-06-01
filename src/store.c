@@ -591,16 +591,13 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 			zval pzval;
 			zend_string *rename;
 
-			/* don't overwrite pthreads objects or closures if they are already locally cached
-			 * we just synced local cache above, so they are guaranteed to match if  they exist locally */
-			if (storage->type == IS_PTHREADS || storage->type == IS_CLOSURE) {
-				if (!name) {
-					if (zend_hash_index_exists(hash, idx))
-						continue;
-				} else {
-					if (zend_hash_exists(hash, name))
-						continue;
-				}
+			//we just synced local cache, so if something is already here, it doesn't need to be modified
+			if (!name) {
+				if (zend_hash_index_exists(hash, idx))
+					continue;
+			} else {
+				if (zend_hash_exists(hash, name))
+					continue;
 			}
 
 			if (pthreads_store_convert(storage, &pzval)!=SUCCESS) {
