@@ -90,6 +90,7 @@ void pthreads_store_sync(zend_object *object) { /* {{{ */
 
 		remove = 1;
 		if (ts_val) {
+			ZVAL_DEINDIRECT(val);
 			if (ts_val->type == IS_PTHREADS && IS_PTHREADS_OBJECT(val)) {
 				pthreads_object_t* threadedStorage = ((pthreads_zend_object_t *) ts_val->data)->ts_obj;
 				pthreads_object_t *threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
@@ -308,6 +309,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 
 		if (property) {
 			pthreads_monitor_unlock(ts_obj->monitor);
+			ZVAL_DEINDIRECT(property);
 			ZVAL_COPY(read, property);
 			if (coerced) {
 				zval_ptr_dtor(&member);
