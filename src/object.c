@@ -373,6 +373,7 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 	object_properties_init(&base->std, entry);
 	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
 		pthreads_base_init(base);
+		base->local_props_modcount = base->ts_obj->store.props->modcount - 1;
 	}
 } /* }}} */
 

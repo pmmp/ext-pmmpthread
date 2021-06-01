@@ -599,6 +599,7 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 		zend_string *name = NULL;
 		zend_ulong idx;
 		zval *zstorage;
+		zend_bool changed = 0;
 
 		pthreads_store_sync_local_properties(threaded);
 
@@ -627,7 +628,14 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 					zval_ptr_dtor(&pzval);
 				zend_string_release(rename);
 			}
+			changed = 1;
 		} ZEND_HASH_FOREACH_END();
+
+		if (changed && hash == threaded->std.properties) {
+			//if this is the object's own properties table, we need to ensure that junk added here
+			//doesn't get incorrectly treated as gospel
+			threaded->local_props_modcount = ts_obj->store.props->modcount - 1;
+		}
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
