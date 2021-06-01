@@ -1,6 +1,7 @@
 .project
 *.o
 *.lo
+*.la
 tests/*.diff
 tests/*.exp
 tests/*.log
