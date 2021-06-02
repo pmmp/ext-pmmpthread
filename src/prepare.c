@@ -863,6 +863,7 @@ static int pthreads_thread_bootstrap(zend_string *file) {
 
 /* {{{ */
 int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce) {
+	zend_string *autoload_file = NULL;
 
 	PTHREADS_PREPARATION_BEGIN_CRITICAL() {
 		thread->local.id = pthreads_self();
@@ -919,15 +920,22 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		pthreads_prepare_resource_destructor(thread);
 
 		if (PTHREADS_G(autoload_file)) {
-			if (pthreads_thread_bootstrap(PTHREADS_G(autoload_file)) == FAILURE) {
-				pthreads_monitor_add(ready, PTHREADS_MONITOR_ERROR);
-				return FAILURE;
-			}
+			autoload_file = zend_string_init(ZSTR_VAL(PTHREADS_G(autoload_file)), ZSTR_LEN(PTHREADS_G(autoload_file)), 1);
 		}
 		pthreads_monitor_add(ready, PTHREADS_MONITOR_READY);
 	} PTHREADS_PREPARATION_END_CRITICAL();
 
-	return SUCCESS;
+	int result = SUCCESS;
+
+	if (autoload_file != NULL) {
+		int result = FAILURE;
+		if (pthreads_thread_bootstrap(autoload_file) == FAILURE) {
+			pthreads_monitor_add(ready, PTHREADS_MONITOR_ERROR);
+			result = FAILURE;
+		}
+		zend_string_release(autoload_file);
+	}
+	return result;
 } /* }}} */
 
 /* {{{ */
