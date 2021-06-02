@@ -15,7 +15,7 @@ $thread = new class($threaded) extends \Thread{
 	public bool $started = false;
 	public bool $wait1 = false;
 
-	public function __construct(public \Threaded $threaded){}
+	public function __construct(public \ThreadedBase $threaded){}
 
 	public function run() : void{
 		socket_getpeername($this->threaded->socket, $addr, $port);
