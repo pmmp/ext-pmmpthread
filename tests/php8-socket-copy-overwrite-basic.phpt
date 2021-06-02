@@ -6,7 +6,7 @@ Test that standard Socket objects get copied and overwritten properly
 --FILE--
 <?php
 
-$threaded = new \Threaded;
+$threaded = new class extends \ThreadedBase{};
 $threaded->socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 socket_connect($threaded->socket, "127.0.0.1", 19132);
 
