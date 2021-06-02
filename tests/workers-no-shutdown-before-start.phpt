@@ -6,7 +6,7 @@ This test verifies shutdown of a Worker (or Thread) not yet started doesn't faul
 <?php
 $worker = new Worker();
 
-$worker->stack(new class extends Threaded {
+$worker->stack(new class extends ThreadedRunnable {
 	public function run() {
 		var_dump($this);
 	}

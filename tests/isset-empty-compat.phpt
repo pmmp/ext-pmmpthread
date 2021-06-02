@@ -14,7 +14,7 @@ class standard {
     public $t_notEmpty = true;
 }
 
-class threadedObject extends \Threaded {
+class threadedObject extends \ThreadedBase {
     public $t_false = false;
     public $t_null = null;
     public $t_emptyStr = "";
@@ -30,8 +30,8 @@ $stdObject->aEmpty = [];
 $stdObject->aNotEmpty = [1];
 
 $threaded = new threadedObject;
-$threaded->aEmpty = (array) [];
-$threaded->aNotEmpty = (array) [1];
+$threaded->aEmpty = [];
+$threaded->aNotEmpty = [1];
 
 foreach (array(
     't_false',

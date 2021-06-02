@@ -11,14 +11,14 @@ Test of ThreadedSocket::setOption() with and without parameters
 
     try {
         $socket->setOption("hello", "world", new stdClass());
-    } catch(Throwable $throwable) {
-        var_dump($throwable->getMessage());
+    } catch(\TypeError $throwable) {
+        echo "bad types for ThreadedSocket::setOption()" . PHP_EOL;
     }
     var_dump($socket->setOption(\ThreadedSocket::SOL_SOCKET, \ThreadedSocket::SO_REUSEADDR, 1));
     var_dump($socket->getOption(\ThreadedSocket::SOL_SOCKET, \ThreadedSocket::SO_REUSEADDR));
 ?>
 --EXPECTF--
-ThreadedSocket::setOption() expects exactly 3 parameters, 0 given
-string(%i) "Argument 1 passed to ThreadedSocket::setOption() must be of the type %s, string given"
+ThreadedSocket::setOption() expects exactly 3 %s, 0 given
+bad types for ThreadedSocket::setOption()
 bool(true)
 int(1)

@@ -8,7 +8,7 @@ interface TestInterface {}
 
 class DebugClass implements TestInterface {}
 
-class Some extends Threaded {
+class Some extends ThreadedBase {
     public static function staticNess() {
         $closure = function() : DebugClass {
             return (new \DebugClass());

@@ -4,7 +4,7 @@ Testing closure members reallocation
 This test verifies that closures can be set as members repeatedly
 --FILE--
 <?php
-class TestClosure extends \Threaded {
+class TestClosure extends \ThreadedRunnable {
     protected $closure;
     function __construct( $closure) {
         $this->closure = $closure;
@@ -19,7 +19,9 @@ $worker->start();
 while ($count++ < 1000) {
     $function = new TestClosure(function() {});
     $worker->stack($function);
-    while($worker->collect());
+    while($worker->collect()){
+        usleep(1);
+    }
 }
 var_dump('ok');
 --EXPECTF--

@@ -17,6 +17,9 @@
  */
 #ifndef HAVE_PTHREADS_CLASS_POOL_H
 #define HAVE_PTHREADS_CLASS_POOL_H
+
+#include <src/compat.h>
+
 PHP_METHOD(Pool, __construct);
 PHP_METHOD(Pool, resize);
 PHP_METHOD(Pool, submit);
@@ -35,12 +38,12 @@ ZEND_BEGIN_ARG_INFO_EX(Pool_resize, 0, 0, 1)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_submit, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, task, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_submitTo, 0, 0, 2)
 	ZEND_ARG_TYPE_INFO(0, worker, IS_LONG, 0)
-	ZEND_ARG_OBJ_INFO(0, task, Threaded, 0)
+	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO_EX(Pool_collect, 0, 0, 0)
@@ -73,9 +76,12 @@ PHP_METHOD(Pool, __construct)
 	zend_class_entry *clazz = NULL;
 	zval *ctor = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l|Ca", &size, &clazz, &ctor) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 3)
+		Z_PARAM_LONG(size)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_CLASS(clazz)
+		Z_PARAM_ARRAY(ctor)
+	ZEND_PARSE_PARAMETERS_END();
 
 	if (clazz == NULL) clazz = pthreads_worker_entry;
 
@@ -84,11 +90,11 @@ PHP_METHOD(Pool, __construct)
 			"The class provided (%s) does not extend Worker", clazz->name->val);
 	}
 
-	zend_update_property_long(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("size"), size);
+	zend_update_property_long(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), size);
 	zend_update_property_stringl(
-		Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("class"), clazz->name->val, clazz->name->len);
+		Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("class"), clazz->name->val, clazz->name->len);
 	if (ctor)
-		zend_update_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("ctor"), ctor);
+		zend_update_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("ctor"), ctor);
 } /* }}} */
 
 /* {{{ proto void Pool::resize(integer size)
@@ -96,16 +102,16 @@ PHP_METHOD(Pool, __construct)
 	then the last workers started will be shutdown until the pool is the requested size */
 PHP_METHOD(Pool, resize) {
 	zval tmp[2];
-	uint32_t newsize = 0;
+	zend_long newsize = 0;
 	zval *workers = NULL;
 	zval *size = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &newsize) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_LONG(newsize)
+	ZEND_PARSE_PARAMETERS_END();
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("workers"), 1, &tmp[0]);
-	size = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("size"), 1, &tmp[1]);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[0]);
+	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
 
 	if (Z_TYPE_P(workers) == IS_ARRAY &&
 		newsize < zend_hash_num_elements(Z_ARRVAL_P(workers))) {
@@ -116,7 +122,7 @@ PHP_METHOD(Pool, resize) {
 			if ((worker = zend_hash_index_find(
 				Z_ARRVAL_P(workers), top-1))) {
 				zend_call_method(
-					worker, Z_OBJCE_P(worker), NULL, ZEND_STRL("shutdown"), NULL, 0, NULL, NULL);
+					PTHREADS_COMPAT_OBJECT_FROM_ZVAL(worker), Z_OBJCE_P(worker), NULL, ZEND_STRL("shutdown"), NULL, 0, NULL, NULL);
 
 			}
 
@@ -127,7 +133,7 @@ PHP_METHOD(Pool, resize) {
 	ZVAL_LONG(size, newsize);
 } /* }}} */
 
-/* {{{ proto integer Pool::submit(Threaded task)
+/* {{{ proto integer Pool::submit(ThreadedRunnable task)
 	Will submit the given task to the next worker in the pool, by default workers are selected round robin */
 PHP_METHOD(Pool, submit) {
 	zval tmp[5];
@@ -142,20 +148,13 @@ PHP_METHOD(Pool, submit) {
 
 	zend_class_entry *ce = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &task, pthreads_threaded_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
-	if (!instanceof_function(Z_OBJCE_P(task), pthreads_threaded_entry)) {
-		zend_throw_exception_ex(spl_ce_RuntimeException,
-			0, "only Threaded objects may be submitted, %s is not Threaded",
-			ZSTR_VAL(Z_OBJCE_P(task)->name));
-		return;
-	}
-
-	last = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("last"), 1, &tmp[0]);
-	size = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("size"), 1, &tmp[1]);
-	workers = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("workers"), 1, &tmp[2]);
+	last = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("last"), 1, &tmp[0]);
+	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[2]);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		array_init(workers);
@@ -164,7 +163,7 @@ PHP_METHOD(Pool, submit) {
 		ZVAL_LONG(last, 0);
 
 	if (!(selected = zend_hash_index_find(Z_ARRVAL_P(workers), Z_LVAL_P(last)))) {
-		clazz = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("class"), 1, &tmp[3]);
+		clazz = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("class"), 1, &tmp[3]);
 
 		if (Z_TYPE_P(clazz) != IS_STRING) {
 			zend_throw_exception_ex(spl_ce_RuntimeException, 0,
@@ -180,7 +179,7 @@ PHP_METHOD(Pool, submit) {
 			return;
 		}
 
-		ctor  = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("ctor"), 1, &tmp[4]);
+		ctor  = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("ctor"), 1, &tmp[4]);
 
 		object_init_ex(&worker, ce);
 
@@ -204,7 +203,9 @@ PHP_METHOD(Pool, submit) {
 				fci.size = sizeof(zend_fcall_info);
 				fci.object = Z_OBJ(worker);
 				fci.retval = &retval;
+#if PHP_VERSION_ID < 80000
 				fci.no_separation = 1;
+#endif
 
 				fcc.function_handler = constructor;
 				fcc.calling_scope = zend_get_executed_scope();
@@ -223,7 +224,7 @@ PHP_METHOD(Pool, submit) {
 					zval_dtor(&retval);
 			}
 
-			zend_call_method(&worker, Z_OBJCE(worker), NULL, ZEND_STRL("start"), NULL, 0, NULL, NULL);
+			zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(&worker), Z_OBJCE(worker), NULL, ZEND_STRL("start"), NULL, 0, NULL, NULL);
 		}
 
 		selected = zend_hash_index_update(
@@ -231,12 +232,12 @@ PHP_METHOD(Pool, submit) {
 
 	}
 
-	zend_call_method(selected, Z_OBJCE_P(selected), NULL, ZEND_STRL("stack"), NULL, 1, task, NULL);
+	zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(selected), Z_OBJCE_P(selected), NULL, ZEND_STRL("stack"), NULL, 1, task, NULL);
 	ZVAL_LONG(return_value, Z_LVAL_P(last));
 	Z_LVAL_P(last)++;
 } /* }}} */
 
-/* {{{ proto integer Pool::submitTo(integer $worker, Threaded task)
+/* {{{ proto integer Pool::submitTo(integer $worker, ThreadedRunnable task)
 	Will submit the given task to the specified worker */
 PHP_METHOD(Pool, submitTo) {
 	zval tmp;
@@ -245,17 +246,18 @@ PHP_METHOD(Pool, submitTo) {
 	zend_long worker = 0;
 	zval *selected = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "lO", &worker, &task, pthreads_threaded_entry) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
+		Z_PARAM_LONG(worker)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+	ZEND_PARSE_PARAMETERS_END();
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("workers"), 1, &tmp);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		array_init(workers);
 
 	if ((selected = zend_hash_index_find(Z_ARRVAL_P(workers), worker))) {
-		zend_call_method(selected,
+		zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(selected),
 			Z_OBJCE_P(selected), NULL,
 			ZEND_STRL("stack"), NULL, 1, task, NULL);
 		ZVAL_LONG(return_value, worker);
@@ -276,11 +278,12 @@ PHP_METHOD(Pool, collect) {
 	     *worker = NULL;
 	zend_long collectable = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|f", &call.fci, &call.fcc) != SUCCESS) {
-		return;
-	}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_FUNC(call.fci, call.fcc)
+	ZEND_PARSE_PARAMETERS_END();
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), getThis(), ZEND_STRL("workers"), 1, &tmp);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		RETURN_LONG(0);
@@ -292,9 +295,8 @@ PHP_METHOD(Pool, collect) {
 			PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
 		collectable += pthreads_stack_collect(
 			&thread->std,
-			thread->ts_obj->stack,
+			thread->stack,
 			&call,
-			pthreads_worker_running_function,
 			pthreads_worker_collect_function);
 		if (!ZEND_NUM_ARGS())
 			PTHREADS_WORKER_COLLECTOR_DTOR(call);
@@ -310,7 +312,7 @@ static inline int pthreads_pool_shutdown_worker(zval *worker) {
 	ZVAL_UNDEF(&retval);
 	EG(current_execute_data) = NULL;
 	zend_call_method_with_0_params(
-		worker, Z_OBJCE_P(worker), NULL, "shutdown", &retval);
+		PTHREADS_COMPAT_OBJECT_FROM_ZVAL(worker), Z_OBJCE_P(worker), NULL, "shutdown", &retval);
 	if (Z_TYPE(retval) != IS_UNDEF)
 		zval_ptr_dtor(&retval);
 	EG(current_execute_data) = ex;
@@ -322,7 +324,7 @@ static inline int pthreads_pool_shutdown_worker(zval *worker) {
 static inline void pthreads_pool_shutdown(zval *pool) {
 	zval tmp;
 	zval *workers = zend_read_property(
-		Z_OBJCE_P(pool), pool, ZEND_STRL("workers"), 1, &tmp);
+		Z_OBJCE_P(pool), PTHREADS_COMPAT_OBJECT_FROM_ZVAL(pool), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) == IS_ARRAY) {
 		if (zend_hash_num_elements(Z_ARRVAL_P(workers))) {
@@ -336,9 +338,7 @@ static inline void pthreads_pool_shutdown(zval *pool) {
 /* {{{ proto void Pool::shutdown(void)
 	Will cause all the workers to finish executing their stacks and shutdown */
 PHP_METHOD(Pool, shutdown) {
-	if (zend_parse_parameters_none() != SUCCESS) {
-		return;
-	}
+	zend_parse_parameters_none_throw();
 
 	pthreads_pool_shutdown(getThis());
 } /* }}} */

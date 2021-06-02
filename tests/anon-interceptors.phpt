@@ -4,13 +4,13 @@ Test interceptors of anonymous classes
 This test verifies that interceptors of anonymous Thread objects work as expected
 --FILE--
 <?php
-class Foo extends Threaded {
+class Foo extends ThreadedBase {
     public $bar;
 
     public function __construct() {
         var_dump(__METHOD__);
 
-        $this->bar = new class extends Threaded {
+        $this->bar = new class extends ThreadedBase {
             private $buzz;
 
             public function __construct() {
@@ -43,13 +43,13 @@ class Test extends \Thread {
 }
 $thread = new Test();
 $thread->start() && $thread->join();
---EXPECT--
+--EXPECTF--
 string(16) "Foo::__construct"
 string(16) "Bar::__construct"
 string(4) "buzz"
 string(11) "hello world"
 string(11) "hello world"
-object(class@anonymous)#3 (1) {
+object(%s@anonymous)#3 (1) {
   ["buzz"]=>
   string(11) "hello world"
 }

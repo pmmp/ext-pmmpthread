@@ -9,7 +9,7 @@ This bug has not been fixed yet
 --FILE--
 <?php
 
-class A extends \Threaded{
+class A extends \ThreadedBase{
 	private $test = 1;
 
 	protected function dump() : void{
@@ -30,7 +30,7 @@ class B extends A{
 $t = new \Worker();
 
 $t->start();
-$t->stack(new class extends \Threaded{
+$t->stack(new class extends \ThreadedRunnable{
 	public function run(){
 		$b = new B;
 		$b->run();

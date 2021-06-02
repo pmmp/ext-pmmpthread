@@ -4,12 +4,12 @@ Testing class statics properties and dependencies (gh bug #666)
 If a static property holds a reference to a threaded object, the order of class definition is important.
 --FILE--
 <?php
-class FirstClass extends \Threaded
+class FirstClass extends \ThreadedBase
 {
     public static $prop = [];
 }
 
-class SecondClass extends \Threaded {}
+class SecondClass extends \ThreadedBase {}
 
 FirstClass::$prop[] = new SecondClass();
 

@@ -26,13 +26,18 @@
 #	include <src/pthreads.h>
 #endif
 
+#include <src/compat.h>
+
 /* {{{ */
-zend_object* pthreads_threaded_ctor(zend_class_entry *entry);
+zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry);
+zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry);
 zend_object* pthreads_worker_ctor(zend_class_entry *entry);
 zend_object* pthreads_thread_ctor(zend_class_entry *entry);
 zend_object* pthreads_socket_ctor(zend_class_entry *entry);
+void         pthreads_base_dtor(zend_object *object);
 void         pthreads_base_free(zend_object *object);
-HashTable*   pthreads_base_gc(zval *object, zval **table, int *n); /* }}} */
+HashTable*   pthreads_base_gc(pthreads_handler_context *object, zval **table, int *n);
+/* }}} */
 
 /* {{{ */
 int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsigned char *buffer, size_t buflen, zend_unserialize_data *data);

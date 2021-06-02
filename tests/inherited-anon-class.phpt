@@ -7,11 +7,11 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 $task = new class extends Thread {
     public function run()
     {
-        $this->prop = new class extends Threaded {};
+        $this->prop = new class extends ThreadedBase {};
 		var_dump($this->prop);
     }
 };
 $task->start() && $task->join();
---EXPECT--
-object(class@anonymous)#2 (0) {
+--EXPECTF--
+object(%s@anonymous)#2 (0) {
 }

@@ -4,7 +4,7 @@ Test pool defaults
 This test verifies pool defaults
 --FILE--
 <?php
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
 	public function run() {
 		var_dump($this);
 	}
@@ -14,9 +14,7 @@ $pool = new Pool(1);
 $pool->submit(new Work());
 $pool->shutdown();
 
-$pool->collect(function(Collectable $work) {
-	return $work->isGarbage();
-});
+$pool->collect();
 
 var_dump($pool);
 ?>

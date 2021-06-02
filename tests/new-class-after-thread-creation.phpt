@@ -10,9 +10,10 @@ $worker = new \Worker();
 $worker->start();
 
 interface A {}
-class task extends Threaded implements A {}
+class task extends ThreadedRunnable implements A {
+	public function run() {}
+}
 
 $worker->stack(new task());
-while($worker->collect());
 $worker->shutdown();
 --EXPECT--

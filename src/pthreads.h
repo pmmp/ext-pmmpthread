@@ -22,6 +22,8 @@
 # include "config.h"
 #endif
 
+#define HAVE_PTHREADS_EXT_SOCKETS_SUPPORT (HAVE_SOCKETS && PHP_VERSION_ID >= 80000)
+
 #include <stdio.h>
 #ifndef _WIN32
 #include <pthread.h>
@@ -54,6 +56,9 @@
 #include <ext/standard/php_var.h>
 #include <ext/spl/spl_exceptions.h>
 #include <ext/spl/spl_iterators.h>
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#include <ext/sockets/php_sockets.h>
+#endif
 #include <Zend/zend.h>
 #include <Zend/zend_closures.h>
 #include <Zend/zend_compile.h>
@@ -75,26 +80,35 @@
 #include <dmalloc.h>
 #endif
 
-extern zend_class_entry *pthreads_threaded_entry;
-extern zend_class_entry *pthreads_volatile_entry;
+extern zend_class_entry *pthreads_threaded_base_entry;
+extern zend_class_entry *pthreads_threaded_array_entry;
+extern zend_class_entry *pthreads_threaded_runnable_entry;
 extern zend_class_entry *pthreads_thread_entry;
 extern zend_class_entry *pthreads_worker_entry;
 extern zend_class_entry *pthreads_socket_entry;
 extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
 #define IS_PTHREADS_CLASS(c) \
-	(instanceof_function(c, pthreads_threaded_entry))
+	(instanceof_function(c, pthreads_threaded_base_entry))
 
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
 
-#define IS_PTHREADS_VOLATILE_CLASS(o)   \
-        instanceof_function(o, pthreads_volatile_entry)
+#define IS_PTHREADS_THREADED_ARRAY(o) \
+	instanceof_function(o, pthreads_threaded_array_entry)
 
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
 
-extern zend_object_handlers pthreads_handlers;
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#define IS_EXT_SOCKETS_OBJECT(z) \
+	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), socket_ce))
+#else
+#define IS_EXT_SOCKETS_OBJECT(z) 0
+#endif
+
+extern zend_object_handlers pthreads_threaded_base_handlers;
+extern zend_object_handlers pthreads_threaded_array_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
 extern zend_object_handlers *zend_handlers;
 
@@ -111,6 +125,10 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	HashTable filenames;
 	HashTable *resources;
 	int hard_copy_interned_strings;
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	zend_object_handlers *original_socket_object_handlers;
+	zend_object_handlers custom_socket_object_handlers;
+#endif
 ZEND_END_MODULE_GLOBALS(pthreads)
 #	define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
 #   define PTHREADS_PID() PTHREADS_ZG(pid) ? PTHREADS_ZG(pid) : (PTHREADS_ZG(pid)=getpid())
@@ -127,38 +145,21 @@ ZEND_END_MODULE_GLOBALS(pthreads)
 
 static zend_string *zend_string_new(zend_string *s)
 {
+	zend_string *ret;
 	if (ZSTR_IS_INTERNED(s)) {
+		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
+			return s;
+		}
 		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
 			return s;
 		}
-		return zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+	} else {
+		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
 	}
-	return zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
+	ZSTR_H(ret) = ZSTR_H(s);
+	return ret;
 }
-
-/* {{{ */
-static inline const zend_op* pthreads_check_opline(zend_execute_data *ex, zend_long offset, zend_uchar opcode) {
-	if (ex && ex->func && ex->func->type == ZEND_USER_FUNCTION) {
-		zend_op_array *ops = &ex->func->op_array;
-		const zend_op *opline = ex->opline;
-
-		if ((opline + offset) >= ops->opcodes) {
-			opline += offset;
-			if (opline->opcode == opcode) {
-				return opline;
-			}
-		}
-	}
-	return NULL;
-} /* }}} */
-
-/* {{{ */
-static inline zend_bool pthreads_check_opline_ex(zend_execute_data *ex, zend_long offset, zend_uchar opcode, uint32_t extended_value) {
-	const zend_op *opline = pthreads_check_opline(ex, offset, opcode);
-	if (opline && opline->extended_value == extended_value)
-		return 1;
-	return 0;
-} /* }}} */
 
 /* {{{ */
 typedef struct _pthreads_call_t {

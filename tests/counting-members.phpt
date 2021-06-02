@@ -4,12 +4,7 @@ Testing member count
 This test verifies that getting member counts works
 --FILE--
 <?php
-class Test extends Threaded {
-	public function run() { 
-	}
-}
-
-$t = new Test();
+$t = new ThreadedArray();
 $t[] = "one";
 $t[] = "two";
 $t["three"] = "three";

@@ -97,7 +97,7 @@ function test(){
 }
 $worker = new Worker();
 $worker->start();
-$worker->stack(new class extends \Threaded{
+$worker->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";
 		test();
@@ -118,7 +118,7 @@ string(22) "Trait1::dummyTraitFunc"
 string(29) "Trait1::aliasedDummyTraitFunc"
 string(24) "Trait2::anotherTraitFunc"
 string(31) "Trait2::anotherAliasedTraitFunc"
-string(%d) "class@anonymous%s::myOwnFunc"
+string(%d) "%s@anonymous%s::myOwnFunc"
 int(1)
 int(2)
 int(1)
@@ -137,7 +137,7 @@ string(22) "Trait1::dummyTraitFunc"
 string(29) "Trait1::aliasedDummyTraitFunc"
 string(24) "Trait2::anotherTraitFunc"
 string(31) "Trait2::anotherAliasedTraitFunc"
-string(%d) "class@anonymous%s::myOwnFunc"
+string(%d) "%s@anonymous%s::myOwnFunc"
 int(1)
 int(2)
 int(1)

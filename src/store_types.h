@@ -15,18 +15,32 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_COLLECTABLE_H
-#define HAVE_PTHREADS_CLASS_COLLECTABLE_H
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(Collectable_isGarbage, 0, 0, _IS_BOOL, 0)
-ZEND_END_ARG_INFO()
+#ifndef HAVE_PTHREADS_STORE_TYPES_H
+#define HAVE_PTHREADS_STORE_TYPES_H
 
-extern zend_function_entry pthreads_collectable_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_COLLECTABLE
-#	define HAVE_PTHREADS_CLASS_COLLECTABLE
-zend_function_entry pthreads_collectable_methods[] = {
-	PHP_ABSTRACT_ME(Collectable, isGarbage, 	Collectable_isGarbage)
-	PHP_FE_END
-};
-#	endif
+#ifdef HAVE_CONFIG_H
+#	include <config.h>
+#endif
+
+typedef enum _pthreads_store_type {
+	STORE_TYPE_CLOSURE,
+	STORE_TYPE_PTHREADS,
+	STORE_TYPE_RESOURCE,
+	STORE_TYPE_OBJECT,
+	STORE_TYPE_ARRAY,
+	STORE_TYPE_SOCKET
+} pthreads_store_type;
+
+typedef struct _pthreads_store_t {
+	HashTable hash;
+	zend_long modcount;
+} pthreads_store_t;
+
+typedef struct _pthreads_storage {
+	pthreads_store_type type;
+	size_t 	length;
+	zend_bool 	exists;
+	void    	*data;
+} pthreads_storage;
+
 #endif

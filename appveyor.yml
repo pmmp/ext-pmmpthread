@@ -1,28 +1,32 @@
 version: '{branch}.{build}'
 
-image: Visual Studio 2017
+image: Visual Studio 2019
 
 environment:
-  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.1.1
+  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.2.0
 
   matrix:
     - ARCH: x86
-      PHP_VER: 7.3
+      PHP_VER: 7.4
       VC_VER: vc15
+      VCVARS_VER: 14.16
     - ARCH: x64
-      PHP_VER: 7.3
+      PHP_VER: 7.4
       VC_VER: vc15
+      VCVARS_VER: 14.16
     - ARCH: x86
-      PHP_VER: 7.4
-      VC_VER: vc15
+      PHP_VER: 8.0
+      VC_VER: vs16
+      VCVARS_VER: ""
     - ARCH: x64
-      PHP_VER: 7.4
-      VC_VER: vc15
+      PHP_VER: 8.0
+      VC_VER: vs16
+      VCVARS_VER: ""
 install:
 - cmd: cinst wget
 build_script:
 - cmd: >-
-    "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
+    "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %ARCH% -vcvars_ver=%VCVARS_VER%
 
     wget https://github.com/OSTC/php-sdk-binary-tools/archive/%PHP_SDK_BINARY_TOOLS_VER%.zip --no-check-certificate -q -O php-sdk-binary-tools-%PHP_SDK_BINARY_TOOLS_VER%.zip
 
@@ -56,7 +60,7 @@ build_script:
 
     buildconf.bat
 
-    configure.bat --disable-all --enable-cli --enable-zts --with-pthreads=shared --with-prefix=C:\projects\pthreads\bin --with-php-build=deps --enable-ipv6 --enable-debug
+    configure.bat --disable-all --enable-cli --enable-zts --with-pthreads=shared --enable-sockets --with-prefix=C:\projects\pthreads\bin --with-php-build=deps --enable-ipv6 --enable-debug
 
     nmake
 

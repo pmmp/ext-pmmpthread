@@ -32,6 +32,12 @@ struct _pthreads_globals pthreads_globals;
 #	define PTHREADS_G () ?  : (void***) &pthreads_globals
 #endif
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+static void pthreads_globals_shared_sockets_dtor_func(zval *pDest) {
+	close(Z_LVAL_P(pDest));
+}
+#endif
+
 /* {{{ */
 zend_bool pthreads_globals_init(){
 	if (!PTHREADS_G(init)&&!PTHREADS_G(failed)) {
@@ -43,6 +49,10 @@ zend_bool pthreads_globals_init(){
 		} else {
 			zend_hash_init(
 				&PTHREADS_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+			zend_hash_init(
+				&PTHREADS_G(shared_sockets), 16, NULL, (dtor_func_t) pthreads_globals_shared_sockets_dtor_func, 1);
+#endif
 		}
 
 		PTHREADS_G(autoload_file) = NULL;
@@ -123,6 +133,38 @@ zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address) {
 	return deleted;
 } /* }}} */
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+void pthreads_globals_shared_socket_track(PHP_SOCKET socket) {
+	if (socket < 0) {
+		return;
+	}
+
+	if (pthreads_globals_lock()) {
+		zval value;
+
+		ZVAL_LONG(&value, (zend_long) socket);
+		zend_hash_index_add(&PTHREADS_G(shared_sockets), (zend_ulong) socket, &value);
+
+		pthreads_globals_unlock();
+	}
+}
+
+zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket) {
+	zend_bool result = 0;
+	if (socket < 0) {
+		return result;
+	}
+
+	if (pthreads_globals_lock()) {
+		result = zend_hash_index_find(&PTHREADS_G(shared_sockets), (zend_ulong) socket) != NULL;
+	
+		pthreads_globals_unlock();
+	}
+
+	return result;
+}
+#endif
+
 /* {{{ */
 zend_bool pthreads_globals_set_autoload_file(const zend_string *path) {
 	if (pthreads_globals_lock()) {
@@ -145,6 +187,10 @@ void pthreads_globals_shutdown() {
 		PTHREADS_G(failed)=0;
 		/* we allow proc shutdown to destroy tables, and global strings */
 		pthreads_monitor_free(PTHREADS_G(monitor));
+		zend_hash_destroy(&PTHREADS_G(objects));
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+		zend_hash_destroy(&PTHREADS_G(shared_sockets));
+#endif
 	}
 } /* }}} */
 #endif

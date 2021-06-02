@@ -15,7 +15,7 @@ comparison which would return true if the property tables of two distinct object
 --FILE--
 <?php
 class Test extends Thread {
-	public function __construct(Threaded ... $args) {
+	public function __construct(ThreadedArray ... $args) {
 		$this->args = $args;
 	}
 
@@ -24,8 +24,8 @@ class Test extends Thread {
 	}
 }
 
-$a = new Threaded();
-$b = new Threaded();
+$a = new ThreadedArray();
+$b = new ThreadedArray();
 
 $test = new Test($a, $b);	# bool(false)
 $test->start();

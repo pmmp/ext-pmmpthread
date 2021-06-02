@@ -34,8 +34,8 @@
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
 #endif
 
-#if PHP_VERSION_ID < 70300
-#	error "pthreads requires PHP 7.3 or later"
+#if PHP_VERSION_ID < 70400
+#	error "pthreads requires PHP 7.4 or later"
 #endif
 
 #if COMPILE_DL_PTHREADS
@@ -47,8 +47,15 @@
 #	include <src/globals.h>
 #endif
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#include <src/ext_sockets_hacks.h>
+#endif
+
 static const zend_module_dep pthreads_module_deps[] = {
 	ZEND_MOD_REQUIRED("spl")
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	ZEND_MOD_REQUIRED("sockets")
+#endif
 	ZEND_MOD_END
 };
 
@@ -69,16 +76,17 @@ zend_module_entry pthreads_module_entry = {
   STANDARD_MODULE_PROPERTIES_EX
 };
 
-zend_class_entry *pthreads_threaded_entry;
-zend_class_entry *pthreads_volatile_entry;
+zend_class_entry *pthreads_threaded_base_entry;
+zend_class_entry *pthreads_threaded_array_entry;
+zend_class_entry *pthreads_threaded_runnable_entry;
 zend_class_entry *pthreads_thread_entry;
 zend_class_entry *pthreads_worker_entry;
-zend_class_entry *pthreads_collectable_entry;
 zend_class_entry *pthreads_pool_entry;
 zend_class_entry *pthreads_socket_entry;
 zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
-zend_object_handlers pthreads_handlers;
+zend_object_handlers pthreads_threaded_base_handlers;
+zend_object_handlers pthreads_threaded_array_handlers;
 zend_object_handlers pthreads_socket_handlers;
 zend_object_handlers *zend_handlers;
 void ***pthreads_instance = NULL;
@@ -144,26 +152,40 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	REGISTER_LONG_CONSTANT("PTHREADS_ALLOW_HEADERS", PTHREADS_ALLOW_HEADERS, CONST_CS | CONST_PERSISTENT);
 
-	INIT_CLASS_ENTRY(ce, "Collectable", pthreads_collectable_methods);
-	pthreads_collectable_entry = zend_register_internal_interface(&ce);
-
-	INIT_CLASS_ENTRY(ce, "Threaded", pthreads_threaded_methods);
-	pthreads_threaded_entry=zend_register_internal_class(&ce);
-	pthreads_threaded_entry->get_iterator = pthreads_object_iterator_create;
-	pthreads_threaded_entry->create_object = pthreads_threaded_ctor;
-	pthreads_threaded_entry->serialize = pthreads_threaded_serialize;
-	pthreads_threaded_entry->unserialize = pthreads_threaded_unserialize;
-	zend_class_implements(pthreads_threaded_entry, 2, zend_ce_traversable, pthreads_collectable_entry);
+	INIT_CLASS_ENTRY(ce, "ThreadedBase", pthreads_threaded_base_methods);
+	pthreads_threaded_base_entry = zend_register_internal_class(&ce);
+	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
+	pthreads_threaded_base_entry->serialize = pthreads_threaded_serialize;
+	pthreads_threaded_base_entry->unserialize = pthreads_threaded_unserialize;
+	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
+	zend_class_implements(
+		pthreads_threaded_base_entry,
+		1,
+#if PHP_VERSION_ID >= 80000
+		zend_ce_aggregate
+#else
+		zend_ce_traversable
+#endif
+	);
+	INIT_CLASS_ENTRY(ce, "ThreadedArray", pthreads_threaded_array_methods);
+	pthreads_threaded_array_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
+	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_FINAL;
+#if PHP_VERSION_ID >= 80000
+	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
+#endif
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
 
-	INIT_CLASS_ENTRY(ce, "Volatile", NULL);
-	pthreads_volatile_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
+	INIT_CLASS_ENTRY(ce, "ThreadedRunnable", pthreads_threaded_runnable_methods);
+	pthreads_threaded_runnable_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+	pthreads_threaded_runnable_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
 	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
-	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
+	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_runnable_entry);
 	pthreads_thread_entry->create_object = pthreads_thread_ctor;
+	pthreads_thread_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
 	INIT_CLASS_ENTRY(ce, "Worker", pthreads_worker_methods);
 	pthreads_worker_entry=zend_register_internal_class_ex(&ce, pthreads_thread_entry);
@@ -178,7 +200,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	zend_declare_property_long(pthreads_pool_entry, ZEND_STRL("last"), 0, ZEND_ACC_PROTECTED);
 
 	INIT_CLASS_ENTRY(ce, "ThreadedSocket", pthreads_socket_methods);
-	pthreads_socket_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_entry);
+	pthreads_socket_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
 	pthreads_socket_entry->create_object = pthreads_socket_ctor;
 
 	zend_declare_class_constant_long(pthreads_socket_entry, ZEND_STRL("AF_UNIX"), AF_UNIX);
@@ -622,36 +644,49 @@ PHP_MINIT_FUNCTION(pthreads)
 	*/
 	zend_handlers = (zend_object_handlers*)zend_get_std_object_handlers();
 
-	memcpy(&pthreads_handlers, zend_handlers, sizeof(zend_object_handlers));
+	memcpy(&pthreads_threaded_base_handlers, zend_handlers, sizeof(zend_object_handlers));
 
-	pthreads_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
+	pthreads_threaded_base_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
 
-	pthreads_handlers.free_obj = pthreads_base_free;
-	pthreads_handlers.cast_object = pthreads_cast_object;
-	pthreads_handlers.count_elements = pthreads_count_properties;
+	pthreads_threaded_base_handlers.free_obj = pthreads_base_free;
+	pthreads_threaded_base_handlers.dtor_obj = pthreads_base_dtor;
+	pthreads_threaded_base_handlers.cast_object = pthreads_cast_object;
 
-	pthreads_handlers.get_debug_info = pthreads_read_debug;
-	pthreads_handlers.get_properties = pthreads_read_properties;
+	pthreads_threaded_base_handlers.get_debug_info = pthreads_read_debug;
+	pthreads_threaded_base_handlers.get_properties = pthreads_read_properties;
 
-	pthreads_handlers.read_property = pthreads_read_property;
-	pthreads_handlers.write_property = pthreads_write_property;
-	pthreads_handlers.has_property = pthreads_has_property;
-	pthreads_handlers.unset_property = pthreads_unset_property;
+	pthreads_threaded_base_handlers.read_property = pthreads_read_property;
+	pthreads_threaded_base_handlers.write_property = pthreads_write_property;
+	pthreads_threaded_base_handlers.has_property = pthreads_has_property;
+	pthreads_threaded_base_handlers.unset_property = pthreads_unset_property;
 
-	pthreads_handlers.read_dimension = pthreads_read_dimension;
-	pthreads_handlers.write_dimension = pthreads_write_dimension;
-	pthreads_handlers.has_dimension = pthreads_has_dimension;
-	pthreads_handlers.unset_dimension = pthreads_unset_dimension;
 
-	pthreads_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
-	pthreads_handlers.get = NULL;
-	pthreads_handlers.set = NULL;
-	pthreads_handlers.get_gc = pthreads_base_gc;
+	pthreads_threaded_base_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
+#if PHP_VERSION_ID < 80000
+	pthreads_threaded_base_handlers.get = NULL;
+	pthreads_threaded_base_handlers.set = NULL;
+#endif
+	pthreads_threaded_base_handlers.get_gc = pthreads_base_gc;
 
-	pthreads_handlers.clone_obj = NULL;
-	pthreads_handlers.compare_objects = pthreads_compare_objects;
+	pthreads_threaded_base_handlers.clone_obj = NULL;
+#if PHP_VERSION_ID < 80000
+	pthreads_threaded_base_handlers.compare_objects = pthreads_compare_objects;
+#else
+	pthreads_threaded_base_handlers.compare = pthreads_compare_objects;
+#endif
 
-	memcpy(&pthreads_socket_handlers, &pthreads_handlers, sizeof(zend_object_handlers));
+	memcpy(&pthreads_threaded_array_handlers, &pthreads_threaded_base_handlers, sizeof(zend_object_handlers));
+	pthreads_threaded_array_handlers.count_elements = pthreads_count_properties;
+	pthreads_threaded_array_handlers.read_dimension = pthreads_read_dimension;
+	pthreads_threaded_array_handlers.write_dimension = pthreads_write_dimension;
+	pthreads_threaded_array_handlers.has_dimension = pthreads_has_dimension;
+	pthreads_threaded_array_handlers.unset_dimension = pthreads_unset_dimension;
+	pthreads_threaded_array_handlers.read_property = pthreads_read_property_disallow;
+	pthreads_threaded_array_handlers.write_property = pthreads_write_property_disallow;
+	pthreads_threaded_array_handlers.has_property = pthreads_has_property_disallow;
+	pthreads_threaded_array_handlers.unset_property = pthreads_unset_property_disallow;
+
+	memcpy(&pthreads_socket_handlers, &pthreads_threaded_base_handlers, sizeof(zend_object_handlers));
 
 	pthreads_socket_handlers.count_elements = pthreads_count_properties_disallow;
 
@@ -668,6 +703,10 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_socket_handlers.unset_dimension = pthreads_unset_dimension_disallow;
 
 	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);
+
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	pthreads_ext_sockets_hacks_init();
+#endif
 
 	if (pthreads_globals_init()) {
 		TSRMLS_CACHE_UPDATE();
@@ -723,6 +762,10 @@ PHP_RINIT_FUNCTION(pthreads) {
 
 	PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
+#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	PTHREADS_ZG(original_socket_object_handlers) = NULL;
+#endif
+
 	if (pthreads_instance != TSRMLS_CACHE) {
 		if (memcmp(sapi_module.name, ZEND_STRL("cli")) == SUCCESS) {
 			sapi_module.deactivate = NULL;
@@ -746,16 +789,15 @@ PHP_MINFO_FUNCTION(pthreads)
 	php_info_print_table_end();
 }
 
-#ifndef HAVE_PTHREADS_CLASS_THREADED
-#	include <classes/threaded.h>
+#include <classes/threaded_base.h>
+#include <classes/threaded_runnable.h>
+
+#ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY
+#	include <classes/threaded_array.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_THREAD
 #	include <classes/thread.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_COLLECTABLE
-#	include <classes/collectable.h>
 #endif
 
 #ifndef HAVE_PTHREADS_CLASS_WORKER

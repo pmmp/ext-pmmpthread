@@ -15,11 +15,12 @@ This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjo
 This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
 
 ## Changes compared to the original
-- PHP 7.4 support
+- PHP 7.4 and 8.0 support
 - Many bug fixes which were never merged upstream
 - Performance improvements
 - Memory usage improvements
 - Integration with [OPcache](https://www.php.net/manual/en/book.opcache.php) on PHP 7.4+ (pthreads leverages opcache SHM to reuse classes and functions, saving lots of memory)
+- OPcache JIT support on PHP 8.0.2+
 
 ## [OPcache](https://www.php.net/manual/en/book.opcache.php) compatibility
 Despite popular belief, OPcache is still useful in a CLI environment - as long as it's a threaded one :)
@@ -34,30 +35,26 @@ Preloading classes and functions is also supported on PHP 7.4, which will make c
 
 OPcache isn't enabled in the CLI by default, so you'll need to add
 ```
-opcache.enable=1
 opcache.enable_cli=1
 ```
 to your `php.ini` file.
 
-## Why not something newer and easier to work with, like [krakjoe/parallel](https://github.com/krakjoe/parallel)?
-Several reasons. The biggest one is that we found ext-parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded`, it might be more usable. In addition, ext-parallel is less widely used, less well maintained and requires significant migration efforts for code using pthreads.
+## Why not drop pthreads and move on to something newer and easier to work with, like [krakjoe/parallel](https://github.com/krakjoe/parallel)?
+- We found parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded`, it might be more usable.
+- It's possible to implement parallel's API using pthreads, but not the other way round.
+- parallel requires significant migration efforts for code using pthreads.
 
-Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the benefits of PHP 7.4 without needing to suffer PocketMine API breaks that would affect plugins. In addition, PHP 7.4 introduced various new internal features which are highly beneficial specifically to pthreads, such as immutable classes and op_arrays.
+Some specific nitpicks which were deal-breakers for parallel usage in PocketMine-MP:
+- parallel has confusing and inconsistent behaviour surrounding object copying. While pthreads also has various inconsistencies and isn't exactly the easiest to understand thing in the world, its faults are well known (better the devil we know than the devil we don't).
+- parallel has uncontrollable behaviour around its object copying routine (it's not possible to customise copies or prevent copies from occurring).
 
-While pthreads is an extraordinary challenge to maintain throughout several PHP versions, I'm something of a masochist and I enjoy the challenge. I've also learned a great deal about PHP internals because of this extension.
-
-## Highlights
-
-* An easy to use, quick to learn OO Threading API for PHP 7.3+
-* Execute any and all predefined and user declared methods and functions, including closures.
-* Ready made synchronization included
-* A world of possibilities ...
+Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the benefits of PHP 7.4 without needing to suffer API breaks that would affect plugins. In addition, PHP 7.4 introduced various new internal features which are highly beneficial specifically to pthreads, such as immutable classes and op_arrays.
 
 ## Requirements
 
-* PHP 7.3+
+* PHP 7.4+
 * ZTS Enabled ( Thread Safety )
-* Posix Threads Implementation
+* Posix Threads Implementation (pthread-w32 / pthreads4w on Windows)
 
 Testing has been carried out on x86, x64 and ARM, in general you just need a compiler and pthread.h
 
@@ -101,10 +98,6 @@ $thread->start() && $thread->join();
 ?>
 ```
 
-### Are you serious ?
-
-Absolutely, this is not a hack, we _don't_ use forking or any other such nonsense, what you create are honest to goodness posix threads that are completely compatible with PHP and safe ... this is true multi-threading :)
-
 ### SAPI Support
 
 pthreads v3 is restricted to operating in CLI only: I have spent many years trying to explain that threads in a web server just don't make sense, after 1,111 commits to pthreads I have realised that, my advice is going unheeded.
@@ -117,14 +110,10 @@ Thanks for listening ;)
 
 Documentation can be found in the PHP manual: http://docs.php.net/manual/en/book.pthreads.php, and some examples can be found in the "examples" folder in the master repository.
 
-Further insights and occasional announcements can be read at the http://pthreads.org site where pthreads is developed and tested in the real world.
-
 Here are some links to articles I have prepared for users: everybody should read them before they do anything else:
 
  - https://gist.github.com/krakjoe/6437782
  - https://gist.github.com/krakjoe/9384409
-
-If you have had the time to put any cool demo's together and would like them showcased on pthreads.org please get in touch.
 
 ### Feedback
 
@@ -143,10 +132,6 @@ Reproducing: some bugs don't show themselves on every execution, that's fine, me
 __It is impossible to help without reproducing code, bugs that are opened without reproducing code will be closed.__
 
 Please include version and operating system information in your report.
-
-*Please do not post requests to help with code on github; I spend a lot of time on Stackoverflow, a much better place for asking questions.*
-
-Have patience; I am one human being.
 
 ### Developers
 

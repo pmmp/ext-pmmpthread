@@ -21,12 +21,11 @@ class TestAsyncTask extends ManInTheMiddle {
 	}
 }
 
-abstract class ManInTheMiddle extends \Threaded{}
+abstract class ManInTheMiddle extends \ThreadedRunnable{}
 
 error_reporting(-1);
 
 $worker->stack(new TestAsyncTask());
-while($worker->collect());
 $worker->shutdown();
 --EXPECT--
 bool(false)

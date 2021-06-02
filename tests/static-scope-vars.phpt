@@ -4,7 +4,7 @@ Test static scope vars gh issue #501
 Static member reference vars were not copied appropriately
 --FILE--
 <?php
-class Test extends Threaded
+class Test extends ThreadedBase
 {
     public function method()
     {

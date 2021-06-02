@@ -52,94 +52,19 @@ define('PTHREADS_INHERIT_COMMENTS', 0x100000);
 define('PTHREADS_ALLOW_HEADERS', 0x1000000);
 
 /**
- * Threaded class
+ * ThreadedBase class
+ *
+ * ThreadedBase exposes similar synchronization functionality to the old Threaded, but
+ * with a less bloated interface which reduces undefined behaviour possibilities.
  *
  * Threaded objects form the basis of pthreads ability to execute user code in parallel;
- * they expose and include synchronization methods and various useful interfaces.
+ * they expose and include synchronization methods.
  *
  * Threaded objects, most importantly, provide implicit safety for the programmer;
  * all operations on the object scope are safe.
- *
- * @link http://www.php.net/manual/en/class.threaded.php
- * @since 2.0.0
  */
-class Threaded implements Traversable, Countable, ArrayAccess, Collectable
+class ThreadedBase
 {
-    /**
-     * Increments the object's reference count
-     */
-    public function addRef() {}
-
-    /**
-     * Fetches a chunk of the objects properties table of the given size
-     *
-     * @param int $size The number of items to fetch
-     * @param bool $preserve Preserve the keys of members
-     *
-     * @link http://www.php.net/manual/en/threaded.chunk.php
-     * @return array An array of items from the objects member table
-     */
-    public function chunk($size, $preserve = false) {}
-
-    /**
-     * {@inheritdoc}
-     */
-    public function count() {}
-
-    /**
-     * Decrements the object's reference count
-     */
-    public function delRef() {}
-
-    /**
-     * Runtime extending of the Threaded class
-     *
-     * @param string $class The name of the class to extend Threaded
-     * @return bool A boolean indication of success
-     */
-    public static function extend($class) {}
-
-    /**
-     * Gets the object's reference count
-     *
-     * @return int The object's reference count
-     */
-    public function getRefCount() {}
-
-    /**
-     * A default method for marking an object as ready to be destroyed
-     *
-     * @return bool(true) The referenced object can be destroyed
-     */
-    public function isGarbage() : bool{}
-
-    /**
-     * Tell if the referenced object is executing
-     *
-     * @link http://www.php.net/manual/en/threaded.isrunning.php
-     * @return bool A boolean indication of state
-     */
-    public function isRunning() {}
-
-    /**
-     * Tell if the referenced object exited, suffered fatal errors, or threw uncaught exceptions during execution
-     *
-     * @link http://www.php.net/manual/en/threaded.isterminated.php
-     * @return bool A boolean indication of state
-     */
-    public function isTerminated() {}
-
-    /**
-     * Merges data into the current object
-     *
-     * @param mixed $from The data to merge
-     * @param bool $overwrite Overwrite existing keys flag
-     *
-     * @link http://www.php.net/manual/en/threaded.merge.php
-     * @return bool A boolean indication of success
-     */
-    public function merge($from, $overwrite = true) {}
-
     /**
      * Send notification to the referenced object
      *
@@ -154,50 +79,6 @@ class Threaded implements Traversable, Countable, ArrayAccess, Collectable
      * @return bool A boolean indication of success
      */
     public function notifyOne() {}
-
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetGet($offset) {}
-
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetSet($offset, $value) {}
-
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetExists($offset) {}
-
-    /**
-     * {@inheritdoc}
-     */
-    public function offsetUnset($offset) {}
-
-    /**
-     * Pops an item from the objects property table
-     *
-     * @link http://www.php.net/manual/en/threaded.pop.php
-     * @return mixed The last item from the objects properties table
-     */
-    public function pop() {}
-
-    /**
-     * The programmer should always implement the run method for objects that are intended for execution.
-     *
-     * @link http://www.php.net/manual/en/threaded.run.php
-     * @return void The methods return value, if used, will be ignored
-     */
-    public function run() {}
-
-    /**
-     * Shifts an item from the objects properties table
-     *
-     * @link http://www.php.net/manual/en/threaded.shift.php
-     * @return mixed The first item from the objects properties table
-     */
-    public function shift() {}
 
     /**
      * Executes the block while retaining the synchronization lock for the current context.
@@ -222,16 +103,101 @@ class Threaded implements Traversable, Countable, ArrayAccess, Collectable
 }
 
 /**
- * Volatile class
+ * ThreadedRunnable class
  *
- * The Volatile class is new to pthreads v3. Its introduction is a consequence of the new immutability semantics of
- * Threaded members of Threaded classes. The Volatile class enables for mutability of its Threaded members, and is also
- * used to store PHP arrays in Threaded contexts.
- *
- * @link http://php.net/manual/en/class.volatile.php
- * @since 3.0.0
+ * ThreadedRunnable represents a unit of work. It provides methods to determine its execution state.
  */
-class Volatile extends Threaded{
+abstract class ThreadedRunnable extends ThreadedBase
+{
+    /**
+     * Tell if the referenced object is executing
+     *
+     * @link http://www.php.net/manual/en/threaded.isrunning.php
+     * @return bool A boolean indication of state
+     */
+    public function isRunning() {}
+
+    /**
+     * Tell if the referenced object exited, suffered fatal errors, or threw uncaught exceptions during execution
+     *
+     * @link http://www.php.net/manual/en/threaded.isterminated.php
+     * @return bool A boolean indication of state
+     */
+    public function isTerminated() {}
+
+    /**
+     * The programmer should always implement the run method for objects that are intended for execution.
+     *
+     * @link http://www.php.net/manual/en/threaded.run.php
+     * @return void The methods return value, if used, will be ignored
+     */
+    abstract public function run() {}
+}
+
+/**
+ * Threaded class
+ *
+ * Threaded objects form the basis of pthreads ability to execute user code in parallel;
+ * they expose and include synchronization methods and various useful interfaces.
+ *
+ * Threaded objects, most importantly, provide implicit safety for the programmer;
+ * all operations on the object scope are safe.
+ *
+ * @link http://www.php.net/manual/en/class.threaded.php
+ * @since 2.0.0
+ */
+class Threaded extends ThreadedBase implements Traversable, Countable, ArrayAccess
+{
+    /**
+     * Fetches a chunk of the objects properties table of the given size
+     *
+     * @param int $size The number of items to fetch
+     * @param bool $preserve Preserve the keys of members
+     *
+     * @link http://www.php.net/manual/en/threaded.chunk.php
+     * @return array An array of items from the objects member table
+     */
+    public function chunk($size, $preserve = false) {}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function count() {}
+
+    /**
+     * Converts the given array into a Threaded object (recursively)
+     * @param array $array
+     *
+     * @return Threaded A Threaded object created from the provided array
+     */
+    public static function fromArray(array $array) : Threaded {}
+
+    /**
+     * Merges data into the current object
+     *
+     * @param mixed $from The data to merge
+     * @param bool $overwrite Overwrite existing keys flag
+     *
+     * @link http://www.php.net/manual/en/threaded.merge.php
+     * @return bool A boolean indication of success
+     */
+    public function merge($from, $overwrite = true) {}
+
+    /**
+     * Pops an item from the objects property table
+     *
+     * @link http://www.php.net/manual/en/threaded.pop.php
+     * @return mixed The last item from the objects properties table
+     */
+    public function pop() {}
+
+    /**
+     * Shifts an item from the objects properties table
+     *
+     * @link http://www.php.net/manual/en/threaded.shift.php
+     * @return mixed The first item from the objects properties table
+     */
+    public function shift() {}
 }
 
 /**
@@ -242,7 +208,7 @@ class Volatile extends Threaded{
  *
  * @link http://www.php.net/manual/en/class.thread.php
  */
-class Thread extends Threaded
+abstract class Thread extends ThreadedRunnable
 {
     /**
      * Will return the identity of the Thread that created the referenced Thread
@@ -338,10 +304,10 @@ class Worker extends Thread
     /**
      * Executes the collector on the collectable object passed
      *
-     * @param Collectable $collectable The collectable object to run the collector on
+     * @param Threaded $collectable The collectable object to run the collector on
      * @return bool The referenced object can be destroyed
      */
-    public function collector(Collectable $collectable) {}
+    public function collector(Threaded $collectable) {}
 
     /**
      * Returns the number of threaded tasks waiting to be executed by the referenced Worker
@@ -381,9 +347,17 @@ class Worker extends Thread
      * Removes the first task (the oldest one) in the stack.
      *
      * @link http://www.php.net/manual/en/worker.unstack.php
-     * @return Collectable|null The item removed from the stack
+     * @return Threaded|null The item removed from the stack
      */
     public function unstack() {}
+
+    /**
+     * Performs initialization actions when the Worker is started.
+     * Override this to do actions on Worker start; an empty default implementation is provided.
+     *
+     * @return void
+     */
+    public function run(){}
 }
 
 /**
@@ -490,24 +464,7 @@ class Pool
     public function submitTo(int $worker, Threaded $task) {}
 }
 
-/**
- * Collectable Class
- *
- * Garbage Collection interface for references to objects on Worker stacks
- *
- * @link http://www.php.net/manual/en/class.collectable.php
- */
-interface Collectable
-{
-    /**
-     * Determine whether an object is ready to be destroyed
-     *
-     * @return bool Whether the referenced object can be destroyed
-     */
-    public function isGarbage() : bool;
-}
-
-class ThreadedSocket extends \Threaded
+class ThreadedSocket extends \ThreadedBase
 {
     public const AF_UNIX = 1;
     public const AF_INET = 2;

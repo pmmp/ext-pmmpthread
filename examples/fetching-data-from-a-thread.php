@@ -19,17 +19,7 @@ $thread = new class($store) extends Thread {
 
 	public function run()
 	{
-		/*
-		The following array cast is necessary to prevent implicit coercion to a
-		Volatile object. Without it, accessing $store in the main thread after
-		this thread has been destroyed would lead to RuntimeException of:
-		"pthreads detected an attempt to connect to an object which has already
-		been destroyed in %s:%d"
-
-		See this StackOverflow post for additional information:
-		https://stackoverflow.com/a/44852650/4530326
-		*/
-		$this->store[] = (array)[1,2,3];
+		$this->store[] = [1,2,3];
 	}
 };
 

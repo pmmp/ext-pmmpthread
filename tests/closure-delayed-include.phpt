@@ -9,10 +9,10 @@ class Foo extends \Thread {
     /** @var bool */
     public $running;
 
-    /** @var \Threaded */
+    /** @var \ThreadedArray */
     private $shared;
 
-    public function __construct(\Threaded $shared) {
+    public function __construct(\ThreadedArray $shared) {
         $this->shared = $shared;
     }
 
@@ -22,28 +22,34 @@ class Foo extends \Thread {
         require __DIR__ .'/assets/ExternalClosureDefinition.php';
 
         $this->shared['loader'] = new ExternalClosureDefinition();
+        $this->synchronized(function() : void{
+            $this->notify();
+        });
         $this->synchronized(function () {
             while($this->running) {
-                $this->wait(0);
+                $this->wait();
             }
         });
-     }
+    }
 }
 
-$shared = new \Threaded();
+$shared = new ThreadedArray();
 
 $foo = new Foo($shared);
 $foo->start();
 
-while(true) {
-    if(!isset($shared['loader'])) {
-        continue;
+$foo->synchronized(function() use ($foo, $shared) : void{
+    while(!isset($shared['loader'])) {
+        $foo->wait();
     }
-    $closureDefinition = $shared['loader'];
-    $closureDefinition->load();
-    break;
-}
+});
+
+$closureDefinition = $shared['loader'];
+$closureDefinition->load();
 $foo->running = false;
-$foo->notify() && $foo->join();
+$foo->synchronized(function() use ($foo) : void{
+    $foo->notify();
+});
+$foo->join();
 --EXPECT--
 string(11) "Hello World"

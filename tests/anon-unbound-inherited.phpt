@@ -8,7 +8,7 @@ $worker = new Worker();
 
 $worker->start();
 
-$collectable = new class extends Threaded {
+$collectable = new class extends ThreadedRunnable {
 	/** z */
 	const Z = 1;
 	/** a */
@@ -18,7 +18,7 @@ $collectable = new class extends Threaded {
 
 	public function run() {
 		var_dump(
-			$this instanceof Collectable,
+			$this instanceof ThreadedRunnable,
 			self::Z,
 			self::$a,
 			$this->c

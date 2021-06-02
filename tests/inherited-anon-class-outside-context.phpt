@@ -37,23 +37,34 @@ class Test extends Thread {
 		var_dump($this->anonymous);
 		$this->anonymous->start();
 		$this->anonymous->join();
-		while($this->alive) {}
+		$this->synchronized(function() : void{
+			$this->notify();
+		});
+		$this->synchronized(function() : void{
+			while($this->alive) {
+				$this->wait();
+			}
+		});
 	}
 }
 $test = new Test();
 $test->start();
-while(true) {
-	if(isset($test->anonymous, $test->anonymous->ready)) {
-		var_dump($test->anonymous);
-		$test->anonymous->run();
-		$test->anonymous->method();
-		$test->alive = false;
-		break;
+$test->synchronized(function() use ($test) : void{
+	while(!isset($test->anonymous, $test->anonymous->ready)) {
+		$test->wait();
 	}
-}
+});
+var_dump($test->anonymous);
+$test->anonymous->run();
+$test->anonymous->method();
+
+$test->alive = false;
+$test->synchronized(function() use ($test) : void{
+	$test->notify();
+});
 $test->join();
---EXPECT--
-object(class@anonymous)#2 (3) {
+--EXPECTF--
+object(%s@anonymous)#2 (3) {
   ["pubProp"]=>
   NULL
   ["protProp"]=>
@@ -62,7 +73,7 @@ object(class@anonymous)#2 (3) {
   NULL
 }
 string(13) "anonymous run"
-object(class@anonymous)#2 (4) {
+object(%s@anonymous)#3 (4) {
   ["pubProp"]=>
   NULL
   ["protProp"]=>

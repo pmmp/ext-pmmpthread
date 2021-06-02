@@ -92,13 +92,12 @@ PHP_METHOD(Thread, start)
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zend_long options = PTHREADS_INHERIT_ALL;
 
-	if (ZEND_NUM_ARGS()) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &options) != SUCCESS) {
-			return;
-		}
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_LONG(options)
+	ZEND_PARSE_PARAMETERS_END();
 
-		thread->ts_obj->options = options;
-	}
+	thread->ts_obj->options = options;
 
 	RETURN_BOOL(pthreads_start(thread));
 } /* }}} */
@@ -109,6 +108,8 @@ PHP_METHOD(Thread, isStarted)
 {
 	pthreads_object_t* thread = PTHREADS_FETCH_TS;
 
+	zend_parse_parameters_none_throw();
+
 	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_STARTED));
 } /* }}} */
 
@@ -117,6 +118,8 @@ PHP_METHOD(Thread, isStarted)
 PHP_METHOD(Thread, isJoined)
 {
 	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+
+	zend_parse_parameters_none_throw();
 
 	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_JOINED));
 } /* }}} */
@@ -127,6 +130,8 @@ PHP_METHOD(Thread, join)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
+	zend_parse_parameters_none_throw();
+
 	RETURN_BOOL(pthreads_join(thread));
 } /* }}} */
 
@@ -134,6 +139,8 @@ PHP_METHOD(Thread, join)
 	Will return the identifier of the referenced Thread */
 PHP_METHOD(Thread, getThreadId)
 {
+	zend_parse_parameters_none_throw();
+
 	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->local.id);
 } /* }}} */
 
@@ -141,6 +148,8 @@ PHP_METHOD(Thread, getThreadId)
 	Will return the identifier of the current Thread */
 PHP_METHOD(Thread, getCurrentThreadId)
 {
+	zend_parse_parameters_none_throw();
+
 	ZVAL_LONG(return_value, pthreads_self());
 } /* }}} */
 
@@ -148,6 +157,8 @@ PHP_METHOD(Thread, getCurrentThreadId)
 	Will return the currently executing Thread */
 PHP_METHOD(Thread, getCurrentThread)
 {
+	zend_parse_parameters_none_throw();
+
 	pthreads_current_thread(return_value);
 } /* }}} */
 
@@ -155,6 +166,8 @@ PHP_METHOD(Thread, getCurrentThread)
 	Will return the identifier of the thread ( or process ) that created the referenced Thread */
 PHP_METHOD(Thread, getCreatorId)
 {
+	zend_parse_parameters_none_throw();
+
 	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */
 

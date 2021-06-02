@@ -8,7 +8,7 @@ class Test{
 	public function run(){}
 }
 
-class Test2 extends \Threaded{
+class Test2 extends \ThreadedBase{
 	public function run(){}
 }
 $test = new Test();
