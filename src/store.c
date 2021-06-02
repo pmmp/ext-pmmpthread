@@ -737,6 +737,7 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 /* {{{ */
 void pthreads_store_save_zval(zval *zstorage, zval *write) {
 	switch (Z_TYPE_P(write)) {
+		case IS_UNDEF: //apparently this happens with promoted properties before they are initialized?
 		case IS_NULL:
 		case IS_FALSE:
 		case IS_TRUE:
@@ -857,6 +858,12 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage) {
 	*was_pthreads_storage = 0;
 	switch (Z_TYPE_P(zstorage)) {
+		case IS_UNDEF:
+			//TODO: this appears for uninitialized typed properties; we return NULL for now, to maintain
+			//consistency with older pthreads, but we really ought to error in this case like regular
+			//objects.
+			ZVAL_NULL(unstore);
+			break;
 		case IS_NULL:
 		case IS_FALSE:
 		case IS_TRUE:
