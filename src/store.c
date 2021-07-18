@@ -589,6 +589,18 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 
 		pthreads_store_sync(object);
 
+		if (hash != threaded->std.properties) {
+			zval *val;
+			ZEND_HASH_FOREACH_KEY_VAL(threaded->std.properties, idx, name, val) {
+				if (name) {
+					zend_hash_update(hash, name, val);
+				} else {
+					zend_hash_index_update(hash, idx, val);
+				}
+				Z_TRY_ADDREF_P(val);
+			} ZEND_HASH_FOREACH_END();
+		}
+
 		ZEND_HASH_FOREACH_KEY_PTR(ts_obj->store.props, idx, name, storage) {
 			zval pzval;
 			zend_string *rename;
