@@ -174,7 +174,7 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 PHP_METHOD(Worker, collector) {
 	zval *collectable;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &collectable, pthreads_collectable_entry) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "O", &collectable, pthreads_collectable_entry) != SUCCESS) {
 		return;
 	}
 
