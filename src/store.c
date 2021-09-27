@@ -348,7 +348,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	if (coerced)
 		zval_ptr_dtor(&member);
 
-	return SUCCESS;
+	return result;
 } /* }}} */
 
 /* {{{ */
@@ -1203,12 +1203,12 @@ void pthreads_store_data(zend_object *object, zval *value, HashPosition *positio
 	pthreads_object_t *ts_obj = PTHREADS_FETCH_TS_FROM(object);
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
-		pthreads_storage *storage = (pthreads_storage*)
-			zend_hash_get_current_data_ptr_ex(ts_obj->store.props, position);
+		zval key;
+		zend_hash_get_current_key_zval_ex(ts_obj->store.props, &key, position);
 
-		if (storage) {
-			pthreads_store_convert(storage, value);
-		} else ZVAL_UNDEF(value);
+		if (pthreads_store_read(object, &key, BP_VAR_R, value) == FAILURE) {
+			ZVAL_UNDEF(value);
+		}
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
