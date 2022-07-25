@@ -197,8 +197,10 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		ZEND_TYPE_FOREACH(dup->type, single_type) {
 			if (ZEND_TYPE_HAS_NAME(*single_type)) {
 				ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
+#if PHP_VERSION_ID < 80100
 			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
 				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
+#endif
 			}
 		} ZEND_TYPE_FOREACH_END();
 
