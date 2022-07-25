@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 #define HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 
-#include <src/compat.h>
-
 PHP_METHOD(ThreadedRunnable, run);
 PHP_METHOD(ThreadedRunnable, isRunning);
 PHP_METHOD(ThreadedRunnable, isTerminated);

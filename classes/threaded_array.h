@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 #define HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 
-#include <src/compat.h>
-
 PHP_METHOD(ThreadedArray, merge);
 PHP_METHOD(ThreadedArray, shift);
 PHP_METHOD(ThreadedArray, chunk);

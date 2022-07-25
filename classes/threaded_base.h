@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_BASE_H
 #define HAVE_PTHREADS_CLASS_THREADED_BASE_H
 
-#include <src/compat.h>
-
 PHP_METHOD(ThreadedBase, wait);
 PHP_METHOD(ThreadedBase, notify);
 PHP_METHOD(ThreadedBase, notifyOne);
