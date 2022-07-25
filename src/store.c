@@ -38,7 +38,6 @@
 #	include <src/store.h>
 #endif
 
-#include <src/compat.h>
 #include <src/globals.h>
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
@@ -385,9 +384,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		if (!key) {
 			zend_ulong next = zend_hash_next_free_element(ts_obj->store.props);
-#if PHP_VERSION_ID >= 80000
 			if (next == ZEND_LONG_MIN) next = 0;
-#endif
 			ZVAL_LONG(&member, next);
 		} else {
 			coerced = pthreads_store_coerce(key, &member);
@@ -796,7 +793,7 @@ int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			//TODO: scopes aren't copied here - this will lead to faults if this is being copied from child -> parent
 			zend_create_closure(pzval, closure, closure->common.scope, closure_obj->called_scope, NULL);
 
-			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(pzval)));
+			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
 			zname = zend_string_init(name, name_len, 0);
 
 			if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
@@ -892,7 +889,7 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 				//TODO: scopes aren't being copied here - this will lead to faults if we're copying from child -> parent
 				zend_create_closure(dest, closure, closure->common.scope, closure_obj->called_scope, NULL);
 
-				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(dest)));
+				name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(dest)));
 				zname = zend_string_init(name, name_len, 0);
 
 				if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {

@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_POOL_H
 #define HAVE_PTHREADS_CLASS_POOL_H
 
-#include <src/compat.h>
-
 PHP_METHOD(Pool, __construct);
 PHP_METHOD(Pool, resize);
 PHP_METHOD(Pool, submit);
@@ -87,11 +85,11 @@ PHP_METHOD(Pool, __construct)
 			"The class provided (%s) does not extend Worker", clazz->name->val);
 	}
 
-	zend_update_property_long(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), size);
+	zend_update_property_long(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("size"), size);
 	zend_update_property_stringl(
-		Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("class"), clazz->name->val, clazz->name->len);
+		Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("class"), clazz->name->val, clazz->name->len);
 	if (ctor)
-		zend_update_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("ctor"), ctor);
+		zend_update_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("ctor"), ctor);
 } /* }}} */
 
 /* {{{ proto void Pool::resize(integer size)
@@ -107,8 +105,8 @@ PHP_METHOD(Pool, resize) {
 		return;
 	}
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[0]);
-	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp[0]);
+	size = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("size"), 1, &tmp[1]);
 
 	if (Z_TYPE_P(workers) == IS_ARRAY &&
 		newsize < zend_hash_num_elements(Z_ARRVAL_P(workers))) {
@@ -119,7 +117,7 @@ PHP_METHOD(Pool, resize) {
 			if ((worker = zend_hash_index_find(
 				Z_ARRVAL_P(workers), top-1))) {
 				zend_call_method(
-					PTHREADS_COMPAT_OBJECT_FROM_ZVAL(worker), Z_OBJCE_P(worker), NULL, ZEND_STRL("shutdown"), NULL, 0, NULL, NULL);
+					Z_OBJ_P(worker), Z_OBJCE_P(worker), NULL, ZEND_STRL("shutdown"), NULL, 0, NULL, NULL);
 
 			}
 
@@ -149,9 +147,9 @@ PHP_METHOD(Pool, submit) {
 		return;
 	}
 
-	last = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("last"), 1, &tmp[0]);
-	size = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("size"), 1, &tmp[1]);
-	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp[2]);
+	last = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("last"), 1, &tmp[0]);
+	size = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("size"), 1, &tmp[1]);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp[2]);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		array_init(workers);
@@ -160,7 +158,7 @@ PHP_METHOD(Pool, submit) {
 		ZVAL_LONG(last, 0);
 
 	if (!(selected = zend_hash_index_find(Z_ARRVAL_P(workers), Z_LVAL_P(last)))) {
-		clazz = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("class"), 1, &tmp[3]);
+		clazz = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("class"), 1, &tmp[3]);
 
 		if (Z_TYPE_P(clazz) != IS_STRING) {
 			zend_throw_exception_ex(spl_ce_RuntimeException, 0,
@@ -176,7 +174,7 @@ PHP_METHOD(Pool, submit) {
 			return;
 		}
 
-		ctor  = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("ctor"), 1, &tmp[4]);
+		ctor  = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("ctor"), 1, &tmp[4]);
 
 		object_init_ex(&worker, ce);
 
@@ -200,9 +198,6 @@ PHP_METHOD(Pool, submit) {
 				fci.size = sizeof(zend_fcall_info);
 				fci.object = Z_OBJ(worker);
 				fci.retval = &retval;
-#if PHP_VERSION_ID < 80000
-				fci.no_separation = 1;
-#endif
 
 				fcc.function_handler = constructor;
 				fcc.calling_scope = zend_get_executed_scope();
@@ -221,7 +216,7 @@ PHP_METHOD(Pool, submit) {
 					zval_dtor(&retval);
 			}
 
-			zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(&worker), Z_OBJCE(worker), NULL, ZEND_STRL("start"), NULL, 0, NULL, NULL);
+			zend_call_method(Z_OBJ_P(&worker), Z_OBJCE(worker), NULL, ZEND_STRL("start"), NULL, 0, NULL, NULL);
 		}
 
 		selected = zend_hash_index_update(
@@ -229,7 +224,7 @@ PHP_METHOD(Pool, submit) {
 
 	}
 
-	zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(selected), Z_OBJCE_P(selected), NULL, ZEND_STRL("stack"), NULL, 1, task, NULL);
+	zend_call_method(Z_OBJ_P(selected), Z_OBJCE_P(selected), NULL, ZEND_STRL("stack"), NULL, 1, task, NULL);
 	ZVAL_LONG(return_value, Z_LVAL_P(last));
 	Z_LVAL_P(last)++;
 } /* }}} */
@@ -247,13 +242,13 @@ PHP_METHOD(Pool, submitTo) {
 		return;
 	}
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		array_init(workers);
 
 	if ((selected = zend_hash_index_find(Z_ARRVAL_P(workers), worker))) {
-		zend_call_method(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(selected),
+		zend_call_method(Z_OBJ_P(selected),
 			Z_OBJCE_P(selected), NULL,
 			ZEND_STRL("stack"), NULL, 1, task, NULL);
 		ZVAL_LONG(return_value, worker);
@@ -278,7 +273,7 @@ PHP_METHOD(Pool, collect) {
 		return;
 	}
 
-	workers = zend_read_property(Z_OBJCE_P(getThis()), PTHREADS_COMPAT_OBJECT_THIS(), ZEND_STRL("workers"), 1, &tmp);
+	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) != IS_ARRAY)
 		RETURN_LONG(0);
@@ -308,7 +303,7 @@ static inline int pthreads_pool_shutdown_worker(zval *worker) {
 	ZVAL_UNDEF(&retval);
 	EG(current_execute_data) = NULL;
 	zend_call_method_with_0_params(
-		PTHREADS_COMPAT_OBJECT_FROM_ZVAL(worker), Z_OBJCE_P(worker), NULL, "shutdown", &retval);
+		Z_OBJ_P(worker), Z_OBJCE_P(worker), NULL, "shutdown", &retval);
 	if (Z_TYPE(retval) != IS_UNDEF)
 		zval_ptr_dtor(&retval);
 	EG(current_execute_data) = ex;
@@ -320,7 +315,7 @@ static inline int pthreads_pool_shutdown_worker(zval *worker) {
 static inline void pthreads_pool_shutdown(zval *pool) {
 	zval tmp;
 	zval *workers = zend_read_property(
-		Z_OBJCE_P(pool), PTHREADS_COMPAT_OBJECT_FROM_ZVAL(pool), ZEND_STRL("workers"), 1, &tmp);
+		Z_OBJCE_P(pool), Z_OBJ_P(pool), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) == IS_ARRAY) {
 		if (zend_hash_num_elements(Z_ARRVAL_P(workers))) {

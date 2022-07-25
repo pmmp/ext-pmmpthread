@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_WORKER_H
 #define HAVE_PTHREADS_CLASS_WORKER_H
 
-#include <src/compat.h>
-
 PHP_METHOD(Worker, stack);
 PHP_METHOD(Worker, unstack);
 PHP_METHOD(Worker, getStacked);
@@ -148,9 +146,6 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 	ZVAL_UNDEF(&result);
 
 	call->fci.retval = &result;
-#if PHP_VERSION_ID < 80000
-	call->fci.no_separation = 1;
-#endif
 
 	zend_fcall_info_argn(&call->fci, 1, collectable);
 
@@ -178,7 +173,7 @@ PHP_METHOD(Worker, collector) {
 		return;
 	}
 
-	zend_call_method_with_0_params(PTHREADS_COMPAT_OBJECT_FROM_ZVAL(collectable), Z_OBJCE_P(collectable), NULL, "isgarbage", return_value);
+	zend_call_method_with_0_params(Z_OBJ_P(collectable), Z_OBJCE_P(collectable), NULL, "isgarbage", return_value);
 } /* }}} */
 
 /* {{{ proto int Worker::collect([callable collector]) */

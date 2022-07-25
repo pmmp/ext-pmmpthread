@@ -26,26 +26,24 @@
 #	include <src/pthreads.h>
 #endif
 
-#include <src/compat.h>
-
-#define PTHREADS_CAST_PASSTHRU_D pthreads_handler_context *from, zval *to, int type
-#define PTHREADS_COUNT_PASSTHRU_D pthreads_handler_context *object, zend_long *count
+#define PTHREADS_CAST_PASSTHRU_D zend_object *from, zval *to, int type
+#define PTHREADS_COUNT_PASSTHRU_D zend_object *object, zend_long *count
 #define PTHREADS_COMPARE_PASSTHRU_D zval *op1, zval *op2
 
 /* {{{  */
-#define PTHREADS_READ_DEBUG_PASSTHRU_D pthreads_handler_context *object, int *is_temp
-#define PTHREADS_READ_PROPERTIES_PASSTHRU_D pthreads_handler_context *object
-#define PTHREADS_READ_PROPERTY_PASSTHRU_D pthreads_handler_context *object, pthreads_property_name *member, int type, void **cache, zval *rv
-#define PTHREADS_READ_DIMENSION_PASSTHRU_D pthreads_handler_context *object, zval *member, int type, zval *rv
+#define PTHREADS_READ_DEBUG_PASSTHRU_D zend_object *object, int *is_temp
+#define PTHREADS_READ_PROPERTIES_PASSTHRU_D zend_object *object
+#define PTHREADS_READ_PROPERTY_PASSTHRU_D zend_object *object, zend_string *member, int type, void **cache, zval *rv
+#define PTHREADS_READ_DIMENSION_PASSTHRU_D zend_object *object, zval *member, int type, zval *rv
 
-#define PTHREADS_WRITE_PROPERTY_PASSTHRU_D pthreads_handler_context *object, pthreads_property_name *member, zval *value, void **cache
-#define PTHREADS_WRITE_DIMENSION_PASSTHRU_D pthreads_handler_context *object, zval *member, zval *value
+#define PTHREADS_WRITE_PROPERTY_PASSTHRU_D zend_object *object, zend_string *member, zval *value, void **cache
+#define PTHREADS_WRITE_DIMENSION_PASSTHRU_D zend_object *object, zval *member, zval *value
 
-#define PTHREADS_HAS_PROPERTY_PASSTHRU_D pthreads_handler_context *object, pthreads_property_name *member, int has_set_exists, void **cache
-#define PTHREADS_HAS_DIMENSION_PASSTHRU_D pthreads_handler_context *object, zval *member, int has_set_exists
+#define PTHREADS_HAS_PROPERTY_PASSTHRU_D zend_object *object, zend_string *member, int has_set_exists, void **cache
+#define PTHREADS_HAS_DIMENSION_PASSTHRU_D zend_object *object, zval *member, int has_set_exists
 
-#define PTHREADS_UNSET_PROPERTY_PASSTHRU_D pthreads_handler_context *object, pthreads_property_name *member, void **cache
-#define PTHREADS_UNSET_DIMENSION_PASSTHRU_D pthreads_handler_context *object, zval *member
+#define PTHREADS_UNSET_PROPERTY_PASSTHRU_D zend_object *object, zend_string *member, void **cache
+#define PTHREADS_UNSET_DIMENSION_PASSTHRU_D zend_object *object, zval *member
 /* }}} */
 
 /* {{{ read proeprties from storage */
@@ -55,7 +53,7 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D); /* }}} */
 HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D); /* }}} */
 
 /* {{{ proxy get_property_ptr_ptr to read_property */
-zval *pthreads_get_property_ptr_ptr_stub(pthreads_handler_context *object, pthreads_property_name *member, int type, void **cache_slot); /* }}} */
+zval *pthreads_get_property_ptr_ptr_stub(zend_object *object, zend_string *member, int type, void **cache_slot); /* }}} */
 
 /* {{{ read a property from the referenced object */
 zval * pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D);

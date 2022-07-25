@@ -1,7 +1,6 @@
 --TEST--
 Test that standard Socket objects get copied and overwritten properly
 --SKIPIF--
-<?php if(PHP_VERSION_ID < 80000) die("skip this test is for PHP 8.0+ only"); ?>
 <?php if(!extension_loaded("sockets")) die("skip ext-sockets is required for this test"); ?>
 --FILE--
 <?php

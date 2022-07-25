@@ -2,7 +2,6 @@
 Test that OPCache persisted classes and functions are used when available
 --SKIPIF--
 <?php
-if(PHP_VERSION_ID < 70400) die("skip: this test is for 7.4+");
 if(defined('PHP_WINDOWS_VERSION_MAJOR')) die("skip: preloading is not supported on Windows");
 if(!extension_loaded("Zend OPcache")) die("skip: this test requires opcache");
 --INI--
