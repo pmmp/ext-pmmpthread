@@ -22,7 +22,7 @@
 # include "config.h"
 #endif
 
-#define HAVE_PTHREADS_EXT_SOCKETS_SUPPORT (HAVE_SOCKETS && PHP_VERSION_ID >= 80000)
+#define HAVE_PTHREADS_EXT_SOCKETS_SUPPORT HAVE_SOCKETS
 
 #include <stdio.h>
 #ifndef _WIN32

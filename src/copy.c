@@ -18,7 +18,6 @@
 
 #include <src/copy.h>
 
-#if PHP_VERSION_ID >= 80000
 static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr) {
 	uint32_t i;
 	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
@@ -49,7 +48,6 @@ HashTable* pthreads_copy_attributes(HashTable *old) {
 
 	return new;
 } /* }}} */
-#endif
 
 /* {{{ */
 static HashTable* pthreads_copy_statics(HashTable *old) {
@@ -155,11 +153,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				 || opline->opcode == ZEND_SEND_VAL_EX
 				 || opline->opcode == ZEND_QM_ASSIGN) {
 					/* Update handlers to eliminate REFCOUNTED check */
-#if PHP_VERSION_ID >= 80000
 					zend_vm_set_opcode_handler_ex(opline, 1 << Z_TYPE_P(opline->op1.zv), 0, 0);
-#else
-					zend_vm_set_opcode_handler_ex(opline, 0, 0, 0);
-#endif
 				}
 			}
 			if (opline->op2_type == IS_CONST) {
@@ -206,9 +200,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				case ZEND_FE_RESET_R:
 				case ZEND_FE_RESET_RW:
 				case ZEND_ASSERT_CHECK:
-#if PHP_VERSION_ID >= 80000
 				case ZEND_JMP_NULL:
-#endif
 					opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
 					break;
 				case ZEND_CATCH:
@@ -220,9 +212,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				case ZEND_FE_FETCH_RW:
 				case ZEND_SWITCH_LONG:
 				case ZEND_SWITCH_STRING:
-#if PHP_VERSION_ID >= 80000
 				case ZEND_MATCH:
-#endif
 					/* relative extended_value don't have to be changed */
 					break;
 			}
@@ -235,14 +225,6 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 
 /* {{{ */
 static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
-#if PHP_VERSION_ID < 80000
-	if (ZEND_TYPE_IS_SET(*old_type) && ZEND_TYPE_IS_CLASS(*old_type)) {
-		*new_type = ZEND_TYPE_ENCODE_CLASS(
-			zend_string_new(
-				ZEND_TYPE_NAME(*new_type)),
-			ZEND_TYPE_ALLOW_NULL(*new_type));
-	}
-#else
 	memcpy(new_type, old_type, sizeof(zend_type));
 
 	//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
@@ -264,7 +246,6 @@ static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_ty
 			ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
 		}
 	} ZEND_TYPE_FOREACH_END();
-#endif
 } /* }}} */
 
 /* {{{ */
@@ -348,12 +329,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 		zend_string_release(filename_copy);
 	}
-#if PHP_VERSION_ID >= 80000
 	//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer always interned
 	//opcache might intern them, but in the absence of opcache this won't be the case
 	//if this string is interned, the following will be a no-op
 	zend_string_addref(filename_copy);
-#endif
 
 	op_array->filename = filename_copy;
 
@@ -387,9 +366,7 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
 		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
-#if PHP_VERSION_ID >= 80000
 		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(op_array->attributes);
-#endif
 	}
 
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
@@ -424,12 +401,10 @@ zend_function* pthreads_copy_function(const zend_function *function) {
 			if (copy->type == ZEND_USER_FUNCTION && copy->op_array.refcount) {
 				(*copy->op_array.refcount)++;
 			}
-#if PHP_VERSION_ID >= 80000
 			//TODO: I think we're actually supposed to dup the entire structure (see zend_inheritance.c zend_duplicate_function)
 			//the only time functions usually get reused is for inheritance and we're not generally supposed to reuse the actual
 			//structure for that, just its members ...
 			zend_string_addref(copy->op_array.function_name);
-#endif
 			return copy;
 		}
 	}

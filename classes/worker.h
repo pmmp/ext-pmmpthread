@@ -18,8 +18,6 @@
 #ifndef HAVE_PTHREADS_CLASS_WORKER_H
 #define HAVE_PTHREADS_CLASS_WORKER_H
 
-#include <src/compat.h>
-
 PHP_METHOD(Worker, run);
 PHP_METHOD(Worker, stack);
 PHP_METHOD(Worker, unstack);
@@ -131,9 +129,6 @@ static zend_bool pthreads_worker_collect_function(pthreads_call_t *call, zval *c
 	ZVAL_UNDEF(&result);
 
 	call->fci.retval = &result;
-#if PHP_VERSION_ID < 80000
-	call->fci.no_separation = 1;
-#endif
 
 	zend_fcall_info_argn(&call->fci, 1, collectable);
 

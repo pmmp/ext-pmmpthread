@@ -26,9 +26,7 @@ PHP_METHOD(ThreadedBase, notifyOne);
 
 PHP_METHOD(ThreadedBase, synchronized);
 
-#if PHP_VERSION_ID >= 80000
 PHP_METHOD(ThreadedBase, getIterator);
-#endif
 
 ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_wait, 0, 0, 0)
 	ZEND_ARG_TYPE_INFO(0, timeout, IS_LONG, 0)
@@ -41,10 +39,8 @@ ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_synchronized, 0, 0, 1)
 	ZEND_ARG_VARIADIC_INFO(0, args)
 ZEND_END_ARG_INFO()
 
-#if PHP_VERSION_ID >= 80000
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(ThreadedBase_getIterator, 0, 0, Iterator, 0)
 ZEND_END_ARG_INFO()
-#endif
 
 extern zend_function_entry pthreads_threaded_base_methods[];
 #else
@@ -55,9 +51,7 @@ zend_function_entry pthreads_threaded_base_methods[] = {
 	PHP_ME(ThreadedBase, notify, ThreadedBase_notify, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, notifyOne, ThreadedBase_notify, ZEND_ACC_PUBLIC)
 	PHP_ME(ThreadedBase, synchronized, ThreadedBase_synchronized, ZEND_ACC_PUBLIC)
-#if PHP_VERSION_ID >= 80000
 	PHP_ME(ThreadedBase, getIterator, ThreadedBase_getIterator, ZEND_ACC_PUBLIC)
-#endif
 	PHP_FE_END
 };
 
@@ -121,9 +115,6 @@ PHP_METHOD(ThreadedBase, synchronized)
 	zend_fcall_info_argp(&call.fci, argc, argv);
 
 	call.fci.retval = return_value;
-#if PHP_VERSION_ID < 80000
-	call.fci.no_separation = 1;
-#endif
 
 	if (pthreads_monitor_lock(threaded->monitor)) {
 		/* synchronize property tables */
@@ -142,14 +133,12 @@ PHP_METHOD(ThreadedBase, synchronized)
 	zend_fcall_info_args_clear(&call.fci, 1);
 } /* }}} */
 
-#if PHP_VERSION_ID >= 80000
 /* {{{ proto Iterator ThreadedBase::getIterator() */
 PHP_METHOD(ThreadedBase, getIterator)
 {
 	ZEND_PARSE_PARAMETERS_NONE();
 	zend_create_internal_iterator_zval(return_value, getThis());
 } /* }}} */
-#endif
 
 #	endif
 #endif

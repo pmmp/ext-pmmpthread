@@ -41,11 +41,11 @@ typedef uint32_t zend_guard;
 /* }}} */
 
 #define PTHREADS_NO_PROPERTIES(object) \
-	zend_throw_exception_ex(spl_ce_RuntimeException, 0, "%s objects are not allowed to have properties", ZSTR_VAL(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object)->ce->name))
+	zend_throw_exception_ex(spl_ce_RuntimeException, 0, "%s objects are not allowed to have properties", ZSTR_VAL(object->ce->name))
 
 /* {{{ */
 int pthreads_count_properties(PTHREADS_COUNT_PASSTHRU_D) {
-	return pthreads_store_count(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object), count);
+	return pthreads_store_count(object, count);
 } /* }}} */
 
 /* {{{ */
@@ -61,14 +61,14 @@ HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D) {
 	zend_hash_init(table, 8, NULL, ZVAL_PTR_DTOR, 0);
 	*is_temp = 1;
 
-	pthreads_store_tohash(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object), table);
+	pthreads_store_tohash(object, table);
 
 	return table;
 } /* }}} */
 
 /* {{{ */
 HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object));
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 
 	rebuild_object_properties(&threaded->std);
 
@@ -79,13 +79,13 @@ HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
 } /* }}} */
 
 /* {{{ */
-zval *pthreads_get_property_ptr_ptr_stub(pthreads_handler_context *object, pthreads_property_name *member, int type, void **cache_slot) { return NULL; }
+zval *pthreads_get_property_ptr_ptr_stub(zend_object *object, zend_string *member, int type, void **cache_slot) { return NULL; }
 /* }}} */
 
 /* {{{ */
 zval * pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D) {
 	zend_guard *guard = NULL;
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object));
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 
 	rebuild_object_properties(&threaded->std);
 
@@ -113,13 +113,9 @@ zval * pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D) {
 }
 
 zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
-#if PHP_VERSION_ID >= 80000
 	zval zmember;
 	ZVAL_STR(&zmember, member);
 	return pthreads_read_dimension(object, &zmember, type, rv);
-#else
-	return pthreads_read_dimension(object, member, type, rv);
-#endif
 }
 /* }}} */
 
@@ -161,9 +157,9 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 			spl_ce_RuntimeException, 0,
 			"pthreads detected an attempt to use unsupported data (%s) for %s::$%s",
 			zend_get_type_by_const(Z_TYPE_P(value)),
-			ZSTR_VAL(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object)->ce->name), Z_STRVAL_P(member));
+			ZSTR_VAL(object->ce->name), Z_STRVAL_P(member));
 	} else {
-		pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object));
+		pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 
 		rebuild_object_properties(&threaded->std);
 
@@ -198,13 +194,9 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 }
 
 zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
-#if PHP_VERSION_ID >= 80000
 	zval zmember;
 	ZVAL_STR(&zmember, member);
 	pthreads_write_dimension(object, &zmember, value);
-#else
-	pthreads_write_dimension(object, member, value);
-#endif
 	return EG(exception) ? &EG(error_zval) : value;
 }
 /* }}} */
@@ -222,7 +214,7 @@ void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { PT
 int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
 	int isset = 0;
 	zend_guard *guard = NULL;
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object));
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 
 	if (threaded->std.ce->__isset && (guard = pthreads_get_guard(&threaded->std, member)) && !((*guard) & IN_ISSET)) {
 		zend_fcall_info fci = empty_fcall_info;
@@ -256,13 +248,9 @@ int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
 }
 int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 	cache = NULL;
-#if PHP_VERSION_ID >= 80000
 	zval zmember;
 	ZVAL_STR(&zmember, member);
 	return pthreads_has_dimension(object, &zmember, has_set_exists);
-#else
-	return pthreads_has_dimension(object, member, has_set_exists);
-#endif
 }
 /* }}} */
 
@@ -281,7 +269,7 @@ int pthreads_has_dimension_disallow(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
 /* {{{ */
 void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) {
 	zend_guard *guard = NULL;
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(object));
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
 
 	rebuild_object_properties(&threaded->std);
 
@@ -315,13 +303,9 @@ void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) {
 }
 void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 	cache = NULL;
-#if PHP_VERSION_ID >= 80000
 	zval zmember;
 	ZVAL_STR(&zmember, member);
 	pthreads_unset_dimension(object, &zmember);
-#else
-	pthreads_unset_dimension(object, member);
-#endif
 }
 /* }}} */
 
@@ -336,7 +320,7 @@ void pthreads_unset_dimension_disallow(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { PT
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
 	switch (type) {
 		case IS_ARRAY: {
-			pthreads_store_tohash(PTHREADS_COMPAT_ZOBJ_FROM_HANDLER_CONTEXT(from), Z_ARRVAL_P(to));
+			pthreads_store_tohash(from, Z_ARRVAL_P(to));
 			return SUCCESS;
 		} break;
 	}

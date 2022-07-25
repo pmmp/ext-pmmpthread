@@ -1,7 +1,5 @@
 --TEST--
 Test attributes copying
---SKIPIF--
-<?php if(PHP_VERSION_ID < 80000) die("skip: this test is for 8.0+ only"); ?>
 --FILE--
 <?php
 

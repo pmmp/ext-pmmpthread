@@ -34,8 +34,8 @@
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
 #endif
 
-#if PHP_VERSION_ID < 70400
-#	error "pthreads requires PHP 7.4 or later"
+#if PHP_VERSION_ID < 80000
+#	error "pthreads requires PHP 8.0 or later"
 #endif
 
 #if COMPILE_DL_PTHREADS
@@ -161,19 +161,13 @@ PHP_MINIT_FUNCTION(pthreads)
 	zend_class_implements(
 		pthreads_threaded_base_entry,
 		1,
-#if PHP_VERSION_ID >= 80000
 		zend_ce_aggregate
-#else
-		zend_ce_traversable
-#endif
 	);
 	INIT_CLASS_ENTRY(ce, "ThreadedArray", pthreads_threaded_array_methods);
 	pthreads_threaded_array_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
 	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
 	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_FINAL;
-#if PHP_VERSION_ID >= 80000
 	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
-#endif
 
 	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
 	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
@@ -662,18 +656,10 @@ PHP_MINIT_FUNCTION(pthreads)
 
 
 	pthreads_threaded_base_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
-#if PHP_VERSION_ID < 80000
-	pthreads_threaded_base_handlers.get = NULL;
-	pthreads_threaded_base_handlers.set = NULL;
-#endif
 	pthreads_threaded_base_handlers.get_gc = pthreads_base_gc;
 
 	pthreads_threaded_base_handlers.clone_obj = NULL;
-#if PHP_VERSION_ID < 80000
-	pthreads_threaded_base_handlers.compare_objects = pthreads_compare_objects;
-#else
 	pthreads_threaded_base_handlers.compare = pthreads_compare_objects;
-#endif
 
 	memcpy(&pthreads_threaded_array_handlers, &pthreads_threaded_base_handlers, sizeof(zend_object_handlers));
 	pthreads_threaded_array_handlers.count_elements = pthreads_count_properties;
