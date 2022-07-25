@@ -7,14 +7,6 @@ environment:
 
   matrix:
     - ARCH: x86
-      PHP_VER: 7.4
-      VC_VER: vc15
-      VCVARS_VER: 14.16
-    - ARCH: x64
-      PHP_VER: 7.4
-      VC_VER: vc15
-      VCVARS_VER: 14.16
-    - ARCH: x86
       PHP_VER: 8.0
       VC_VER: vs16
       VCVARS_VER: ""
