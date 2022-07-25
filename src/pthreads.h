@@ -151,6 +151,13 @@ static zend_string *zend_string_new(zend_string *s)
 			return s;
 		}
 		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+#if PHP_VERSION_ID >= 80100
+		if(GC_FLAGS(s) & IS_STR_CLASS_NAME_MAP_PTR){
+			//in PHP 8.1, interned strings may abuse their refcount field to cache a map_ptr offset to their associated class
+			GC_SET_REFCOUNT(ret, GC_REFCOUNT(s));
+			GC_ADD_FLAGS(ret, IS_STR_CLASS_NAME_MAP_PTR);
+		}
+#endif
 	} else {
 		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
 	}
