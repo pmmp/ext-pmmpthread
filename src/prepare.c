@@ -129,7 +129,15 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 
 			parent = parent->parent;
 		}
+
+#if PHP_VERSION_ID >= 80100
+		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->default_static_members_count != 0) {
+			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
+			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);
+		}
+#else
 		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
+#endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
 
