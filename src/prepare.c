@@ -91,14 +91,22 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 #if PHP_VERSION_ID >= 80100
  /* {{{ */
-static void init_class_statics(zend_class_entry* candidate, zend_class_entry* prepared)
+static void init_class_statics(pthreads_object_t* thread, zend_class_entry* candidate, zend_class_entry* prepared)
 {
 	int i;
 	zval* p;
 
+	//to maintain parity with 8.0 behaviour, we manually copy the current static members.
+	//While it would make sense to just stick with the default ones to avoid doing wacky stuff, we
+	//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
 	//this code is adapted from zend_class_init_statics()
 
-	if (CE_STATIC_MEMBERS(candidate) && !CE_STATIC_MEMBERS(prepared)) {
+	//the map_ptr won't be initialized if there are no declared static members
+	zval* candidate_static_members_table = candidate->default_static_members_count ?
+		PTHREADS_MAP_PTR_GET(thread->creator.ls, candidate->static_members_table) :
+		0;
+
+	if (candidate_static_members_table && !CE_STATIC_MEMBERS(prepared)) {
 		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->parent) {
 			zend_class_init_statics(prepared->parent);
 		}
@@ -113,7 +121,7 @@ static void init_class_statics(zend_class_entry* candidate, zend_class_entry* pr
 				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
 			} else {
 				pthreads_store_separate(
-					&CE_STATIC_MEMBERS(candidate)[i],
+					&candidate_static_members_table[i],
 					&CE_STATIC_MEMBERS(prepared)[i]
 				);
 			}
@@ -167,11 +175,6 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		if (!ZEND_MAP_PTR(prepared->static_members_table)) {
 			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
 			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);
-
-			//to maintain parity with 8.0 behaviour, we manually copy the current static members.
-			//While it would make sense to just stick with the default ones to avoid doing wacky stuff, we
-			//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
-			init_class_statics(candidate, prepared);
 		}
 #else
 		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
@@ -600,6 +603,10 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		//IMMUTABLE classes don't need to be copied and should not be modified
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
+		if (do_late_bindings) {
+			//this is needed to copy non-default statics from the origin thread
+			pthreads_prepared_entry_late_bindings(thread, candidate, candidate);
+		}
 		return candidate;
 	}
 
@@ -626,9 +633,14 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 
 /* {{{ */
 void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
-	prepare_class_property_table(thread, candidate, prepared);
-	prepare_class_statics(thread, candidate, prepared);
-	prepare_class_constants(thread, candidate, prepared);
+	if (!(candidate->ce_flags & ZEND_ACC_IMMUTABLE)) {
+		prepare_class_property_table(thread, candidate, prepared);
+		prepare_class_statics(thread, candidate, prepared);
+		prepare_class_constants(thread, candidate, prepared);
+	}
+#if PHP_VERSION_ID >= 80100
+	init_class_statics(thread, candidate, prepared);
+#endif
 } /* }}} */
 
 
@@ -638,7 +650,7 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->local.ls, class_table), name, entry) {
-		if (entry->type != ZEND_INTERNAL_CLASS && !(entry->ce_flags & ZEND_ACC_IMMUTABLE)) {
+		if (entry->type != ZEND_INTERNAL_CLASS) {
 			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
 		}
 	} ZEND_HASH_FOREACH_END();
