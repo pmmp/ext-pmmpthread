@@ -281,6 +281,20 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 	return info;
 } /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+/* {{{ */
+static zend_op_array** pthreads_copy_dynamic_func_defs(const zend_op_array** old, uint32_t num_dynamic_func_defs) {
+	zend_op_array** new = (zend_op_array**) emalloc(num_dynamic_func_defs * sizeof(zend_op_array*));
+
+	for (int i = 0; i < num_dynamic_func_defs; i++) {
+		//assume this is OK?
+		new[i] = (zend_op_array*) pthreads_copy_function(old[i]);
+	}
+
+	return new;
+} /* }}} */
+#endif
+
 /* {{{ */
 static inline zend_function* pthreads_copy_user_function(const zend_function *function) {
 	zend_function  *copy;
@@ -373,6 +387,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+
+#if PHP_VERSION_ID >= 80100
+	if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
+#endif
 
 	return copy;
 } /* }}} */
