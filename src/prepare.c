@@ -89,6 +89,39 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+ /* {{{ */
+static void init_class_statics(zend_class_entry* candidate, zend_class_entry* prepared)
+{
+	int i;
+	zval* p;
+
+	//this code is adapted from zend_class_init_statics()
+
+	if (CE_STATIC_MEMBERS(candidate) && !CE_STATIC_MEMBERS(prepared)) {
+		if (prepared->parent) {
+			zend_class_init_statics(prepared->parent);
+		}
+
+		ZEND_MAP_PTR_SET(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
+		for (i = prepared->default_static_members_count - 1; i >= 0; i--) {
+			//copy in reverse order, to ensure object ID consistency with 8.0
+			p = &prepared->default_static_members_table[i];
+			if (Z_TYPE_P(p) == IS_INDIRECT) {
+				zval* q = &CE_STATIC_MEMBERS(prepared->parent)[i];
+				ZVAL_DEINDIRECT(q);
+				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
+			} else {
+				pthreads_store_separate(
+					&CE_STATIC_MEMBERS(candidate)[i],
+					&CE_STATIC_MEMBERS(prepared)[i]
+				);
+			}
+		}
+	}
+} /* }}} */
+#endif
+
 /* {{{ */
 static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
 	if (candidate->default_static_members_count) {
@@ -131,9 +164,14 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		}
 
 #if PHP_VERSION_ID >= 80100
-		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->default_static_members_count != 0) {
+		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->default_static_members_count != 0 && !ZEND_MAP_PTR(prepared->static_members_table)) {
 			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
 			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);
+
+			//to maintain parity with 8.0 behaviour, we manually copy the current static members.
+			//While it would make sense to just stick with the default ones to avoid doing wacky stuff, we
+			//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
+			init_class_statics(candidate, prepared);
 		}
 #else
 		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
