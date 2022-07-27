@@ -14,7 +14,7 @@ environment:
       PHP_VER: 8.0
       VC_VER: vs16
       VCVARS_VER: ""
-	- ARCH: x86
+    - ARCH: x86
       PHP_VER: 8.1
       VC_VER: vs16
       VCVARS_VER: ""
