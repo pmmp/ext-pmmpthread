@@ -745,7 +745,12 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 					constant.name = zend_string_new(name);
 
 					if (pthreads_store_separate(&zconstant->value, &constant.value) != SUCCESS) {
-						zend_error_noreturn(E_CORE_ERROR, "Encountered unknown non-copyable constant type");
+						zend_error_noreturn(
+							E_CORE_ERROR,
+							"pthreads encountered an unknown non-copyable constant %s of type %s",
+							ZSTR_VAL(zconstant->name),
+							zend_get_type_by_const(Z_TYPE(zconstant->value))
+						);
 					}
 					ZEND_CONSTANT_SET_FLAGS(&constant, ZEND_CONSTANT_FLAGS(zconstant), ZEND_CONSTANT_MODULE_NUMBER(zconstant));
 					zend_register_constant(&constant);
