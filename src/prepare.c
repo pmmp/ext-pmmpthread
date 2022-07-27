@@ -74,7 +74,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 		memcpy(rc, zc, sizeof(zend_class_constant));
 
 		if (zc->attributes) {
-			rc->attributes = pthreads_copy_attributes(zc->attributes);
+			rc->attributes = pthreads_copy_attributes(zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
 		}
 		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
 			if (zc->doc_comment != NULL) {
@@ -254,7 +254,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		} ZEND_TYPE_FOREACH_END();
 
 		if (info->attributes) {
-			dup->attributes = pthreads_copy_attributes(info->attributes);
+			dup->attributes = pthreads_copy_attributes(info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
 		}
 
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
@@ -483,7 +483,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 		} else prepared->info.user.doc_comment = NULL;
 	
 	if (candidate->attributes) {
-		prepared->attributes = pthreads_copy_attributes(candidate->attributes);
+		prepared->attributes = pthreads_copy_attributes(candidate->attributes, prepared->info.user.filename);
 	}
 
 	if (prepared->info.user.filename) {
