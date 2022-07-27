@@ -101,10 +101,10 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 	//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
 	//this code is adapted from zend_class_init_statics()
 
-	//the map_ptr won't be initialized if there are no declared static members
-	zval* candidate_static_members_table = candidate->default_static_members_count ?
+	//the map_ptr won't be initialized if there are no declared static members, or if the class is opcached and not linked
+	zval* candidate_static_members_table = candidate->default_static_members_count && (candidate->ce_flags & ZEND_ACC_LINKED) ?
 		PTHREADS_MAP_PTR_GET(thread->creator.ls, candidate->static_members_table) :
-		0;
+		NULL;
 
 	if (candidate_static_members_table && !CE_STATIC_MEMBERS(prepared)) {
 		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->parent) {
