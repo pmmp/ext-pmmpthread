@@ -587,7 +587,6 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
 	){
 		//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
-		ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE));
 
 		if (prepared->ce_flags & ZEND_ACC_IMMUTABLE) {
 			//we can't modify an immutable class; fallthru to full copy
@@ -608,6 +607,7 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 
 	if (candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		//IMMUTABLE classes don't need to be copied and should not be modified
+		//this may overwrite previously inserted immutable classes on 8.1 (e.g. unlinked opcached class -> linked opcached class)
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
 		if (do_late_bindings) {
