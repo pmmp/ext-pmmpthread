@@ -580,22 +580,29 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 
 	lookup = zend_string_tolower(candidate->name);
 
+	prepared = zend_hash_find_ptr(EG(class_table), lookup);
+	if(
+		prepared &&
+		(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == ZEND_ACC_ANON_CLASS &&
+		(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
+	){
+		//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
+		ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE));
 
-	if ((prepared = zend_hash_find_ptr(EG(class_table), lookup))) {
-		zend_string_release(lookup);
-
-		if(
-			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == ZEND_ACC_ANON_CLASS &&
-			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
-		){
-			ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE) && !(prepared->ce_flags & ZEND_ACC_IMMUTABLE));
-			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
+		if (prepared->ce_flags & ZEND_ACC_IMMUTABLE) {
+			//we can't modify an immutable class; fallthru to full copy
+			prepared = NULL;
+		} else {
 			pthreads_complete_entry(thread, candidate, prepared);
 			if (do_late_bindings) {
 				//linking might cause new statics and constants to become visible
 				pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
 			}
 		}
+	}
+
+	if (prepared) {
+		zend_string_release(lookup);
 		return prepared;
 	}
 
