@@ -939,6 +939,14 @@ static HashTable *pthreads_store_copy_hash(HashTable *source) {
 	return ht;
 }
 
+#if PHP_VERSION_ID < 80100
+static inline size_t zend_ast_size(uint32_t children) {
+	//this is an exact copy of zend_ast_size() in zend_ast.c, which we can't use because it's static :(
+	//this is in the header in 8.1, so it's only needed for 8.0
+	return sizeof(zend_ast) - sizeof(zend_ast*) + sizeof(zend_ast*) * children;
+}
+#endif
+
 static inline size_t zend_ast_list_size(uint32_t children) {
 	//this is an exact copy of zend_ast_list_size() in zend_ast.c, which we can't use because it's static :(
 	return sizeof(zend_ast_list) - sizeof(zend_ast*) + sizeof(zend_ast*) * children;
