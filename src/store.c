@@ -40,6 +40,9 @@
 
 #include <src/globals.h>
 #include <Zend/zend_ast.h>
+#if PHP_VERSION_ID >= 80100
+#include <Zend/zend_enum.h>
+#endif
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
@@ -712,6 +715,21 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 		} break;
 
 		case IS_OBJECT:
+#if PHP_VERSION_ID >= 80100
+			if (Z_OBJCE_P(unstore)->ce_flags & ZEND_ACC_ENUM) {
+				storage->type = STORE_TYPE_ENUM;
+				zval* zname = zend_enum_fetch_case_name(Z_OBJ_P(unstore));
+
+				pthreads_enum_storage_t* enum_info = malloc(sizeof(pthreads_enum_storage_t));
+
+				enum_info->class_name = pthreads_store_save_string(Z_OBJCE_P(unstore)->name);
+				enum_info->member_name = pthreads_store_save_string(Z_STR_P(zname));
+
+				storage->data = enum_info;
+				break;
+			}
+#endif
+
 			if (instanceof_function(Z_OBJCE_P(unstore), zend_ce_closure)) {
 				const zend_closure *closure = (const zend_closure *) Z_OBJ_P(unstore);
 				storage->type = STORE_TYPE_CLOSURE;
@@ -873,6 +891,31 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			socket->blocking = stored_socket->blocking;
 			result = SUCCESS;
 		} break;
+#endif
+#if PHP_VERSION_ID >= 80100
+		case STORE_TYPE_ENUM: {
+			pthreads_enum_storage_t* enum_data = (pthreads_enum_storage_t*)storage->data;
+
+			zend_class_entry* enum_ce = zend_lookup_class(enum_data->class_name);
+
+			if (enum_ce && enum_ce->ce_flags & ZEND_ACC_ENUM && zend_hash_exists(CE_CONSTANTS_TABLE(enum_ce), enum_data->member_name)) {
+				zend_object* enum_member = zend_enum_get_case(enum_ce, enum_data->member_name);
+				ZEND_ASSERT(enum_member);
+
+				ZVAL_OBJ_COPY(pzval, enum_member);
+				result = SUCCESS;
+			} else {
+				//this might happen if the class failed to load on this thread, or if a different version of the class
+				//was loaded than on the origin thread
+				zend_throw_error(
+					NULL,
+					"pthreads failed to restore enum case %s::%s because either it or the class does not exist",
+					ZSTR_VAL(enum_data->class_name),
+					ZSTR_VAL(enum_data->member_name)
+				);
+			}
+			break;
+		}
 #endif
 		default: ZEND_ASSERT(0);
 	}
@@ -1290,7 +1333,17 @@ void pthreads_store_storage_dtor (zval *zstorage){
 				if (storage->data) {
 					free(storage->data);
 				}
-			break;
+				break;
+#if PHP_VERSION_ID >= 80100
+			case STORE_TYPE_ENUM:
+				if (storage->data) {
+					pthreads_enum_storage_t* data = (pthreads_enum_storage_t*) storage->data;
+					zend_string_free(data->class_name);
+					zend_string_free(data->member_name);
+					free(storage->data);
+				}
+				break;
+#endif
 			default: break;
 		}
 		free(storage);

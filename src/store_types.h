@@ -26,7 +26,8 @@ typedef enum _pthreads_store_type {
 	STORE_TYPE_CLOSURE,
 	STORE_TYPE_PTHREADS,
 	STORE_TYPE_RESOURCE,
-	STORE_TYPE_SOCKET
+	STORE_TYPE_SOCKET,
+	STORE_TYPE_ENUM,
 } pthreads_store_type;
 
 typedef struct _pthreads_store_t {
@@ -38,5 +39,10 @@ typedef struct _pthreads_storage {
 	pthreads_store_type type;
 	void    	*data;
 } pthreads_storage;
+
+typedef struct _pthreads_enum_storage_t {
+	zend_string* class_name;
+	zend_string* member_name;
+} pthreads_enum_storage_t;
 
 #endif
