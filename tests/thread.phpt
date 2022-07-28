@@ -5,7 +5,7 @@ This test will create and join a simple thread
 --FILE--
 <?php
 class ThreadTest extends Thread {
-	public function run(){
+	public function run() : void{
 		/* nothing to do */
 	}
 }

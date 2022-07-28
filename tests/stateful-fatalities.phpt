@@ -5,7 +5,7 @@ This test verifies that state includes fatalities
 --FILE--
 <?php
 class TestThread extends Thread {
-	public function run(){
+	public function run() : void{
 		i_do_not_exist();
 	}
 }

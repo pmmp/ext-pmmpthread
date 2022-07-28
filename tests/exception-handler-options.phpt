@@ -13,7 +13,7 @@ class Handler {
 }
 
 class Test extends Thread {
-	public function run () {
+	public function run() : void{
 		throw new Exception("oh dear");
 	}
 }

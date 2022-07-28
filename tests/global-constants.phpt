@@ -11,7 +11,7 @@ define ("NCONST", null);
 define ("BCONST", true);
 
 class TestThread extends Thread {
-	public function run() {
+	public function run() : void{
 		foreach (array(
 			"string" => SCONST,
 			"long" => LCONST,

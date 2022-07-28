@@ -21,8 +21,7 @@ class ExceptionThread extends Thread
 		throw new Exception("OK");
 	}
 
-    public function run()
-    {
+    public function run() : void{
         $this->traceable();
     }
 }

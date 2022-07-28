@@ -14,12 +14,12 @@ class baseTest extends \Thread {
         });
     }
 
-    public function run() {}
+    public function run() : void{}
 }
 
 class testClass extends baseTest {
 
-    public function run() {
+    public function run() : void{
         $this->test();
     }
 }

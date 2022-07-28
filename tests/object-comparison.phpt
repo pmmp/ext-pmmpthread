@@ -19,7 +19,7 @@ class Test extends Thread {
 		$this->args = $args;
 	}
 
-	public function run () {
+	public function run() : void{
 		var_dump($this->args[0] == $this->args[1]);
 	}
 }

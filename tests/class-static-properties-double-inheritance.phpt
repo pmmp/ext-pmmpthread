@@ -11,8 +11,7 @@ $worker->start();
 class TestAsyncTask extends ManInTheMiddle {
 	public static $destroyed = false;
 
-	public function run()
-	{
+	public function run() : void{
 		try {
 			var_dump(self::$destroyed);
 		} catch(\Error $e) {

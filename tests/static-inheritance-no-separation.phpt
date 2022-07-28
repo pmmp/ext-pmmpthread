@@ -9,11 +9,11 @@ property with the same name.
 class A extends \ThreadedRunnable{
 	public static $a = [];
 
-	public function run() {}
+	public function run() : void{}
 }
 class B extends A{
 
-	public function run(){
+	public function run() : void{
 		echo "---worker thread start---\n";
 		doTest();
 		echo "---worker thread end---\n";

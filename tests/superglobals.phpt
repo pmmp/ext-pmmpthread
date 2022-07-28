@@ -9,7 +9,7 @@ variables_order=ES
 <?php
 
 class TestThread extends Thread {
-	public function run() {
+	public function run() : void{
 		var_dump(is_array($GLOBALS));
 		var_dump(is_array($_SERVER));
 		var_dump(is_array($_ENV));

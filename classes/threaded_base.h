@@ -15,43 +15,11 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
+
 #ifndef HAVE_PTHREADS_CLASS_THREADED_BASE_H
 #define HAVE_PTHREADS_CLASS_THREADED_BASE_H
 
-PHP_METHOD(ThreadedBase, wait);
-PHP_METHOD(ThreadedBase, notify);
-PHP_METHOD(ThreadedBase, notifyOne);
-
-PHP_METHOD(ThreadedBase, synchronized);
-
-PHP_METHOD(ThreadedBase, getIterator);
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_wait, 0, 0, 0)
-	ZEND_ARG_TYPE_INFO(0, timeout, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_notify, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedBase_synchronized, 0, 0, 1)
-	ZEND_ARG_INFO(0, function)
-	ZEND_ARG_VARIADIC_INFO(0, args)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(ThreadedBase_getIterator, 0, 0, Iterator, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_threaded_base_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_THREADED_BASE
-#	define HAVE_PTHREADS_CLASS_THREADED_BASE
-zend_function_entry pthreads_threaded_base_methods[] = {
-	PHP_ME(ThreadedBase, wait, ThreadedBase_wait, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, notify, ThreadedBase_notify, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, notifyOne, ThreadedBase_notify, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, synchronized, ThreadedBase_synchronized, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedBase, getIterator, ThreadedBase_getIterator, ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
+#include <stubs/ThreadedBase_arginfo.h>
 
 /* {{{ proto boolean ThreadedBase::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object
@@ -138,5 +106,4 @@ PHP_METHOD(ThreadedBase, getIterator)
 	zend_create_internal_iterator_zval(return_value, getThis());
 } /* }}} */
 
-#	endif
 #endif

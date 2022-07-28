@@ -24,8 +24,8 @@ class TestThread extends \Thread
     {
         $this->function = $function;
     }
-    public function run()
-    {
+
+    public function run() : void{
         $function = $this->function;
         $function();
     }

@@ -18,55 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_WORKER_H
 #define HAVE_PTHREADS_CLASS_WORKER_H
 
-PHP_METHOD(Worker, run);
-PHP_METHOD(Worker, stack);
-PHP_METHOD(Worker, unstack);
-PHP_METHOD(Worker, getStacked);
-PHP_METHOD(Worker, collect);
-PHP_METHOD(Worker, collector);
-
-ZEND_BEGIN_ARG_INFO_EX(Worker_stack, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, work, ThreadedRunnable, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(Worker_unstack, 0, 0, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(Worker_getStacked, 0, 0, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(Worker_collect, 0, 0, 0)
-	ZEND_ARG_CALLABLE_INFO(0, function, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(Worker_collector, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, collectable, ThreadedRunnable, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_worker_methods[];
-
-#define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
-	memset(&call, 0, sizeof(pthreads_call_t)); \
-	call.fci.size = sizeof(zend_fcall_info); \
-	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
-	call.fcc.function_handler = zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
-	call.fci.object = (w); \
-	call.fcc.calling_scope = (w)->ce; \
-	call.fcc.called_scope = (w)->ce; \
-	call.fcc.object = (w); \
-} while(0)
-
-#define PTHREADS_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
-#else
-#	ifndef HAVE_PTHREADS_CLASS_WORKER
-#	define HAVE_PTHREADS_CLASS_WORKER
-zend_function_entry pthreads_worker_methods[] = {
-	PHP_MALIAS(Thread, shutdown, join, Thread_join, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, run, ThreadedRunnable_run, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, stack, Worker_stack, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, unstack, Worker_unstack, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, getStacked, Worker_getStacked, ZEND_ACC_PUBLIC)
-	PHP_MALIAS(Thread, isShutdown, isJoined, Thread_isJoined, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, collect, Worker_collect, ZEND_ACC_PUBLIC)
-	PHP_ME(Worker, collector, Worker_collector, ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
+#include <stubs/Worker_arginfo.h>
 
 /* {{{ */
 PHP_METHOD(Worker, run) {} /* }}} */
@@ -159,6 +111,19 @@ PHP_METHOD(Worker, collector) {
 	RETURN_TRUE;
 } /* }}} */
 
+#define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
+	memset(&call, 0, sizeof(pthreads_call_t)); \
+	call.fci.size = sizeof(zend_fcall_info); \
+	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
+	call.fcc.function_handler = zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
+	call.fci.object = (w); \
+	call.fcc.calling_scope = (w)->ce; \
+	call.fcc.called_scope = (w)->ce; \
+	call.fcc.object = (w); \
+} while(0)
+
+#define PTHREADS_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
+
 /* {{{ proto int Worker::collect([callable collector]) */
 PHP_METHOD(Worker, collect)
 {
@@ -187,6 +152,6 @@ PHP_METHOD(Worker, collect)
 		PTHREADS_WORKER_COLLECTOR_DTOR(call);
 	}
 }
-#	endif
+
 #endif
 

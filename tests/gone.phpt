@@ -8,7 +8,7 @@ This test verifies that objects that have gone away do not cause segfaults
 class T extends Thread {
 	public $o;
 
-	public function run() {
+	public function run() : void{
 		$this->o = new ThreadedArray();
 		/* this will disappear with this context */
 		$this->o["data"] = true;

@@ -5,7 +5,7 @@ This test verifies that reading properties from the object without var_dump/prin
 --FILE--
 <?php
 class Test extends Thread {
-	public function run() { 
+	public function run() : void{ 
 		$this->name = sprintf("%s", __CLASS__);
 	}
 }

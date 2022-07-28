@@ -9,7 +9,7 @@ function TestFunction(){
 }
 
 class TestThread extends Thread {
-	public function run() { 
+	public function run() : void{ 
 		printf("%s\n", TestFunction()); 
 	}
 }

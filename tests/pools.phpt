@@ -17,7 +17,7 @@ class WebWork extends ThreadedRunnable {
 		$this->id = $id;
 	}
 
-	public function run() {
+	public function run() : void{
 		$this->worker
 			->logger
 			->log("%s(%d) executing in Thread #%lu",

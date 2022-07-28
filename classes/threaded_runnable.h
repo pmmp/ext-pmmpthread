@@ -18,28 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 #define HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 
-PHP_METHOD(ThreadedRunnable, run);
-PHP_METHOD(ThreadedRunnable, isRunning);
-PHP_METHOD(ThreadedRunnable, isTerminated);
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedRunnable_run, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedRunnable_isRunning, 0, 0, 0)
-ZEND_END_ARG_INFO()
-ZEND_BEGIN_ARG_INFO_EX(ThreadedRunnable_isTerminated, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_threaded_runnable_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_THREADED_RUNNABLE
-#	define HAVE_PTHREADS_CLASS_THREADED_RUNNABLE
-zend_function_entry pthreads_threaded_runnable_methods[] = {
-	PHP_ABSTRACT_ME(ThreadedRunnable, run, ThreadedRunnable_run)
-	PHP_ME(ThreadedRunnable, isRunning, ThreadedRunnable_isRunning, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedRunnable, isTerminated, ThreadedRunnable_isTerminated, ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
+#include <stubs/ThreadedRunnable_arginfo.h>
 
 /* {{{ proto boolean ThreadedRunnable::isRunning()
 	Will return true while the referenced ThreadedRunnable is executing */
@@ -63,5 +42,4 @@ PHP_METHOD(ThreadedRunnable, isTerminated)
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */
 
-#	endif
 #endif

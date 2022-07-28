@@ -20,13 +20,13 @@ $w = new \Worker();
 $w->start();
 
 $w->stack(new class extends \ThreadedRunnable{
-	public function run(){
+	public function run() : void{
 		throwException();
 	}
 });
 
 $w->stack(new class extends \ThreadedRunnable{
-	public function run(){
+	public function run() : void{
 		undefined();
 	}
 });

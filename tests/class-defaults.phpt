@@ -6,7 +6,7 @@ Class defaults should now initialize defaults properly
 <?php
 class Test extends Thread {
 
-	public function run(){
+	public function run() : void{
 		var_dump($this);
 	}
 	

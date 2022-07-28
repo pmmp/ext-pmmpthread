@@ -38,7 +38,7 @@ class Work extends ThreadedRunnable {
         $this->wrapper->stack($this);
     }
 
-    public function run() {
+    public function run() : void{
         echo "Foo\n";
     }
 }

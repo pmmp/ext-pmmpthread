@@ -20,8 +20,7 @@ $objInstance->method();
 
 $objThread = new class extends Thread
 {
-    public function run()
-    {
+    public function run() : void{
         $objInstance = new Test();
         $objInstance->method();
     }

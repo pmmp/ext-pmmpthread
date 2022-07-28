@@ -11,7 +11,7 @@ class Test {
 }
 
 class UserThread extends Thread {
-    public function run () {
+    public function run() : void{
         Test::called_func("argument");
     }
 }

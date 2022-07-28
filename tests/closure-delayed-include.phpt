@@ -16,7 +16,7 @@ class Foo extends \Thread {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         $this->running = true;
 
         require __DIR__ .'/assets/ExternalClosureDefinition.php';

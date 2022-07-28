@@ -20,7 +20,7 @@ class Test extends Thread {
 		$this->member = $member;
 	}
 
-	public function run() {
+	public function run() : void{
 		$this->thing->member = 
 			(object) $this->member;
 

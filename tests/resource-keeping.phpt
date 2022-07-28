@@ -16,7 +16,7 @@ class myWorker extends Worker {
         ]);
     }
 
-    public function run () {
+    public function run() : void{
 
         // polute EG(regular_list) with another resource of our own
         $localThreadFP = tmpfile();
@@ -49,7 +49,7 @@ class myWorker extends Worker {
 
 class Work extends ThreadedRunnable {
 
-    public function run () {
+    public function run() : void{
 	$foreignResource = $this->worker->foreignResource;
 
         var_dump(array(

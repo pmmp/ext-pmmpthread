@@ -11,7 +11,7 @@ class Foo extends Thread
 	public $running = true;
 	private $shared;
 
-	public function run() {
+	public function run() : void{
 		require __DIR__ . '/child-to-parent-class-copying-helper.php';
 
 		$this->shared['baseClass'] = new ExternalBaseClass();

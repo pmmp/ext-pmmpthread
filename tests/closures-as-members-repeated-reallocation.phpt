@@ -9,7 +9,7 @@ class TestClosure extends \ThreadedRunnable {
     function __construct( $closure) {
         $this->closure = $closure;
     }
-    public function run() {
+    public function run() : void{
         ($this->closure)();
     }
 }

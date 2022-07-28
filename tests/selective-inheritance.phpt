@@ -13,7 +13,7 @@ define ("TEST_CONSTANT", true);
 class TestClass {}
 
 class TestThread extends Thread {
-	public function run() { 
+	public function run() : void{ 
 		var_dump(function_exists("TestFunction"));
 		var_dump(defined("TEST_CONSTANT"));
 		var_dump(class_exists("TestClass")); 

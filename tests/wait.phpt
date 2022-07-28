@@ -11,7 +11,7 @@ class ThreadTest extends Thread {
 	    $this->sent = false;
 	}
 	
-	public function run(){
+	public function run() : void{
 	    $this->synchronized(function($self){
 		    $self->sent = true;
 		    $self->notify();

@@ -29,7 +29,7 @@ class C extends ThreadedRunnable
     public static function __set_state($ps){}
     public function __clone(){}
     public function __debugInfo(){}
-    public function run(){var_dump(self::C, $this->c2);}
+    public function run() : void{var_dump(self::C, $this->c2);}
 }
 
 trait T1 {function t(){}}

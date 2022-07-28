@@ -17,7 +17,7 @@ class TestThread extends Thread implements INamedThread {
 		return $this->name;
 	}
 	
-	public function run() { printf("%s\n", $this->getName()); }
+	public function run() : void{ printf("%s\n", $this->getName()); }
 }
 
 $thread = new TestThread();

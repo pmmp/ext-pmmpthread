@@ -5,7 +5,7 @@ Test traits scope (gh issue #484)
 class MyWork extends \ThreadedRunnable {
 	use \MyTrait;
 
-	public function run() {
+	public function run() : void{
     	$this->getSomething();
 	}
 }

@@ -20,7 +20,7 @@ class A extends \ThreadedBase{
 class B extends A{
 	public $test = 3;
 
-	public function run(){
+	public function run() : void{
 		$this->test = 2;
 		parent::dump();
 		var_dump($this->test);
@@ -31,7 +31,7 @@ $t = new \Worker();
 
 $t->start();
 $t->stack(new class extends \ThreadedRunnable{
-	public function run(){
+	public function run() : void{
 		$b = new B;
 		$b->run();
 	}

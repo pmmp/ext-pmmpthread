@@ -16,7 +16,7 @@ $thread = new class($v, $v2) extends \Thread{
 		$this->v2 = $v2;
 	}
 
-	public function run(){
+	public function run() : void{
 		$this->v->a = $this->v2;
 	}
 };

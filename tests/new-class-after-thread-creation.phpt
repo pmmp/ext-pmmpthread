@@ -11,7 +11,7 @@ $worker->start();
 
 interface A {}
 class task extends ThreadedRunnable implements A {
-	public function run() {}
+	public function run() : void{}
 }
 
 $worker->stack(new task());

@@ -6,7 +6,7 @@ This test verifies that syncronization is working
 <?php
 class T extends Thread {
         public $data;
-        public function run() {
+        public function run() : void{
             $this->synchronized(function($thread){
 				$thread->data = true;
 				$thread->notify();

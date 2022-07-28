@@ -17,66 +17,8 @@
  */
 #ifndef HAVE_PTHREADS_CLASS_THREAD_H
 #define HAVE_PTHREADS_CLASS_THREAD_H
-PHP_METHOD(Thread, start);
-PHP_METHOD(Thread, join);
-PHP_METHOD(Thread, isStarted);
-PHP_METHOD(Thread, isJoined);
-PHP_METHOD(Thread, getThreadId);
-PHP_METHOD(Thread, getCurrentThreadId);
-PHP_METHOD(Thread, getCurrentThread);
-PHP_METHOD(Thread, getCreatorId);
 
-ZEND_BEGIN_ARG_INFO_EX(Thread_start, 0, 0, 0)
-	ZEND_ARG_TYPE_INFO(0, options, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_run, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_join, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_getThreadId, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_getCurrentThreadId, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_getCurrentThread, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_getCreatorId, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_isStarted, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_isJoined, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_isTerminated, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Thread_merge, 0, 0, 1)
-	ZEND_ARG_INFO(0, from)
-	ZEND_ARG_TYPE_INFO(0, overwrite, _IS_BOOL, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_thread_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_THREAD
-#	define HAVE_PTHREADS_CLASS_THREAD
-zend_function_entry pthreads_thread_methods[] = {
-	PHP_ME(Thread, start, Thread_start, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, join, Thread_join, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, isStarted, Thread_isStarted, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, isJoined, Thread_isJoined, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, getThreadId, Thread_getThreadId, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, getCreatorId, Thread_getThreadId, ZEND_ACC_PUBLIC)
-	PHP_ME(Thread, getCurrentThreadId, Thread_getCurrentThreadId, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_ME(Thread, getCurrentThread, Thread_getCurrentThread, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
-	PHP_FE_END
-};
+#include <stubs/Thread_arginfo.h>
 
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
@@ -164,5 +106,5 @@ PHP_METHOD(Thread, getCreatorId)
 
 	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */
-#	endif
+
 #endif

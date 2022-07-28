@@ -9,7 +9,7 @@ class Test extends Thread {
 		$this->worker = $worker;
 	}
 	
-	public function run() {
+	public function run() : void{
 		$this->worker->unstack();
 	}
 }

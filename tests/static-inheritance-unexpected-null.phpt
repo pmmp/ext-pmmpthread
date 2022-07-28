@@ -15,7 +15,7 @@ class B extends A{
 }
 
 class thr extends Thread{
-    public function run(){
+    public function run() : void{
         $a = new A();
         var_dump($a->gVar());
     }

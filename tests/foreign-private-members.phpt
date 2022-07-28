@@ -17,7 +17,7 @@ class TEST extends Thread {
                 $this->my = $my;
         }
 
-        public function run(){
+        public function run() : void{
                 printf("TEST: %s\n", $this->my->getTest());
         }
 }

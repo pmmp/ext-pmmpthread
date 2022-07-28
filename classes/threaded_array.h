@@ -18,49 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 #define HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 
-PHP_METHOD(ThreadedArray, merge);
-PHP_METHOD(ThreadedArray, shift);
-PHP_METHOD(ThreadedArray, chunk);
-PHP_METHOD(ThreadedArray, pop);
-PHP_METHOD(ThreadedArray, count);
-PHP_METHOD(ThreadedArray, fromArray);
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedArray_merge, 0, 0, 1)
-	ZEND_ARG_INFO(0, from)
-	ZEND_ARG_INFO(0, overwrite)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedArray_shift, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedArray_chunk, 0, 0, 1)
-	ZEND_ARG_INFO(0, size)
-	ZEND_ARG_INFO(0, preserve)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedArray_pop, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(ThreadedArray_count, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(ThreadedArray_fromArray, 0, 1, ThreadedArray, 0)
-	ZEND_ARG_ARRAY_INFO(0, array, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_threaded_array_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY
-#	define HAVE_PTHREADS_CLASS_THREADED_ARRAY
-zend_function_entry pthreads_threaded_array_methods[] = {
-	PHP_ME(ThreadedArray, merge, ThreadedArray_merge, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedArray, shift, ThreadedArray_shift, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedArray, chunk, ThreadedArray_chunk, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedArray, pop, ThreadedArray_pop, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedArray, count, ThreadedArray_count, ZEND_ACC_PUBLIC)
-	PHP_ME(ThreadedArray, fromArray, ThreadedArray_fromArray, ZEND_ACC_PUBLIC | ZEND_ACC_STATIC)
-	PHP_FE_END
-};
+#include <stubs/ThreadedArray_arginfo.h>
 
 /* {{{ proto boolean ThreadedArray::merge(mixed $data, [boolean $overwrite = true])
 	Will merge data with the referenced ThreadedArray */
@@ -138,5 +96,4 @@ PHP_METHOD(ThreadedArray, fromArray)
 	pthreads_store_merge(Z_OBJ_P(return_value), input, 1, PTHREADS_STORE_COERCE_ARRAY);
 } /* }}} */
 
-#	endif
 #endif

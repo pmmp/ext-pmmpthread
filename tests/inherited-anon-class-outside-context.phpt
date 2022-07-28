@@ -11,7 +11,7 @@ class Test extends Thread {
 	/**
 	 * doccomment run
 	 */
-	public function run() {
+	public function run() : void{
 		$this->alive = true;
 		/**
 		 * doccomment anonymous
@@ -25,7 +25,7 @@ class Test extends Thread {
 			protected $protProp;
 			private $privProp;
 			public static $staticProp;
-			public function run() {
+			public function run() : void{
 				var_dump('anonymous run');
 				$this->ready = true;
 			}

@@ -17,8 +17,7 @@ class ExceptionThread extends Thread
 	public function traceable() {
 		throw new Exception();
 	}
-    public function run()
-    {
+    public function run() : void{
         $this->traceable();
     }
 }
@@ -49,7 +48,7 @@ object(Exception)#2 (%d) {
       ["file"]=>
       string(%d) "%s"
       ["line"]=>
-      int(17)
+      int(16)
       ["function"]=>
       string(9) "traceable"
       ["class"]=>

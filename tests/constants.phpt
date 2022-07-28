@@ -5,7 +5,7 @@ This test verifies that constant members in declarations made outside of threads
 --FILE--
 <?php
 class TestThread extends Thread {
-	public function run() { printf("%s\n", DateTime::ISO8601 ); }
+	public function run() : void{ printf("%s\n", DateTime::ISO8601 ); }
 }
 
 $thread = new TestThread();

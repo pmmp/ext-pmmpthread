@@ -8,7 +8,7 @@ class Work extends ThreadedBase {
 }
 
 class Test extends Thread {
-	public function run(){
+	public function run() : void{
 		$test = new Work();
 		$this->test = $test;
 		print_r($this->test);

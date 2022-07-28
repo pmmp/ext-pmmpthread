@@ -5,8 +5,7 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 --FILE--
 <?php
 $task = new class extends Thread {
-    public function run()
-    {
+    public function run() : void{
         try {
             $this->prop = new class {};
         } catch (\Throwable $e) {

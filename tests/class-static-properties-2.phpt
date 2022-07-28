@@ -12,7 +12,7 @@ class T extends Thread {
 		self::$autoloadPath = 'abc';
     }
 
-	public function run() {
+	public function run() : void{
 		var_dump(self::$autoloadPath);
 	}
 }

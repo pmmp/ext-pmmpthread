@@ -40,7 +40,7 @@ Test::$prop9 = [new ThreadedArray, new stdClass, [
 ]];
 
 $test = new class extends Thread {
-	public function run() {
+	public function run() : void{
 		var_dump(Test::$prop1,
 				 Test::$prop2,
 				 Test::$prop3,

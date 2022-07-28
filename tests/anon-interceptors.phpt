@@ -36,7 +36,7 @@ class Foo extends ThreadedBase {
 }
 
 class Test extends \Thread {
-    public function run() {
+    public function run() : void{
         $foo = new Foo();
         var_dump($foo->bar);
     }

@@ -14,8 +14,7 @@ class testbug extends Thread
         var_dump(static::$somevar);
     }
 
-    public function run()
-    {
+    public function run() : void{
         var_dump(self::$somevar);
         var_dump(static::$somevar);
     }

@@ -14,7 +14,7 @@ class SecondClass extends \ThreadedBase {}
 FirstClass::$prop[] = new SecondClass();
 
 $thread = new class extends Thread {
-    public function run() {
+    public function run() : void{
         var_dump(FirstClass::$prop);
     }
 };

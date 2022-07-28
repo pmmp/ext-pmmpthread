@@ -15,7 +15,7 @@ class T extends Thread {
 		$this->s = new stdClass();
 	}
 	
-    public function run(){
+    public function run() : void{
 		var_dump($this->t, $this->s, $this);
 	}
 }

@@ -19,7 +19,7 @@ class SystemLoaderConfig extends \ThreadedBase { }
 SystemLoader::getConfig();
 
 class Test extends Thread {
-	public function run(){
+	public function run() : void{
 		echo SystemLoaderConfig::class;
 	}
 }

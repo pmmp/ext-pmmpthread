@@ -16,7 +16,7 @@ $collectable = new class extends ThreadedRunnable {
 	/** c */
 	public $c = false;
 
-	public function run() {
+	public function run() : void{
 		var_dump(
 			$this instanceof ThreadedRunnable,
 			self::Z,

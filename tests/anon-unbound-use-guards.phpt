@@ -10,8 +10,7 @@ class T2 extends ThreadedRunnable
 {
     public function __get($p){}
 
-	public function run()
-	{
+	public function run() : void{
         var_dump($this->prop);
 	}
 }

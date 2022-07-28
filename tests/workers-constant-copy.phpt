@@ -14,8 +14,7 @@ class Testing extends ThreadedRunnable
 {
     const MY_VAR = "Testing";
 
-    public function run()
-    {
+    public function run() : void{
         var_dump("Running...");
     }
 }

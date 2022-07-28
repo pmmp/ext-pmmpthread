@@ -9,7 +9,7 @@ class ThreadTest extends Thread {
 		return 1;
 	}
 	
-	public function run(){
+	public function run() : void{
 		$this->result = self::staticTest();
 	}
 }

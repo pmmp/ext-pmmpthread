@@ -22,13 +22,20 @@
 #	include <src/pthreads.h>
 #endif
 
-#ifndef HAVE_PHP_PTHREADS_H
-#	include <php_pthreads.h>
-#endif
-
 #ifndef HAVE_PTHREADS_OBJECT_H
 #	include <src/object.h>
 #endif
+
+#include <classes/threaded_base.h>
+#include <classes/threaded_runnable.h>
+#include <classes/threaded_array.h>
+#include <classes/thread.h>
+#include <classes/worker.h>
+#include <classes/pool.h>
+#include <stubs/ThreadedConnectionException_arginfo.h>
+
+#include <php_pthreads.h>
+
 
 #ifndef ZTS
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
@@ -131,8 +138,6 @@ static inline void pthreads_globals_ctor(zend_pthreads_globals *pg) {
 
 PHP_MINIT_FUNCTION(pthreads)
 {
-	zend_class_entry ce;
-
 	if (!pthreads_is_supported_sapi(sapi_module.name)) {
 		zend_error(E_ERROR, "The %s SAPI is not supported by pthreads",
 			sapi_module.name);
@@ -150,46 +155,26 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	REGISTER_LONG_CONSTANT("PTHREADS_ALLOW_HEADERS", PTHREADS_ALLOW_HEADERS, CONST_CS | CONST_PERSISTENT);
 
-	INIT_CLASS_ENTRY(ce, "ThreadedBase", pthreads_threaded_base_methods);
-	pthreads_threaded_base_entry = zend_register_internal_class(&ce);
+	pthreads_threaded_base_entry = register_class_ThreadedBase(zend_ce_aggregate);
 	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
 	pthreads_threaded_base_entry->serialize = pthreads_threaded_serialize;
 	pthreads_threaded_base_entry->unserialize = pthreads_threaded_unserialize;
 	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
-	zend_class_implements(
-		pthreads_threaded_base_entry,
-		1,
-		zend_ce_aggregate
-	);
-	INIT_CLASS_ENTRY(ce, "ThreadedArray", pthreads_threaded_array_methods);
-	pthreads_threaded_array_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
+
+	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_traversable, zend_ce_countable);
 	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
-	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_FINAL;
-	pthreads_threaded_array_entry->ce_flags |= ZEND_ACC_NO_DYNAMIC_PROPERTIES;
 
-	INIT_CLASS_ENTRY(ce, "ThreadedConnectionException", NULL);
-	pthreads_ce_ThreadedConnectionException = zend_register_internal_class_ex(&ce, spl_ce_RuntimeException);
+	pthreads_ce_ThreadedConnectionException = register_class_ThreadedConnectionException(spl_ce_RuntimeException);
 
-	INIT_CLASS_ENTRY(ce, "ThreadedRunnable", pthreads_threaded_runnable_methods);
-	pthreads_threaded_runnable_entry = zend_register_internal_class_ex(&ce, pthreads_threaded_base_entry);
-	pthreads_threaded_runnable_entry->ce_flags |= ZEND_ACC_ABSTRACT;
+	pthreads_threaded_runnable_entry = register_class_ThreadedRunnable(pthreads_threaded_base_entry);
 
-	INIT_CLASS_ENTRY(ce, "Thread", pthreads_thread_methods);
-	pthreads_thread_entry=zend_register_internal_class_ex(&ce, pthreads_threaded_runnable_entry);
+	pthreads_thread_entry = register_class_Thread(pthreads_threaded_runnable_entry);
 	pthreads_thread_entry->create_object = pthreads_thread_ctor;
-	pthreads_thread_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
-	INIT_CLASS_ENTRY(ce, "Worker", pthreads_worker_methods);
-	pthreads_worker_entry=zend_register_internal_class_ex(&ce, pthreads_thread_entry);
+	pthreads_worker_entry = register_class_Worker(pthreads_thread_entry);
 	pthreads_worker_entry->create_object = pthreads_worker_ctor;
 
-	INIT_CLASS_ENTRY(ce, "Pool", pthreads_pool_methods);
-	pthreads_pool_entry=zend_register_internal_class(&ce);
-	zend_declare_property_long(pthreads_pool_entry, ZEND_STRL("size"), 1, ZEND_ACC_PROTECTED);
-	zend_declare_property_null(pthreads_pool_entry, ZEND_STRL("class"),   ZEND_ACC_PROTECTED);
-	zend_declare_property_null(pthreads_pool_entry, ZEND_STRL("workers"), ZEND_ACC_PROTECTED);
-	zend_declare_property_null(pthreads_pool_entry, ZEND_STRL("ctor"),    ZEND_ACC_PROTECTED);
-	zend_declare_property_long(pthreads_pool_entry, ZEND_STRL("last"), 0, ZEND_ACC_PROTECTED);
+	pthreads_pool_entry = register_class_Pool();
 
 	/*
 	* Setup object handlers
@@ -316,24 +301,5 @@ PHP_MINFO_FUNCTION(pthreads)
 	php_info_print_table_row(2, "Version", PHP_PTHREADS_VERSION);
 	php_info_print_table_end();
 }
-
-#include <classes/threaded_base.h>
-#include <classes/threaded_runnable.h>
-
-#ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY
-#	include <classes/threaded_array.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_THREAD
-#	include <classes/thread.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_WORKER
-#	include <classes/worker.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_POOL
-#	include <classes/pool.h>
-#endif
 
 #endif

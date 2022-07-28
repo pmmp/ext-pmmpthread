@@ -13,7 +13,7 @@ class TestNestedWrite extends Thread {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         var_dump($this->shared['queue'][0]);
 
         // link to new var
@@ -52,7 +52,7 @@ class TestNestedRead extends Thread {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         $this->shared->synchronized(function() : void{
             while(!isset($this->shared['lock'])){
                 $this->shared->wait();
@@ -76,7 +76,7 @@ class TestNestedRead extends Thread {
 }
 
 class Test extends Thread {
-    public function run() {
+    public function run() : void{
         $queue = new ThreadedArray();
         $queue[0] = new ThreadedArray();
 

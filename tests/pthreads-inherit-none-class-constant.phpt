@@ -8,7 +8,7 @@ class testClass extends \Thread {
 
     const TEST_CONSTANT=0x00;
 
-    public function run() {
+    public function run() : void{
         var_dump('works');
     }
 }

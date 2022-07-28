@@ -17,10 +17,10 @@ interface Dummy2 {
 }
 
 class Base extends ThreadedRunnable implements Dummy {
-	public function run() {}
+	public function run() : void{}
 }
 $collectable = new class extends Base implements Dummy2 {
-	public function run() {
+	public function run() : void{
 		var_dump($this instanceof Dummy);
 		var_dump($this instanceof Dummy2);
 	}

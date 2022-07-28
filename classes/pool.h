@@ -18,52 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_POOL_H
 #define HAVE_PTHREADS_CLASS_POOL_H
 
-PHP_METHOD(Pool, __construct);
-PHP_METHOD(Pool, resize);
-PHP_METHOD(Pool, submit);
-PHP_METHOD(Pool, submitTo);
-PHP_METHOD(Pool, collect);
-PHP_METHOD(Pool, shutdown);
-
-ZEND_BEGIN_ARG_INFO_EX(Pool___construct, 0, 0, 1)
-	ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO(0, class, IS_STRING, 0)
-	ZEND_ARG_TYPE_INFO(0, ctor, IS_ARRAY, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Pool_resize, 0, 0, 1)
-	ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Pool_submit, 0, 0, 1)
-	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Pool_submitTo, 0, 0, 2)
-	ZEND_ARG_TYPE_INFO(0, worker, IS_LONG, 0)
-	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Pool_collect, 0, 0, 0)
-	ZEND_ARG_CALLABLE_INFO(0, collector, 0)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(Pool_noargs, 0, 0, 0)
-ZEND_END_ARG_INFO()
-
-extern zend_function_entry pthreads_pool_methods[];
-#else
-#	ifndef HAVE_PTHREADS_CLASS_POOL
-#	define HAVE_PTHREADS_CLASS_POOL
-zend_function_entry pthreads_pool_methods[] = {
-	PHP_ME(Pool, __construct, 	Pool___construct, 	ZEND_ACC_PUBLIC)
-	PHP_ME(Pool, resize, 		Pool_resize, 		ZEND_ACC_PUBLIC)
-	PHP_ME(Pool, submit, 		Pool_submit, 		ZEND_ACC_PUBLIC)
-	PHP_ME(Pool, submitTo, 		Pool_submitTo, 		ZEND_ACC_PUBLIC)
-	PHP_ME(Pool, collect, 		Pool_collect, 		ZEND_ACC_PUBLIC)
-	PHP_ME(Pool, shutdown, 		Pool_noargs, 		ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
+#include <stubs/Pool_arginfo.h>
 
 /* {{{ proto Pool Pool::__construct(integer size, [class worker, [array $ctor]])
 	Construct a pool ready to create a maximum of $size workers of class $worker
@@ -337,5 +292,5 @@ PHP_METHOD(Pool, shutdown) {
 
 	pthreads_pool_shutdown(getThis());
 } /* }}} */
-#	endif
+
 #endif

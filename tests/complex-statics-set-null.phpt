@@ -23,7 +23,7 @@ class file {
 }
 
 class UserThread extends Thread {
-	public function run () {
+	public function run () : void{
 		/* execute calls */
 		$i = 2;
 		file::get("something".(++$i));

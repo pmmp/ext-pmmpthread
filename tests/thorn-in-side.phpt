@@ -18,7 +18,7 @@ class childClass extends parentClass {
 
 class clientThread extends Thread {
 
-    public function run() {
+    public function run() : void{
         $objChild = new childClass();
 
     }               

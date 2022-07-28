@@ -16,7 +16,7 @@ class T extends Thread {
         $this->test = $test;
     }
     
-    public function run() {
+    public function run() : void{
         /* call original closure */
         $this->call($this->test->some);
         

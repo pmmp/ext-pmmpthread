@@ -21,7 +21,7 @@ class Some extends ThreadedBase {
 }
 
 class Test extends Thread {
-    public function run(){
+    public function run() : void{
         Some::staticNess();
     }
 }
@@ -29,7 +29,7 @@ class Test extends Thread {
 Some::staticNess();
 
 $test = new class extends Thread {
-	public function run() {
+	public function run() : void{
 		Some::staticNess();
 	}
 };

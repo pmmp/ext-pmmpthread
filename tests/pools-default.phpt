@@ -5,7 +5,7 @@ This test verifies pool defaults
 --FILE--
 <?php
 class Work extends ThreadedRunnable {
-	public function run() {
+	public function run() : void{
 		var_dump($this);
 	}
 }

@@ -16,7 +16,7 @@ class C{
 }
 
 $thread = new class extends Thread{
-	public function run(){
+	public function run() : void{
 		var_dump(TEST);
 		var_dump(C::TEST4, C::$FIELD, (new C)->field2);
 	}
