@@ -512,13 +512,11 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 	zend_class_entry *candidate = va_arg(argv, zend_class_entry*);
 	zend_class_entry *scope = function->common.scope;
 
-	if (function->type == ZEND_USER_FUNCTION) {
-		if (scope == candidate) {
-			function->common.scope = prepared;
-		} else {
-			if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
-				function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
-			}
+	if (scope == candidate) {
+		function->common.scope = prepared;
+	} else {
+		if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
+			function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
 		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
