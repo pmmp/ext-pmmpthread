@@ -26,10 +26,6 @@
 #	include <src/resources.h>
 #endif
 
-#ifndef HAVE_PTHREADS_SOCKET_H
-#	include <src/socket.h>
-#endif
-
 typedef struct _pthreads_ident_t {
 	zend_ulong id;
 	void*** ls;
@@ -42,10 +38,7 @@ typedef struct _pthreads_object_t {
 	unsigned int scope;
 	zend_ulong options;
 	pthreads_monitor_t *monitor;
-	union {
-		pthreads_store_t *props;
-		pthreads_socket_t *sock;
-	} store;
+	pthreads_store_t *props;
 	zval user_exception_handler;
 	pthreads_ident_t creator;
 	pthreads_ident_t local;

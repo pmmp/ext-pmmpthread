@@ -85,7 +85,6 @@ extern zend_class_entry *pthreads_threaded_array_entry;
 extern zend_class_entry *pthreads_threaded_runnable_entry;
 extern zend_class_entry *pthreads_thread_entry;
 extern zend_class_entry *pthreads_worker_entry;
-extern zend_class_entry *pthreads_socket_entry;
 extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
 #define IS_PTHREADS_CLASS(c) \

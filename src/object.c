@@ -185,17 +185,6 @@ zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 } /* }}} */
 
 /* {{{ */
-zend_object* pthreads_socket_ctor(zend_class_entry *entry) {
-	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
-		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
-
-	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_SOCKET);
-	threaded->std.handlers = &pthreads_socket_handlers;
-
-	return &threaded->std;
-} /* }}} */
-
-/* {{{ */
 int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *buflen, zend_serialize_data *data) {
 	pthreads_zend_object_t *address = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
 	if (address->original_zobj != NULL) {
@@ -351,11 +340,7 @@ static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 	ts_obj->creator.ls = TSRMLS_CACHE;
 	ts_obj->creator.id = pthreads_self();
 	ts_obj->options = PTHREADS_INHERIT_ALL;
-	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
-		ts_obj->store.props   = pthreads_store_alloc();
-	} else {
-		ts_obj->store.sock = pthreads_socket_alloc();
-	}
+	ts_obj->props   = pthreads_store_alloc();
 	return ts_obj;
 } /* }}} */
 
@@ -369,10 +354,8 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 
 	zend_object_std_init(&base->std, entry);
 	object_properties_init(&base->std, entry);
-	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
-		pthreads_base_init(base);
-		base->local_props_modcount = base->ts_obj->store.props->modcount - 1;
-	}
+	pthreads_base_init(base);
+	base->local_props_modcount = base->ts_obj->props->modcount - 1;
 } /* }}} */
 
 /* {{{ */
@@ -392,13 +375,9 @@ void pthreads_base_dtor(zend_object *object) {
 /* {{{ */
 static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 	pthreads_object_t *ts_obj = base->ts_obj;
-	if (!PTHREADS_IS_SOCKET(base)) {
-		if (pthreads_monitor_lock(ts_obj->monitor)) {
-			pthreads_store_free(ts_obj->store.props);
-			pthreads_monitor_unlock(ts_obj->monitor);
-		}
-	} else {
-		pthreads_socket_free(ts_obj->store.sock, 1);
+	if (pthreads_monitor_lock(ts_obj->monitor)) {
+		pthreads_store_free(ts_obj->props);
+		pthreads_monitor_unlock(ts_obj->monitor);
 	}
 
 	pthreads_monitor_free(ts_obj->monitor);
