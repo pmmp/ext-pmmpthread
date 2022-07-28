@@ -7,14 +7,13 @@ on:
 
 jobs:
   build:
-    name: Tests (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}, JIT ${{ matrix.jit }})
+    name: PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}
     strategy:
       fail-fast: false
       matrix:
         php: [8.0.21, 8.1.8]
-        opcache: [0, 1]
         valgrind: [0, 1]
-        jit: [0, 1205]
+        opcache: [off, on, jit]
 
     runs-on: ubuntu-18.04
 
@@ -60,13 +59,15 @@ jobs:
       - name: Generate php.ini
         run: |
           echo "extension=pthreads.so" > $GITHUB_WORKSPACE/php.ini
-          if [[ "${{ matrix.opcache }}" == "1" ]]; then
+          if [[ "${{ matrix.opcache }}" != "off" ]]; then
             echo "Enabling OPcache"
             echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.jit=${{ matrix.jit }}" >> $GITHUB_WORKSPACE/php.ini
-            echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
+            if [[ "${{ matrix.opcache }}" == "jit" ]]; then
+              echo "opcache.jit=1205" >> $GITHUB_WORKSPACE/php.ini
+              echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
+            fi
           else
             echo "OPcache is not enabled for this run"
           fi
@@ -79,7 +80,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v2
         with:
-          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}-jit-${{ matrix.jit }}
+          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}
           path: |
             ${{ github.workspace }}/tests/*
             !${{ github.workspace }}/tests/*.phpt
