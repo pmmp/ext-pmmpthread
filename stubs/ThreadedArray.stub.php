@@ -6,7 +6,7 @@
  * @generate-class-entries
  * @strict-properties
  */
-final class ThreadedArray extends ThreadedBase implements Traversable, Countable
+final class ThreadedArray extends ThreadedBase implements Countable, ArrayAccess
 {
     /**
      * Fetches a chunk of the objects properties table of the given size
@@ -54,4 +54,12 @@ final class ThreadedArray extends ThreadedBase implements Traversable, Countable
      * @return mixed The first item in the array
      */
     public function shift() : mixed{}
+
+	public function offsetGet(mixed $offset) : mixed{}
+
+	public function offsetSet(mixed $offset, mixed $value) : void{}
+
+	public function offsetExists(mixed $offset) : bool{}
+
+	public function offsetUnset(mixed $offset) : void{}
 }

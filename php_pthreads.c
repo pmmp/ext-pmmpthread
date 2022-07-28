@@ -161,7 +161,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_base_entry->unserialize = pthreads_threaded_unserialize;
 	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
 
-	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_traversable, zend_ce_countable);
+	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_countable, zend_ce_arrayaccess);
 	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
 
 	pthreads_ce_ThreadedConnectionException = register_class_ThreadedConnectionException(spl_ce_RuntimeException);

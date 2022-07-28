@@ -18,6 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 #define HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 
+#include <src/store.h>
 #include <stubs/ThreadedArray_arginfo.h>
 
 /* {{{ proto boolean ThreadedArray::merge(mixed $data, [boolean $overwrite = true])
@@ -94,6 +95,60 @@ PHP_METHOD(ThreadedArray, fromArray)
 
 	object_init_ex(return_value, pthreads_threaded_array_entry);
 	pthreads_store_merge(Z_OBJ_P(return_value), input, 1, PTHREADS_STORE_COERCE_ARRAY);
+} /* }}} */
+
+/* {{{ proto mixed ThreadedArray::offsetGet(mixed $offset)
+	Gets an offset from the array */
+PHP_METHOD(ThreadedArray, offsetGet)
+{
+	zval* key;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_ZVAL(key)
+	ZEND_PARSE_PARAMETERS_END();
+
+	pthreads_store_read(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
+} /* }}} */
+
+/* {{{ proto void ThreadedArray::offsetSet(mixed $offset, mixed $value)
+	Sets an offset to the given value */
+PHP_METHOD(ThreadedArray, offsetSet)
+{
+	zval* key;
+	zval* value;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
+		Z_PARAM_ZVAL(key)
+		Z_PARAM_ZVAL(value)
+	ZEND_PARSE_PARAMETERS_END();
+
+	pthreads_store_write(Z_OBJ_P(getThis()), key, value, PTHREADS_STORE_NO_COERCE_ARRAY);
+} /* }}} */
+
+/* {{{ proto bool ThreadedArray::offsetExists(mixed $offset)
+	Returns whether an offset exists in the array */
+PHP_METHOD(ThreadedArray, offsetExists)
+{
+	zval* key;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_ZVAL(key)
+	ZEND_PARSE_PARAMETERS_END();
+
+	RETURN_BOOL(pthreads_store_isset(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
+} /* }}} */
+
+/* {{{ proto void ThreadedArray::offsetUnset(mixed $offset)
+	Removes an offset from the array, if it exists */
+PHP_METHOD(ThreadedArray, offsetUnset)
+{
+	zval* key;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_ZVAL(key)
+	ZEND_PARSE_PARAMETERS_END();
+
+	pthreads_store_delete(Z_OBJ_P(getThis()), key);
 } /* }}} */
 
 #endif
