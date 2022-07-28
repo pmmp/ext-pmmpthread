@@ -36,8 +36,6 @@ typedef struct _pthreads_store_t {
 
 typedef struct _pthreads_storage {
 	pthreads_store_type type;
-	size_t 	length;
-	zend_bool 	exists;
 	void    	*data;
 } pthreads_storage;
 
