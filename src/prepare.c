@@ -78,9 +78,9 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			zval* enum_value = candidate->enum_backing_type == IS_UNDEF ?
 				NULL :
 				zend_enum_fetch_case_value(Z_OBJ(zc->value));
-			zval copied_enum_value;
-			ZVAL_UNDEF(&copied_enum_value);
+
 			if (enum_value) {
+				zval copied_enum_value;
 				if (pthreads_store_separate(enum_value, &copied_enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
@@ -99,9 +99,11 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 				} else {
 					zend_hash_index_del(prepared->backed_enum_table, Z_LVAL(copied_enum_value));
 				}
+				zend_enum_add_case(prepared, name, &copied_enum_value);
+			} else {
+				zend_enum_add_case(prepared, name, NULL);
 			}
 
-			zend_enum_add_case(prepared, name, &copied_enum_value);
 
 			rc = zend_hash_find_ptr(&prepared->constants_table, name);
 			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
