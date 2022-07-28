@@ -210,10 +210,6 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_array_handlers.write_dimension = pthreads_write_dimension;
 	pthreads_threaded_array_handlers.has_dimension = pthreads_has_dimension;
 	pthreads_threaded_array_handlers.unset_dimension = pthreads_unset_dimension;
-	pthreads_threaded_array_handlers.read_property = pthreads_read_property_disallow;
-	pthreads_threaded_array_handlers.write_property = pthreads_write_property_disallow;
-	pthreads_threaded_array_handlers.has_property = pthreads_has_property_disallow;
-	pthreads_threaded_array_handlers.unset_property = pthreads_unset_property_disallow;
 
 	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);
 

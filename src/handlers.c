@@ -37,18 +37,9 @@
 
 typedef uint32_t zend_guard;
 
-#define PTHREADS_NO_PROPERTIES(object) \
-	zend_throw_exception_ex(spl_ce_RuntimeException, 0, "%s objects are not allowed to have properties", ZSTR_VAL(object->ce->name))
-
 /* {{{ */
 int pthreads_count_properties(PTHREADS_COUNT_PASSTHRU_D) {
 	return pthreads_store_count(object, count);
-} /* }}} */
-
-/* {{{ */
-int pthreads_count_properties_disallow(PTHREADS_COUNT_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return -1;
 } /* }}} */
 
 /* {{{ */
@@ -116,18 +107,6 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-zval * pthreads_read_property_disallow (PTHREADS_READ_PROPERTY_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return &EG(uninitialized_zval);
-}
-
-zval* pthreads_read_dimension_disallow(PTHREADS_READ_DIMENSION_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return &EG(uninitialized_zval);
-}
-/* }}} */
-
-/* {{{ */
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE){
 		zend_throw_error(
@@ -180,15 +159,6 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-zval* pthreads_write_property_disallow(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return &EG(error_zval);
-}
-
-void pthreads_write_dimension_disallow(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) { PTHREADS_NO_PROPERTIES(object); }
-/* }}} */
-
-/* {{{ */
 int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
 	return pthreads_store_isset(object, member, has_set_exists);
 }
@@ -232,18 +202,6 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-int pthreads_has_property_disallow(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return 0;
-}
-
-int pthreads_has_dimension_disallow(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-	return 0;
-}
-/* }}} */
-
-/* {{{ */
 void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) {
 	pthreads_store_delete(object, member);
 }
@@ -280,13 +238,6 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 		pthreads_store_delete(object, &zmember);
 	}
 }
-/* }}} */
-
-/* {{{ */
-void pthreads_unset_property_disallow(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
-	PTHREADS_NO_PROPERTIES(object);
-}
-void pthreads_unset_dimension_disallow(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) { PTHREADS_NO_PROPERTIES(object); }
 /* }}} */
 
 /* {{{ */
