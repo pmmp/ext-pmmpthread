@@ -38,6 +38,8 @@
 #   include <src/copy.h>
 #endif
 
+#include <Zend/zend_enum.h>
+
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
@@ -65,26 +67,61 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 		zend_class_constant *zc = Z_PTR_P(value);
 		zend_class_constant *rc;
 
-		if (zc->ce->type == ZEND_INTERNAL_CLASS) {
-			rc = pemalloc(sizeof(zend_class_constant), 1);
+		name = zend_string_new(key);
+
+		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE) {
+			//enum objects require special treatment, because serializing and unserializing them just gives back the same object
+			zval *enum_value = candidate->enum_backing_type == IS_UNDEF ?
+				NULL :
+				zend_hash_find(candidate->backed_enum_table, name);
+			zval* copied_enum_value = NULL;
+			if (enum_value) {
+				if (pthreads_store_separate(enum_value, copied_enum_value) == FAILURE) {
+					zend_error_at_noreturn(
+						E_CORE_ERROR,
+						prepared->info.user.filename,
+						0,
+						"pthreads encountered a non-copyable enum case %s::%s with backing value of type %s",
+						ZSTR_VAL(prepared->name),
+						ZSTR_VAL(name),
+						zend_get_type_by_const(Z_TYPE_P(enum_value))
+					);
+				}
+			}
+			zend_enum_add_case(prepared, name, copied_enum_value);
+
+			rc = zend_hash_find_ptr(&prepared->constants_table, name);
+			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
 		} else {
-			rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
-		}
+			if (zc->ce->type == ZEND_INTERNAL_CLASS) {
+				rc = pemalloc(sizeof(zend_class_constant), 1);
+			} else {
+				rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
+			}
 
-		memcpy(rc, zc, sizeof(zend_class_constant));
-
-		if (zc->attributes) {
-			rc->attributes = pthreads_copy_attributes(zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
-		}
-		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
-			if (zc->doc_comment != NULL) {
-				rc->doc_comment = zend_string_new(zc->doc_comment);
+			memcpy(rc, zc, sizeof(zend_class_constant));
+			if (pthreads_store_separate(&zc->value, &rc->value) != SUCCESS) {
+				zend_error_at_noreturn(
+					E_CORE_ERROR,
+					prepared->info.user.filename,
+					0,
+					"pthreads encountered a non-copyable class constant %s::%s with value of type %s",
+					ZSTR_VAL(prepared->name),
+					ZSTR_VAL(name),
+					zend_get_type_by_const(Z_TYPE(zc->value))
+				);
 			}
 			rc->ce = pthreads_prepared_entry(thread, zc->ce);
 
-			name = zend_string_new(key);
 			zend_hash_add_ptr(&prepared->constants_table, name, rc);
-			zend_string_release(name);
+		}
+		zend_string_release(name);
+
+		if (zc->doc_comment != NULL) {
+			rc->doc_comment = zend_string_new(zc->doc_comment);
+		}
+		if (zc->attributes) {
+			rc->attributes = pthreads_copy_attributes(zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
 		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
@@ -484,6 +521,13 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 	
 	if (candidate->attributes) {
 		prepared->attributes = pthreads_copy_attributes(candidate->attributes, prepared->info.user.filename);
+	}
+
+	prepared->enum_backing_type = candidate->enum_backing_type;
+	if (candidate->backed_enum_table) {
+		prepared->backed_enum_table = emalloc(sizeof(HashTable));
+		zend_hash_init(prepared->backed_enum_table, 0, NULL, ZVAL_PTR_DTOR, 0);
+		//prepare_class_constants() will populate this table later
 	}
 
 	if (prepared->info.user.filename) {
