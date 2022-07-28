@@ -74,9 +74,6 @@ void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D); /* }}} */
 /* {{{ count properties in storage */
 int pthreads_count_properties(PTHREADS_COUNT_PASSTHRU_D); /* }}} */
 
-/* {{{ count properties in storage */
-int pthreads_count_properties_disallow(PTHREADS_COUNT_PASSTHRU_D); /* }}} */
-
 /* {{{ cast an object to a normal array helper */
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D); /* }}} */
 
