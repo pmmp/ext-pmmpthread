@@ -324,7 +324,7 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 		pthreads_store_write(
 			&base->std, &key,
 			&base->std.ce->default_properties_table[offset],
-			PTHREADS_STORE_COERCE_ARRAY
+			PTHREADS_STORE_NO_COERCE_ARRAY
 		);
 		zval_ptr_dtor(&key);
 	} ZEND_HASH_FOREACH_END();
