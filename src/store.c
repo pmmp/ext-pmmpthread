@@ -337,6 +337,30 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	return result;
 } /* }}} */
 
+/* {{{ Copies strings (as needed) for use in thread-safe object tables */
+static zend_string* pthreads_store_save_string(zend_string* string) {
+	zend_string* result;
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) { //interned by OPcache, or provided by builtin class
+		result = string;
+	}
+	else {
+		result = zend_string_init(ZSTR_VAL(string), ZSTR_LEN(string), 1);
+	}
+
+	return result;
+} /* }}} */
+
+static zend_string* pthreads_store_restore_string(zend_string* string) {
+	zend_string* result;
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) {
+		/* string from OPcache or internal class */
+		result = string;
+	} else {
+		result = zend_string_init(ZSTR_VAL(string), ZSTR_LEN(string), 0);
+	}
+	return result;
+}
+
 /* {{{ */
 int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded) {
 	int result = FAILURE;
@@ -383,8 +407,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		} else {
 			/* anything provided by this context might not live long enough to be used by another context,
 			 * so we have to hard copy, even if the string is interned. */
-			zend_string *orig_key = Z_STR(member);
-			zend_string *keyed = zend_string_init(ZSTR_VAL(orig_key), ZSTR_LEN(orig_key), 1);
+			zend_string* keyed = pthreads_store_save_string(Z_STR(member));
 
 			if (zend_hash_update(&ts_obj->props->hash, keyed, &zstorage)) {
 				result = SUCCESS;
@@ -639,7 +662,7 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 					zval_ptr_dtor(&pzval);
 				}
 			} else {
-				rename = zend_string_init(name->val, name->len, 0);
+				rename = pthreads_store_restore_string(name);
 				if (!zend_hash_update(hash, rename, &pzval))
 					zval_ptr_dtor(&pzval);
 				zend_string_release(rename);
@@ -757,11 +780,7 @@ zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
 			result = SUCCESS;
 			break;
 		case IS_STRING:
-			if (GC_FLAGS(Z_STR_P(write)) & IS_STR_PERMANENT) { //interned by OPcache, or provided by builtin class
-				ZVAL_STR(zstorage, Z_STR_P(write));
-			} else {
-				ZVAL_STR(zstorage, zend_string_init(Z_STRVAL_P(write), Z_STRLEN_P(write), 1));
-			}
+			ZVAL_STR(zstorage, pthreads_store_save_string(Z_STR_P(write)));
 			result = SUCCESS;
 			break;
 		default: {
@@ -885,13 +904,7 @@ void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *wa
 			ZVAL_COPY(unstore, zstorage);
 			break;
 		case IS_STRING:
-			if (GC_FLAGS(Z_STR_P(zstorage)) & IS_STR_PERMANENT) {
-				/* string from OPcache or internal class */
-				ZVAL_STR(unstore, Z_STR_P(zstorage));
-			} else {
-				/* we can't use this directly (it would cause refcount races) */
-				ZVAL_STR(unstore, zend_string_init(Z_STRVAL_P(zstorage), Z_STRLEN_P(zstorage), 0));
-			}
+			ZVAL_STR(unstore, pthreads_store_restore_string(Z_STR_P(zstorage)));
 			break;
 		case IS_PTR:
 			{
@@ -924,7 +937,7 @@ static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage)
 
 		ZVAL_PTR(new_zstorage, copy);
 	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
-		ZVAL_STR(new_zstorage, zend_string_init(Z_STRVAL_P(zstorage), Z_STRLEN_P(zstorage), 1));
+		ZVAL_STR(new_zstorage, pthreads_store_save_string(Z_STR_P(zstorage)));
 	} else {
 		ZEND_ASSERT(!Z_REFCOUNTED_P(zstorage));
 		ZVAL_COPY(new_zstorage, zstorage);
@@ -1194,8 +1207,7 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 							} else {
 								/* anything provided by this context might not live long enough to be used by another context,
 								 * so we have to hard copy, even if the string is interned. */
-								zend_string *orig_key = Z_STR(key);
-								zend_string *keyed = zend_string_init(ZSTR_VAL(orig_key), ZSTR_LEN(orig_key), 1);
+								zend_string *keyed = pthreads_store_save_string(Z_STR(key));
 
 								zend_hash_update(tables[0], keyed, &new_zstorage);
 								zend_string_release(keyed);
