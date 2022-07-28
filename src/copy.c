@@ -18,21 +18,28 @@
 
 #include <src/copy.h>
 
-static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr) {
+static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr, zend_string *filename) {
 	uint32_t i;
 	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
 
 	for (i = 0; i < attr->argc; i++) {
 		if (pthreads_store_separate(&attr->args[i].value, &copy->args[i].value) == FAILURE) {
 			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
-			zend_error_noreturn(E_CORE_ERROR, "pthreads encountered a non-copyable attribute argument of type %s", zend_get_type_by_const(Z_TYPE(attr->args[i].value)));
+			zend_error_at_noreturn(
+				E_CORE_ERROR,
+				filename,
+				attr->lineno,
+				"pthreads encountered a non-copyable attribute argument %s of type %s",
+				ZSTR_VAL(attr->name),
+				zend_get_type_by_const(Z_TYPE(attr->args[i].value))
+			);
 		}
 		copy->args[i].name = attr->args[i].name ? zend_string_new(attr->args[i].name) : NULL;
 	}
 }
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(HashTable *old) {
+HashTable* pthreads_copy_attributes(HashTable *old, zend_string *filename) {
 	if (!old) {
 		return NULL;
 	}
@@ -43,7 +50,7 @@ HashTable* pthreads_copy_attributes(HashTable *old) {
 	HashTable *new = NULL;
 
 	ZEND_HASH_FOREACH_VAL(old, v) {
-		pthreads_copy_attribute(&new, Z_PTR_P(v));
+		pthreads_copy_attribute(&new, Z_PTR_P(v), filename);
 	} ZEND_HASH_FOREACH_END();
 
 	return new;
@@ -281,6 +288,20 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 	return info;
 } /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+/* {{{ */
+static zend_op_array** pthreads_copy_dynamic_func_defs(const zend_op_array** old, uint32_t num_dynamic_func_defs) {
+	zend_op_array** new = (zend_op_array**) emalloc(num_dynamic_func_defs * sizeof(zend_op_array*));
+
+	for (int i = 0; i < num_dynamic_func_defs; i++) {
+		//assume this is OK?
+		new[i] = (zend_op_array*) pthreads_copy_function(old[i]);
+	}
+
+	return new;
+} /* }}} */
+#endif
+
 /* {{{ */
 static inline zend_function* pthreads_copy_user_function(const zend_function *function) {
 	zend_function  *copy;
@@ -366,13 +387,17 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
 		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
-		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(op_array->attributes);
+		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(op_array->attributes, op_array->filename);
 	}
 
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
 	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+
+#if PHP_VERSION_ID >= 80100
+	if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
+#endif
 
 	return copy;
 } /* }}} */

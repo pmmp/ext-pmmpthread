@@ -22,7 +22,7 @@
 #include <Zend/zend_attributes.h>
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(HashTable *attributes); /* }}} */
+HashTable* pthreads_copy_attributes(HashTable *attributes, zend_string *filename); /* }}} */
 
 /* {{{ */
 zend_function* pthreads_copy_function(const zend_function *function); /* }}} */

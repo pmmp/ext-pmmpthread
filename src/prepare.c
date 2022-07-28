@@ -38,6 +38,10 @@
 #   include <src/copy.h>
 #endif
 
+#if PHP_VERSION_ID >= 80100
+#include <Zend/zend_enum.h>
+#endif
+
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
@@ -63,31 +67,123 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 		}
 
 		zend_class_constant *zc = Z_PTR_P(value);
-		zend_class_constant *rc;
+		zend_class_constant* rc;
 
-		if (zc->ce->type == ZEND_INTERNAL_CLASS) {
-			rc = pemalloc(sizeof(zend_class_constant), 1);
+		name = zend_string_new(key);
+
+#if PHP_VERSION_ID >= 80100
+		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE && Z_TYPE(zc->value) == IS_OBJECT) {
+			//resolved enum members require special treatment, because serializing and unserializing them just gives
+			//back the original enum member.
+			zval* enum_value = candidate->enum_backing_type == IS_UNDEF ?
+				NULL :
+				zend_enum_fetch_case_value(Z_OBJ(zc->value));
+
+			if (enum_value) {
+				zval copied_enum_value;
+				if (pthreads_store_separate(enum_value, &copied_enum_value) == FAILURE) {
+					zend_error_at_noreturn(
+						E_CORE_ERROR,
+						prepared->info.user.filename,
+						0,
+						"pthreads encountered a non-copyable enum case %s::%s with backing value of type %s",
+						ZSTR_VAL(prepared->name),
+						ZSTR_VAL(name),
+						zend_get_type_by_const(Z_TYPE_P(enum_value))
+					);
+				}
+				ZEND_ASSERT(prepared->backed_enum_table);
+				//zend_enum_add_case() won't expect this to be populated, so we have to remove it (we populated it in prepare_backed_enum_table())
+				if (Z_TYPE(copied_enum_value) == IS_STRING) {
+					zend_hash_del(prepared->backed_enum_table, Z_STR(copied_enum_value));
+				} else {
+					zend_hash_index_del(prepared->backed_enum_table, Z_LVAL(copied_enum_value));
+				}
+				zend_enum_add_case(prepared, name, &copied_enum_value);
+			} else {
+				zend_enum_add_case(prepared, name, NULL);
+			}
+
+
+			rc = zend_hash_find_ptr(&prepared->constants_table, name);
+			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
+#else
+		if (0) {
+#endif
 		} else {
-			rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
-		}
+			if (zc->ce->type == ZEND_INTERNAL_CLASS) {
+				rc = pemalloc(sizeof(zend_class_constant), 1);
+			} else {
+				rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
+			}
 
-		memcpy(rc, zc, sizeof(zend_class_constant));
-
-		if (zc->attributes) {
-			rc->attributes = pthreads_copy_attributes(zc->attributes);
-		}
-		if (pthreads_store_separate(&zc->value, &rc->value) == SUCCESS) {
-			if (zc->doc_comment != NULL) {
-				rc->doc_comment = zend_string_new(zc->doc_comment);
+			memcpy(rc, zc, sizeof(zend_class_constant));
+			if (pthreads_store_separate(&zc->value, &rc->value) != SUCCESS) {
+				zend_error_at_noreturn(
+					E_CORE_ERROR,
+					prepared->info.user.filename,
+					0,
+					"pthreads encountered a non-copyable class constant %s::%s with value of type %s",
+					ZSTR_VAL(prepared->name),
+					ZSTR_VAL(name),
+					zend_get_type_by_const(Z_TYPE(zc->value))
+				);
 			}
 			rc->ce = pthreads_prepared_entry(thread, zc->ce);
 
-			name = zend_string_new(key);
 			zend_hash_add_ptr(&prepared->constants_table, name, rc);
-			zend_string_release(name);
+		}
+		zend_string_release(name);
+
+		if (zc->doc_comment != NULL) {
+			rc->doc_comment = zend_string_new(zc->doc_comment);
+		}
+		if (zc->attributes) {
+			rc->attributes = pthreads_copy_attributes(zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
 		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
+
+#if PHP_VERSION_ID >= 80100
+ /* {{{ */
+static void init_class_statics(pthreads_object_t* thread, zend_class_entry* candidate, zend_class_entry* prepared)
+{
+	int i;
+	zval* p;
+
+	//to maintain parity with 8.0 behaviour, we manually copy the current static members.
+	//While it would make sense to just stick with the default ones to avoid doing wacky stuff, we
+	//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
+	//this code is adapted from zend_class_init_statics()
+
+	//the map_ptr won't be initialized if there are no declared static members, or if the class is opcached and not linked
+	zval* candidate_static_members_table = candidate->default_static_members_count && (candidate->ce_flags & ZEND_ACC_LINKED) ?
+		PTHREADS_MAP_PTR_GET(thread->creator.ls, candidate->static_members_table) :
+		NULL;
+
+	if (candidate_static_members_table && !CE_STATIC_MEMBERS(prepared)) {
+		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->parent) {
+			zend_class_init_statics(prepared->parent);
+		}
+
+		ZEND_MAP_PTR_SET(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
+		for (i = prepared->default_static_members_count - 1; i >= 0; i--) {
+			//copy in reverse order, to ensure object ID consistency with 8.0
+			p = &prepared->default_static_members_table[i];
+			if (Z_TYPE_P(p) == IS_INDIRECT) {
+				zval* q = &CE_STATIC_MEMBERS(prepared->parent)[i];
+				ZVAL_DEINDIRECT(q);
+				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
+			} else {
+				pthreads_store_separate(
+					&candidate_static_members_table[i],
+					&CE_STATIC_MEMBERS(prepared)[i]
+				);
+			}
+		}
+	}
+} /* }}} */
+#endif
 
 /* {{{ */
 static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
@@ -129,7 +225,15 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 
 			parent = parent->parent;
 		}
+
+#if PHP_VERSION_ID >= 80100
+		if (!ZEND_MAP_PTR(prepared->static_members_table)) {
+			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
+			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);
+		}
+#else
 		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
+#endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
 
@@ -197,13 +301,15 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		ZEND_TYPE_FOREACH(dup->type, single_type) {
 			if (ZEND_TYPE_HAS_NAME(*single_type)) {
 				ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
+#if PHP_VERSION_ID < 80100
 			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
 				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
+#endif
 			}
 		} ZEND_TYPE_FOREACH_END();
 
 		if (info->attributes) {
-			dup->attributes = pthreads_copy_attributes(info->attributes);
+			dup->attributes = pthreads_copy_attributes(info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
 		}
 
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
@@ -411,6 +517,40 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	return prepared;
 } /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+/* {{{ */
+static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
+	if (!candidate_table) {
+		return NULL;
+	}
+
+	HashTable *result = emalloc(sizeof(HashTable));
+	zend_hash_init(result, 0, NULL, ZVAL_PTR_DTOR, 0);
+
+	HashPosition h;
+	zend_string* key;
+	zval* val;
+	ZEND_HASH_FOREACH_KEY_VAL(candidate_table, h, key, val) {
+		zval new_val;
+		if (pthreads_store_separate(val, &new_val) == FAILURE) {
+			ZEND_ASSERT(0);
+			continue;
+		}
+		if (key) {
+			zend_string* new_key = zend_string_new(key);
+			zend_hash_add_new(result, key, &new_val);
+			zend_string_release(new_key);
+		}
+		else {
+			zend_hash_index_add_new(result, h, &new_val);
+		}
+	} ZEND_HASH_FOREACH_END();
+
+	return result;
+}
+/* }}} */
+#endif
+
 /* {{{ */
 static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
 	zend_class_entry *prepared;
@@ -432,8 +572,15 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 		} else prepared->info.user.doc_comment = NULL;
 	
 	if (candidate->attributes) {
-		prepared->attributes = pthreads_copy_attributes(candidate->attributes);
+		prepared->attributes = pthreads_copy_attributes(candidate->attributes, prepared->info.user.filename);
 	}
+
+#if PHP_VERSION_ID >= 80100
+	prepared->enum_backing_type = candidate->enum_backing_type;
+	if (candidate->backed_enum_table) {
+		prepared->backed_enum_table = prepare_backed_enum_table(candidate->backed_enum_table);
+	}
+#endif
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
@@ -461,13 +608,11 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 	zend_class_entry *candidate = va_arg(argv, zend_class_entry*);
 	zend_class_entry *scope = function->common.scope;
 
-	if (function->type == ZEND_USER_FUNCTION) {
-		if (scope == candidate) {
-			function->common.scope = prepared;
-		} else {
-			if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
-				function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
-			}
+	if (scope == candidate) {
+		function->common.scope = prepared;
+	} else {
+		if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
+			function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
 		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
@@ -529,29 +674,40 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 
 	lookup = zend_string_tolower(candidate->name);
 
+	prepared = zend_hash_find_ptr(EG(class_table), lookup);
+	if(
+		prepared &&
+		(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == ZEND_ACC_ANON_CLASS &&
+		(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
+	){
+		//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
 
-	if ((prepared = zend_hash_find_ptr(EG(class_table), lookup))) {
-		zend_string_release(lookup);
-
-		if(
-			(prepared->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == ZEND_ACC_ANON_CLASS &&
-			(candidate->ce_flags & (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)) == (ZEND_ACC_ANON_CLASS|ZEND_ACC_LINKED)
-		){
-			ZEND_ASSERT(!(candidate->ce_flags & ZEND_ACC_IMMUTABLE) && !(prepared->ce_flags & ZEND_ACC_IMMUTABLE));
-			//anonymous class that was unbound at initial copy, now bound on another thread (worker task stack?)
+		if (prepared->ce_flags & ZEND_ACC_IMMUTABLE) {
+			//we can't modify an immutable class; fallthru to full copy
+			prepared = NULL;
+		} else {
 			pthreads_complete_entry(thread, candidate, prepared);
 			if (do_late_bindings) {
 				//linking might cause new statics and constants to become visible
 				pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
 			}
 		}
+	}
+
+	if (prepared) {
+		zend_string_release(lookup);
 		return prepared;
 	}
 
 	if (candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		//IMMUTABLE classes don't need to be copied and should not be modified
+		//this may overwrite previously inserted immutable classes on 8.1 (e.g. unlinked opcached class -> linked opcached class)
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
+		if (do_late_bindings) {
+			//this is needed to copy non-default statics from the origin thread
+			pthreads_prepared_entry_late_bindings(thread, candidate, candidate);
+		}
 		return candidate;
 	}
 
@@ -578,9 +734,14 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 
 /* {{{ */
 void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
-	prepare_class_property_table(thread, candidate, prepared);
-	prepare_class_statics(thread, candidate, prepared);
-	prepare_class_constants(thread, candidate, prepared);
+	if (!(candidate->ce_flags & ZEND_ACC_IMMUTABLE)) {
+		prepare_class_property_table(thread, candidate, prepared);
+		prepare_class_statics(thread, candidate, prepared);
+		prepare_class_constants(thread, candidate, prepared);
+	}
+#if PHP_VERSION_ID >= 80100
+	init_class_statics(thread, candidate, prepared);
+#endif
 } /* }}} */
 
 
@@ -590,7 +751,7 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->local.ls, class_table), name, entry) {
-		if (entry->type != ZEND_INTERNAL_CLASS && !(entry->ce_flags & ZEND_ACC_IMMUTABLE)) {
+		if (entry->type != ZEND_INTERNAL_CLASS) {
 			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -678,7 +839,12 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 					constant.name = zend_string_new(name);
 
 					if (pthreads_store_separate(&zconstant->value, &constant.value) != SUCCESS) {
-						zend_error_noreturn(E_CORE_ERROR, "Encountered unknown non-copyable constant type");
+						zend_error_noreturn(
+							E_CORE_ERROR,
+							"pthreads encountered an unknown non-copyable constant %s of type %s",
+							ZSTR_VAL(zconstant->name),
+							zend_get_type_by_const(Z_TYPE(zconstant->value))
+						);
 					}
 					ZEND_CONSTANT_SET_FLAGS(&constant, ZEND_CONSTANT_FLAGS(zconstant), ZEND_CONSTANT_MODULE_NUMBER(zconstant));
 					zend_register_constant(&constant);
