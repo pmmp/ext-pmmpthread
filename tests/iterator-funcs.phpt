@@ -13,23 +13,23 @@ class MyIterator implements \Iterator {
                 $this->position = 0;
         }
 
-        public function next() {
+        public function next() : void{
                 ++$this->position;
         }
 
-        public function key() {
+        public function key() : int{
                 return $this->position;
         }
 
-        public function current() {
+        public function current() : string{
                 return $this->items[$this->position];
         }
 
-        public function valid() {
+        public function valid() : bool{
                 return ($this->position < count($this->items));
         }
 
-        public function rewind() {
+        public function rewind() : void{
                 $this->myProtectedMethod();
                 $this->position = 0;
         }

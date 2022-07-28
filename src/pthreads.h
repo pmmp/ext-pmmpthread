@@ -69,6 +69,7 @@
 #include <Zend/zend_interfaces.h>
 #include <Zend/zend_inheritance.h>
 #include <Zend/zend_list.h>
+#include <Zend/zend_map_ptr.h>
 #include <Zend/zend_object_handlers.h>
 #include <Zend/zend_smart_str.h>
 #include <Zend/zend_variables.h>
@@ -140,6 +141,15 @@ ZEND_END_MODULE_GLOBALS(pthreads)
 #define PTHREADS_PG(ls, v) PTHREADS_FETCH_CTX(ls, core_globals_id, php_core_globals*, v)
 #define PTHREADS_EG_ALL(ls) PTHREADS_FETCH_ALL(ls, executor_globals_id, zend_executor_globals*)
 
+#define PTHREADS_MAP_PTR_OFFSET2PTR(ls, offset) \
+	((void**)((char*)PTHREADS_CG(ls, map_ptr_base) + offset))
+#define PTHREADS_MAP_PTR_PTR2OFFSET(ls, ptr) \
+	((void*)(((char*)(ptr)) - ((char*)PTHREADS_CG(ls, map_ptr_base))))
+#define PTHREADS_MAP_PTR_GET(ls, ptr) \
+	(*(ZEND_MAP_PTR_IS_OFFSET(ptr) ? \
+		PTHREADS_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
+		((void**)(ZEND_MAP_PTR(ptr)))))
+
 static zend_string *zend_string_new(zend_string *s)
 {
 	zend_string *ret;
@@ -151,6 +161,13 @@ static zend_string *zend_string_new(zend_string *s)
 			return s;
 		}
 		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+#if PHP_VERSION_ID >= 80100
+		if(GC_FLAGS(s) & IS_STR_CLASS_NAME_MAP_PTR){
+			//in PHP 8.1, interned strings may abuse their refcount field to cache a map_ptr offset to their associated class
+			GC_SET_REFCOUNT(ret, GC_REFCOUNT(s));
+			GC_ADD_FLAGS(ret, IS_STR_CLASS_NAME_MAP_PTR);
+		}
+#endif
 	} else {
 		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
 	}
