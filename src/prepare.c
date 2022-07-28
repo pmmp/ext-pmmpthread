@@ -65,18 +65,21 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 		}
 
 		zend_class_constant *zc = Z_PTR_P(value);
-		zend_class_constant *rc;
+		zend_class_constant* rc;
 
 		name = zend_string_new(key);
 
-		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE) {
-			//enum objects require special treatment, because serializing and unserializing them just gives back the same object
-			zval *enum_value = candidate->enum_backing_type == IS_UNDEF ?
+#if PHP_VERSION_ID >= 80100
+		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE && Z_TYPE(zc->value) == IS_OBJECT) {
+			//resolved enum members require special treatment, because serializing and unserializing them just gives
+			//back the original enum member.
+			zval* enum_value = candidate->enum_backing_type == IS_UNDEF ?
 				NULL :
-				zend_hash_find(candidate->backed_enum_table, name);
-			zval* copied_enum_value = NULL;
+				zend_enum_fetch_case_value(Z_OBJ(zc->value));
+			zval copied_enum_value;
+			ZVAL_UNDEF(&copied_enum_value);
 			if (enum_value) {
-				if (pthreads_store_separate(enum_value, copied_enum_value) == FAILURE) {
+				if (pthreads_store_separate(enum_value, &copied_enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
 						prepared->info.user.filename,
@@ -87,11 +90,22 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 						zend_get_type_by_const(Z_TYPE_P(enum_value))
 					);
 				}
+				ZEND_ASSERT(prepared->backed_enum_table);
+				//zend_enum_add_case() won't expect this to be populated, so we have to remove it (we populated it in prepare_backed_enum_table())
+				if (Z_TYPE(copied_enum_value) == IS_STRING) {
+					zend_hash_del(prepared->backed_enum_table, Z_STR(copied_enum_value));
+				} else {
+					zend_hash_index_del(prepared->backed_enum_table, Z_LVAL(copied_enum_value));
+				}
 			}
-			zend_enum_add_case(prepared, name, copied_enum_value);
+
+			zend_enum_add_case(prepared, name, &copied_enum_value);
 
 			rc = zend_hash_find_ptr(&prepared->constants_table, name);
 			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
+#else
+		if (0) {
+#endif
 		} else {
 			if (zc->ce->type == ZEND_INTERNAL_CLASS) {
 				rc = pemalloc(sizeof(zend_class_constant), 1);
@@ -499,6 +513,40 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 	return prepared;
 } /* }}} */
 
+#if PHP_VERSION_ID >= 80100
+/* {{{ */
+static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
+	if (!candidate_table) {
+		return NULL;
+	}
+
+	HashTable *result = emalloc(sizeof(HashTable));
+	zend_hash_init(result, 0, NULL, ZVAL_PTR_DTOR, 0);
+
+	HashPosition h;
+	zend_string* key;
+	zval* val;
+	ZEND_HASH_FOREACH_KEY_VAL(candidate_table, h, key, val) {
+		zval new_val;
+		if (pthreads_store_separate(val, &new_val) == FAILURE) {
+			ZEND_ASSERT(0);
+			continue;
+		}
+		if (key) {
+			zend_string* new_key = zend_string_new(key);
+			zend_hash_add_new(result, key, &new_val);
+			zend_string_release(new_key);
+		}
+		else {
+			zend_hash_index_add_new(result, h, &new_val);
+		}
+	} ZEND_HASH_FOREACH_END();
+
+	return result;
+}
+/* }}} */
+#endif
+
 /* {{{ */
 static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
 	zend_class_entry *prepared;
@@ -523,12 +571,12 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 		prepared->attributes = pthreads_copy_attributes(candidate->attributes, prepared->info.user.filename);
 	}
 
+#if PHP_VERSION_ID >= 80100
 	prepared->enum_backing_type = candidate->enum_backing_type;
 	if (candidate->backed_enum_table) {
-		prepared->backed_enum_table = emalloc(sizeof(HashTable));
-		zend_hash_init(prepared->backed_enum_table, 0, NULL, ZVAL_PTR_DTOR, 0);
-		//prepare_class_constants() will populate this table later
+		prepared->backed_enum_table = prepare_backed_enum_table(candidate->backed_enum_table);
 	}
+#endif
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
