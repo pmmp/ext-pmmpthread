@@ -764,7 +764,7 @@ zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
 		default: {
 			pthreads_storage *storage = pthreads_store_create(write);
 			if (storage != NULL) {
-				ZVAL_PTR(zstorage, pthreads_store_create(write));
+				ZVAL_PTR(zstorage, storage);
 				result = SUCCESS;
 			} else {
 				result = FAILURE;
