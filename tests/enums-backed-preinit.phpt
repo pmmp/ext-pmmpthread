@@ -13,6 +13,7 @@ enum TestEnum : string{
 function test() : void{
 	foreach(TestEnum::cases() as $case){
 		var_dump($case->value);
+		var_dump(TestEnum::from($case->value));
 	}
 }
 
@@ -28,6 +29,10 @@ $t->start() && $t->join();
 ?>
 --EXPECT--
 string(3) "yes"
+enum(TestEnum::A)
 string(4) "yes2"
+enum(TestEnum::B)
 string(3) "yes"
+enum(TestEnum::A)
 string(4) "yes2"
+enum(TestEnum::B)
