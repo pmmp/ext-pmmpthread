@@ -122,7 +122,6 @@ static void pthreads_routine_init(pthreads_routine_arg_t *r, pthreads_zend_objec
 	r->ready  = pthreads_monitor_alloc();
 	pthreads_monitor_add(
 		r->thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED);
-	pthreads_prepare_parent(thread->ts_obj);
 }
 
 static void pthreads_routine_wait(pthreads_routine_arg_t *r) {

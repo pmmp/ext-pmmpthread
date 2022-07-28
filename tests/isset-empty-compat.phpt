@@ -25,14 +25,6 @@ class threadedObject extends \ThreadedBase {
     public $t_notEmpty = true;
 }
 
-$stdObject = new standard;
-$stdObject->aEmpty = [];
-$stdObject->aNotEmpty = [1];
-
-$threaded = new threadedObject;
-$threaded->aEmpty = [];
-$threaded->aNotEmpty = [1];
-
 foreach (array(
     't_false',
     't_null',
@@ -41,9 +33,7 @@ foreach (array(
     't_zero2',
     't_zero3',
     't_notSet',
-    't_notEmpty',
-	'aEmpty',
-	'aNotEmpty') as $prop) {
+    't_notEmpty') as $prop) {
     
     printf("%s:\n", $prop);
     var_dump(isset($stdObject->$prop) == isset($threaded->$prop));
@@ -81,13 +71,5 @@ bool(true)
 bool(true)
 
 t_notEmpty:
-bool(true)
-bool(true)
-
-aEmpty:
-bool(true)
-bool(true)
-
-aNotEmpty:
 bool(true)
 bool(true)

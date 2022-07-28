@@ -900,15 +900,6 @@ static inline void pthreads_prepare_includes(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_exception_handler(pthreads_object_t* thread) {
-	if (Z_TYPE(thread->user_exception_handler) != IS_UNDEF) {
-		pthreads_store_restore_zval(&EG(user_exception_handler), &thread->user_exception_handler);
-		pthreads_store_storage_dtor(&thread->user_exception_handler);
-		ZVAL_UNDEF(&thread->user_exception_handler);
-	}
-} /* }}} */
-
-/* {{{ */
 static inline void pthreads_prepare_resource_destructor(pthreads_object_t* thread) {
 	if (!PTHREADS_G(default_resource_dtor))
 		PTHREADS_G(default_resource_dtor)=(EG(regular_list).pDestructor);
@@ -922,41 +913,6 @@ static inline void pthreads_prepare_sapi(pthreads_object_t* thread) {
 	if (!(thread->options & PTHREADS_ALLOW_HEADERS)) {
 		SG(headers_sent)=1;
 		SG(request_info).no_headers = 1;
-	}
-} /* }}} */
-
-/* {{{ */
-static inline void pthreads_rebuild_object(zval *zv) {
-	if (Z_TYPE_P(zv) == IS_OBJECT) {
-		rebuild_object_properties(Z_OBJ_P(zv));
-	} else if (Z_TYPE_P(zv) == IS_ARRAY) {
-		zval *object = zend_hash_index_find(Z_ARRVAL_P(zv), 0);
-		if (object && Z_TYPE_P(object) == IS_OBJECT) {
-			rebuild_object_properties(Z_OBJ_P(object));
-		}
-	}
-} /* }}} */
-
-/* {{{ */
-void pthreads_prepare_parent(pthreads_object_t *thread) {
-	zval *handler = &EG(user_exception_handler);
-
-	ZVAL_UNDEF(&thread->user_exception_handler);
-	if (thread->options & (PTHREADS_INHERIT_CLASSES | PTHREADS_INHERIT_FUNCTIONS)) {
-		if (Z_TYPE_P(handler) != IS_UNDEF) {
-			pthreads_rebuild_object(handler);
-			if (Z_TYPE_P(handler) == IS_ARRAY) {
-				if (zend_hash_num_elements(Z_ARRVAL_P(handler)) > 1) {
-					if (!(thread->options & PTHREADS_INHERIT_CLASSES)) {
-						return;
-					}
-				} else if (!(thread->options & PTHREADS_INHERIT_FUNCTIONS)) {
-					return;
-				}
-			}
-
-			pthreads_store_save_zval(&thread->user_exception_handler, handler);
-		}
 	}
 } /* }}} */
 
@@ -1014,7 +970,6 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		if (thread->options & PTHREADS_INHERIT_INCLUDES)
 			pthreads_prepare_includes(thread);
 
-		pthreads_prepare_exception_handler(thread);
 		pthreads_prepare_resource_destructor(thread);
 		pthreads_monitor_add(ready, PTHREADS_MONITOR_READY);
 	} PTHREADS_PREPARATION_END_CRITICAL();

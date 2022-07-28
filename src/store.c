@@ -45,11 +45,6 @@
 
 
 /* {{{ */
-static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength);
-static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength);
-/* }}} */
-
-/* {{{ */
 pthreads_store_t* pthreads_store_alloc() {
 	pthreads_store_t *store = (pthreads_store_t*) calloc(1, sizeof(pthreads_store_t));
 
@@ -248,13 +243,6 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 							isset = 0;
 						}
 						break;
-					case IS_PTR: {
-							/* serialized array, serialized object, Threaded object, or resource */
-							pthreads_storage *serialized = (pthreads_storage *) Z_PTR_P(zstorage);
-							if (serialized->type == STORE_TYPE_ARRAY && serialized->exists == 0) {
-								isset = 0;
-							}
-						} break;
 					case IS_ARRAY:
 						if (zend_hash_num_elements(Z_ARRVAL_P(zstorage)) == 0) {
 							isset = 0;
@@ -374,7 +362,10 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		rebuild_object_properties(Z_OBJ_P(write));
 	}
 
-	pthreads_store_save_zval(&zstorage, write);
+	if (pthreads_store_save_zval(&zstorage, write) != SUCCESS) {
+		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_get_type_by_const(Z_TYPE_P(write)));
+		return FAILURE;
+	}
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		if (!key) {
@@ -739,25 +730,19 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 			}
 #endif
 
-			storage->type = STORE_TYPE_OBJECT;
-
-		/* break intentionally omitted */
-		case IS_ARRAY: if (pthreads_store_tostring(unstore, (char**) &storage->data, &storage->length)==SUCCESS) {
-			if (Z_TYPE_P(unstore) == IS_ARRAY) {
-				storage->exists = zend_hash_num_elements(Z_ARRVAL_P(unstore));
-				storage->type = STORE_TYPE_ARRAY;
-			}
-		} break;
+			/* fallthru to default, non-threaded, non-closure objects cannot be stored */
 		default:
-			ZEND_ASSERT(0);
-
+			free(storage);
+			storage = NULL;
+			break;
 	}
 	return storage;
 }
 /* }}} */
 
 /* {{{ */
-void pthreads_store_save_zval(zval *zstorage, zval *write) {
+zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
+	zend_result result = FAILURE;
 	switch (Z_TYPE_P(write)) {
 		case IS_UNDEF: //apparently this happens with promoted properties before they are initialized?
 		case IS_NULL:
@@ -766,6 +751,7 @@ void pthreads_store_save_zval(zval *zstorage, zval *write) {
 		case IS_LONG:
 		case IS_DOUBLE:
 			ZVAL_COPY(zstorage, write);
+			result = SUCCESS;
 			break;
 		case IS_STRING:
 			if (GC_FLAGS(Z_STR_P(write)) & IS_STR_PERMANENT) { //interned by OPcache, or provided by builtin class
@@ -773,12 +759,19 @@ void pthreads_store_save_zval(zval *zstorage, zval *write) {
 			} else {
 				ZVAL_STR(zstorage, zend_string_init(Z_STRVAL_P(write), Z_STRLEN_P(write), 1));
 			}
+			result = SUCCESS;
 			break;
-		default:
-			//TODO: what if this fails?
-			ZVAL_PTR(zstorage, pthreads_store_create(write));
-			break;
+		default: {
+			pthreads_storage *storage = pthreads_store_create(write);
+			if (storage != NULL) {
+				ZVAL_PTR(zstorage, pthreads_store_create(write));
+				result = SUCCESS;
+			} else {
+				result = FAILURE;
+			}
+		} break;
 	}
+	return result;
 } /* }}} */
 
 /* {{{ */
@@ -859,12 +852,6 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			result = SUCCESS;
 		} break;
 #endif
-
-		case STORE_TYPE_OBJECT:
-		case STORE_TYPE_ARRAY:
-			result = pthreads_store_tozval(pzval, (char*) storage->data, storage->length);
-		break;
-
 		default: ZEND_ASSERT(0);
 	}
 
@@ -905,7 +892,7 @@ void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *wa
 			break;
 		case IS_PTR:
 			{
-				/* threaded object, serialized object, resource, serialized array */
+				/* threaded object, serialized object, resource */
 				pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
 				*was_pthreads_storage = storage->type == STORE_TYPE_PTHREADS;
 				pthreads_store_convert(storage, unstore);
@@ -930,18 +917,8 @@ static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage)
 
 		memcpy(copy, storage, sizeof(pthreads_storage));
 
-		switch (copy->type) {
-			case STORE_TYPE_OBJECT:
-			case STORE_TYPE_ARRAY: if (storage->length) {
-				copy->data = (char*) malloc(copy->length+1);
-				if (!copy->data) {
-					break;
-				}
-				memcpy(copy->data, (const void*) storage->data, copy->length);
-				((char *)copy->data)[copy->length] = 0;
-			} break;
-			default: break;
-		}
+		//if we add new store types, their internal data might need to be copied here
+
 		ZVAL_PTR(new_zstorage, copy);
 	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
 		ZVAL_STR(new_zstorage, zend_string_init(Z_STRVAL_P(zstorage), Z_STRLEN_P(zstorage), 1));
@@ -1167,72 +1144,6 @@ int pthreads_store_separate(zval * pzval, zval *separated) {
 } /* }}} */
 
 /* {{{ */
-static int pthreads_store_tostring(zval *pzval, char **pstring, size_t *slength) {
-	int result = FAILURE;
-	if (pzval && (Z_TYPE_P(pzval) != IS_NULL)) {
-		smart_str smart;
-		memset(&smart, 0, sizeof(smart_str));
-
-		php_serialize_data_t vars;
-
-		PHP_VAR_SERIALIZE_INIT(vars);
-		php_var_serialize(&smart, pzval, &vars);
-		PHP_VAR_SERIALIZE_DESTROY(vars);
-
-		if (EG(exception)) {
-			smart_str_free(&smart);
-
-			*pstring = NULL;
-			*slength = 0;
-			return FAILURE;
-		}
-
-		if (smart.s) {
-			*slength = smart.s->len;
-			if (*slength) {
-				*pstring = malloc(*slength+1);
-				if (*pstring) {
-					memcpy(
-						(char*) *pstring, (const void*) smart.s->val, smart.s->len
-					);
-					(*pstring)[*slength] = 0;
-					result = SUCCESS;
-				}
-			} else *pstring = NULL;
-		}
-
-		smart_str_free(&smart);
-	} else {
-		*slength = 0;
-		*pstring = NULL;
-	}
-	return result;
-} /* }}} */
-
-/* {{{ */
-static int pthreads_store_tozval(zval *pzval, char *pstring, size_t slength) {
-	int result = SUCCESS;
-
-	if (pstring) {
-		const unsigned char* pointer = (const unsigned char*) pstring;
-
-		if (pointer) {
-			php_unserialize_data_t vars;
-
-			PHP_VAR_UNSERIALIZE_INIT(vars);
-			if (!php_var_unserialize(pzval, &pointer, pointer+slength, &vars)) {
-				result = FAILURE;
-			} else if (Z_REFCOUNTED_P(pzval)) {
-				gc_check_possible_root(Z_COUNTED_P(pzval));
-			}
-			PHP_VAR_UNSERIALIZE_DESTROY(vars);
-		} else result = FAILURE;
-	} else result = FAILURE;
-
-	return result;
-} /* }}} */
-
-/* {{{ */
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded) {
 	if (Z_TYPE_P(from) != IS_ARRAY &&
 		Z_TYPE_P(from) != IS_OBJECT) {
@@ -1359,8 +1270,6 @@ void pthreads_store_storage_dtor (zval *zstorage){
 	if (Z_TYPE_P(zstorage) == IS_PTR) {
 		pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
 		switch (storage->type) {
-			case STORE_TYPE_OBJECT:
-			case STORE_TYPE_ARRAY:
 			case STORE_TYPE_RESOURCE:
 			case STORE_TYPE_SOCKET:
 				if (storage->data) {

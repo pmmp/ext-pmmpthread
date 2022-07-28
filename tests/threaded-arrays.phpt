@@ -21,8 +21,8 @@ $threaded["test"] = ThreadedArray::fromArray([
 /*
  This looks strange, but needs to be consistent with zend, so we'll test here ... 
 */
-$threaded["0"] = [];
-$threaded[1] = [];
+$threaded["0"] = new ThreadedArray;
+$threaded[1] = new ThreadedArray;
 $threaded[2] = 'foo';
 $threaded['3'] = 'bar';
 $threaded[null] = 'null key';
@@ -62,10 +62,10 @@ object(ThreadedArray)#%d (%d) {
     }
   }
   [0]=>
-  array(0) {
+  object(ThreadedArray)#%d (0) {
   }
   [1]=>
-  array(0) {
+  object(ThreadedArray)#%d (0) {
   }
   [2]=>
   string(3) "foo"
@@ -97,10 +97,10 @@ object(ThreadedArray)#%d (%d) {
     }
   }
   [0]=>
-  array(0) {
+  object(ThreadedArray)#%d (0) {
   }
   [1]=>
-  array(0) {
+  object(ThreadedArray)#%d (0) {
   }
 }
 

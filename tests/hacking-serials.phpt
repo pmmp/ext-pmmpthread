@@ -31,11 +31,11 @@ class Wrapper {
 class Work extends ThreadedRunnable {
     public $wrapper;
     public function __construct(Wrapper $wrapper) {
-        $this->wrapper = $wrapper;
+        $this->wrapper = serialize($wrapper);
     }
 
     public function stack() {
-        $this->wrapper->stack($this);
+        unserialize($this->wrapper)->stack($this);
     }
 
     public function run() : void{

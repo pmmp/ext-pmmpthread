@@ -12,11 +12,10 @@ class T extends Thread {
 	public function __construct() {
 		$this->t = new ThreadedBase();
 		$this->t->set = true;
-		$this->s = new stdClass();
 	}
-	
+
     public function run() : void{
-		var_dump($this->t, $this->s, $this);
+		var_dump($this->t, $this);
 	}
 }
 
@@ -32,23 +31,15 @@ object(T)#%d (%d) {
     ["set"]=>
     bool(true)
   }
-  ["s"]=>
-  object(stdClass)#%d (%d) {
-  }
 }
 object(ThreadedBase)#2 (%d) {
   ["set"]=>
   bool(true)
-}
-object(stdClass)#%d (%d) {
 }
 object(T)#%d (%d) {
   ["t"]=>
   object(ThreadedBase)#%d (%d) {
     ["set"]=>
     bool(true)
-  }
-  ["s"]=>
-  object(stdClass)#%d (%d) {
   }
 }

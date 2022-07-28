@@ -14,12 +14,6 @@ class Test extends \Thread{
 
 	public $refcountedString;
 
-	public $emptyArray;
-
-	public $constArray;
-
-	public $refcountedArray;
-
 	public function run() : void{
 		require __DIR__ . '/child-to-parent-values-copying.inc';
 		assignStuff($this);
@@ -31,32 +25,11 @@ $t->start() && $t->join();
 var_dump($t);
 ?>
 --EXPECT--
-object(Test)#1 (6) {
+object(Test)#1 (3) {
   ["permanentInternedString"]=>
   string(6) "Thread"
   ["requestInternedString"]=>
   string(27) "i am a request-local string"
   ["refcountedString"]=>
   string(15) "hellohellohello"
-  ["emptyArray"]=>
-  array(0) {
-  }
-  ["constArray"]=>
-  array(3) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    int(3)
-  }
-  ["refcountedArray"]=>
-  array(3) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    int(3)
-  }
 }

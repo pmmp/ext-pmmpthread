@@ -15,12 +15,13 @@ comparison which would return true if the property tables of two distinct object
 --FILE--
 <?php
 class Test extends Thread {
-	public function __construct(ThreadedArray ... $args) {
-		$this->args = $args;
+	public function __construct(ThreadedArray $arg1, ThreadedArray $arg2) {
+		$this->arg1 = $arg1;
+		$this->arg2 = $arg2;
 	}
 
 	public function run() : void{
-		var_dump($this->args[0] == $this->args[1]);
+		var_dump($this->arg1 == $this->arg2);
 	}
 }
 
