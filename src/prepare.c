@@ -38,7 +38,9 @@
 #   include <src/copy.h>
 #endif
 
+#if PHP_VERSION_ID >= 80100
 #include <Zend/zend_enum.h>
+#endif
 
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
