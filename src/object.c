@@ -310,6 +310,8 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 		const char *clazz = NULL,
 		           *prop = NULL;
 		size_t plen = 0;
+		zval* value;
+		int result;
 
 		if (info->flags & ZEND_ACC_STATIC) {
 			continue;
@@ -321,12 +323,23 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 			info->name, &clazz, &prop, &plen);
 
 		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
-		pthreads_store_write(
+		value = &base->std.ce->default_properties_table[offset];
+		result = pthreads_store_write(
 			&base->std, &key,
-			&base->std.ce->default_properties_table[offset],
+			value,
 			PTHREADS_STORE_NO_COERCE_ARRAY
 		);
 		zval_ptr_dtor(&key);
+		if (result == FAILURE) {
+			zend_throw_error(
+				NULL,
+				"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
+				zend_get_type_by_const(Z_TYPE_P(value)),
+				ZSTR_VAL(base->std.ce->name),
+				ZSTR_VAL(Z_STR(key))
+			);
+			break;
+		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 

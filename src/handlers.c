@@ -128,41 +128,13 @@ zval* pthreads_read_dimension_disallow(PTHREADS_READ_DIMENSION_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-static zend_bool pthreads_is_supported_type(zval *value) {
-	switch(Z_TYPE_P(value)){
-		case IS_UNDEF:
-		case IS_STRING:
-		case IS_LONG:
-		case IS_ARRAY:
-		case IS_OBJECT:
-		case IS_NULL:
-		case IS_DOUBLE:
-		case IS_RESOURCE:
-		case IS_TRUE:
-		case IS_FALSE:
-			return 1;
-		default:
-			return 0;
-	}
-} /* }}} */
-
-static zend_bool pthreads_throw_if_not_supported_type(zend_object* object, zval* member, zval* value) {
-	if (!pthreads_is_supported_type(value)) {
-		zend_throw_exception_ex(
-			spl_ce_RuntimeException, 0,
-			"pthreads detected an attempt to use unsupported data (%s) for %s::$%s",
-			zend_get_type_by_const(Z_TYPE_P(value)),
-			ZSTR_VAL(object->ce->name), Z_STRVAL_P(member));
-		return 0;
-	}
-
-	return 1;
-}
-
-/* {{{ */
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
-	 if (pthreads_throw_if_not_supported_type(object, member, value)) {
-		pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY);
+	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE){
+		zend_throw_error(
+			NULL,
+			"Cannot assign non-thread-safe value of type %s to ThreadedArray",
+			zend_get_type_by_const(Z_TYPE_P(value))
+		);
 	}
 }
 
@@ -193,8 +165,14 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 		if (Z_TYPE(rv) != IS_UNDEF)
 			zval_dtor(&rv);
 		zend_fcall_info_args_clear(&fci, 1);
-	} else if (pthreads_throw_if_not_supported_type(object, &zmember, value)) {
-		pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY);
+	} else if (pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
+		zend_throw_error(
+			NULL,
+			"Cannot assign non-thread-safe value of type %s to Threaded class property %s::$%s",
+			zend_get_type_by_const(Z_TYPE_P(value)),
+			ZSTR_VAL(object->ce->name),
+			ZSTR_VAL(member)
+		);
 	}
 
 	return EG(exception) ? &EG(error_zval) : value;

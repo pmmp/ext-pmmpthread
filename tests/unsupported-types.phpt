@@ -18,8 +18,8 @@ foreach([
 }
 ?>
 --EXPECT--
-Unsupported data type array
-Unsupported data type array
-Unsupported data type array
-Unsupported data type object
+Cannot assign non-thread-safe value of type array to ThreadedArray
+Cannot assign non-thread-safe value of type array to ThreadedArray
+Cannot assign non-thread-safe value of type array to ThreadedArray
+Cannot assign non-thread-safe value of type object to ThreadedArray
 

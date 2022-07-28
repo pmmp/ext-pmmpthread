@@ -11,9 +11,7 @@ class Test extends Thread {
 	}
 	
 	protected $string = "hello world";
-	protected $array  = array(1, 2, 3);
 	private $pstring  = "world hello";
-	private $parray   = array(3, 2, 1);
 	protected static $nocopy = true;
 }
 
@@ -26,26 +24,8 @@ $test->join();
 object(Test)#%d (%d) {
   ["string"]=>
   string(11) "dlrow olleh"
-  ["array"]=>
-  object(ThreadedArray)#%d (%d) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    int(3)
-  }
   ["pstring"]=>
   string(11) "world hello"
-  ["parray"]=>
-  object(ThreadedArray)#%d (%d) {
-    [0]=>
-    int(3)
-    [1]=>
-    int(2)
-    [2]=>
-    int(1)
-  }
 }
 
 
