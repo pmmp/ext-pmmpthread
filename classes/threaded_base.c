@@ -19,7 +19,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_BASE_H
 #define HAVE_PTHREADS_CLASS_THREADED_BASE_H
 
-#include <stubs/ThreadedBase_arginfo.h>
+#include <src/pthreads.h>
 
 /* {{{ proto boolean ThreadedBase::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object

@@ -18,7 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 #define HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 
-#include <stubs/ThreadedRunnable_arginfo.h>
+#include <src/pthreads.h>
 
 /* {{{ proto boolean ThreadedRunnable::isRunning()
 	Will return true while the referenced ThreadedRunnable is executing */

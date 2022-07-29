@@ -18,7 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_POOL_H
 #define HAVE_PTHREADS_CLASS_POOL_H
 
-#include <stubs/Pool_arginfo.h>
+#include <src/pthreads.h>
 
 /* {{{ proto Pool Pool::__construct(integer size, [class worker, [array $ctor]])
 	Construct a pool ready to create a maximum of $size workers of class $worker

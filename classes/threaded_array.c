@@ -18,8 +18,8 @@
 #ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 #define HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 
+#include <src/pthreads.h>
 #include <src/store.h>
-#include <stubs/ThreadedArray_arginfo.h>
 
 /* {{{ proto boolean ThreadedArray::merge(mixed $data, [boolean $overwrite = true])
 	Will merge data with the referenced ThreadedArray */

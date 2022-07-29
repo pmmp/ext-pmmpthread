@@ -18,7 +18,7 @@
 #ifndef HAVE_PTHREADS_CLASS_THREAD_H
 #define HAVE_PTHREADS_CLASS_THREAD_H
 
-#include <stubs/Thread_arginfo.h>
+#include <src/pthreads.h>
 
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
