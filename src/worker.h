@@ -26,13 +26,13 @@ typedef struct _pthreads_worker_data_t pthreads_worker_data_t;
 typedef zend_bool (*pthreads_worker_collect_function_t) (pthreads_call_t *call, zval *value);
 
 pthreads_worker_data_t* pthreads_worker_data_alloc(pthreads_monitor_t *monitor);
-zend_long pthreads_worker_task_queue_size(pthreads_worker_data_t *stack);
-void pthreads_worker_data_free(pthreads_worker_data_t *stack);
-zend_long pthreads_worker_add_task(pthreads_worker_data_t *stack, zval *value);
-zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *stack, zval *value);
-zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *stack, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
-pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *stack, zval *value, pthreads_queue_item_t **item);
-void pthreads_worker_add_garbage(pthreads_worker_data_t *stack, pthreads_queue_item_t *item);
+zend_long pthreads_worker_task_queue_size(pthreads_worker_data_t *worker_data);
+void pthreads_worker_data_free(pthreads_worker_data_t *worker_data);
+zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *value);
+zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval *value);
+zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
+pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, zval *value, pthreads_queue_item_t **item);
+void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue_item_t *item);
 
 #endif
 
