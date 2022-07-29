@@ -72,7 +72,7 @@ zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *va
 
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		size = worker_data->queue.size;
-		pthreads_queue_add_new(&worker_data->queue, value);
+		pthreads_queue_push_new(&worker_data->queue, value);
 		if (!size) {
 			pthreads_monitor_notify(worker_data->monitor);
 		}
@@ -87,7 +87,7 @@ zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *va
 
 void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue_item_t *item) {
 	if (pthreads_monitor_lock(worker_data->monitor)) {
-		pthreads_queue_add(&worker_data->gc, item);
+		pthreads_queue_push(&worker_data->gc, item);
 		pthreads_monitor_unlock(worker_data->monitor);
 	} else {
 		ZEND_ASSERT(0);
@@ -98,8 +98,8 @@ zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval
 	zend_long size = 0;
 
 	if (pthreads_monitor_lock(worker_data->monitor)) {
-		size = pthreads_queue_remove(
-			&worker_data->queue, worker_data->queue.head, value, PTHREADS_STACK_FREE);
+		//as counterintuitive as this looks, it is in fact expected behaviour :(
+		size = pthreads_queue_shift(&worker_data->queue, value, PTHREADS_STACK_FREE);
 		pthreads_monitor_unlock(worker_data->monitor);
 	}
 
@@ -115,11 +115,9 @@ zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pth
 		item = worker_data->gc.head;
 		while (item) {
 			if (collect(call, &item->value)) {
-				pthreads_queue_item_t *garbage = item;
-				item = garbage->next;
+				item = item->next;
 
-				pthreads_queue_remove(
-					&worker_data->gc, garbage, NULL, PTHREADS_STACK_FREE);
+				pthreads_queue_shift(&worker_data->gc, NULL, PTHREADS_STACK_FREE);
 				continue;
 			}
 
@@ -149,7 +147,7 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 				pthreads_monitor_wait(worker_data->monitor, 0);
 			} else {
 				*item = worker_data->queue.head; //this is allocated on the creator thread's ZMM, so we can't free it
-				pthreads_queue_remove(&worker_data->queue, worker_data->queue.head, value, PTHREADS_STACK_NOTHING);
+				pthreads_queue_shift(&worker_data->queue, value, PTHREADS_STACK_NOTHING);
 				break;
 			}
 		} while (state != PTHREADS_MONITOR_JOINED);

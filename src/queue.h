@@ -36,8 +36,13 @@ typedef struct _pthreads_queue {
 } pthreads_queue;
 
 void pthreads_queue_clean(pthreads_queue* queue);
-void pthreads_queue_add_new(pthreads_queue* queue, zval* value);
-void pthreads_queue_add(pthreads_queue* queue, pthreads_queue_item_t* item);
+void pthreads_queue_push(pthreads_queue* queue, pthreads_queue_item_t* item);
+void pthreads_queue_push_new(pthreads_queue* queue, zval* value);
+void pthreads_queue_unshift(pthreads_queue* queue, pthreads_queue_item_t* item);
+
 zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* item, zval* value, int garbage);
+
+zend_long pthreads_queue_shift(pthreads_queue* queue, zval* value, int garbage);
+zend_long pthreads_queue_pop(pthreads_queue* queue, zval* value, int garbage);
 
 #endif
