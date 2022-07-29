@@ -34,6 +34,5 @@ zend_long pthreads_worker_collect_tasks(zend_object *std, pthreads_worker_data_t
 pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *stack, zval *value, pthreads_queue_item_t **item);
 void pthreads_worker_add_garbage(pthreads_worker_data_t *stack, pthreads_queue_item_t *item);
 
-void pthreads_worker_data_tohash(pthreads_worker_data_t *stack, HashTable *hash);
 #endif
 

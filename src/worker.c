@@ -159,41 +159,5 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 	return state;
 }
 
-void pthreads_worker_data_tohash(pthreads_worker_data_t *worker_data, HashTable *hash) {
-	zval stacked;
-	zval waiting;
-	zval gc;
-
-	array_init(&stacked);
-	array_init(&waiting);
-	array_init(&gc);
-
-	zend_hash_str_add(Z_ARRVAL(stacked), ":stacked:", sizeof(":stacked:")-1, &waiting);
-	zend_hash_str_add(Z_ARRVAL(stacked), ":gc:", sizeof(":gc:")-1, &gc);
-
-	if (pthreads_monitor_lock(worker_data->monitor)) {
-		pthreads_queue_item_t *item = worker_data->queue.head;
-
-		while (item) {
-			if (add_next_index_zval(
-					&waiting, &item->value)) {
-				Z_ADDREF(item->value);
-			}
-			item = item->next;
-		}
-
-		item = worker_data->gc.head;
-		while (item) {
-			if (add_next_index_zval(
-					&gc, &item->value)) {
-				Z_ADDREF(item->value);
-			}
-			item = item->next;
-		}
-		pthreads_monitor_unlock(worker_data->monitor);
-	}
-
-	zend_hash_str_add(hash, ":stack:", sizeof(":stack:")-1, &stacked);
-}
 #endif
 
