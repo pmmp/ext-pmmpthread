@@ -26,13 +26,13 @@
 #	include <src/object.h>
 #endif
 
-#include <classes/threaded_base.h>
-#include <classes/threaded_runnable.h>
-#include <classes/threaded_array.h>
-#include <classes/thread.h>
-#include <classes/worker.h>
-#include <classes/pool.h>
+#include <stubs/Pool_arginfo.h>
+#include <stubs/Thread_arginfo.h>
+#include <stubs/ThreadedArray_arginfo.h>
+#include <stubs/ThreadedBase_arginfo.h>
+#include <stubs/ThreadedRunnable_arginfo.h>
 #include <stubs/ThreadedConnectionException_arginfo.h>
+#include <stubs/Worker_arginfo.h>
 
 #include <php_pthreads.h>
 

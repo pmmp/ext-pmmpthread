@@ -15,8 +15,6 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_POOL_H
-#define HAVE_PTHREADS_CLASS_POOL_H
 
 #include <src/pthreads.h>
 
@@ -291,5 +289,3 @@ PHP_METHOD(Pool, shutdown) {
 
 	pthreads_pool_shutdown(getThis());
 } /* }}} */
-
-#endif

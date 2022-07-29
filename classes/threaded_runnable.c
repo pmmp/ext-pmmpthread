@@ -15,8 +15,6 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
-#define HAVE_PTHREADS_CLASS_THREADED_RUNNABLE_H
 
 #include <src/pthreads.h>
 
@@ -41,5 +39,3 @@ PHP_METHOD(ThreadedRunnable, isTerminated)
 
 	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */
-
-#endif

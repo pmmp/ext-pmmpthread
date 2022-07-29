@@ -15,8 +15,6 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_WORKER_H
-#define HAVE_PTHREADS_CLASS_WORKER_H
 
 #include <src/pthreads.h>
 
@@ -113,5 +111,4 @@ PHP_METHOD(Worker, collect)
 	}
 }
 
-#endif
 

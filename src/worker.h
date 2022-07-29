@@ -22,6 +22,19 @@
 
 #include "queue.h"
 
+#define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
+	memset(&call, 0, sizeof(pthreads_call_t)); \
+	call.fci.size = sizeof(zend_fcall_info); \
+	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
+	call.fcc.function_handler = zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
+	call.fci.object = (w); \
+	call.fcc.calling_scope = (w)->ce; \
+	call.fcc.called_scope = (w)->ce; \
+	call.fcc.object = (w); \
+} while(0)
+
+#define PTHREADS_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
+
 typedef struct _pthreads_worker_data_t pthreads_worker_data_t;
 typedef zend_bool (*pthreads_worker_collect_function_t) (pthreads_call_t *call, zval *value);
 
@@ -33,6 +46,8 @@ zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval
 zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
 pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, zval *value, pthreads_queue_item_t **item);
 void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue_item_t *item);
+
+zend_bool pthreads_worker_collect_function(pthreads_call_t* call, zval* collectable);
 
 #endif
 

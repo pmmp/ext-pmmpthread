@@ -157,5 +157,32 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 	return state;
 }
 
+/* {{{ */
+zend_bool pthreads_worker_collect_function(pthreads_call_t* call, zval* collectable) {
+	zval result;
+	zend_bool remove = 0;
+
+	ZVAL_UNDEF(&result);
+
+	call->fci.retval = &result;
+
+	zend_fcall_info_argn(&call->fci, 1, collectable);
+
+	if (zend_call_function(&call->fci, &call->fcc) != SUCCESS) {
+		return remove;
+	}
+
+	zend_fcall_info_args_clear(&call->fci, 1);
+
+	if (Z_TYPE(result) != IS_UNDEF) {
+		if (zend_is_true(&result)) {
+			remove = 1;
+		}
+		zval_ptr_dtor(&result);
+	}
+
+	return remove;
+} /* }}} */
+
 #endif
 

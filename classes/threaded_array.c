@@ -15,8 +15,6 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
-#define HAVE_PTHREADS_CLASS_THREADED_ARRAY_H
 
 #include <src/pthreads.h>
 #include <src/store.h>
@@ -150,5 +148,3 @@ PHP_METHOD(ThreadedArray, offsetUnset)
 
 	pthreads_store_delete(Z_OBJ_P(getThis()), key);
 } /* }}} */
-
-#endif

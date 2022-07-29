@@ -16,9 +16,6 @@
   +----------------------------------------------------------------------+
  */
 
-#ifndef HAVE_PTHREADS_CLASS_THREADED_BASE_H
-#define HAVE_PTHREADS_CLASS_THREADED_BASE_H
-
 #include <src/pthreads.h>
 
 /* {{{ proto boolean ThreadedBase::wait([long timeout])
@@ -105,5 +102,3 @@ PHP_METHOD(ThreadedBase, getIterator)
 	ZEND_PARSE_PARAMETERS_NONE();
 	zend_create_internal_iterator_zval(return_value, getThis());
 } /* }}} */
-
-#endif

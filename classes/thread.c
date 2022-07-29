@@ -15,10 +15,9 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_CLASS_THREAD_H
-#define HAVE_PTHREADS_CLASS_THREAD_H
 
 #include <src/pthreads.h>
+#include <src/object.h>
 
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
@@ -106,5 +105,3 @@ PHP_METHOD(Thread, getCreatorId)
 
 	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */
-
-#endif
