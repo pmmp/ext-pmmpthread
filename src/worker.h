@@ -26,7 +26,7 @@
 	memset(&call, 0, sizeof(pthreads_call_t)); \
 	call.fci.size = sizeof(zend_fcall_info); \
 	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
-	call.fcc.function_handler = zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
+	call.fcc.function_handler = (zend_function*) zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
 	call.fci.object = (w); \
 	call.fcc.calling_scope = (w)->ce; \
 	call.fcc.called_scope = (w)->ce; \
