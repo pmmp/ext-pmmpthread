@@ -146,7 +146,7 @@ PHP_METHOD(Worker, collect)
 		return;
 	}
 
-	RETVAL_LONG(pthreads_worker_collect_tasks(&thread->std, thread->worker_data, &call, pthreads_worker_collect_function));
+	RETVAL_LONG(pthreads_worker_collect_tasks(thread->worker_data, &call, pthreads_worker_collect_function));
 
 	if (!ZEND_NUM_ARGS()) {
 		PTHREADS_WORKER_COLLECTOR_DTOR(call);

@@ -30,7 +30,7 @@ zend_long pthreads_worker_task_queue_size(pthreads_worker_data_t *stack);
 void pthreads_worker_data_free(pthreads_worker_data_t *stack);
 zend_long pthreads_worker_add_task(pthreads_worker_data_t *stack, zval *value);
 zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *stack, zval *value);
-zend_long pthreads_worker_collect_tasks(zend_object *std, pthreads_worker_data_t *stack, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
+zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *stack, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
 pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *stack, zval *value, pthreads_queue_item_t **item);
 void pthreads_worker_add_garbage(pthreads_worker_data_t *stack, pthreads_queue_item_t *item);
 
