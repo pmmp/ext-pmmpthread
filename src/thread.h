@@ -25,6 +25,7 @@
 #ifndef HAVE_PTHREADS_RESOURCES_H
 #	include <src/resources.h>
 #endif
+#include <src/worker.h>
 
 typedef struct _pthreads_ident_t {
 	zend_ulong id;
@@ -53,7 +54,7 @@ struct _pthreads_zend_object_t {
 	pthreads_ident_t owner;
 	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
 	zend_long local_props_modcount;
-	pthreads_stack_t *stack;
+	pthreads_worker_data_t *worker_data;
 	zend_object std;
 }; /* }}} */
 

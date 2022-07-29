@@ -243,9 +243,9 @@ PHP_METHOD(Pool, collect) {
 			PTHREADS_FETCH_FROM(Z_OBJ_P(worker));
 		if (!ZEND_NUM_ARGS())
 			PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
-		collectable += pthreads_stack_collect(
+		collectable += pthreads_worker_collect_tasks(
 			&thread->std,
-			thread->stack,
+			thread->worker_data,
 			&call,
 			pthreads_worker_collect_function);
 		if (!ZEND_NUM_ARGS())

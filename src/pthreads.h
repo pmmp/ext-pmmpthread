@@ -188,10 +188,6 @@ typedef struct _pthreads_call_t {
 #	include <src/monitor.h>
 #endif
 
-#ifndef HAVE_PTHREADS_STACK_H
-#	include <src/stack.h>
-#endif
-
 #ifndef HAVE_PTHREADS_STORE_H
 #	include <src/store.h>
 #endif
@@ -199,5 +195,7 @@ typedef struct _pthreads_call_t {
 #ifndef HAVE_PTHREADS_THREAD_H
 #	include <src/thread.h>
 #endif
+
+#include <src/worker.h>
 
 #endif
