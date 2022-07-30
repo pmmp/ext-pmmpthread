@@ -74,21 +74,9 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 	ZVAL_STR(&zmember, member);
 
 	if (object->ce->__get && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_GET)) {
-		zend_fcall_info fci = empty_fcall_info;
-		zend_fcall_info_cache fcc = empty_fcall_info_cache;
-
-		fci.size = sizeof(zend_fcall_info);
-		fci.retval = rv;
-		fci.object = object;
-		zend_fcall_info_argn(&fci, 1, &zmember);
-		fcc.function_handler = object->ce->__get;
-		fcc.object = object;
-
 		(*guard) |= IN_GET;
-		zend_call_function(&fci, &fcc);
+		zend_call_known_instance_method_with_1_params(object->ce->__get, object, rv, &zmember);
 		(*guard) &= ~IN_GET;
-
-		zend_fcall_info_args_clear(&fci, 1);
 	} else {
 		pthreads_store_read(object, &zmember, type, rv);
 	}
@@ -114,26 +102,15 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 	ZVAL_STR(&zmember, member);
 
 	if (object->ce->__set && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_SET)) {
-		zend_fcall_info fci = empty_fcall_info;
-		zend_fcall_info_cache fcc = empty_fcall_info_cache;
 		zval rv;
-
 		ZVAL_UNDEF(&rv);
 
-		fci.size = sizeof(zend_fcall_info);
-		fci.retval = &rv;
-		fci.object = object;
-		zend_fcall_info_argn(&fci, 2, &zmember, value);
-		fcc.function_handler = object->ce->__set;
-		fcc.object = object;
-
 		(*guard) |= IN_SET;
-		zend_call_function(&fci, &fcc);
+		zend_call_known_instance_method_with_2_params(object->ce->__set, object, &rv, &zmember, value);
 		(*guard) &= ~IN_SET;
 
 		if (Z_TYPE(rv) != IS_UNDEF)
 			zval_dtor(&rv);
-		zend_fcall_info_args_clear(&fci, 1);
 	} else if (pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
 		zend_throw_error(
 			NULL,
@@ -161,29 +138,17 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 	ZVAL_STR(&zmember, member);
 
 	if (object->ce->__isset && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_ISSET)) {
-		zend_fcall_info fci = empty_fcall_info;
-		zend_fcall_info_cache fcc = empty_fcall_info_cache;
 		zval rv;
-
 		ZVAL_UNDEF(&rv);
 
-		fci.size = sizeof(zend_fcall_info);
-		fci.retval = &rv;
-		fci.object = object;
-		zend_fcall_info_argn(&fci, 1, &zmember);
-		fcc.function_handler = object->ce->__isset;
-		fcc.object = object;
-
 		(*guard) |= IN_ISSET;
-		zend_call_function(&fci, &fcc);
+		zend_call_known_instance_method_with_1_params(object->ce->__set, object, &rv, &zmember);
 		(*guard) &= ~IN_ISSET;
 
 		if (Z_TYPE(rv) != IS_UNDEF) {
-			isset =
-				zend_is_true(&rv);
+			isset = zend_is_true(&rv);
 			zval_dtor(&rv);
 		}
-		zend_fcall_info_args_clear(&fci, 1);
 	} else {
 		isset = pthreads_store_isset(object, &zmember, has_set_exists);
 	}
@@ -203,27 +168,16 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 	ZVAL_STR(&zmember, member);
 
 	if (object->ce->__unset && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_UNSET)) {
-		zend_fcall_info fci = empty_fcall_info;
-		zend_fcall_info_cache fcc = empty_fcall_info_cache;
 		zval rv;
-
 		ZVAL_UNDEF(&rv);
 
-		fci.size = sizeof(zend_fcall_info);
-		fci.retval = &rv;
-		fci.object = object;
-		zend_fcall_info_argn(&fci, 1, &zmember);
-		fcc.function_handler = object->ce->__unset;
-		fcc.object = object;
-
 		(*guard) |= IN_UNSET;
-		zend_call_function(&fci, &fcc);
+		zend_call_known_instance_method_with_1_params(object->ce->__unset, object, &rv, &zmember);
 		(*guard) &= ~IN_UNSET;
 
 		if (Z_TYPE(rv) != IS_UNDEF) {
 			zval_dtor(&rv);
 		}
-		zend_fcall_info_args_clear(&fci, 1);
 	} else {
 		pthreads_store_delete(object, &zmember);
 	}
