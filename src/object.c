@@ -170,16 +170,6 @@ zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 	return &threaded->std;
 } /* }}} */
 
-zend_object* pthreads_threaded_queue_ctor(zend_class_entry* ce) {
-	pthreads_zend_object_t* zobj = pthreads_globals_object_alloc(
-		sizeof(pthreads_zend_object_t) + zend_object_properties_size(ce)
-	);
-
-	pthreads_base_ctor(zobj, ce, PTHREADS_SCOPE_QUEUE);
-	//TODO: we'll need custom debuginfo handlers
-	zobj->std.handlers = &pthreads_threaded_base_handlers;
-}
-
 /* {{{ */
 int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *buflen, zend_serialize_data *data) {
 	pthreads_zend_object_t *address = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
