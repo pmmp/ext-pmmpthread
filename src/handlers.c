@@ -78,7 +78,16 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 		zend_call_known_instance_method_with_1_params(object->ce->__get, object, rv, &zmember);
 		(*guard) &= ~IN_GET;
 	} else {
-		pthreads_store_read(object, &zmember, type, rv);
+		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		if (info == ZEND_WRONG_PROPERTY_INFO) {
+			rv = &EG(uninitialized_zval);
+		} else if (info == NULL) { //dynamic property
+			pthreads_store_read(object, &zmember, type, rv);
+		} else {
+			//defined property, use mangled name
+			ZVAL_STR(&zmember, info->name);
+			pthreads_store_read(object, &zmember, type, rv);
+		}
 	}
 	return rv;
 }
@@ -111,14 +120,23 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 
 		if (Z_TYPE(rv) != IS_UNDEF)
 			zval_dtor(&rv);
-	} else if (pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
-		zend_throw_error(
-			NULL,
-			"Cannot assign non-thread-safe value of type %s to Threaded class property %s::$%s",
-			zend_get_type_by_const(Z_TYPE_P(value)),
-			ZSTR_VAL(object->ce->name),
-			ZSTR_VAL(member)
-		);
+	} else {
+		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		if (info != ZEND_WRONG_PROPERTY_INFO) {
+			if (info != NULL) {
+				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
+			}
+
+			if (pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
+				zend_throw_error(
+					NULL,
+					"Cannot assign non-thread-safe value of type %s to Threaded class property %s::$%s",
+					zend_get_type_by_const(Z_TYPE_P(value)),
+					ZSTR_VAL(object->ce->name),
+					ZSTR_VAL(member)
+				);
+			}
+		}
 	}
 
 	return EG(exception) ? &EG(error_zval) : value;
@@ -150,7 +168,13 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 			zval_dtor(&rv);
 		}
 	} else {
-		isset = pthreads_store_isset(object, &zmember, has_set_exists);
+		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		if (info != ZEND_WRONG_PROPERTY_INFO) {
+			if (info != NULL) {
+				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
+			}
+			isset = pthreads_store_isset(object, &zmember, has_set_exists);
+		} else isset = 0;
 	}
 	return isset;
 }
@@ -179,7 +203,15 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 			zval_dtor(&rv);
 		}
 	} else {
-		pthreads_store_delete(object, &zmember);
+		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		if (info != ZEND_WRONG_PROPERTY_INFO) {
+			if (info != NULL) {
+				//TODO: this should probably write IS_UNDEF into the table instead of nuking the property
+				//if this is a typed property
+				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
+			}
+			pthreads_store_delete(object, &zmember);
+		}
 	}
 }
 /* }}} */

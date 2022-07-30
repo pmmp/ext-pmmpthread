@@ -5,7 +5,7 @@ Test that resources from other thread contexts can properly be accessed and are 
 --FILE--
 <?php
 class myWorker extends Worker {
-    private $foreignResource;
+    public $foreignResource;
 
     public function __construct($useResource) {
         $this->foreignResource = $useResource;

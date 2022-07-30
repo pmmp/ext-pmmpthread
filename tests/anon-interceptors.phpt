@@ -43,14 +43,14 @@ class Test extends \Thread {
 }
 $thread = new Test();
 $thread->start() && $thread->join();
---EXPECTF--
+--EXPECT--
 string(16) "Foo::__construct"
 string(16) "Bar::__construct"
 string(4) "buzz"
 string(11) "hello world"
 string(11) "hello world"
-object(%s@anonymous)#3 (1) {
-  ["buzz"]=>
+object(ThreadedBase@anonymous)#3 (1) {
+  ["buzz":"ThreadedBase@anonymous":private]=>
   string(11) "hello world"
 }
 string(15) "Foo::__destruct"

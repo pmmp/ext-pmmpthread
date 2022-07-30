@@ -170,6 +170,16 @@ zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 	return &threaded->std;
 } /* }}} */
 
+zend_object* pthreads_threaded_queue_ctor(zend_class_entry* ce) {
+	pthreads_zend_object_t* zobj = pthreads_globals_object_alloc(
+		sizeof(pthreads_zend_object_t) + zend_object_properties_size(ce)
+	);
+
+	pthreads_base_ctor(zobj, ce, PTHREADS_SCOPE_QUEUE);
+	//TODO: we'll need custom debuginfo handlers
+	zobj->std.handlers = &pthreads_threaded_base_handlers;
+}
+
 /* {{{ */
 int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *buflen, zend_serialize_data *data) {
 	pthreads_zend_object_t *address = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
@@ -292,42 +302,41 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 	zend_property_info *info;
 	zval key;
 
-	ZEND_HASH_FOREACH_PTR(&base->std.ce->properties_info, info) {
-		zend_ulong offset;
-		const char *clazz = NULL,
-		           *prop = NULL;
-		size_t plen = 0;
-		zval* value;
-		int result;
+	zend_class_entry* ce = base->std.ce;
 
-		if (info->flags & ZEND_ACC_STATIC) {
-			continue;
-		}
+	while (ce != NULL) {
+		ZEND_HASH_FOREACH_PTR(&ce->properties_info, info) {
+			zend_ulong offset;
+			zval* value;
+			int result;
 
-		offset = OBJ_PROP_TO_NUM(info->offset);
+			if (info->flags & ZEND_ACC_STATIC) {
+				continue;
+			}
 
-		zend_unmangle_property_name_ex(
-			info->name, &clazz, &prop, &plen);
+			offset = OBJ_PROP_TO_NUM(info->offset);
 
-		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
-		value = &base->std.ce->default_properties_table[offset];
-		result = pthreads_store_write(
-			&base->std, &key,
-			value,
-			PTHREADS_STORE_NO_COERCE_ARRAY
-		);
-		zval_ptr_dtor(&key);
-		if (result == FAILURE) {
-			zend_throw_error(
-				NULL,
-				"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
-				zend_get_type_by_const(Z_TYPE_P(value)),
-				ZSTR_VAL(base->std.ce->name),
-				ZSTR_VAL(Z_STR(key))
+			ZVAL_STR(&key, info->name);
+			value = &ce->default_properties_table[offset];
+			result = pthreads_store_write(
+				&base->std, &key,
+				value,
+				PTHREADS_STORE_NO_COERCE_ARRAY
 			);
-			break;
-		}
-	} ZEND_HASH_FOREACH_END();
+			if (result == FAILURE) {
+				zend_throw_error(
+					NULL,
+					"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
+					zend_get_type_by_const(Z_TYPE_P(value)),
+					ZSTR_VAL(ce->name),
+					ZSTR_VAL(Z_STR(key))
+				);
+				break;
+			}
+		} ZEND_HASH_FOREACH_END();
+
+		ce = ce->parent;
+	}
 } /* }}} */
 
 /* {{{ */

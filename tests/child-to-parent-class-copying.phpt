@@ -9,7 +9,7 @@ with interned strings (since they were not being copied).
 class Foo extends Thread
 {
 	public $running = true;
-	private $shared;
+	public $shared;
 
 	public function run() : void{
 		require __DIR__ . '/child-to-parent-class-copying-helper.php';

@@ -6,6 +6,10 @@ Class defaults should now initialize defaults properly
 <?php
 class Test extends Thread {
 
+	public function __construct(){
+		$this->string = strrev($this->string);
+	}
+
 	public function run() : void{
 		var_dump($this);
 	}
@@ -16,16 +20,13 @@ class Test extends Thread {
 }
 
 $test =new Test();
-$test->string = strrev($test->string);
 $test->start();
 $test->join();
 ?>
---EXPECTF--
-object(Test)#%d (%d) {
-  ["string"]=>
+--EXPECT--
+object(Test)#1 (2) {
+  ["string":protected]=>
   string(11) "dlrow olleh"
-  ["pstring"]=>
+  ["pstring":"Test":private]=>
   string(11) "world hello"
 }
-
-

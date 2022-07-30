@@ -63,22 +63,22 @@ $test->synchronized(function() use ($test) : void{
 	$test->notify();
 });
 $test->join();
---EXPECTF--
-object(%s@anonymous)#2 (3) {
+--EXPECT--
+object(Thread@anonymous)#2 (3) {
   ["pubProp"]=>
   NULL
-  ["protProp"]=>
+  ["protProp":protected]=>
   NULL
-  ["privProp"]=>
+  ["privProp":"Thread@anonymous":private]=>
   NULL
 }
 string(13) "anonymous run"
-object(%s@anonymous)#3 (4) {
+object(Thread@anonymous)#3 (4) {
   ["pubProp"]=>
   NULL
-  ["protProp"]=>
+  ["protProp":protected]=>
   NULL
-  ["privProp"]=>
+  ["privProp":"Thread@anonymous":private]=>
   NULL
   ["ready"]=>
   bool(true)
