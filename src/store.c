@@ -15,29 +15,12 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_STORE
-#define HAVE_PTHREADS_STORE
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
-
-#ifndef HAVE_PTHREADS_COPY_H
-#	include <src/copy.h>
-#endif
-
-#ifndef HAVE_PTHREADS_STORE_H
-#	include <src/store.h>
-#endif
-
+#include <src/pthreads.h>
+#include <src/object.h>
+#include <src/resources.h>
+#include <src/copy.h>
+#include <src/store.h>
 #include <src/globals.h>
 #include <Zend/zend_ast.h>
 #if PHP_VERSION_ID >= 80100
@@ -1417,5 +1400,3 @@ void pthreads_store_forward(zend_object *object, HashPosition *position) {
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
 } /* }}} */
-
-#endif

@@ -15,16 +15,9 @@
   | Author: Joe Watkins <joe.watkins@live.co.uk>                         |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PHP_PTHREADS
-#define HAVE_PHP_PTHREADS
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
+#include <src/pthreads.h>
+#include <src/object.h>
 
 #include <stubs/Pool_arginfo.h>
 #include <stubs/Thread_arginfo.h>
@@ -50,9 +43,7 @@
 	ZEND_GET_MODULE(pthreads)
 #endif
 
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
+#include <src/globals.h>
 
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 #include <src/ext_sockets_hacks.h>
@@ -96,9 +87,7 @@ zend_object_handlers pthreads_threaded_array_handlers;
 zend_object_handlers *zend_handlers;
 void ***pthreads_instance = NULL;
 
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
+#include <src/object.h>
 
 ZEND_DECLARE_MODULE_GLOBALS(pthreads)
 
@@ -297,5 +286,3 @@ PHP_MINFO_FUNCTION(pthreads)
 	php_info_print_table_row(2, "Version", PHP_PTHREADS_VERSION);
 	php_info_print_table_end();
 }
-
-#endif

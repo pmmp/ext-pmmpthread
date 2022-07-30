@@ -22,9 +22,7 @@
 #	include <config.h>
 #endif
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 /* {{{ */
 zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry);

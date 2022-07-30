@@ -22,9 +22,7 @@
 #ifndef HAVE_PTHREADS_HANDLERS_H
 #define HAVE_PTHREADS_HANDLERS_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 #define PTHREADS_CAST_PASSTHRU_D zend_object *from, zval *to, int type
 #define PTHREADS_COUNT_PASSTHRU_D zend_object *object, zend_long *count

@@ -18,9 +18,7 @@
 #ifndef HAVE_PTHREADS_RESOURCES_H
 #define HAVE_PTHREADS_RESOURCES_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 typedef struct {
 	zend_resource *original;

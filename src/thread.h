@@ -18,13 +18,8 @@
 #ifndef HAVE_PTHREADS_THREAD_H
 #define HAVE_PTHREADS_THREAD_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
+#include <src/pthreads.h>
+#include <src/resources.h>
 #include <src/worker.h>
 
 typedef struct _pthreads_ident_t {

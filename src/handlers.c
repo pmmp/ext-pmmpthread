@@ -15,20 +15,10 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_HANDLERS
-#define HAVE_PTHREADS_HANDLERS
 
-#ifndef HAVE_PTHREADS_HANDLERS_H
-#	include <src/handlers.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
+#include <src/handlers.h>
+#include <src/object.h>
+#include <src/globals.h>
 
 #define IN_GET      (1<<0)
 #define IN_SET      (1<<1)
@@ -265,4 +255,3 @@ int pthreads_compare_objects(PTHREADS_COMPARE_PASSTHRU_D) {
 
 	return 1;
 } /* }}} */
-#endif

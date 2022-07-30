@@ -18,9 +18,7 @@
 #ifndef HAVE_PTHREADS_PREPARE_H
 #define HAVE_PTHREADS_PREPARE_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 /* {{{ fetch prepared class entry */
 zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate); /* }}} */

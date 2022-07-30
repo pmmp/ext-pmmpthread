@@ -15,12 +15,8 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_MONITOR
-#define HAVE_PTHREADS_MONITOR
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 struct _pthreads_monitor_t {
 	pthreads_monitor_state_t state;
@@ -129,4 +125,3 @@ void pthreads_monitor_free(pthreads_monitor_t *m) {
 	pthread_cond_destroy(&m->cond);
 	free(m);
 }
-#endif

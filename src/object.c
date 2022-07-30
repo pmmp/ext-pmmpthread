@@ -15,24 +15,11 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_OBJECT
-#define HAVE_PTHREADS_OBJECT
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
+#include <src/pthreads.h>
+#include <src/object.h>
+#include <src/globals.h>
+#include <src/prepare.h>
 
 /* {{{ */
 extern zend_module_entry pthreads_module_entry; /* }}} */
@@ -594,6 +581,3 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 	return NULL;
 #endif
 } /* }}} */
-
-#endif
-

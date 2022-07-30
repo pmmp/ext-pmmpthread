@@ -18,9 +18,7 @@
 #ifndef HAVE_PTHREADS_GLOBALS_H
 #define HAVE_PTHREADS_GLOBALS_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pthreads.h>
 
 /* {{{ pthreads_globals */
 struct _pthreads_globals {
@@ -104,4 +102,4 @@ void pthreads_globals_unlock(); /* }}} */
 /* {{{ shutdown global structures */
 void pthreads_globals_shutdown(); /* }}} */
 
-#endif /* HAVE_PTHREADS_GLOBAL_H */
+#endif /* HAVE_PTHREADS_GLOBALS_H */

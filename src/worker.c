@@ -15,17 +15,12 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_STACK
-#define HAVE_PTHREADS_STACK
 
 #ifdef HAVE_CONFIG_H
 #	include <config.h>
 #endif
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
+#include <src/pthreads.h>
 #include "worker.h"
 #include "queue.h"
 
@@ -183,6 +178,3 @@ zend_bool pthreads_worker_collect_function(pthreads_call_t* call, zval* collecta
 
 	return remove;
 } /* }}} */
-
-#endif
-

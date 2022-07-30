@@ -184,18 +184,9 @@ typedef struct _pthreads_call_t {
 
 #define PTHREADS_CALL_EMPTY {empty_fcall_info, empty_fcall_info_cache}
 
-#ifndef HAVE_PTHREADS_MONITOR_H
-#	include <src/monitor.h>
-#endif
-
-#ifndef HAVE_PTHREADS_STORE_H
-#	include <src/store.h>
-#endif
-
-#ifndef HAVE_PTHREADS_THREAD_H
-#	include <src/thread.h>
-#endif
-
+#include <src/monitor.h>
+#include <src/store.h>
+#include <src/thread.h>
 #include <src/worker.h>
 
 #endif

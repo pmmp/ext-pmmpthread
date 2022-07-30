@@ -15,28 +15,12 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_PREPARE
-#define HAVE_PTHREADS_PREPARE
 
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
-
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_COPY_H
-#   include <src/copy.h>
-#endif
+#include <src/prepare.h>
+#include <src/object.h>
+#include <src/resources.h>
+#include <src/globals.h>
+#include <src/copy.h>
 
 #if PHP_VERSION_ID >= 80100
 #include <Zend/zend_enum.h>
@@ -1046,5 +1030,3 @@ static void pthreads_prepared_resource_dtor(zval *zv) {
 		}
 	} zend_end_try();
 } /* }}} */
-#endif
-
