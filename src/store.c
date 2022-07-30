@@ -642,6 +642,13 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 			}
 
 			pthreads_store_restore_zval(&pzval, zstorage);
+			if (Z_ISUNDEF(pzval) && name) {
+				//uninitialized typed property
+				zend_property_info* info = zend_hash_find_ptr(&object->ce->properties_info, name);
+				if (info != NULL && info != ZEND_WRONG_PROPERTY_INFO) {
+					ZVAL_INDIRECT(&pzval, &object->properties_table[OBJ_PROP_TO_NUM(info->offset)]);
+				}
+			}
 
 			if (!name) {
 				if (!zend_hash_index_update(hash, idx, &pzval)) {
@@ -771,7 +778,12 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
 	zend_result result = FAILURE;
 	switch (Z_TYPE_P(write)) {
-		case IS_UNDEF: //apparently this happens with promoted properties before they are initialized?
+		case IS_UNDEF: //uninitialized typed property value
+			//ZEND_HASH_FOREACH and friends skip over IS_UNDEF, so this hack makes sure they show up
+			//in var_dump() and such (it's the same hack used in php-src)
+			ZVAL_INDIRECT(zstorage, &PTHREADS_G(undef_zval));
+			result = SUCCESS;
+			break;
 		case IS_NULL:
 		case IS_FALSE:
 		case IS_TRUE:
@@ -915,11 +927,9 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage) {
 	*was_pthreads_storage = 0;
 	switch (Z_TYPE_P(zstorage)) {
-		case IS_UNDEF:
-			//TODO: this appears for uninitialized typed properties; we return NULL for now, to maintain
-			//consistency with older pthreads, but we really ought to error in this case like regular
-			//objects.
-			ZVAL_NULL(unstore);
+		case IS_INDIRECT:
+			//we use IS_INDIRECT only for uninitialized typed properties, to make them be seen by ZEND_HASH_FOREACH
+			ZVAL_UNDEF(unstore);
 			break;
 		case IS_NULL:
 		case IS_FALSE:

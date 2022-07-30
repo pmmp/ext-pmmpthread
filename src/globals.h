@@ -54,6 +54,8 @@ struct _pthreads_globals {
 	HashTable shared_sockets;
 #endif
 
+	zval undef_zval;
+
 	/*
 	* High Frequency Strings
 	*/

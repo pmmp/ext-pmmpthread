@@ -46,6 +46,7 @@ zend_bool pthreads_globals_init(){
 			zend_hash_init(
 				&PTHREADS_G(shared_sockets), 16, NULL, (dtor_func_t) pthreads_globals_shared_sockets_dtor_func, 1);
 #endif
+			ZVAL_UNDEF(&PTHREADS_G(undef_zval));
 		}
 
 #define INIT_STRING(n, v) do { \
