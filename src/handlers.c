@@ -142,7 +142,7 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 		ZVAL_UNDEF(&rv);
 
 		(*guard) |= IN_ISSET;
-		zend_call_known_instance_method_with_1_params(object->ce->__set, object, &rv, &zmember);
+		zend_call_known_instance_method_with_1_params(object->ce->__isset, object, &rv, &zmember);
 		(*guard) &= ~IN_ISSET;
 
 		if (Z_TYPE(rv) != IS_UNDEF) {
