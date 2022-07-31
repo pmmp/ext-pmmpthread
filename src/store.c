@@ -139,6 +139,12 @@ static inline zend_bool pthreads_store_retain_in_local_cache(zval *val) {
 	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val);
 }
 
+static inline zend_bool pthreads_store_valid_local_cache_item(zval* val) {
+	//rebuild_object_properties() may add IS_INDIRECT zvals to point to the linear property table
+	//we don't want that, because they aren't used by pthreads and are always uninitialized
+	return Z_TYPE_P(val) != IS_INDIRECT;
+}
+
 /* {{{ */
 static inline zend_bool pthreads_store_storage_is_cacheable(zval *zstorage) {
 	pthreads_storage *storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
@@ -272,9 +278,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 				property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
 			} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
 
-			//if the table isn't out of sync, there may be default stuff in there from rebuild_object_properties()
-			//ignore everything that isn't cacheable
-			if (property && pthreads_store_retain_in_local_cache(property)) {
+			if (property && pthreads_store_valid_local_cache_item(property)) {
 				pthreads_monitor_unlock(ts_obj->monitor);
 				ZVAL_DEINDIRECT(property);
 				ZVAL_COPY(read, property);
@@ -617,23 +621,24 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 			//we just synced local cache, so if something is already here, it doesn't need to be modified
 			if (hash == threaded->std.properties) {
 				if (!name) {
-					if (zend_hash_index_exists(hash, idx))
-						continue;
+					cached = zend_hash_index_find(threaded->std.properties, idx);
 				} else {
-					if (zend_hash_exists(hash, name))
-						continue;
+					cached = zend_hash_find(threaded->std.properties, name);
+				}
+				if (cached && pthreads_store_valid_local_cache_item(cached)) {
+					continue;
 				}
 			} else {
 				if (!name) {
 					cached = zend_hash_index_find(threaded->std.properties, idx);
-					if (cached) {
+					if (cached && pthreads_store_valid_local_cache_item(cached)) {
 						zend_hash_index_update(hash, idx, cached);
 						Z_TRY_ADDREF_P(cached);
 						continue;
 					}
 				} else {
 					cached = zend_hash_find(threaded->std.properties, name);
-					if (cached) {
+					if (cached && pthreads_store_valid_local_cache_item(cached)) {
 						zend_hash_update(hash, name, cached);
 						Z_TRY_ADDREF_P(cached);
 						continue;
