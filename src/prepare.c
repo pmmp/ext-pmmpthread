@@ -689,7 +689,7 @@ static zend_class_entry* pthreads_prepare_immutable_class_dependents(pthreads_ob
 				ce = zend_hash_find_ptr(PTHREADS_EG(thread->creator.ls, class_table), lookup);
 				zend_string_release(lookup);
 #if PHP_VERSION_ID < 80100
-			} else if (ZEND_TYPE_HAS_CLASS(*type) {
+			} else if (ZEND_TYPE_HAS_CLASS(*type)) {
 				ce = ZEND_TYPE_CE(*type);
 #endif
 			} else {
