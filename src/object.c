@@ -308,7 +308,6 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 	zval key;
 
 	ZEND_HASH_FOREACH_PTR(&base->std.ce->properties_info, info) {
-		zend_ulong offset;
 		const char *clazz = NULL,
 		           *prop = NULL;
 		size_t plen = 0;
@@ -317,15 +316,13 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 			continue;
 		}
 
-		offset = OBJ_PROP_TO_NUM(info->offset);
-
 		zend_unmangle_property_name_ex(
 			info->name, &clazz, &prop, &plen);
 
 		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
 		pthreads_store_write(
 			&base->std, &key,
-			&base->std.ce->default_properties_table[offset]);
+			OBJ_PROP(&base->std, info->offset));
 		zval_ptr_dtor(&key);
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
