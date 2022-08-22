@@ -29,6 +29,9 @@ jobs:
           echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
           echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
 
+      - name: Install PHP build dependencies
+        run: sudo apt-get update && sudo apt-get install libzip5
+
       - name: Restore PHP build cache
         uses: actions/cache@v2
         id: php-build-cache
