@@ -132,7 +132,7 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 					&& execute_data->func
 					&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
 
-				if (!zend_verify_property_type(info, value, strict)) {
+				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
 					ok = false;
 				}
 			}
