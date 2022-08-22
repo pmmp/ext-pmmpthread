@@ -649,6 +649,43 @@ static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend
 	return pthreads_create_entry(thread, candidate, 1);
 } /* }}} */
 
+static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_object_t* thread, zend_class_entry* candidate, int do_late_bindings) {
+	//assume that all dependencies of immutable classes are themselves immutable
+
+	if (candidate->ce_flags & ZEND_ACC_LINKED) {
+		if (candidate->parent) {
+			pthreads_create_entry(thread, candidate->parent, do_late_bindings);
+		}
+		if (candidate->num_interfaces) {
+			for (int i = 0; i < candidate->num_interfaces; i++) {
+				pthreads_create_entry(thread, candidate->interfaces[i], do_late_bindings);
+			}
+		}
+	}
+
+	zend_property_info* info;
+	zend_type *type;
+	zend_class_entry* ce;
+	ZEND_HASH_FOREACH_PTR(&candidate->properties_info, info) {
+		ZEND_TYPE_FOREACH(info->type, type) {
+			if (ZEND_TYPE_HAS_NAME(*type)) {
+				zend_string* lookup = zend_string_tolower(ZEND_TYPE_NAME(*type));
+				ce = zend_hash_find_ptr(PTHREADS_EG(thread->creator.ls, class_table), lookup);
+				zend_string_release(lookup);
+#if PHP_VERSION_ID < 80100
+			} else if (ZEND_TYPE_HAS_CLASS(*type)) {
+				ce = ZEND_TYPE_CE(*type);
+#endif
+			} else {
+				ce = NULL;
+			}
+			if (ce != NULL) {
+				pthreads_create_entry(thread, ce, do_late_bindings);
+			}
+		} ZEND_TYPE_FOREACH_END();
+	} ZEND_HASH_FOREACH_END();
+}
+
 /* {{{ */
 static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings) {
 	zend_class_entry *prepared = NULL;
@@ -696,6 +733,7 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		//this may overwrite previously inserted immutable classes on 8.1 (e.g. unlinked opcached class -> linked opcached class)
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
+		pthreads_prepare_immutable_class_dependencies(thread, candidate, do_late_bindings);
 		if (do_late_bindings) {
 			//this is needed to copy non-default statics from the origin thread
 			pthreads_prepared_entry_late_bindings(thread, candidate, candidate);
