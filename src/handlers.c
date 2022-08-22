@@ -121,13 +121,23 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 		if (Z_TYPE(rv) != IS_UNDEF)
 			zval_dtor(&rv);
 	} else {
+		bool ok = true;
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
 			if (info != NULL) {
 				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
+
+				zend_execute_data* execute_data = EG(current_execute_data);
+				bool strict = execute_data
+					&& execute_data->func
+					&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
+
+				if (!zend_verify_property_type(info, value, strict)) {
+					ok = false;
+				}
 			}
 
-			if (pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
+			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
 				zend_throw_error(
 					NULL,
 					"Cannot assign non-thread-safe value of type %s to Threaded class property %s::$%s",
