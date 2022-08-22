@@ -665,8 +665,8 @@ static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend
 	return pthreads_create_entry(thread, candidate, 1);
 } /* }}} */
 
-static zend_class_entry* pthreads_prepare_immutable_class_dependents(pthreads_object_t* thread, zend_class_entry* candidate, int do_late_bindings) {
-	//assume that all dependents of immutable classes are themselves immutable
+static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_object_t* thread, zend_class_entry* candidate, int do_late_bindings) {
+	//assume that all dependencies of immutable classes are themselves immutable
 
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
 		if (candidate->parent) {
@@ -749,7 +749,7 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		//this may overwrite previously inserted immutable classes on 8.1 (e.g. unlinked opcached class -> linked opcached class)
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
-		pthreads_prepare_immutable_class_dependents(thread, candidate, do_late_bindings);
+		pthreads_prepare_immutable_class_dependencies(thread, candidate, do_late_bindings);
 		if (do_late_bindings) {
 			//this is needed to copy non-default statics from the origin thread
 			pthreads_prepared_entry_late_bindings(thread, candidate, candidate);
