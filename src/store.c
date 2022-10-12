@@ -516,8 +516,9 @@ int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve
 					zend_hash_index_del(ts_obj->store.props, Z_LVAL(key));
 					zend_hash_index_del(threaded->std.properties, Z_LVAL(key));
 				} else {
-					zend_hash_update(
-						Z_ARRVAL_P(chunk), Z_STR(key), &zv);
+					/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+					zend_hash_str_update(
+						Z_ARRVAL_P(chunk), Z_STRVAL(key), Z_STRLEN(key), &zv);
 					zend_hash_del(ts_obj->store.props, Z_STR(key));
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 					zend_string_release(Z_STR(key));
