@@ -477,7 +477,7 @@ int pthreads_store_shift(zend_object *object, zval *member) {
 				} else {
 					zend_hash_del(ts_obj->store.props, Z_STR(key));
 					zend_hash_del(threaded->std.properties, Z_STR(key));
-					zval_dtor(&key);
+					zend_string_release(Z_STR(key));
 				}
 			}
 		} else ZVAL_NULL(member);
@@ -520,7 +520,7 @@ int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve
 						Z_ARRVAL_P(chunk), Z_STR(key), &zv);
 					zend_hash_del(ts_obj->store.props, Z_STR(key));
 					zend_hash_del(threaded->std.properties, Z_STR(key));
-					zval_dtor(&key);
+					zend_string_release(Z_STR(key));
 				}
 			} else break;
 
@@ -563,7 +563,7 @@ int pthreads_store_pop(zend_object *object, zval *member) {
 						ts_obj->store.props, Z_STR(key));
 					zend_hash_del(
 						threaded->std.properties, Z_STR(key));
-					zval_dtor(&key);
+					zend_string_release(Z_STR(key));
 				}
 			}
 		} else ZVAL_NULL(member);
@@ -1324,7 +1324,7 @@ void pthreads_store_data(zend_object *object, zval *value, HashPosition *positio
 		if (pthreads_store_read(object, &key, BP_VAR_R, value) == FAILURE) {
 			ZVAL_UNDEF(value);
 		}
-		zval_dtor(&key);
+		zend_string_release(Z_STR(key));
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
