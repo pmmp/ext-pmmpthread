@@ -12,6 +12,11 @@ $s["string"] = "string";
 var_dump($s);
 var_dump($s->shift());
 var_dump($s);
+$s["string"] = "string";
+var_dump($s);
+var_dump($s->pop());
+var_dump($s);
+
 $s[] = "help";
 var_dump($s);
 var_dump($s->shift());
@@ -28,6 +33,13 @@ while (($next = $s->pop())) {
 }
 ?>
 --EXPECT--
+object(S)#1 (1) {
+  ["string"]=>
+  string(6) "string"
+}
+string(6) "string"
+object(S)#1 (0) {
+}
 object(S)#1 (1) {
   ["string"]=>
   string(6) "string"
