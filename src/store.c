@@ -1324,7 +1324,9 @@ void pthreads_store_data(zend_object *object, zval *value, HashPosition *positio
 		if (pthreads_store_read(object, &key, BP_VAR_R, value) == FAILURE) {
 			ZVAL_UNDEF(value);
 		}
-		zend_string_release(Z_STR(key));
+		if (Z_TYPE(key) == IS_STRING) {
+			zend_string_release(Z_STR(key));
+		}
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
