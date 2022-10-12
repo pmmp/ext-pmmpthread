@@ -617,7 +617,8 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 				} else {
 					cached = zend_hash_find(threaded->std.properties, name);
 					if (cached) {
-						zend_hash_update(hash, name, cached);
+						/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+						zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), cached);
 						Z_TRY_ADDREF_P(cached);
 						continue;
 					}
