@@ -21,9 +21,9 @@ $test->start();
 $test->join();
 ?>
 --EXPECTF--
-Fatal error: Uncaught RuntimeException: only the creator of this Worker may call collect in %s:8
+Fatal error: Uncaught RuntimeException: only the creator of this Worker may call collect in %s:%d
 Stack trace:
-#0 %s(8): Worker->collect()
+#0 %s(%d): Worker->collect()
 #1 [internal function]: Test->run()
 #2 {main}
-  thrown in %s on line 8
+  thrown in %s on line %d

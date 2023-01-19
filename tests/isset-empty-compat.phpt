@@ -12,6 +12,8 @@ class standard {
     public $t_zero3 = "0";
     public $t_notSet;
     public $t_notEmpty = true;
+    public $aEmpty;
+    public $aNotEmpty;
 }
 
 class threadedObject extends \ThreadedBase {
@@ -23,6 +25,8 @@ class threadedObject extends \ThreadedBase {
     public $t_zero3 = "0";
     public $t_notSet;
     public $t_notEmpty = true;
+    public $aEmpty;
+    public $aNotEmpty;
 }
 
 foreach (array(

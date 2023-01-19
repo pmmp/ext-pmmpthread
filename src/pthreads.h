@@ -146,10 +146,18 @@ ZEND_END_MODULE_GLOBALS(pthreads)
 	((void**)((char*)PTHREADS_CG(ls, map_ptr_base) + offset))
 #define PTHREADS_MAP_PTR_PTR2OFFSET(ls, ptr) \
 	((void*)(((char*)(ptr)) - ((char*)PTHREADS_CG(ls, map_ptr_base))))
+
+#if PHP_VERSION_ID >= 80200
+#define PTHREADS_MAP_PTR_GET(ls, ptr) \
+	(ZEND_MAP_PTR_IS_OFFSET(ptr) ? \
+		*PTHREADS_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
+		((void*)(ZEND_MAP_PTR(ptr))))
+#else
 #define PTHREADS_MAP_PTR_GET(ls, ptr) \
 	(*(ZEND_MAP_PTR_IS_OFFSET(ptr) ? \
 		PTHREADS_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
 		((void**)(ZEND_MAP_PTR(ptr)))))
+#endif
 
 static zend_string *zend_string_new(zend_string *s)
 {

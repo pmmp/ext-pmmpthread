@@ -395,14 +395,10 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 			if (zend_hash_index_update(&ts_obj->props->hash, Z_LVAL(member), &zstorage))
 				result = SUCCESS;
 		} else {
-			/* anything provided by this context might not live long enough to be used by another context,
-			 * so we have to hard copy, even if the string is interned. */
-			zend_string* keyed = pthreads_store_save_string(Z_STR(member));
-
-			if (zend_hash_update(&ts_obj->props->hash, keyed, &zstorage)) {
+			/* do not use zend_hash_update_ptr() here - the string key must be hard-copied, even if it's interned */
+			if (zend_hash_str_update(&ts_obj->props->hash, Z_STRVAL(member), Z_STRLEN(member), &zstorage)) {
 				result = SUCCESS;
 			}
-			zend_string_release(keyed);
 		}
 		if (result == SUCCESS && was_pthreads_object) {
 			_pthreads_store_bump_modcount_nolock(threaded);
@@ -482,7 +478,7 @@ int pthreads_store_shift(zend_object *object, zval *member) {
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
-				zval_dtor(&key);
+				zend_string_release(Z_STR(key));
 			}
 
 			if (was_pthreads_object) {
@@ -529,13 +525,14 @@ int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve
 					zend_hash_index_del(threaded->std.properties, Z_LVAL(key));
 				}
 			} else {
-				zend_hash_update(
-					Z_ARRVAL_P(chunk), Z_STR(key), &zv);
+				/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+				zend_hash_str_update(
+					Z_ARRVAL_P(chunk), Z_STRVAL(key), Z_STRLEN(key), &zv);
 				zend_hash_del(&ts_obj->props->hash, Z_STR(key));
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
-				zval_dtor(&key);
+				zend_string_release(Z_STR(key));
 			}
 
 			zend_hash_internal_pointer_reset_ex(&ts_obj->props->hash, &position);
@@ -581,7 +578,7 @@ int pthreads_store_pop(zend_object *object, zval *member) {
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
-				zval_dtor(&key);
+				zend_string_release(Z_STR(key));
 			}
 			if (was_pthreads_object) {
 				_pthreads_store_bump_modcount_nolock(threaded);
@@ -616,7 +613,6 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 		ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props->hash, idx, name, zstorage) {
 			zval *cached;
 			zval pzval;
-			zend_string *rename;
 
 			//we just synced local cache, so if something is already here, it doesn't need to be modified
 			if (hash == threaded->std.properties) {
@@ -639,7 +635,8 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 				} else {
 					cached = zend_hash_find(threaded->std.properties, name);
 					if (cached && pthreads_store_valid_local_cache_item(cached)) {
-						zend_hash_update(hash, name, cached);
+						/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+						zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), cached);
 						Z_TRY_ADDREF_P(cached);
 						continue;
 					}
@@ -660,10 +657,9 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 					zval_ptr_dtor(&pzval);
 				}
 			} else {
-				rename = pthreads_store_restore_string(name);
-				if (!zend_hash_update(hash, rename, &pzval))
+				/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+				if (!zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), &pzval))
 					zval_ptr_dtor(&pzval);
-				zend_string_release(rename);
 			}
 			changed = 1;
 		} ZEND_HASH_FOREACH_END();
@@ -1056,22 +1052,25 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 }
 
 static HashTable *pthreads_store_copy_hash(HashTable *source) {
-	Bucket *p;
 	zval newzval;
+
+	zend_ulong h;
+	zend_string* key;
+	zval* val;
 
 	//TODO: what about IS_ARRAY_IMMUTABLE?
 	HashTable *ht = (HashTable*) pemalloc(sizeof(HashTable), GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 	zend_hash_init(ht, source->nNumUsed, NULL, source->pDestructor, GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 
-	ZEND_HASH_FOREACH_BUCKET(source, p){
-		if(pthreads_store_copy_zval(&newzval, &p->val) == FAILURE){
+	ZEND_HASH_FOREACH_KEY_VAL(source, h, key, val){
+		if(pthreads_store_copy_zval(&newzval, val) == FAILURE){
 			continue;
 		}
 
-		if (p->key) {
-			zend_hash_update(ht, zend_string_new(p->key), &newzval);
+		if (key) {
+			zend_hash_update(ht, zend_string_new(key), &newzval);
 		} else {
-			zend_hash_index_update(ht, p->h, &newzval);
+			zend_hash_index_update(ht, h, &newzval);
 		}
 	} ZEND_HASH_FOREACH_END();
 
@@ -1246,12 +1245,8 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 							if (Z_TYPE(key) == IS_LONG) {
 								zend_hash_index_update(tables[0], Z_LVAL(key), &new_zstorage);
 							} else {
-								/* anything provided by this context might not live long enough to be used by another context,
-								 * so we have to hard copy, even if the string is interned. */
-								zend_string *keyed = pthreads_store_save_string(Z_STR(key));
-
-								zend_hash_update(tables[0], keyed, &new_zstorage);
-								zend_string_release(keyed);
+								/* do not use zend_hash_update_ptr() here - the string key must be hard-copied to avoid races */
+								zend_hash_str_update(tables[0], Z_STRVAL(key), Z_STRLEN(key), &new_zstorage);
 							}
 						}
 						if (overwrote_pthreads_object) {
@@ -1397,7 +1392,9 @@ void pthreads_store_data(zend_object *object, zval *value, HashPosition *positio
 		if (pthreads_store_read(object, &key, BP_VAR_R, value) == FAILURE) {
 			ZVAL_UNDEF(value);
 		}
-		zval_dtor(&key);
+		if (Z_TYPE(key) == IS_STRING) {
+			zend_string_release(Z_STR(key));
+		}
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
