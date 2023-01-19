@@ -397,6 +397,10 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
 		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
 		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(op_array->attributes, op_array->filename);
+
+#if PHP_VERSION_ID >= 80100
+		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
+#endif
 	}
 
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
@@ -406,10 +410,6 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, NULL);
 #else
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
-#endif
-
-#if PHP_VERSION_ID >= 80100
-	if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
 #endif
 
 	return copy;
