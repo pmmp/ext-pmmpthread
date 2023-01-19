@@ -16,7 +16,7 @@ for($i = 0; $i < 5; ++$i){
 	$threaded["key$i"] = "string$i";
 }
 
-$threaded["threaded"] = new Threaded();
+$threaded["threaded"] = new ThreadedArray();
 
 foreach($threaded as $i => $prop){
 	var_dump($i, $prop);
@@ -45,5 +45,5 @@ string(6) "value4"
 string(4) "key4"
 string(7) "string4"
 string(8) "threaded"
-object(Threaded)#2 (0) {
+object(ThreadedArray)#2 (0) {
 }
