@@ -195,9 +195,11 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 				case ZEND_FAST_CALL:
 					opline->op1.jmp_addr = &copy[opline->op1.jmp_addr - op_array->opcodes];
 					break;
+#if PHP_VERSION_ID < 80200
 				case ZEND_JMPZNZ:
 					/* relative extended_value don't have to be changed */
 					/* break omitted intentionally */
+#endif
 				case ZEND_JMPZ:
 				case ZEND_JMPNZ:
 				case ZEND_JMPZ_EX:
