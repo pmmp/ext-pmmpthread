@@ -251,7 +251,9 @@ static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_ty
 
 	zend_type *single_type;
 	ZEND_TYPE_FOREACH(*new_type, single_type) {
-		if (ZEND_TYPE_HAS_NAME(*single_type)) {
+		if (ZEND_TYPE_HAS_LIST(*single_type)) {
+			pthreads_copy_zend_type(single_type, single_type);
+		} else if (ZEND_TYPE_HAS_NAME(*single_type)) {
 			ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
 		}
 	} ZEND_TYPE_FOREACH_END();
