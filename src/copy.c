@@ -403,7 +403,7 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
 #if PHP_VERSION_ID >= 80200
-	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, op_array->static_variables);
+	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, NULL);
 #else
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
 #endif
