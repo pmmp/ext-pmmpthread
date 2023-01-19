@@ -390,25 +390,31 @@ while(0)
 	FIND_AND_SET(destructor, "__destruct");
 #undef FIND_AND_SET
 
-#define SET_ITERATOR_FUNC(f) do { \
-	if (candidate->iterator_funcs_ptr->f) { \
-		prepared->iterator_funcs_ptr->f = zend_hash_index_find_ptr( \
-			&PTHREADS_ZG(resolve), (zend_ulong) candidate->iterator_funcs_ptr->f); \
-	} \
+#define SET_FUNC_REF(group, funcname) do { \
+	prepared->group->zf_##funcname = zend_hash_str_find_ptr( \
+		&prepared->function_table, #funcname, sizeof(#funcname) - 1); \
 } while (0)
 
 	if (candidate->iterator_funcs_ptr) {
 		prepared->iterator_funcs_ptr = zend_arena_alloc(&CG(arena), sizeof(zend_class_iterator_funcs));
-		memset(prepared->iterator_funcs_ptr, 0, sizeof(zend_class_iterator_funcs));
-		SET_ITERATOR_FUNC(zf_new_iterator);
-		SET_ITERATOR_FUNC(zf_valid);
-		SET_ITERATOR_FUNC(zf_current);
-		SET_ITERATOR_FUNC(zf_key);
-		SET_ITERATOR_FUNC(zf_next);
-		SET_ITERATOR_FUNC(zf_rewind);
+		SET_FUNC_REF(iterator_funcs_ptr, new_iterator);
+		SET_FUNC_REF(iterator_funcs_ptr, valid);
+		SET_FUNC_REF(iterator_funcs_ptr, current);
+		SET_FUNC_REF(iterator_funcs_ptr, key);
+		SET_FUNC_REF(iterator_funcs_ptr, next);
+		SET_FUNC_REF(iterator_funcs_ptr, rewind);
 	} else prepared->iterator_funcs_ptr = NULL;
 
-#undef SET_ITERATOR_FUNC
+#if PHP_VERSION_ID >= 80200
+	if (candidate->arrayaccess_funcs_ptr) {
+		prepared->arrayaccess_funcs_ptr = zend_arena_alloc(&CG(arena), sizeof(zend_class_arrayaccess_funcs));
+		SET_FUNC_REF(arrayaccess_funcs_ptr, offsetget);
+		SET_FUNC_REF(arrayaccess_funcs_ptr, offsetexists);
+		SET_FUNC_REF(arrayaccess_funcs_ptr, offsetset);
+		SET_FUNC_REF(arrayaccess_funcs_ptr, offsetunset);
+	} else prepared->arrayaccess_funcs_ptr = NULL;
+#endif
+#undef SET_FUNC_REF
 } /* }}} */
 
 /* {{{ */
