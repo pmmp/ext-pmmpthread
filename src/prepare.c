@@ -166,11 +166,7 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 			zend_class_init_statics(prepared->parent);
 		}
 
-#if PHP_VERSION_ID >= 80200
-		ZEND_MAP_PTR_INIT(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
-#else
 		ZEND_MAP_PTR_SET(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
-#endif
 		for (i = prepared->default_static_members_count - 1; i >= 0; i--) {
 			//copy in reverse order, to ensure object ID consistency with 8.0
 			p = &prepared->default_static_members_table[i];
