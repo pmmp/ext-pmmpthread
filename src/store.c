@@ -915,22 +915,25 @@ static int pthreads_store_copy_zval(zval *dest, zval *source) {
 }
 
 static HashTable *pthreads_store_copy_hash(HashTable *source) {
-	Bucket *p;
 	zval newzval;
+
+	zend_ulong h;
+	zend_string* key;
+	zval* val;
 
 	//TODO: what about IS_ARRAY_IMMUTABLE?
 	HashTable *ht = (HashTable*) pemalloc(sizeof(HashTable), GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 	zend_hash_init(ht, source->nNumUsed, NULL, source->pDestructor, GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 
-	ZEND_HASH_FOREACH_BUCKET(source, p){
-		if(pthreads_store_copy_zval(&newzval, &p->val) == FAILURE){
+	ZEND_HASH_FOREACH_KEY_VAL(source, h, key, val){
+		if(pthreads_store_copy_zval(&newzval, val) == FAILURE){
 			continue;
 		}
 
-		if (p->key) {
-			zend_hash_update(ht, zend_string_new(p->key), &newzval);
+		if (key) {
+			zend_hash_update(ht, zend_string_new(key), &newzval);
 		} else {
-			zend_hash_index_update(ht, p->h, &newzval);
+			zend_hash_index_update(ht, h, &newzval);
 		}
 	} ZEND_HASH_FOREACH_END();
 
