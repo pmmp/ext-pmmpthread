@@ -166,7 +166,11 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 			zend_class_init_statics(prepared->parent);
 		}
 
+#if PHP_VERSION_ID >= 80200
+		ZEND_MAP_PTR_INIT(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
+#else
 		ZEND_MAP_PTR_SET(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
+#endif
 		for (i = prepared->default_static_members_count - 1; i >= 0; i--) {
 			//copy in reverse order, to ensure object ID consistency with 8.0
 			p = &prepared->default_static_members_table[i];
@@ -226,7 +230,9 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 			parent = parent->parent;
 		}
 
-#if PHP_VERSION_ID >= 80100
+#if PHP_VERSION_ID >= 80200
+		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to NULL, so nothing to do here
+#elif PHP_VERSION_ID >= 80100
 		if (!ZEND_MAP_PTR(prepared->static_members_table)) {
 			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
 			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);

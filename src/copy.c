@@ -332,13 +332,22 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 		//the primary problem is zend_create_closure(), which doesn't like being given an op_array that has a NULL
 		//map_ptr. However, when allocated on heap, Zend expects the map ptr and the runtime cache to be part of the
 		//same contiguous memory block freed with a single call to efree(), and the cache won't be resized.
+#if PHP_VERSION_ID >= 80200
+		void* ptr = ecalloc(1, op_array->cache_size);
+		ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
+#else
 		void *ptr = ecalloc(1, sizeof(void*) + op_array->cache_size);
 		ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
 		ptr = (char*)ptr + sizeof(void*);
 		ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
+#endif
 	} else {
+#if PHP_VERSION_ID >= 80200
+		ZEND_MAP_PTR_INIT(op_array->run_time_cache, NULL);
+#else
 		ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
 		ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
+#endif
 	}
 
 	if (op_array->doc_comment) {
@@ -393,7 +402,11 @@ static inline zend_function* pthreads_copy_user_function(const zend_function *fu
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
 	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(op_array->static_variables);
+#if PHP_VERSION_ID >= 80200
+	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, op_array->static_variables);
+#else
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, &op_array->static_variables);
+#endif
 
 #if PHP_VERSION_ID >= 80100
 	if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
