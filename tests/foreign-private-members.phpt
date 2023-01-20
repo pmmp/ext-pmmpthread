@@ -14,11 +14,11 @@ class MY {
 
 class TEST extends Thread {
         public function __construct($my) {
-                $this->my = $my;
+                $this->my = serialize($my);
         }
 
-        public function run(){
-                printf("TEST: %s\n", $this->my->getTest());
+        public function run() : void{
+                printf("TEST: %s\n", unserialize($this->my)->getTest());
         }
 }
 

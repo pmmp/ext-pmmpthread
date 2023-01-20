@@ -9,14 +9,14 @@ class Foo extends \Thread {
     /** @var bool */
     public $running;
 
-    /** @var \Threaded */
+    /** @var \ThreadedArray */
     private $shared;
 
-    public function __construct(\Threaded $shared) {
+    public function __construct(\ThreadedArray $shared) {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         $this->running = true;
 
         require __DIR__ .'/assets/ExternalClosureDefinition.php';
@@ -33,7 +33,7 @@ class Foo extends \Thread {
     }
 }
 
-$shared = new \Threaded();
+$shared = new ThreadedArray();
 
 $foo = new Foo($shared);
 $foo->start();

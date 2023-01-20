@@ -6,46 +6,27 @@ Class defaults should now initialize defaults properly
 <?php
 class Test extends Thread {
 
-	public function run(){
+	public function __construct(){
+		$this->string = strrev($this->string);
+	}
+
+	public function run() : void{
 		var_dump($this);
 	}
 	
 	protected $string = "hello world";
-	protected $array  = array(1, 2, 3);
 	private $pstring  = "world hello";
-	private $parray   = array(3, 2, 1);
 	protected static $nocopy = true;
 }
 
 $test =new Test();
-$test->string = strrev($test->string);
 $test->start();
 $test->join();
 ?>
---EXPECTF--
-object(Test)#%d (%d) {
-  ["string"]=>
+--EXPECT--
+object(Test)#1 (2) {
+  ["string":protected]=>
   string(11) "dlrow olleh"
-  ["array"]=>
-  object(Volatile)#%d (%d) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    int(3)
-  }
-  ["pstring"]=>
+  ["pstring":"Test":private]=>
   string(11) "world hello"
-  ["parray"]=>
-  object(Volatile)#%d (%d) {
-    [0]=>
-    int(3)
-    [1]=>
-    int(2)
-    [2]=>
-    int(1)
-  }
 }
-
-

@@ -5,7 +5,7 @@ More mishandling of exceptions, regression test
 --FILE--
 <?php
 class Test extends Thread {
-    public function run() {
+    public function run() : void{
         set_exception_handler(function($message) {
             var_dump('Uncaught', $message);
         });

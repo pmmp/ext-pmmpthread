@@ -12,7 +12,7 @@ seconds.
 <?php
 class T extends Thread {
         public $data;
-        public function run() {
+        public function run() : void{
 			$start = time();
             $this->synchronized(function() use($start) {
 				while (time() - $start < 3) {

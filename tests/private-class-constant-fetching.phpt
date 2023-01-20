@@ -30,8 +30,7 @@ class A
 }
 
 $t = new class extends Thread {
-	public function run()
-	{
+	public function run() : void{
 		A::getA();
 	}
 };

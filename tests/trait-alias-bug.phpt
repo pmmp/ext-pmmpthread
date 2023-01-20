@@ -16,7 +16,7 @@ class B {
 }
 
 class My extends Thread{
-    function run(){
+    public function run() : void{
         for($i=1;$i<2;$i++){
             echo Thread::getCurrentThreadId();
         }

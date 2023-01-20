@@ -5,7 +5,7 @@ Test pthreads constant array copy
 const CONSTANT_ARRAY = ['ok'];
 
 class Test extends Thread {
-        public function run() {
+        public function run() : void{
                 echo CONSTANT_ARRAY[0];
         }
 }

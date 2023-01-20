@@ -97,7 +97,7 @@ function test(){
 }
 $worker = new Worker();
 $worker->start();
-$worker->stack(new class extends \Threaded{
+$worker->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";
 		test();

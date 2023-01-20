@@ -12,7 +12,7 @@ class Foo {
     use Hello { world as sun; }
 }
 $t = new class extends Thread {
-    public function run() {
+    public function run() : void{
         $foo = new Foo();
 
         $class = new ReflectionClass($foo);

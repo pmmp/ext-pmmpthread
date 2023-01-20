@@ -6,7 +6,7 @@ Mishandling of exceptions caused catch() blocks to be ignored in some cases
 <?php
 class Test extends Thread {
 
-    public function run() {
+    public function run() : void{
 		set_exception_handler(function($ex) {
 			var_dump('Uncaught', $ex);
 		});

@@ -15,28 +15,12 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_PREPARE
-#define HAVE_PTHREADS_PREPARE
 
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
-
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_COPY_H
-#   include <src/copy.h>
-#endif
+#include <src/prepare.h>
+#include <src/object.h>
+#include <src/resources.h>
+#include <src/globals.h>
+#include <src/copy.h>
 
 #if PHP_VERSION_ID >= 80100
 #include <Zend/zend_enum.h>
@@ -954,15 +938,6 @@ static inline void pthreads_prepare_includes(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_exception_handler(pthreads_object_t* thread) {
-	if (thread->user_exception_handler != NULL) {
-		pthreads_store_convert(thread->user_exception_handler, &EG(user_exception_handler));
-		pthreads_store_storage_dtor(thread->user_exception_handler);
-		thread->user_exception_handler = NULL;
-	}
-} /* }}} */
-
-/* {{{ */
 static inline void pthreads_prepare_resource_destructor(pthreads_object_t* thread) {
 	if (!PTHREADS_G(default_resource_dtor))
 		PTHREADS_G(default_resource_dtor)=(EG(regular_list).pDestructor);
@@ -976,40 +951,6 @@ static inline void pthreads_prepare_sapi(pthreads_object_t* thread) {
 	if (!(thread->options & PTHREADS_ALLOW_HEADERS)) {
 		SG(headers_sent)=1;
 		SG(request_info).no_headers = 1;
-	}
-} /* }}} */
-
-/* {{{ */
-static inline void pthreads_rebuild_object(zval *zv) {
-	if (Z_TYPE_P(zv) == IS_OBJECT) {
-		rebuild_object_properties(Z_OBJ_P(zv));
-	} else if (Z_TYPE_P(zv) == IS_ARRAY) {
-		zval *object = zend_hash_index_find(Z_ARRVAL_P(zv), 0);
-		if (object && Z_TYPE_P(object) == IS_OBJECT) {
-			rebuild_object_properties(Z_OBJ_P(object));
-		}
-	}
-} /* }}} */
-
-/* {{{ */
-void pthreads_prepare_parent(pthreads_object_t *thread) {
-	zval *handler = &EG(user_exception_handler);
-
-	if (thread->options & (PTHREADS_INHERIT_CLASSES | PTHREADS_INHERIT_FUNCTIONS)) {
-		if (Z_TYPE_P(handler) != IS_UNDEF) {
-			pthreads_rebuild_object(handler);
-			if (Z_TYPE_P(handler) == IS_ARRAY) {
-				if (zend_hash_num_elements(Z_ARRVAL_P(handler)) > 1) {
-					if (!(thread->options & PTHREADS_INHERIT_CLASSES)) {
-						return;
-					}
-				} else if (!(thread->options & PTHREADS_INHERIT_FUNCTIONS)) {
-					return;
-				}
-			}
-
-			thread->user_exception_handler = pthreads_store_create(handler);
-		}
 	}
 } /* }}} */
 
@@ -1067,7 +1008,6 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		if (thread->options & PTHREADS_INHERIT_INCLUDES)
 			pthreads_prepare_includes(thread);
 
-		pthreads_prepare_exception_handler(thread);
 		pthreads_prepare_resource_destructor(thread);
 		pthreads_monitor_add(ready, PTHREADS_MONITOR_READY);
 	} PTHREADS_PREPARATION_END_CRITICAL();
@@ -1144,5 +1084,3 @@ static void pthreads_prepared_resource_dtor(zval *zv) {
 		}
 	} zend_end_try();
 } /* }}} */
-#endif
-

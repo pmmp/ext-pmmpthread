@@ -7,7 +7,7 @@ This test verifies that static members in declarations made outside of threads a
 class TestThread extends Thread {
 	static $static = "pthreads rocks!";
 
-	public function run() { var_dump(self::$static); }
+	public function run() : void{ var_dump(self::$static); }
 }
 
 $thread = new TestThread();

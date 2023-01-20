@@ -24,7 +24,7 @@ class sql {
 }
 
 class UserThread extends Thread {
-    public function run () {
+    public function run () : void{
         /* execute queries */
 		sql::query("SELECT * FROM mysql.user");
 		sql::query("SELECT * FROM mysql.user");

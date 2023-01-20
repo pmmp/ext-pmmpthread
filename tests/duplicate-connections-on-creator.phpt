@@ -14,7 +14,7 @@ In this test, creating a duplicate connection to the Worker context by dereferen
 <?php
 
 $w = new Worker;
-class Dummy extends Threaded{
+class Dummy extends ThreadedRunnable{
 	/** @var Worker */
 	public $worker;
 

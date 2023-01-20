@@ -7,7 +7,7 @@ work as expected
 <?php
 
 /** c */
-class C extends Threaded
+class C extends ThreadedRunnable
 {
     use T1, T2 {
         T2::t insteadof T1;
@@ -29,7 +29,7 @@ class C extends Threaded
     public static function __set_state($ps){}
     public function __clone(){}
     public function __debugInfo(){}
-    public function run(){var_dump(self::C, $this->c2);}
+    public function run() : void{var_dump(self::C, $this->c2);}
 }
 
 trait T1 {function t(){}}

@@ -20,7 +20,7 @@ function test() : void{
 test();
 
 $t = new class extends \Thread{
-	public function run(){
+	public function run() : void{
 		test();
 	}
 };

@@ -4,7 +4,7 @@ Test iterating on Threaded
 Regression test for bugs introduced with Threaded iteration in PHP 7.3
 --FILE--
 <?php
-$threaded = new Threaded();
+$threaded = new ThreadedArray();
 
 var_dump($threaded->count());
 foreach($threaded as $k => $prop){
@@ -16,7 +16,7 @@ for($i = 0; $i < 5; ++$i){
 	$threaded["key$i"] = "string$i";
 }
 
-$threaded["threaded"] = new Threaded();
+$threaded["threaded"] = new ThreadedArray();
 
 foreach($threaded as $i => $prop){
 	var_dump($i, $prop);
@@ -45,5 +45,5 @@ string(6) "value4"
 string(4) "key4"
 string(7) "string4"
 string(8) "threaded"
-object(Threaded)#2 (0) {
+object(ThreadedArray)#2 (0) {
 }

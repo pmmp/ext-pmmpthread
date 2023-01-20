@@ -8,8 +8,7 @@ semantics differ to that of normal function copying.
 
 class SubThread extends Thread
 {
-    public function run()
-    {
+    public function run() : void{
         $this->testFunction();
     }
 
@@ -20,8 +19,7 @@ class SubThread extends Thread
 }
 
 $thread = new class extends Thread {
-    public function run()
-    {
+    public function run() : void{
         $thread = new SubThread();
         $thread->start(PTHREADS_INHERIT_NONE) && $thread->join();
     }

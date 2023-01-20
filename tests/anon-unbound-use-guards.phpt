@@ -6,12 +6,11 @@ class copy (it is only relevant to unbound anonymous classes).
 --FILE--
 <?php
 
-class T2 extends Threaded
+class T2 extends ThreadedRunnable
 {
     public function __get($p){}
 
-	public function run()
-	{
+	public function run() : void{
         var_dump($this->prop);
 	}
 }

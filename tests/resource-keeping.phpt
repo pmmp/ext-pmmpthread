@@ -5,7 +5,7 @@ Test that resources from other thread contexts can properly be accessed and are 
 --FILE--
 <?php
 class myWorker extends Worker {
-    private $foreignResource;
+    public $foreignResource;
 
     public function __construct($useResource) {
         $this->foreignResource = $useResource;
@@ -16,7 +16,7 @@ class myWorker extends Worker {
         ]);
     }
 
-    public function run () {
+    public function run() : void{
 
         // polute EG(regular_list) with another resource of our own
         $localThreadFP = tmpfile();
@@ -47,9 +47,9 @@ class myWorker extends Worker {
 
 }
 
-class Work extends Threaded {
+class Work extends ThreadedRunnable {
 
-    public function run () {
+    public function run() : void{
 	$foreignResource = $this->worker->foreignResource;
 
         var_dump(array(

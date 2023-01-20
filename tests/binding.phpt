@@ -11,7 +11,7 @@ class ThreadTesting extends Thread {
 	public function setOther($other){
 		$this->other = $other;
 	}
-	public function run(){
+	public function run() : void{
 		$this->synchronized(function($that) {
 			$that->done = true;
 			$that->notify();
@@ -26,7 +26,7 @@ class ThreadTest extends Thread {
 	public function setOther($other){
 		$this->other = $other;
 	}
-	public function run(){
+	public function run() : void{
 		$this->synchronized(function($that) {
 			$that->done = true;
 			$that->notify();

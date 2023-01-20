@@ -18,21 +18,9 @@
 #ifndef HAVE_PTHREADS_THREAD_H
 #define HAVE_PTHREADS_THREAD_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
-
-#ifndef HAVE_PTHREADS_SOCKET_H
-#	include <src/socket.h>
-#endif
-
-#ifndef HAVE_PTHREADS_STORE_H
-#	include <src/store.h>
-#endif
+#include <src/pthreads.h>
+#include <src/resources.h>
+#include <src/worker.h>
 
 typedef struct _pthreads_ident_t {
 	zend_ulong id;
@@ -46,11 +34,8 @@ typedef struct _pthreads_object_t {
 	unsigned int scope;
 	zend_ulong options;
 	pthreads_monitor_t *monitor;
-	union {
-		pthreads_store_t *props;
-		pthreads_socket_t *sock;
-	} store;
-	pthreads_storage *user_exception_handler;
+	pthreads_store_t *props;
+	zval user_exception_handler;
 	pthreads_ident_t creator;
 	pthreads_ident_t local;
 } pthreads_object_t; /* }}} */
@@ -63,8 +48,8 @@ struct _pthreads_zend_object_t {
 	pthreads_object_t *ts_obj;
 	pthreads_ident_t owner;
 	pthreads_zend_object_t *original_zobj; //NULL if this is the original object
-	pthreads_stack_t *stack;
-	zend_object *running;
+	zend_long local_props_modcount;
+	pthreads_worker_data_t *worker_data;
 	zend_object std;
 }; /* }}} */
 

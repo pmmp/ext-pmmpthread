@@ -11,8 +11,7 @@ $worker->start();
 class TestAsyncTask extends ManInTheMiddle {
 	public static $destroyed = false;
 
-	public function run()
-	{
+	public function run() : void{
 		try {
 			var_dump(self::$destroyed);
 		} catch(\Error $e) {
@@ -21,7 +20,7 @@ class TestAsyncTask extends ManInTheMiddle {
 	}
 }
 
-abstract class ManInTheMiddle extends \Threaded{}
+abstract class ManInTheMiddle extends \ThreadedRunnable{}
 
 error_reporting(-1);
 

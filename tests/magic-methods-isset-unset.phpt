@@ -4,18 +4,18 @@ Test magic __isset and __unset
 This test verifies that __isset and __unset work as expected
 --FILE--
 <?php
-class Test extends Threaded {
+class Test extends ThreadedBase {
 
     public function __isset($key) {
         printf("magic %s\n", __FUNCTION__);
         
-        return isset($this[$key]);
+        return isset($this->{$key});
     }
     
     public function __unset($key) {
         printf("magic %s\n", __FUNCTION__);
         
-        unset($this[$key]);
+        unset($this->{$key});
     }
 }
 $test = new Test();

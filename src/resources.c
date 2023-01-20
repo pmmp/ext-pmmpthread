@@ -15,17 +15,13 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_RESOURCES
-#define HAVE_PTHREADS_RESOURCES
 
 /*
 * THIS IS A TEST | THIS IS A TEST | THIS IS A TEST | THIS IS A TEST
 * IF IT DOESN'T WORK TOUGH SHIT !! | IF IT DOESN'T WORK TOUGH SHIT !!
 */
 
-#ifndef HAVE_PTHREADS_RESOURCES_H
-#	include <src/resources.h>
-#endif
+#include <src/resources.h>
 
 /* {{{ mark a resource for keeping */
 zend_bool pthreads_resources_keep(pthreads_resource res) {
@@ -52,5 +48,3 @@ zend_bool pthreads_resources_kept(zend_resource *entry) {
 	}
 	return 0;
 } /* }}} */
-#endif
-

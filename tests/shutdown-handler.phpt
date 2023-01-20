@@ -5,7 +5,7 @@ Shutdown handlers that were closures were causing segfaults
 --FILE--
 <?php
 class Test extends Thread {
-        public function run() {
+        public function run() : void{
                 register_shutdown_function(function(){
                         var_dump(new stdClass());
                 });

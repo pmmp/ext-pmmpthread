@@ -4,18 +4,18 @@ Test magic __get and __set
 This test verifies that __set and __get work as expected
 --FILE--
 <?php
-class Test extends Threaded {
+class Test extends ThreadedBase {
 
     public function __get($key) {
         printf(
             "magic %s\n", __FUNCTION__);
-        return $this[$key];
+        return $this->{$key};
     }
     
     public function __set($key, $value) {
         printf(
             "magic %s\n", __FUNCTION__);
-        return $this[$key] = $value;
+        return $this->{$key} = $value;
     }
 }
 

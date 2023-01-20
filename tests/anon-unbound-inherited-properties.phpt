@@ -9,10 +9,12 @@ $worker = new Worker();
 
 $worker->start();
 
-class Base extends Threaded {
+class Base extends ThreadedRunnable {
 	public static $staticProp = "staticProp";
 
 	public $prop = "prop";
+
+	public function run() : void{}
 }
 
 class Base2 extends Base {
@@ -22,7 +24,7 @@ class Base2 extends Base {
 }
 
 $collectable = new class extends Base2 {
-	public function run() {
+	public function run() : void{
 		var_dump($this->prop);
 		var_dump($this->prop2);
 		var_dump(self::$staticProp);

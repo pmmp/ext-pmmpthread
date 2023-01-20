@@ -15,16 +15,9 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_GLOBALS
-#define HAVE_PTHREADS_GLOBALS
 
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
+#include <src/globals.h>
+#include <src/prepare.h>
 
 struct _pthreads_globals pthreads_globals;
 
@@ -53,6 +46,7 @@ zend_bool pthreads_globals_init(){
 			zend_hash_init(
 				&PTHREADS_G(shared_sockets), 16, NULL, (dtor_func_t) pthreads_globals_shared_sockets_dtor_func, 1);
 #endif
+			ZVAL_UNDEF(&PTHREADS_G(undef_zval));
 		}
 
 #define INIT_STRING(n, v) do { \
@@ -176,4 +170,3 @@ void pthreads_globals_shutdown() {
 #endif
 	}
 } /* }}} */
-#endif

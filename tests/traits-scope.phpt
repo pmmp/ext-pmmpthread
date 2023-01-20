@@ -2,10 +2,10 @@
 Test traits scope (gh issue #484)
 --FILE--
 <?php
-class MyWork extends \Threaded {
+class MyWork extends \ThreadedRunnable {
 	use \MyTrait;
 
-	public function run() {
+	public function run() : void{
     	$this->getSomething();
 	}
 }

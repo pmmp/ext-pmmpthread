@@ -38,7 +38,7 @@ class MyIterator implements \Iterator {
 }
 
 class MyThread extends \Thread {
-        public function run() {
+        public function run() : void{
                 $it = new \MyIterator();
                 foreach ($it as $item) {}
                 print "SUCCESS";

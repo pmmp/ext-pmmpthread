@@ -4,14 +4,11 @@ Testing sane handling of resources and objects bug #39
 Test that resources and objects are not corrupted when written to thread storage
 --FILE--
 <?php
-class Work extends Threaded {
-	public function run(){
-		
-	}
+class Work extends ThreadedBase {
 }
 
 class Test extends Thread {
-	public function run(){
+	public function run() : void{
 		$test = new Work();
 		$this->test = $test;
 		print_r($this->test);

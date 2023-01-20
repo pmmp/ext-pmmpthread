@@ -19,14 +19,14 @@ function undefined(){
 $w = new \Worker();
 $w->start();
 
-$w->stack(new class extends \Threaded{
-	public function run(){
+$w->stack(new class extends \ThreadedRunnable{
+	public function run() : void{
 		throwException();
 	}
 });
 
-$w->stack(new class extends \Threaded{
-	public function run(){
+$w->stack(new class extends \ThreadedRunnable{
+	public function run() : void{
 		undefined();
 	}
 });

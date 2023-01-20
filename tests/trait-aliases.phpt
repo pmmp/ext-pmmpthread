@@ -13,7 +13,7 @@ trait testTrait {
 class myThread extends Thread {
     use testTrait  {fromTrait as fromTraitAliased;}
 
-    public function run() {
+    public function run() : void{
         $this->fromTrait('blah');
     }
 }

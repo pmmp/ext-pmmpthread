@@ -17,12 +17,12 @@ interface Dummy2 {
 	public const A_CONSTANT_2 = 2;
 }
 
-class Base extends Threaded implements Dummy {
+abstract class Base extends ThreadedRunnable implements Dummy {
 	public const BASE_CONSTANT = 3;
 }
 
 $collectable = new class extends Base implements Dummy2 {
-	public function run() {
+	public function run() : void{
 		var_dump(self::A_CONSTANT);
 		var_dump(static::A_CONSTANT);
 		var_dump(self::A_CONSTANT_2);

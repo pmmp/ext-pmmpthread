@@ -1,18 +1,18 @@
 --TEST--
-Test iterating on Threaded objects produces the same Threaded objects as property reads
+Test iterating on ThreadedArray objects produces the same ThreadedArray objects as property reads
 --DESCRIPTION--
-Threaded iteration was bypassing local property cache, causing a new Threaded object to be created every time a Threaded member of a Threaded object was yielded by foreach.
+ThreadedArray iteration was bypassing local property cache, causing a new ThreadedArray object to be created every time a ThreadedArray member of a ThreadedArray object was yielded by foreach.
 --FILE--
 <?php
-$threaded = new Threaded();
+$threaded = new ThreadedArray();
 
-$threaded[] = new \Threaded();
-$threaded[] = new \Threaded();
+$threaded[] = new \ThreadedArray();
+$threaded[] = new \ThreadedArray();
 
 $thread = new class($threaded) extends \Thread{
-	private \Threaded $threaded;
+	private \ThreadedArray $threaded;
 
-	public function __construct(\Threaded $t){
+	public function __construct(\ThreadedArray $t){
 		$this->threaded = $t;
 	}
 
@@ -31,11 +31,11 @@ $thread->join();
 
 ?>
 --EXPECTF--
-object(Threaded)#3 (0) {
+object(ThreadedArray)#3 (0) {
 }
-object(Threaded)#4 (0) {
+object(ThreadedArray)#4 (0) {
 }
-object(Threaded)#3 (0) {
+object(ThreadedArray)#3 (0) {
 }
-object(Threaded)#4 (0) {
+object(ThreadedArray)#4 (0) {
 }

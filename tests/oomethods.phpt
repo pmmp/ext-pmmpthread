@@ -9,7 +9,7 @@ class ThreadTest extends Thread {
 		return $this->value;
 	}
 	
-	public function run(){
+	public function run() : void{
 		$this->value = 1;
 	}
 }

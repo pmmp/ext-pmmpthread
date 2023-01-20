@@ -13,11 +13,13 @@ class baseTest extends \Thread {
             var_dump("Constant: " . self::TEST_CONSTANT);
         });
     }
+
+    public function run() : void{}
 }
 
 class testClass extends baseTest {
 
-    public function run() {
+    public function run() : void{
         $this->test();
     }
 }

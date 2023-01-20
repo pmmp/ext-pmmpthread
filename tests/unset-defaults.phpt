@@ -7,7 +7,7 @@ This test verifies that unset members do not cause a problem in pthreads objects
 class TestThread extends Thread {
 	public $default;
 	
-	public function run() {
+	public function run() : void{
 		var_dump($this->default); 
 	}
 }

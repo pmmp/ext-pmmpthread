@@ -179,27 +179,6 @@
 	<file name="tests/selective-inheritance.phpt" role="test" />
 	<file name="tests/shift-pop.phpt" role="test" />
 	<file name="tests/shutdown-handler.phpt" role="test" />
-	<file name="tests/socket-bind.phpt" role="test" />
-	<file name="tests/socket-connect-error-unix.phpt" role="test" />
-	<file name="tests/socket-connect-error-win32.phpt" role="test" />
-	<file name="tests/socket-connect-params-af-inet.phpt" role="test" />
-	<file name="tests/socket-connect-params-af-unix.phpt" role="test" />
-	<file name="tests/socket-construct.phpt" role="test" />
-	<file name="tests/socket-getoption.phpt" role="test" />
-	<file name="tests/socket-getpeername-af-inet.phpt" role="test" />
-	<file name="tests/socket-getpeername-af-unix.phpt" role="test" />
-	<file name="tests/socket-getsockname-af-inet.phpt" role="test" />
-	<file name="tests/socket-getsockname-af-unix.phpt" role="test" />
-	<file name="tests/socket-ipv4loop.phpt" role="test" />
-	<file name="tests/socket-ipv6loop.phpt" role="test" />
-	<file name="tests/socket-read-type.phpt" role="test" />
-	<file name="tests/socket-select-unix.phpt" role="test" />
-	<file name="tests/socket-select-win32.phpt" role="test" />
-	<file name="tests/socket-sentto-recvfrom-ipv4-udp.phpt" role="test" />
-	<file name="tests/socket-sentto-recvfrom-ipv6-udp.phpt" role="test" />
-	<file name="tests/socket-sentto-recvfrom-unix.phpt" role="test" />
-	<file name="tests/socket-setoption.phpt" role="test" />
-	<file name="tests/socket-unixloop.phpt" role="test" />
 	<file name="tests/stateful-fatalities.phpt" role="test" />
 	<file name="tests/static-inheritance-unexpected-null.phpt" role="test" />
 	<file name="tests/static-resolution.phpt" role="test" />
@@ -235,7 +214,6 @@
 	<file name="tests/workers-no-start.phpt" role="test" />
 	<file name="tests/workers-no-unstack.phpt" role="test" />
 	<file name="tests/workers-ok-unstack.phpt" role="test" />
-   	<file name="src/sockets/windows_common.h" role="src" />
    	<file name="src/copy.h" role="src" />
 	<file name="src/globals.c" role="src" />
 	<file name="src/globals.h" role="src" />
@@ -250,16 +228,12 @@
 	<file name="src/pthreads.h" role="src" />
 	<file name="src/resources.c" role="src" />
 	<file name="src/resources.h" role="src" />
-	<file name="src/socket.c" role="src" />
-	<file name="src/socket.h" role="src" />
 	<file name="src/stack.c" role="src" />
 	<file name="src/stack.h" role="src" />
 	<file name="src/store.c" role="src" />
 	<file name="src/store.h" role="src" />
 	<file name="src/thread.h" role="src" />
-   	<file name="classes/collectable.h" role="src" />
 	<file name="classes/pool.h" role="src" />
-	<file name="classes/socket.h" role="src" />
 	<file name="classes/thread.h" role="src" />
 	<file name="classes/threaded.h" role="src" />
 	<file name="classes/worker.h" role="src" />

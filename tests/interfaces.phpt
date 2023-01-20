@@ -21,7 +21,7 @@ class TEST extends Thread {
 
     }
 
-    public function run(){
+    public function run() : void{
 	    $MY = new MY();
         var_dump(in_array("iMY",get_declared_interfaces()));
 	    var_dump(in_array("iMY",class_implements($MY)));

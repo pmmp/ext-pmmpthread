@@ -9,7 +9,7 @@ function some() : string {
 }
 
 $thread = new class extends Thread {
-	public function run () {
+	public function run() : void{
 		var_dump(some());
 	}
 };

@@ -8,7 +8,7 @@ define("INC", sprintf("%s/includeme.inc", dirname(__FILE__)));
 
 include(INC);
 class TestThread extends Thread {
-	public function run(){
+	public function run() : void{
 		require_once(INC);
 		if (!function_exists("myTestFunc")) {
 			printf("FAILED\n");

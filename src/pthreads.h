@@ -80,21 +80,21 @@
 #include <dmalloc.h>
 #endif
 
-extern zend_class_entry *pthreads_threaded_entry;
-extern zend_class_entry *pthreads_volatile_entry;
+extern zend_class_entry *pthreads_threaded_base_entry;
+extern zend_class_entry *pthreads_threaded_array_entry;
+extern zend_class_entry *pthreads_threaded_runnable_entry;
 extern zend_class_entry *pthreads_thread_entry;
 extern zend_class_entry *pthreads_worker_entry;
-extern zend_class_entry *pthreads_socket_entry;
 extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 
 #define IS_PTHREADS_CLASS(c) \
-	(instanceof_function(c, pthreads_threaded_entry))
+	(instanceof_function(c, pthreads_threaded_base_entry))
 
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
 
-#define IS_PTHREADS_VOLATILE_CLASS(o)   \
-        instanceof_function(o, pthreads_volatile_entry)
+#define IS_PTHREADS_THREADED_ARRAY(o) \
+	instanceof_function(o, pthreads_threaded_array_entry)
 
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
@@ -106,7 +106,8 @@ extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 #define IS_EXT_SOCKETS_OBJECT(z) 0
 #endif
 
-extern zend_object_handlers pthreads_handlers;
+extern zend_object_handlers pthreads_threaded_base_handlers;
+extern zend_object_handlers pthreads_threaded_array_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
 extern zend_object_handlers *zend_handlers;
 
@@ -181,30 +182,6 @@ static zend_string *zend_string_new(zend_string *s)
 }
 
 /* {{{ */
-static inline const zend_op* pthreads_check_opline(zend_execute_data *ex, zend_long offset, zend_uchar opcode) {
-	if (ex && ex->func && ex->func->type == ZEND_USER_FUNCTION) {
-		zend_op_array *ops = &ex->func->op_array;
-		const zend_op *opline = ex->opline;
-
-		if ((opline + offset) >= ops->opcodes) {
-			opline += offset;
-			if (opline->opcode == opcode) {
-				return opline;
-			}
-		}
-	}
-	return NULL;
-} /* }}} */
-
-/* {{{ */
-static inline zend_bool pthreads_check_opline_ex(zend_execute_data *ex, zend_long offset, zend_uchar opcode, uint32_t extended_value) {
-	const zend_op *opline = pthreads_check_opline(ex, offset, opcode);
-	if (opline && opline->extended_value == extended_value)
-		return 1;
-	return 0;
-} /* }}} */
-
-/* {{{ */
 typedef struct _pthreads_call_t {
 	zend_fcall_info fci;
 	zend_fcall_info_cache fcc;
@@ -212,20 +189,9 @@ typedef struct _pthreads_call_t {
 
 #define PTHREADS_CALL_EMPTY {empty_fcall_info, empty_fcall_info_cache}
 
-#ifndef HAVE_PTHREADS_MONITOR_H
-#	include <src/monitor.h>
-#endif
-
-#ifndef HAVE_PTHREADS_STACK_H
-#	include <src/stack.h>
-#endif
-
-#ifndef HAVE_PTHREADS_STORE_H
-#	include <src/store.h>
-#endif
-
-#ifndef HAVE_PTHREADS_THREAD_H
-#	include <src/thread.h>
-#endif
+#include <src/monitor.h>
+#include <src/store.h>
+#include <src/thread.h>
+#include <src/worker.h>
 
 #endif

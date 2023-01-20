@@ -9,15 +9,15 @@ class WebWorker extends Worker {
 		$this->logger = $logger;
 	}
 	
-	protected $logger;	
+	public $logger;
 }
 
-class WebWork extends Threaded {
+class WebWork extends ThreadedRunnable {
 	public function __construct(int $id) {
 		$this->id = $id;
 	}
 
-	public function run() {
+	public function run() : void{
 		$this->worker
 			->logger
 			->log("%s(%d) executing in Thread #%lu",
@@ -27,7 +27,7 @@ class WebWork extends Threaded {
 	protected $id;
 }
 
-class SafeLog extends Threaded {
+class SafeLog extends ThreadedBase {
 	public function log($message, ... $args) {
 		$this->synchronized(function($message, ... $args) {
 			echo vsprintf("{$message}\n", ...$args);

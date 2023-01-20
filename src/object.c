@@ -15,24 +15,11 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_OBJECT
-#define HAVE_PTHREADS_OBJECT
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
-
-#ifndef HAVE_PTHREADS_OBJECT_H
-#	include <src/object.h>
-#endif
-
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
-#endif
-
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
+#include <src/pthreads.h>
+#include <src/object.h>
+#include <src/globals.h>
+#include <src/prepare.h>
 
 /* {{{ */
 extern zend_module_entry pthreads_module_entry; /* }}} */
@@ -122,7 +109,6 @@ static void pthreads_routine_init(pthreads_routine_arg_t *r, pthreads_zend_objec
 	r->ready  = pthreads_monitor_alloc();
 	pthreads_monitor_add(
 		r->thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED);
-	pthreads_prepare_parent(thread->ts_obj);
 }
 
 static void pthreads_routine_wait(pthreads_routine_arg_t *r) {
@@ -143,7 +129,7 @@ zend_object* pthreads_thread_ctor(zend_class_entry *entry) {
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
 	pthreads_base_ctor(thread, entry, PTHREADS_SCOPE_THREAD);
-	thread->std.handlers = &pthreads_handlers;
+	thread->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &thread->std;
 } /* }}} */
@@ -155,31 +141,31 @@ zend_object* pthreads_worker_ctor(zend_class_entry *entry) {
 
 	pthreads_base_ctor(worker, entry, PTHREADS_SCOPE_WORKER);
 
-	worker->stack = pthreads_stack_alloc(worker->ts_obj->monitor);
+	worker->worker_data = pthreads_worker_data_alloc(worker->ts_obj->monitor);
 
-	worker->std.handlers = &pthreads_handlers;
+	worker->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &worker->std;
 } /* }}} */
 
 /* {{{ */
-zend_object* pthreads_threaded_ctor(zend_class_entry *entry) {
+zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry) {
 	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
 	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_THREADED);
-	threaded->std.handlers = &pthreads_handlers;
+	threaded->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &threaded->std;
 } /* }}} */
 
 /* {{{ */
-zend_object* pthreads_socket_ctor(zend_class_entry *entry) {
+zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
-	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_SOCKET);
-	threaded->std.handlers = &pthreads_socket_handlers;
+	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_THREADED);
+	threaded->std.handlers = &pthreads_threaded_array_handlers;
 
 	return &threaded->std;
 } /* }}} */
@@ -234,11 +220,10 @@ void pthreads_current_thread(zval *return_value) {
 static inline int _pthreads_connect_nolock(pthreads_zend_object_t* source, pthreads_zend_object_t* destination) {
 	if (source && destination) {
 		//TODO: avoid these things being allocated to begin with...
-		if (destination->stack) {
-			pthreads_stack_free(destination->stack);
-			destination->stack = NULL;
+		if (destination->worker_data) {
+			pthreads_worker_data_free(destination->worker_data);
+			destination->worker_data = NULL;
 		}
-		destination->running = NULL;
 
 		if (destination->ts_obj && --destination->ts_obj->refcount == 0) {
 			pthreads_ts_object_free(destination);
@@ -307,24 +292,38 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 	zend_property_info *info;
 	zval key;
 
-	ZEND_HASH_FOREACH_PTR(&base->std.ce->properties_info, info) {
-		const char *clazz = NULL,
-		           *prop = NULL;
-		size_t plen = 0;
+	zend_class_entry* ce = base->std.ce;
 
-		if (info->flags & ZEND_ACC_STATIC) {
-			continue;
-		}
+	while (ce != NULL) {
+		ZEND_HASH_FOREACH_PTR(&ce->properties_info, info) {
+			zval* value;
+			int result;
 
-		zend_unmangle_property_name_ex(
-			info->name, &clazz, &prop, &plen);
+			if (info->flags & ZEND_ACC_STATIC) {
+				continue;
+			}
 
-		ZVAL_STR(&key, zend_string_init(prop, plen, 0));
-		pthreads_store_write(
-			&base->std, &key,
-			OBJ_PROP(&base->std, info->offset));
-		zval_ptr_dtor(&key);
-	} ZEND_HASH_FOREACH_END();
+			ZVAL_STR(&key, info->name);
+			value = OBJ_PROP(&base->std, info->offset);
+			result = pthreads_store_write(
+				&base->std, &key,
+				value,
+				PTHREADS_STORE_NO_COERCE_ARRAY
+			);
+			if (result == FAILURE) {
+				zend_throw_error(
+					NULL,
+					"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
+					zend_get_type_by_const(Z_TYPE_P(value)),
+					ZSTR_VAL(ce->name),
+					ZSTR_VAL(Z_STR(key))
+				);
+				break;
+			}
+		} ZEND_HASH_FOREACH_END();
+
+		ce = ce->parent;
+	}
 } /* }}} */
 
 /* {{{ */
@@ -336,11 +335,7 @@ static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 	ts_obj->creator.ls = TSRMLS_CACHE;
 	ts_obj->creator.id = pthreads_self();
 	ts_obj->options = PTHREADS_INHERIT_ALL;
-	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
-		ts_obj->store.props   = pthreads_store_alloc();
-	} else {
-		ts_obj->store.sock = pthreads_socket_alloc();
-	}
+	ts_obj->props   = pthreads_store_alloc();
 	return ts_obj;
 } /* }}} */
 
@@ -350,14 +345,12 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 	base->owner.ls = TSRMLS_CACHE;
 	base->owner.id = pthreads_self();
 	base->original_zobj = NULL;
-	base->stack = NULL;
-	base->running = NULL;
+	base->worker_data = NULL;
 
 	zend_object_std_init(&base->std, entry);
 	object_properties_init(&base->std, entry);
-	if (!(scope & PTHREADS_SCOPE_SOCKET)) {
-		pthreads_base_init(base);
-	}
+	pthreads_base_init(base);
+	base->local_props_modcount = base->ts_obj->props->modcount - 1;
 } /* }}} */
 
 /* {{{ */
@@ -377,13 +370,9 @@ void pthreads_base_dtor(zend_object *object) {
 /* {{{ */
 static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 	pthreads_object_t *ts_obj = base->ts_obj;
-	if (!PTHREADS_IS_SOCKET(base)) {
-		if (pthreads_monitor_lock(ts_obj->monitor)) {
-			pthreads_store_free(ts_obj->store.props);
-			pthreads_monitor_unlock(ts_obj->monitor);
-		}
-	} else {
-		pthreads_socket_free(ts_obj->store.sock, 1);
+	if (pthreads_monitor_lock(ts_obj->monitor)) {
+		pthreads_store_free(ts_obj->props);
+		pthreads_monitor_unlock(ts_obj->monitor);
 	}
 
 	pthreads_monitor_free(ts_obj->monitor);
@@ -395,8 +384,8 @@ static void pthreads_ts_object_free(pthreads_zend_object_t* base) {
 void pthreads_base_free(zend_object *object) {
 	pthreads_zend_object_t* base = PTHREADS_FETCH_FROM(object);
 
-	if (base->stack) {
-		pthreads_stack_free(base->stack);
+	if (base->worker_data) {
+		pthreads_worker_data_free(base->worker_data);
 	}
 
 	if (pthreads_globals_lock()) {
@@ -507,7 +496,7 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 	pthreads_monitor_add(object->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
 
 	if (work)
-		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this));
+		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this), PTHREADS_STORE_NO_COERCE_ARRAY);
 
 	zend_try {
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
@@ -562,14 +551,16 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 			pthreads_routine_run_function(thread, PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this))), NULL);
 
 			if (PTHREADS_IS_WORKER(thread)) {
-				zval stacked;
+				zval task;
+				pthreads_queue_item_t *item;
 
-				while (pthreads_stack_next(thread->stack, &stacked, &thread->running) != PTHREADS_MONITOR_JOINED) {
+				while (pthreads_worker_next_task(thread->worker_data, &task, &item) != PTHREADS_MONITOR_JOINED) {
 					zval that;
-					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(stacked));
+					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(task));
 					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
 					zval_ptr_dtor(&that);
+					pthreads_worker_add_garbage(thread->worker_data, item);
 				}
 			}
 
@@ -586,6 +577,3 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 	return NULL;
 #endif
 } /* }}} */
-
-#endif
-

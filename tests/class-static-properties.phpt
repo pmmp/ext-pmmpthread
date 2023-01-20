@@ -12,7 +12,7 @@ We are back to the original rules, that complex unsafe members will be removed f
 	array: remains, rules above applied
 --FILE--
 <?php
-class Test extends Threaded {
+class Test extends ThreadedBase {
 
    public static $prop1 = "one";
    public static $prop2 = [1, 2, 3];
@@ -25,7 +25,7 @@ class Test extends Threaded {
    public static $prop9;
 }
 
-Test::$prop4 = new Threaded;
+Test::$prop4 = new ThreadedArray;
 Test::$prop5 = new stdClass; /* will be null */
 Test::$prop6 = function() { /* will be copied with voodoo */
 	return [1,2,3];
@@ -33,14 +33,14 @@ Test::$prop6 = function() { /* will be copied with voodoo */
 
 Test::$prop7 = fopen("php://stdin", "r");
 Test::$prop8 = [fopen("php://stdin", "r")];
-Test::$prop9 = [new Threaded, new stdClass, [
-	new Threaded, new stdClass, [
-		new Threaded, new stdClass
+Test::$prop9 = [new ThreadedArray, new stdClass, [
+	new ThreadedArray, new stdClass, [
+		new ThreadedArray, new stdClass
 	]
 ]];
 
 $test = new class extends Thread {
-	public function run() {
+	public function run() : void{
 		var_dump(Test::$prop1,
 				 Test::$prop2,
 				 Test::$prop3,
@@ -84,7 +84,7 @@ array(2) {
     int(6)
   }
 }
-object(Threaded)#5 (0) {
+object(ThreadedArray)#5 (0) {
 }
 NULL
 object(Closure)#4 (0) {
@@ -102,17 +102,17 @@ array(0) {
 }
 array(2) {
   [0]=>
-  object(Threaded)#1 (0) {
+  object(ThreadedArray)#1 (0) {
   }
   [2]=>
   array(2) {
     [0]=>
-    object(Threaded)#2 (0) {
+    object(ThreadedArray)#2 (0) {
     }
     [2]=>
     array(1) {
       [0]=>
-      object(Threaded)#3 (0) {
+      object(ThreadedArray)#3 (0) {
       }
     }
   }

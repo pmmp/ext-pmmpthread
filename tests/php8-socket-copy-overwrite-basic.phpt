@@ -5,7 +5,7 @@ Test that standard Socket objects get copied and overwritten properly
 --FILE--
 <?php
 
-$threaded = new \Threaded;
+$threaded = new class extends \ThreadedBase{};
 $threaded->socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 socket_connect($threaded->socket, "127.0.0.1", 19132);
 
@@ -14,7 +14,7 @@ $thread = new class($threaded) extends \Thread{
 	public bool $started = false;
 	public bool $wait1 = false;
 
-	public function __construct(public \Threaded $threaded){}
+	public function __construct(public \ThreadedBase $threaded){}
 
 	public function run() : void{
 		socket_getpeername($this->threaded->socket, $addr, $port);

@@ -15,12 +15,12 @@ This could be dangerous if misused ... please don't misuse it ...
 <?php
 class Test extends Thread {
 	
-	public function __construct(Threaded $thing, Threaded $member) {
+	public function __construct(ThreadedBase $thing, ThreadedBase $member) {
 		$this->thing = $thing;
 		$this->member = $member;
 	}
 
-	public function run() {
+	public function run() : void{
 		$this->thing->member = 
 			(object) $this->member;
 
@@ -30,8 +30,8 @@ class Test extends Thread {
 	private $member;
 }
 
-$thing = new Threaded();
-$member = new Threaded();
+$thing = new ThreadedBase();
+$member = new ThreadedBase();
 
 $test = new Test($thing, $member);
 
@@ -40,9 +40,9 @@ $test->start() && $test->join();
 var_dump($thing);
 ?>
 --EXPECT--
-object(Threaded)#1 (1) {
+object(ThreadedBase)#1 (1) {
   ["member"]=>
-  object(Threaded)#2 (0) {
+  object(ThreadedBase)#2 (0) {
   }
 }
 

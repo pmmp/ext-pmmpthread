@@ -10,12 +10,11 @@ $worker->start(PTHREADS_INHERIT_NONE);
 $worker->stack(new Testing());
 $worker->shutdown();
 
-class Testing extends Threaded
+class Testing extends ThreadedRunnable
 {
     const MY_VAR = "Testing";
 
-    public function run()
-    {
+    public function run() : void{
         var_dump("Running...");
     }
 }

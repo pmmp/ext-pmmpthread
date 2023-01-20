@@ -6,8 +6,8 @@ This test verifies that unstack functions as intended
 <?php
 $worker = new Worker();
 
-$worker->stack(new class extends Threaded {
-	public function run() {
+$worker->stack(new class extends ThreadedRunnable {
+	public function run() : void{
 		var_dump($this);
 	}
 });

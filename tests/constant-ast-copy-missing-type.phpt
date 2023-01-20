@@ -8,7 +8,7 @@ namespace any\name\space {
 	class Test extends \Thread {
 		const KEY = '';
 
-		public function run() {
+		public function run() : void{
 			static $arrConst = [self::KEY => true];
 
 			var_dump($arrConst);

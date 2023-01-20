@@ -18,7 +18,7 @@
 #ifndef HAVE_PHP_PTHREADS_H
 #define HAVE_PHP_PTHREADS_H
 #define PHP_PTHREADS_EXTNAME "pthreads"
-#define PHP_PTHREADS_VERSION "4.2.1dev"
+#define PHP_PTHREADS_VERSION "5.0.1dev"
 
 PHP_MINIT_FUNCTION(pthreads);
 PHP_MSHUTDOWN_FUNCTION(pthreads);
@@ -26,30 +26,6 @@ PHP_RINIT_FUNCTION(pthreads);
 PHP_RSHUTDOWN_FUNCTION(pthreads);
 PHP_MINFO_FUNCTION(pthreads);
 ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
-
-#ifndef HAVE_PTHREADS_CLASS_THREADED_H
-#	include <classes/threaded.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_THREAD_H
-#	include <classes/thread.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_COLLECTABLE_H
-#	include <classes/collectable.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_WORKER_H
-#	include <classes/worker.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_POOL_H
-#	include <classes/pool.h>
-#endif
-
-#ifndef HAVE_PTHREADS_CLASS_SOCKET_H
-#	include <classes/socket.h>
-#endif
 
 extern zend_module_entry pthreads_module_entry;
 #define phpext_pthreads_ptr &pthreads_module_entry

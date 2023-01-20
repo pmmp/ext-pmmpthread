@@ -6,20 +6,16 @@ is able to retain a reference to another Threaded object, this makes programming
 the code in this test would fail with pthreads v2 and will work as expected with pthreads v3, which is a win for everyone ...
 --FILE--
 <?php
-class O extends Threaded {
-	public function run(){}
-}
 
 class T extends Thread {
 
 	public function __construct() {
-		$this->t = new O();
+		$this->t = new ThreadedBase();
 		$this->t->set = true;
-		$this->s = new stdClass();
 	}
-	
-    public function run(){
-		var_dump($this->t, $this->s, $this);
+
+    public function run() : void{
+		var_dump($this->t, $this);
 	}
 }
 
@@ -31,27 +27,19 @@ $t->join();
 --EXPECTF--
 object(T)#%d (%d) {
   ["t"]=>
-  object(O)#%d (%d) {
+  object(ThreadedBase)#%d (%d) {
     ["set"]=>
     bool(true)
   }
-  ["s"]=>
-  object(stdClass)#%d (%d) {
-  }
 }
-object(O)#2 (%d) {
+object(ThreadedBase)#2 (%d) {
   ["set"]=>
   bool(true)
 }
-object(stdClass)#%d (%d) {
-}
 object(T)#%d (%d) {
   ["t"]=>
-  object(O)#%d (%d) {
+  object(ThreadedBase)#%d (%d) {
     ["set"]=>
     bool(true)
-  }
-  ["s"]=>
-  object(stdClass)#%d (%d) {
   }
 }

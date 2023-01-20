@@ -22,24 +22,14 @@
 #	include <config.h>
 #endif
 
+#include <src/store_types.h>
+#include <src/thread.h>
 #include <src/pthreads.h>
 
-#define IS_CLOSURE  (IS_PTR + 1)
-#define IS_PTHREADS (IS_PTR + 2)
-#define IS_SOCKET (IS_PTR + 3)
+#define PTHREADS_STORE_COERCE_ARRAY 1
+#define PTHREADS_STORE_NO_COERCE_ARRAY 0
 
-typedef HashTable pthreads_store_t;
-
-typedef struct _pthreads_storage {
-	zend_uchar 	type;
-	size_t 	length;
-	zend_bool 	exists;
-	union {
-		zend_long   lval;
-		double     dval;
-	} simple;
-	void    	*data;
-} pthreads_storage;
+#define TRY_PTHREADS_STORAGE_PTR_P(zval) ((zval) != NULL && Z_TYPE_P(zval) == IS_PTR ? (pthreads_storage *) Z_PTR_P(zval) : NULL)
 
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 typedef struct _pthreads_storage_socket {
@@ -60,12 +50,12 @@ typedef struct _zend_closure {
 } zend_closure;
 
 pthreads_store_t* pthreads_store_alloc();
-void pthreads_store_sync(zend_object *object);
-int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite);
+void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
+int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
 zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists);
-int pthreads_store_write(zend_object *object, zval *key, zval *write);
+int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded);
 int pthreads_store_separate(zval *pzval, zval *seperated);
 void pthreads_store_tohash(zend_object *object, HashTable *hash);
 int pthreads_store_shift(zend_object *object, zval *member);
@@ -80,8 +70,10 @@ void pthreads_store_key(zend_object *object, zval *key, HashPosition *position);
 void pthreads_store_data(zend_object *object, zval *value, HashPosition *position);
 void pthreads_store_forward(zend_object *object, HashPosition *position); /* }}} */
 
-pthreads_storage* pthreads_store_create(zval *pzval);
-int pthreads_store_convert(pthreads_storage *storage, zval *pzval);
-void pthreads_store_storage_dtor(pthreads_storage *element);
+/* {{{ */
+zend_result pthreads_store_save_zval(zval *zstorage, zval *write);
+void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage);
+void pthreads_store_restore_zval(zval *unstore, zval *zstorage); /* }}} */
+void pthreads_store_storage_dtor(zval *element);
 
 #endif

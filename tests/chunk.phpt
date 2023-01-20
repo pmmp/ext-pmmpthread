@@ -4,16 +4,12 @@ Check chunking
 This test verifies functionality of ::chunk
 --FILE--
 <?php
-class S extends Threaded {
-    public function run(){}
-}
-
-$s = new S();
+$s = new ThreadedArray();
 $s->merge(array_fill(0, 10000, true));
 
 var_dump($s->chunk(10));
 
-$s = new S();
+$s = new ThreadedArray();
 $s->merge(array_fill_keys(array_map(fn(int $i) => "key$i", range(0, 1000)), true));
 
 var_dump($s->chunk(10));

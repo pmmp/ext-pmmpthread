@@ -5,7 +5,7 @@ This test verifies that fatalities are graceful with regard to state
 --FILE--
 <?php
 class TestThread extends Thread {
-	public function run(){
+	public function run() : void{
 		/* silent fatal error */
 		echo @MY::$FATAL;
 	}

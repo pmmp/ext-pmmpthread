@@ -25,7 +25,7 @@ class T extends Thread {
     * @package package
     * @subpackage subpackage
     */
-    public function run() {
+    public function run() : void{
        $reflect = new ReflectionMethod("T", "run");
        var_dump($reflect);
        var_dump($reflect->getDocComment());
