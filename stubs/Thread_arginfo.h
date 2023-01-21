@@ -1,10 +1,10 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: f3d9321b52c19c493e2915dbb5ee9b3110915f08 */
+ * Stub hash: a2b65be0718b120ca3b8d84a62c95407958cf7d5 */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_Thread_getCurrentThread, 0, 0, Thread, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_Thread_getCurrentThread, 0, 0, Thread, 1)
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_Thread_getCurrentThreadId arginfo_class_Thread_getCreatorId

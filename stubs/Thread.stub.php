@@ -22,9 +22,9 @@ abstract class Thread extends ThreadedRunnable
     /**
      * Will return the instance of currently executing thread
      *
-     * @return Thread
+     * @return Thread|null
      */
-    public static function getCurrentThread() : Thread{}
+    public static function getCurrentThread() : ?Thread{}
 
     /**
      * Will return the identity of the currently executing thread
