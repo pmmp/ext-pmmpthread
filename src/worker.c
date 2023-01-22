@@ -138,10 +138,6 @@ zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pth
 
 /* {{{ Runs a pthreads_store_full_sync_local_properties() on every task in the GC queue, to ensure availability of properties */
 zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t* worker_data) {
-	if (worker_data == NULL) {
-		//this may be a worker referenced from a thread that isn't its owner
-		return;
-	}
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		pthreads_queue_item_t* item = worker_data->gc.head;
 		while (item) {

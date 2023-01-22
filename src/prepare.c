@@ -68,7 +68,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 				if (pthreads_store_separate(enum_value, &copied_enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
-						prepared->info.user.filename,
+						ZSTR_VAL(prepared->info.user.filename),
 						0,
 						"pthreads encountered a non-copyable enum case %s::%s with backing value of type %s",
 						ZSTR_VAL(prepared->name),
@@ -105,7 +105,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			if (pthreads_store_separate(&zc->value, &rc->value) != SUCCESS) {
 				zend_error_at_noreturn(
 					E_CORE_ERROR,
-					prepared->info.user.filename,
+					ZSTR_VAL(prepared->info.user.filename),
 					0,
 					"pthreads encountered a non-copyable class constant %s::%s with value of type %s",
 					ZSTR_VAL(prepared->name),
