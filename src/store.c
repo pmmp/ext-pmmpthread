@@ -100,6 +100,7 @@ void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /*
 				}
 			}
 		} ZEND_HASH_FOREACH_END();
+		HT_FLAGS(threaded->std.properties) &= ~HASH_FLAG_HAS_EMPTY_IND;
 	}
 	threaded->local_props_modcount = ts_obj->props->modcount;
 } /* }}} */
@@ -730,6 +731,7 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 				//uninitialized typed property
 				ZVAL_INDIRECT(&pzval, &object->properties_table[OBJ_PROP_TO_NUM(info->offset)]);
 				zend_hash_update(hash, info->name, &pzval);
+				HT_FLAGS(hash) |= HASH_FLAG_HAS_EMPTY_IND;
 				changed = 1;
 			}
 		}
