@@ -32,6 +32,9 @@ while(!$done){
 ?>
 --EXPECT--
 object(ThreadedRunnable@anonymous)#2 (2) {
+  ["worker"]=>
+  object(Worker)#1 (0) {
+  }
   ["array"]=>
   object(ThreadedArray)#4 (2) {
     ["sub"]=>
@@ -39,8 +42,5 @@ object(ThreadedRunnable@anonymous)#2 (2) {
     }
     ["recursive"]=>
     *RECURSION*
-  }
-  ["worker"]=>
-  object(Worker)#1 (0) {
   }
 }

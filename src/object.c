@@ -314,20 +314,23 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 
 			ZVAL_STR(&key, info->name);
 			value = OBJ_PROP(&base->std, info->offset);
-			result = pthreads_store_write(
-				&base->std, &key,
-				value,
-				PTHREADS_STORE_NO_COERCE_ARRAY
-			);
-			if (result == FAILURE) {
-				zend_throw_error(
-					NULL,
-					"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
-					zend_get_type_by_const(Z_TYPE_P(value)),
-					ZSTR_VAL(ce->name),
-					ZSTR_VAL(Z_STR(key))
+			if (!Z_ISUNDEF_P(value)) {
+				result = pthreads_store_write(
+					&base->std, &key,
+					value,
+					PTHREADS_STORE_NO_COERCE_ARRAY
 				);
-				break;
+				if (result == FAILURE) {
+					zend_throw_error(
+						NULL,
+						"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
+						zend_get_type_by_const(Z_TYPE_P(value)),
+						ZSTR_VAL(ce->name),
+						ZSTR_VAL(Z_STR(key))
+					);
+					break;
+				}
+				ZVAL_UNDEF(value);
 			}
 		} ZEND_HASH_FOREACH_END();
 

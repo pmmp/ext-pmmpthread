@@ -87,6 +87,15 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 			//defined property, use mangled name
 			ZVAL_STR(&zmember, info->name);
 			pthreads_store_read(object, &zmember, type, rv);
+
+			if (Z_ISUNDEF_P(rv)) {
+				if (type != BP_VAR_IS) {
+					zend_throw_error(NULL, "Typed property %s::$%s must not be accessed before initialization",
+						ZSTR_VAL(info->ce->name),
+						ZSTR_VAL(member));
+				}
+				rv = &EG(uninitialized_zval);
+			}
 		}
 	}
 	return rv;
@@ -216,8 +225,6 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
 			if (info != NULL) {
-				//TODO: this should probably write IS_UNDEF into the table instead of nuking the property
-				//if this is a typed property
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
 			pthreads_store_delete(object, &zmember);
