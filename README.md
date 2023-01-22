@@ -1,17 +1,27 @@
 # Threading for PHP - Share Nothing, Do Everything :)
 
-[![Build Status](https://travis-ci.com/pmmp/pthreads.svg?branch=fork)](https://travis-ci.com/pmmp/pthreads)
+[![CI](https://github.com/pmmp/pthreads/actions/workflows/main.yml/badge.svg)](https://github.com/pmmp/pthreads/actions/workflows/main.yml)
 [![Build status](https://ci.appveyor.com/api/projects/status/929kgwur23p40n1y/branch/fork?svg=true)](https://ci.appveyor.com/project/pmmp/pthreads/branch/fork)
-<!---
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/krakjoe/pthreads.svg)](http://isitmaintained.com/project/krakjoe/pthreads "Percentage of issues still open")
-[![Join the chat at https://gitter.im/krakjoe/pthreads](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/krakjoe/pthreads?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
--->
-This project provides multi-threading that is compatible with PHP based on Posix Threads.
+
+This project provides limited support for threading in PHP CLI.
 
 This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjoe/pthreads) extension.
 
-## Focus
+## Managing expectations
+
+While the idea of PHP threading may seem great, the barrier to using threads is much higher than other languages, due to severe limitations imposed by the design of the Zend Engine. Many things are not possible with threads in PHP, or are simply far too performance-intensive to be worthwhile.
+
+You can learn more about pthreads at the following links:
+- https://doc.pmmp.io/en/rtfd/developer-reference/threading-in-php-wtf.html
+- https://gist.github.com/krakjoe/6437782
+- https://gist.github.com/krakjoe/9384409
+
+## Documentation 
+Documentation can be found in the `stub.php` files in the `stubs` folder, and some examples can be found in the `examples` folder in the master repository.
+
+Legacy documentation for pthreads v2/v3 can be found [here](http://docs.php.net/manual/en/book.pthreads.php).
+
+## Fork focus
 This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
 
 ## Changes compared to the original
@@ -53,6 +63,7 @@ Updating pthreads to PHP 7.4 allowed PocketMine-MP users to immediately gain the
 ## Requirements
 
 * PHP 7.4+
+* PHP CLI (**only** CLI is supported; pthreads is not intended for usage on a webserver)
 * ZTS Enabled ( Thread Safety )
 * Posix Threads Implementation (pthread-w32 / pthreads4w on Windows)
 
@@ -69,13 +80,12 @@ Building pthreads from source is quite simple on Unix-based OSs. The instruction
  * `make install` (may need sudo)
  * Update your php.ini file to load the `pthreads.so` file using the `extension` directive
 
-### Windows Support
-
+### Windows-based Building from Source
 Yes !! Windows support is offered thanks to the pthread-w32 library.
 
 ##### Simple Windows Installation
 
-* Add `pthreadVC2.dll` (included with the Windows releases) to the same directory as `php.exe` eg. `C:\xampp\php`
+* Add `pthreadVC2.dll` or `pthreadVC3.dll` (included with the Windows releases) to the same directory as `php.exe` eg. `C:\xampp\php`
 * Add `php_pthreads.dll` to PHP extension folder eg. `C:\xampp\php\ext`
 
 ### Mac OSX Support
@@ -98,28 +108,11 @@ $thread->start() && $thread->join();
 ?>
 ```
 
-### SAPI Support
-
-pthreads v3 is restricted to operating in CLI only: I have spent many years trying to explain that threads in a web server just don't make sense, after 1,111 commits to pthreads I have realised that, my advice is going unheeded.
-
-So I'm promoting the advice to hard and fast fact: *you can't use pthreads safely and sensibly anywhere but CLI.*
-
-Thanks for listening ;)
-
-### Documentation 
-
-Documentation can be found in the PHP manual: http://docs.php.net/manual/en/book.pthreads.php, and some examples can be found in the "examples" folder in the master repository.
-
-Here are some links to articles I have prepared for users: everybody should read them before they do anything else:
-
- - https://gist.github.com/krakjoe/6437782
- - https://gist.github.com/krakjoe/9384409
-
-### Feedback
+## Feedback
 
 Please submit issues, and send your feedback and suggestions as often as you have them.
 
-### Reporting Bugs
+## Reporting Bugs
 
 If you believe you have found a bug in pthreads, please open an issue: Include in your report *minimal, executable, reproducing code*.
 
@@ -133,6 +126,6 @@ __It is impossible to help without reproducing code, bugs that are opened withou
 
 Please include version and operating system information in your report.
 
-### Developers
+## Developers
 
 There is no defined API for you to create your own threads in your extensions, this project aims to provide Userland threading, it does not aim to provide a threading API for extension developers. I suggest you allow users to decide what they thread and keep your own extension focused on your functionality.
