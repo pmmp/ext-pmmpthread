@@ -2,11 +2,22 @@
 Test that uninitialized and unset static properties behave correctly
 --FILE--
 <?php
-
+class NTS{
+	public int $a = 1;
+	public string $b = "hello";
+	public $c;
+}
+class TS extends \ThreadedBase{
+	public int $a = 1;
+	public string $b = "hello";
+	public $c;
+}
 function test(object $t1) : void{
 	var_dump($t1);
 	unset($t1->a);
 	var_dump($t1);
+	var_dump(isset($t1->a));
+	var_dump(property_exists($t1, "a"));
 
 	try{
 		var_dump($t1->a);
@@ -17,53 +28,73 @@ function test(object $t1) : void{
 	foreach($t1 as $name => $value){
 		var_dump($name, $value);
 	}
+
+	var_dump($t1->c);
+	var_dump(isset($t1->c));
+	var_dump(property_exists($t1, "c"));
 }
 
 echo "--- Normal object ---\n";
-test(new class{
-	public int $a = 1;
-	public string $b = "hello";
-});
+test(new NTS);
 echo "--- pthreads object ---\n";
 echo "--- properties are currently expected to be in an unstable order ---\n";
-test(new class extends \ThreadedBase{
-	public int $a = 1;
-	public string $b = "hello";
-});
+test(new TS);
 echo "--- Done ---\n";
 ?>
 --EXPECT--
 --- Normal object ---
-object(class@anonymous)#1 (2) {
+object(NTS)#1 (3) {
   ["a"]=>
   int(1)
   ["b"]=>
   string(5) "hello"
+  ["c"]=>
+  NULL
 }
-object(class@anonymous)#1 (1) {
+object(NTS)#1 (2) {
   ["a"]=>
   uninitialized(int)
   ["b"]=>
   string(5) "hello"
+  ["c"]=>
+  NULL
 }
-Typed property class@anonymous::$a must not be accessed before initialization
+bool(false)
+bool(true)
+Typed property NTS::$a must not be accessed before initialization
 string(1) "b"
 string(5) "hello"
+string(1) "c"
+NULL
+NULL
+bool(false)
+bool(true)
 --- pthreads object ---
 --- properties are currently expected to be in an unstable order ---
-object(ThreadedBase@anonymous)#2 (2) {
+object(TS)#2 (3) {
   ["a"]=>
   int(1)
   ["b"]=>
   string(5) "hello"
+  ["c"]=>
+  NULL
 }
-object(ThreadedBase@anonymous)#2 (2) {
+object(TS)#2 (2) {
   ["b"]=>
   string(5) "hello"
+  ["c"]=>
+  NULL
   ["a"]=>
   uninitialized(int)
 }
-Typed property ThreadedBase@anonymous::$a must not be accessed before initialization
+bool(false)
+bool(true)
+Typed property TS::$a must not be accessed before initialization
 string(1) "b"
 string(5) "hello"
+string(1) "c"
+NULL
+NULL
+bool(false)
+bool(true)
 --- Done ---
