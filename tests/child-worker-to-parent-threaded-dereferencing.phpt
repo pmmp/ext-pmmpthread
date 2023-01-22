@@ -28,9 +28,7 @@ while(!$done){
 		var_dump($work);
 		$done = true;
 	});
-	$worker->synchronized(function() use ($worker) : void{
-		$worker->wait(100_000);
-	});
+	usleep(100_000);
 }
 ?>
 --EXPECT--
