@@ -33,7 +33,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install libzip5
 
       - name: Restore PHP build cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
