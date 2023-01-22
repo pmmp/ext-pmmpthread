@@ -51,6 +51,7 @@ typedef struct _zend_closure {
 
 pthreads_store_t* pthreads_store_alloc();
 void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
+void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);

@@ -28,6 +28,7 @@ struct _pthreads_worker_data_t {
 	pthreads_monitor_t   	*monitor;
 	pthreads_queue queue;
 	pthreads_queue gc;
+	zend_ulong tasks_collected;
 };
 
 pthreads_worker_data_t* pthreads_worker_data_alloc(pthreads_monitor_t *monitor) {
@@ -80,10 +81,11 @@ zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *va
 	return size;
 }
 
-void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue_item_t *item) {
+void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, pthreads_queue_item_t *item, zval* work_zval) {
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		pthreads_queue_push(&worker_data->gc, item);
 		pthreads_monitor_unlock(worker_data->monitor);
+		pthreads_queue_push_new(done_tasks_cache, work_zval);
 	} else {
 		ZEND_ASSERT(0);
 	}
@@ -108,15 +110,22 @@ zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pth
 		pthreads_queue_item_t *item;
 
 		item = worker_data->gc.head;
+		zend_long tasks_collected = 0;
 		while (item) {
+			pthreads_store_full_sync_local_properties(PTHREADS_FETCH_FROM(Z_OBJ(item->value)));
 			if (collect(call, &item->value)) {
 				item = item->next;
 
 				pthreads_queue_shift(&worker_data->gc, NULL, PTHREADS_STACK_FREE);
+				tasks_collected++;
 				continue;
+			} else {
+				break;
 			}
-
-			item = item->next;
+		}
+		if (tasks_collected > 0) {
+			worker_data->tasks_collected += tasks_collected;
+			pthreads_monitor_add(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE);
 		}
 
 		size = (worker_data->queue.size + worker_data->gc.size) + -offset;
@@ -127,11 +136,44 @@ zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pth
 	return size;
 }
 
-pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, zval *value, pthreads_queue_item_t **item) {
+/* {{{ Runs a pthreads_store_full_sync_local_properties() on every task in the GC queue, to ensure availability of properties */
+zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t* worker_data) {
+	if (worker_data == NULL) {
+		//this may be a worker referenced from a thread that isn't its owner
+		return;
+	}
+	if (pthreads_monitor_lock(worker_data->monitor)) {
+		pthreads_queue_item_t* item = worker_data->gc.head;
+		while (item) {
+			pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ(item->value));
+			if (pthreads_monitor_lock(threaded->ts_obj->monitor)) {
+				pthreads_store_full_sync_local_properties(threaded);
+				pthreads_monitor_unlock(threaded->ts_obj->monitor);
+			}
+			item = item->next;
+		}
+
+		pthreads_monitor_unlock(worker_data->monitor);
+		return SUCCESS;
+	}
+
+	return FAILURE;
+} /* }}} */
+
+pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value, pthreads_queue_item_t **item) {
 	pthreads_monitor_state_t state = PTHREADS_MONITOR_RUNNING;
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		do {
 			if (!worker_data->queue.head) {
+				if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE)) {
+					zend_long tasks_collected_on_parent = worker_data->tasks_collected;
+					for (zend_long i = 0; i < tasks_collected_on_parent; i++) {
+						pthreads_queue_shift(done_tasks_cache, NULL, PTHREADS_STACK_FREE);
+					}
+					worker_data->tasks_collected = 0;
+					pthreads_monitor_remove(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE);
+				}
+
 				if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_JOINED)) {
 					state = PTHREADS_MONITOR_JOINED;
 					*item = NULL;
@@ -150,6 +192,29 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 	}
 
 	return state;
+}
+
+zend_get_gc_buffer* pthreads_worker_get_gc_extra(pthreads_worker_data_t* worker_data) {
+	zend_get_gc_buffer* buffer = zend_get_gc_buffer_create();
+	if (pthreads_monitor_lock(worker_data->monitor)) {
+		pthreads_queue_item_t* item = NULL;
+
+		item = worker_data->queue.head;
+		while (item != NULL) {
+			zend_get_gc_buffer_add_zval(buffer, &item->value);
+			item = item->next;
+		}
+
+		item = worker_data->gc.head;
+		while (item != NULL) {
+			zend_get_gc_buffer_add_zval(buffer, &item->value);
+			item = item->next;
+		}
+
+		pthreads_monitor_unlock(worker_data->monitor);
+	}
+
+	return buffer;
 }
 
 /* {{{ */

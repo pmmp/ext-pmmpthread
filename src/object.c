@@ -270,16 +270,25 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 			ZVAL_OBJ(object, &pthreads->std);
 			Z_ADDREF_P(object);
 		} else {
-			/* we do not own the object, create a connection */
-			if (!ce) {
-				/* we may not know the class, can't use ce directly
-					from zend_object because it is from another context */
-				PTHREADS_ZG(hard_copy_interned_strings) = 1;
-				ce = pthreads_prepare_single_class(pthreads->ts_obj, pthreads->std.ce);
-				PTHREADS_ZG(hard_copy_interned_strings) = 0;
+			/* we do not own the object, create or find a connection */
+			pthreads_zend_object_t* connection = (pthreads_zend_object_t*) zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)pthreads->ts_obj);
+			if (connection) {
+				/* a connection already exists on this thread, reuse it */
+				ZVAL_OBJ_COPY(object, &connection->std);
+			} else {
+				/* no connection exists, create a new one */
+				if (!ce) {
+					/* we may not know the class, can't use ce directly
+						from zend_object because it is from another context */
+					PTHREADS_ZG(hard_copy_interned_strings) = 1;
+					ce = pthreads_prepare_single_class(pthreads->ts_obj, pthreads->std.ce);
+					PTHREADS_ZG(hard_copy_interned_strings) = 0;
+				}
+				object_init_ex(object, ce);
+				connection = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+				_pthreads_connect_nolock(pthreads, connection);
+				zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)connection->ts_obj, connection);
 			}
-			object_init_ex(object, ce);
-			_pthreads_connect_nolock(pthreads, PTHREADS_FETCH_FROM(Z_OBJ_P(object)));
 		}
 	}
 
@@ -388,6 +397,11 @@ void pthreads_base_free(zend_object *object) {
 		pthreads_worker_data_free(base->worker_data);
 	}
 
+	if (zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)base->ts_obj) == base) {
+		/* this is the primary connection to the TS object on the current thread - destroy it */
+		zend_hash_index_del(&PTHREADS_ZG(resolve), (zend_ulong)base->ts_obj);
+	}
+
 	if (pthreads_globals_lock()) {
 		if (--base->ts_obj->refcount == 0) {
 			pthreads_ts_object_free(base);
@@ -401,8 +415,14 @@ void pthreads_base_free(zend_object *object) {
 
 /* {{{ */
 HashTable* pthreads_base_gc(zend_object *object, zval **table, int *n) {
-	*table = NULL;
-	*n = 0;
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
+	if (threaded->worker_data != NULL) {
+		zend_get_gc_buffer* buffer = pthreads_worker_get_gc_extra(threaded->worker_data);
+		zend_get_gc_buffer_use(buffer, table, n);
+	} else {
+		*table = NULL;
+		*n = 0;
+	}
 	return object->properties;
 } /* }}} */
 
@@ -471,6 +491,20 @@ zend_bool pthreads_join(pthreads_zend_object_t* thread) {
 	}
 
 	pthreads_monitor_add(thread->ts_obj->monitor, PTHREADS_MONITOR_JOINED);
+
+	//wait for the thread to signal that it's no longer running PHP code
+	pthreads_monitor_wait_until(thread->ts_obj->monitor, PTHREADS_MONITOR_AWAIT_JOIN);
+
+	//now, synchronize all object properties that may have been assigned by the thread
+	if (pthreads_monitor_lock(thread->ts_obj->monitor)) {
+		pthreads_store_full_sync_local_properties(thread);
+		pthreads_monitor_unlock(thread->ts_obj->monitor);
+	}
+	if (thread->worker_data != NULL) {
+		pthreads_worker_sync_collectable_tasks(thread->worker_data);
+	}
+
+	pthreads_monitor_add(thread->ts_obj->monitor, PTHREADS_MONITOR_EXIT);
 
 	return (pthread_join(thread->ts_obj->thread, NULL) == SUCCESS);
 } /* }}} */
@@ -544,6 +578,7 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 	pthreads_monitor_t* ready = routine->ready;
 
 	if (pthreads_prepared_startup(ts_obj, ready, thread->std.ce) == SUCCESS) {
+		pthreads_queue done_tasks_cache;
 
 		zend_first_try {
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
@@ -554,18 +589,33 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 				zval task;
 				pthreads_queue_item_t *item;
 
-				while (pthreads_worker_next_task(thread->worker_data, &task, &item) != PTHREADS_MONITOR_JOINED) {
+				memset(&done_tasks_cache, 0, sizeof(pthreads_queue));
+
+				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &task, &item) != PTHREADS_MONITOR_JOINED) {
 					zval that;
 					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(task));
 					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
+					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, item, &that);
 					zval_ptr_dtor(&that);
-					pthreads_worker_add_garbage(thread->worker_data, item);
 				}
 			}
 
+
+		} zend_end_try();
+
+		pthreads_monitor_add(ts_obj->monitor, PTHREADS_MONITOR_AWAIT_JOIN);
+		//wait for the parent to tell us it is done
+		pthreads_monitor_wait_until(ts_obj->monitor, PTHREADS_MONITOR_EXIT);
+
+		zend_first_try{
+			//now we can safely get rid of our local objects
 			zval_ptr_dtor(&PTHREADS_ZG(this));
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
+
+			if (PTHREADS_IS_WORKER(thread)) {
+				pthreads_queue_clean(&done_tasks_cache);
+			}
 		} zend_end_try();
 	}
 

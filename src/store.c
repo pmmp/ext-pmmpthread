@@ -104,6 +104,84 @@ void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /*
 	threaded->local_props_modcount = ts_obj->props->modcount;
 } /* }}} */
 
+static inline zend_bool pthreads_store_retain_in_local_cache(zval* val) {
+	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val);
+}
+
+static inline zend_bool pthreads_store_valid_local_cache_item(zval* val) {
+	//rebuild_object_properties() may add IS_INDIRECT zvals to point to the linear property table
+	//we don't want that, because they aren't used by pthreads and are always uninitialized
+	return Z_TYPE_P(val) != IS_INDIRECT;
+}
+
+/* {{{ */
+static inline zend_bool pthreads_store_storage_is_cacheable(zval* zstorage) {
+	pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
+	return storage && (storage->type == STORE_TYPE_PTHREADS || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET);
+} /* }}} */
+
+/* {{{ Syncs all the cacheable properties from TS storage into local cache */
+void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded) {
+	if (GC_IS_RECURSIVE(&threaded->std)) {
+		return;
+	}
+
+	if (!pthreads_monitor_lock(threaded->ts_obj->monitor)) {
+		return;
+	}
+	GC_PROTECT_RECURSION(&threaded->std);
+
+	pthreads_store_sync_local_properties(threaded); //remove any outdated cache elements
+
+	pthreads_object_t* ts_obj = threaded->ts_obj;
+
+	zend_long idx;
+	zend_string* name;
+	zval* zstorage;
+
+	rebuild_object_properties(&threaded->std);
+
+	ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props->hash, idx, name, zstorage) {
+		zval* cached;
+		zval pzval;
+
+		//we just synced local cache, so if something is already here, it doesn't need to be modified
+		if (!name) {
+			cached = zend_hash_index_find(threaded->std.properties, idx);
+		} else {
+			cached = zend_hash_find(threaded->std.properties, name);
+		}
+		if (cached && pthreads_store_valid_local_cache_item(cached)) {
+			continue;
+		}
+		if (pthreads_store_storage_is_cacheable(zstorage)) {
+			pthreads_store_restore_zval(&pzval, zstorage);
+
+			if (IS_PTHREADS_OBJECT(&pzval)) {
+				pthreads_store_full_sync_local_properties(PTHREADS_FETCH_FROM(Z_OBJ(pzval)));
+			}
+
+			//TODO: we need to recursively sync here if this is a closure or thread-safe object
+			if (!name) {
+				if (!zend_hash_index_update(threaded->std.properties, idx, &pzval)) {
+					zval_ptr_dtor(&pzval);
+				}
+			} else {
+				/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+				if (!zend_hash_str_update(threaded->std.properties, ZSTR_VAL(name), ZSTR_LEN(name), &pzval))
+					zval_ptr_dtor(&pzval);
+			}
+		}
+	} ZEND_HASH_FOREACH_END();
+
+	if (threaded->worker_data != NULL) {
+		pthreads_worker_sync_collectable_tasks(threaded->worker_data);
+	}
+
+	GC_UNPROTECT_RECURSION(&threaded->std);
+	pthreads_monitor_unlock(threaded->ts_obj->monitor);
+} /* }}} */
+
 /* {{{ */
 static inline void _pthreads_store_bump_modcount_nolock(pthreads_zend_object_t *threaded) {
 	if (threaded->local_props_modcount == threaded->ts_obj->props->modcount) {
@@ -134,22 +212,6 @@ static inline zend_bool pthreads_store_coerce(zval *key, zval *member) {
 			return 1;
 	}
 }
-
-static inline zend_bool pthreads_store_retain_in_local_cache(zval *val) {
-	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val);
-}
-
-static inline zend_bool pthreads_store_valid_local_cache_item(zval* val) {
-	//rebuild_object_properties() may add IS_INDIRECT zvals to point to the linear property table
-	//we don't want that, because they aren't used by pthreads and are always uninitialized
-	return Z_TYPE_P(val) != IS_INDIRECT;
-}
-
-/* {{{ */
-static inline zend_bool pthreads_store_storage_is_cacheable(zval *zstorage) {
-	pthreads_storage *storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
-	return storage && (storage->type == STORE_TYPE_PTHREADS || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET);
-} /* }}} */
 
 /* {{{ */
 static inline zend_bool pthreads_store_member_is_cacheable(zend_object *object, zval *key) {
