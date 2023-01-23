@@ -25,5 +25,7 @@ $t->start() && $t->join();
 echo "OK\n";
 ?>
 --EXPECT--
+string(38) "ExternalClosureDefinitionChildToParent"
+string(38) "ExternalClosureDefinitionChildToParent"
 OK
 
