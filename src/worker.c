@@ -160,16 +160,15 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 	pthreads_monitor_state_t state = PTHREADS_MONITOR_RUNNING;
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		do {
-			if (!worker_data->queue.head) {
-				if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE)) {
-					zend_long tasks_collected_on_parent = worker_data->tasks_collected;
-					for (zend_long i = 0; i < tasks_collected_on_parent; i++) {
-						pthreads_queue_shift(done_tasks_cache, NULL, PTHREADS_STACK_FREE);
-					}
-					worker_data->tasks_collected = 0;
-					pthreads_monitor_remove(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE);
+			if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE)) {
+				zend_long tasks_collected_on_parent = worker_data->tasks_collected;
+				for (zend_long i = 0; i < tasks_collected_on_parent; i++) {
+					pthreads_queue_shift(done_tasks_cache, NULL, PTHREADS_STACK_FREE);
 				}
-
+				worker_data->tasks_collected = 0;
+				pthreads_monitor_remove(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE);
+			}
+			if (!worker_data->queue.head) {
 				if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_JOINED)) {
 					state = PTHREADS_MONITOR_JOINED;
 					*item = NULL;
