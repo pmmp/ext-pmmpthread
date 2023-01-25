@@ -46,9 +46,9 @@ zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval
 zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
 /* {{{ Runs a pthreads_store_full_sync_local_properties() on every task in the GC queue, to ensure availability of properties */
 zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t * worker_data);
-pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value, pthreads_queue_item_t **item);
+pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value);
 zend_get_gc_buffer* pthreads_worker_get_gc_extra(pthreads_worker_data_t * worker_data);
-void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, pthreads_queue_item_t *item, zval* work_zval);
+void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval* work_zval);
 
 zend_bool pthreads_worker_collect_function(pthreads_call_t* call, zval* collectable);
 

@@ -28,6 +28,7 @@ struct _pthreads_worker_data_t {
 	pthreads_monitor_t   	*monitor;
 	pthreads_queue queue;
 	pthreads_queue gc;
+	pthreads_queue_item_t *running;
 	zend_ulong tasks_collected;
 };
 
@@ -57,6 +58,9 @@ void pthreads_worker_data_free(pthreads_worker_data_t *worker_data) {
 		pthreads_queue_clean(&worker_data->queue);
 		pthreads_queue_clean(&worker_data->gc);
 
+		//we should never be freeing worker_data for a worker with active tasks
+		ZEND_ASSERT(worker_data->running == NULL);
+
 		efree(worker_data);
 
 		pthreads_monitor_unlock(monitor);
@@ -81,9 +85,10 @@ zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *va
 	return size;
 }
 
-void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, pthreads_queue_item_t *item, zval* work_zval) {
+void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval* work_zval) {
 	if (pthreads_monitor_lock(worker_data->monitor)) {
-		pthreads_queue_push(&worker_data->gc, item);
+		pthreads_queue_push(&worker_data->gc, worker_data->running);
+		worker_data->running = NULL;
 		pthreads_monitor_unlock(worker_data->monitor);
 		pthreads_queue_push_new(done_tasks_cache, work_zval);
 	} else {
@@ -128,7 +133,7 @@ zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pth
 			pthreads_monitor_add(worker_data->monitor, PTHREADS_MONITOR_COLLECT_GARBAGE);
 		}
 
-		size = (worker_data->queue.size + worker_data->gc.size) + -offset;
+		size = (worker_data->queue.size + worker_data->gc.size) + (worker_data->running != NULL ? 1 : 0);
 
 		pthreads_monitor_unlock(worker_data->monitor);
 	}
@@ -156,7 +161,7 @@ zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t* worke
 	return FAILURE;
 } /* }}} */
 
-pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value, pthreads_queue_item_t **item) {
+pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value) {
 	pthreads_monitor_state_t state = PTHREADS_MONITOR_RUNNING;
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		do {
@@ -171,14 +176,13 @@ pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worke
 			if (!worker_data->queue.head) {
 				if (pthreads_monitor_check(worker_data->monitor, PTHREADS_MONITOR_JOINED)) {
 					state = PTHREADS_MONITOR_JOINED;
-					*item = NULL;
 					break;
 				}
 
-				*item  = NULL;
 				pthreads_monitor_wait(worker_data->monitor, 0);
 			} else {
-				*item = worker_data->queue.head; //this is allocated on the creator thread's ZMM, so we can't free it
+				//this is allocated on the creator thread's ZMM, so we can't free it
+				worker_data->running = worker_data->queue.head;
 				pthreads_queue_shift(&worker_data->queue, value, PTHREADS_STACK_NOTHING);
 				break;
 			}
@@ -198,6 +202,10 @@ zend_get_gc_buffer* pthreads_worker_get_gc_extra(pthreads_worker_data_t* worker_
 		while (item != NULL) {
 			zend_get_gc_buffer_add_zval(buffer, &item->value);
 			item = item->next;
+		}
+
+		if (worker_data->running != NULL) {
+			zend_get_gc_buffer_add_zval(buffer, &worker_data->running->value);
 		}
 
 		item = worker_data->gc.head;

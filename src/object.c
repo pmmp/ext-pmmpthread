@@ -590,16 +590,15 @@ static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 
 			if (PTHREADS_IS_WORKER(thread)) {
 				zval task;
-				pthreads_queue_item_t *item;
 
 				memset(&done_tasks_cache, 0, sizeof(pthreads_queue));
 
-				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &task, &item) != PTHREADS_MONITOR_JOINED) {
+				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &task) != PTHREADS_MONITOR_JOINED) {
 					zval that;
 					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(task));
 					object_init_ex(&that, pthreads_prepare_single_class(ts_obj, work->std.ce));
 					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
-					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, item, &that);
+					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, &that);
 					zval_ptr_dtor(&that);
 				}
 			}
