@@ -45,7 +45,9 @@ echo "first task\n";
 $w->stack($t = new Dummy);
 $t->waitUntilRunning();
 echo "first collect\n";
-while($w->collect());
+while($w->collect()){
+	usleep(20_000);
+}
 //this creates a new cached connection to the worker distinct from $w
 $t->worker;
 unset($t);
@@ -54,7 +56,9 @@ echo "second task\n";
 $w->stack($t2 = new Dummy);
 $t2->waitUntilRunning();
 echo "second collect\n";
-while($w->collect());
+while($w->collect()){
+	usleep(20_000);
+}
 
 $w->shutdown();
 echo "ok\n";

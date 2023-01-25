@@ -16,7 +16,9 @@ while ($i<10) {
 }
 
 var_dump($i);
-while ($worker->collect()) continue;
+while ($worker->collect()){
+	usleep(20_000);
+}
 var_dump($worker->getStacked());
 $worker->shutdown();
 ?>
