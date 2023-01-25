@@ -27,7 +27,11 @@ static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr,
 			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
 			zend_error_at_noreturn(
 				E_CORE_ERROR,
+#if PHP_VERSION_ID >= 80100
+				filename,
+#else
 				ZSTR_VAL(filename),
+#endif
 				attr->lineno,
 				"pthreads encountered a non-copyable attribute argument %s of type %s",
 				ZSTR_VAL(attr->name),
