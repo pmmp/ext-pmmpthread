@@ -29,6 +29,11 @@
 
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
+/* {{{ */
+static zend_result pthreads_store_save_zval(zval* zstorage, zval* write);
+static void pthreads_store_restore_zval_ex(zval* unstore, zval* zstorage, zend_bool* was_pthreads_storage);
+static void pthreads_store_restore_zval(zval* unstore, zval* zstorage); /* }}} */
+static void pthreads_store_storage_dtor(zval* element);
 
 /* {{{ */
 pthreads_store_t* pthreads_store_alloc() {
@@ -846,7 +851,7 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 /* }}} */
 
 /* {{{ */
-zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
+static zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
 	zend_result result = FAILURE;
 	switch (Z_TYPE_P(write)) {
 		case IS_NULL:
@@ -989,7 +994,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 /* }}} */
 
 /* {{{ */
-void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage) {
+static void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage) {
 	*was_pthreads_storage = 0;
 	switch (Z_TYPE_P(zstorage)) {
 		case IS_NULL:
@@ -1017,7 +1022,7 @@ void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *wa
 } /* }}} */
 
 /* {{{ */
-void pthreads_store_restore_zval(zval *unstore, zval *zstorage) {
+static void pthreads_store_restore_zval(zval *unstore, zval *zstorage) {
 	zend_bool dummy;
 	pthreads_store_restore_zval_ex(unstore, zstorage, &dummy);
 } /* }}} */
@@ -1157,7 +1162,7 @@ next:
 
 
 /* {{{ Will free store element */
-void pthreads_store_storage_dtor (zval *zstorage){
+static void pthreads_store_storage_dtor (zval *zstorage){
 	if (!zstorage) return;
 
 	if (Z_TYPE_P(zstorage) == IS_PTR) {

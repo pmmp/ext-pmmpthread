@@ -70,10 +70,4 @@ void pthreads_store_key(zend_object *object, zval *key, HashPosition *position);
 void pthreads_store_data(zend_object *object, zval *value, HashPosition *position);
 void pthreads_store_forward(zend_object *object, HashPosition *position); /* }}} */
 
-/* {{{ */
-zend_result pthreads_store_save_zval(zval *zstorage, zval *write);
-void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pthreads_storage);
-void pthreads_store_restore_zval(zval *unstore, zval *zstorage); /* }}} */
-void pthreads_store_storage_dtor(zval *element);
-
 #endif
