@@ -260,6 +260,7 @@ PHP_RINIT_FUNCTION(pthreads) {
 	zend_hash_init(&PTHREADS_ZG(filenames), 15, NULL, NULL, 0);
 
 	PTHREADS_ZG(hard_copy_interned_strings) = 0;
+	PTHREADS_ZG(options) = PTHREADS_INHERIT_ALL;
 
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 	PTHREADS_ZG(original_socket_object_handlers) = NULL;
