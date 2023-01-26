@@ -8,6 +8,7 @@ on:
 jobs:
   build-php:
     name: Build PHP ${{ matrix.php }}, Valgrind ${{ matrix.valgrind }}
+    concurrency: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
     strategy:
       matrix:
         php: [8.0.27, 8.1.14, 8.2.1]
