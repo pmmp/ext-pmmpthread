@@ -57,7 +57,6 @@ int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
 zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists);
 int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded);
-int pthreads_store_separate(zval *pzval, zval *seperated);
 void pthreads_store_tohash(zend_object *object, HashTable *hash);
 int pthreads_store_shift(zend_object *object, zval *member);
 int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve, zval *chunk);

@@ -18,12 +18,227 @@
 
 #include <src/copy.h>
 
+static HashTable* pthreads_store_copy_hash(HashTable* source);
+static zend_ast_ref* pthreads_store_copy_ast(zend_ast* ast);
+static void* pthreads_store_copy_ast_tree(zend_ast* ast, void* buf);
+
+int pthreads_store_copy_zval(zval* dest, zval* source) {
+	if (Z_TYPE_P(source) == IS_INDIRECT)
+		return pthreads_store_copy_zval(dest, Z_INDIRECT_P(source));
+	if (Z_TYPE_P(source) == IS_REFERENCE)
+		return pthreads_store_copy_zval(dest, &Z_REF_P(source)->val);
+
+	int result = FAILURE;
+	switch (Z_TYPE_P(source)) {
+	case IS_NULL:
+	case IS_TRUE:
+	case IS_FALSE:
+	case IS_LONG:
+	case IS_DOUBLE:
+		ZVAL_DUP(dest, source);
+		result = SUCCESS;
+		break;
+
+	case IS_STRING:
+		ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
+		result = SUCCESS;
+		break;
+
+	case IS_ARRAY:
+		ZVAL_ARR(dest, pthreads_store_copy_hash(Z_ARRVAL_P(source)));
+		result = SUCCESS;
+		break;
+
+	case IS_OBJECT:
+		if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_base_entry)) {
+			pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), NULL, dest);
+			result = SUCCESS;
+		}
+		else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
+			const zend_closure* closure_obj = (const zend_closure*)Z_OBJ_P(source);
+
+			char* name;
+			size_t name_len;
+			zend_string* zname;
+			zend_function* closure = pthreads_copy_function(&closure_obj->func);
+
+			//TODO: scopes aren't being copied here - this will lead to faults if we're copying from child -> parent
+			zend_create_closure(dest, closure, closure->common.scope, closure_obj->called_scope, NULL);
+
+			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(dest)));
+			zname = zend_string_init(name, name_len, 0);
+
+			if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
+				result = FAILURE;
+				zval_dtor(dest);
+			}
+			else result = SUCCESS;
+			efree(name);
+			zend_string_release(zname);
+
+			result = SUCCESS;
+		}
+		break;
+
+	case IS_CONSTANT_AST:
+		ZVAL_AST(dest, pthreads_store_copy_ast(GC_AST(Z_AST_P(source))));
+		result = SUCCESS;
+		break;
+	default:
+		result = FAILURE;
+	}
+	return result;
+}
+
+static HashTable* pthreads_store_copy_hash(HashTable* source) {
+	zval newzval;
+
+	zend_ulong h;
+	zend_string* key;
+	zval* val;
+
+	//TODO: what about IS_ARRAY_IMMUTABLE?
+	HashTable* ht = (HashTable*)pemalloc(sizeof(HashTable), GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
+	zend_hash_init(ht, source->nNumUsed, NULL, source->pDestructor, GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
+
+	ZEND_HASH_FOREACH_KEY_VAL(source, h, key, val) {
+		if (pthreads_store_copy_zval(&newzval, val) == FAILURE) {
+			continue;
+		}
+
+		if (key) {
+			zend_hash_update(ht, zend_string_new(key), &newzval);
+		}
+		else {
+			zend_hash_index_update(ht, h, &newzval);
+		}
+	} ZEND_HASH_FOREACH_END();
+
+	return ht;
+}
+
+#if PHP_VERSION_ID < 80100
+static inline size_t zend_ast_size(uint32_t children) {
+	//this is an exact copy of zend_ast_size() in zend_ast.c, which we can't use because it's static :(
+	//this is in the header in 8.1, so it's only needed for 8.0
+	return sizeof(zend_ast) - sizeof(zend_ast*) + sizeof(zend_ast*) * children;
+}
+#endif
+
+static inline size_t zend_ast_list_size(uint32_t children) {
+	//this is an exact copy of zend_ast_list_size() in zend_ast.c, which we can't use because it's static :(
+	return sizeof(zend_ast_list) - sizeof(zend_ast*) + sizeof(zend_ast*) * children;
+}
+
+static size_t zend_ast_tree_size(zend_ast* ast) {
+	//this is an exact copy of zend_ast_tree_size() in zend_ast.c, which we can't use because it's static :(
+	size_t size;
+
+	if (ast->kind == ZEND_AST_ZVAL || ast->kind == ZEND_AST_CONSTANT) {
+		size = sizeof(zend_ast_zval);
+	}
+	else if (zend_ast_is_list(ast)) {
+		uint32_t i;
+		zend_ast_list* list = zend_ast_get_list(ast);
+
+		size = zend_ast_list_size(list->children);
+		for (i = 0; i < list->children; i++) {
+			if (list->child[i]) {
+				size += zend_ast_tree_size(list->child[i]);
+			}
+		}
+	}
+	else {
+		uint32_t i, children = zend_ast_get_num_children(ast);
+
+		size = zend_ast_size(children);
+		for (i = 0; i < children; i++) {
+			if (ast->child[i]) {
+				size += zend_ast_tree_size(ast->child[i]);
+			}
+		}
+	}
+	return size;
+}
+
+static void* pthreads_store_copy_ast_tree(zend_ast* ast, void* buf)
+{
+	//this code is adapted from zend_ast_tree_copy() in zend_ast.c
+	//sadly we have to duplicate all of this even though we only need to change a couple of lines
+
+	if (ast->kind == ZEND_AST_ZVAL) {
+		zend_ast_zval* new = (zend_ast_zval*)buf;
+		new->kind = ZEND_AST_ZVAL;
+		new->attr = ast->attr;
+		pthreads_store_copy_zval(&new->val, zend_ast_get_zval(ast)); //changed
+		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
+	}
+	else if (ast->kind == ZEND_AST_CONSTANT) {
+		zend_ast_zval* new = (zend_ast_zval*)buf;
+		new->kind = ZEND_AST_CONSTANT;
+		new->attr = ast->attr;
+		ZVAL_STR(&new->val, zend_string_new(zend_ast_get_constant_name(ast))); //changed
+		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
+	}
+	else if (zend_ast_is_list(ast)) {
+		zend_ast_list* list = zend_ast_get_list(ast);
+		zend_ast_list* new = (zend_ast_list*)buf;
+		uint32_t i;
+		new->kind = list->kind;
+		new->attr = list->attr;
+		new->children = list->children;
+		buf = (void*)((char*)buf + zend_ast_list_size(list->children));
+		for (i = 0; i < list->children; i++) {
+			if (list->child[i]) {
+				new->child[i] = (zend_ast*)buf;
+				buf = pthreads_store_copy_ast_tree(list->child[i], buf); //changed
+			}
+			else {
+				new->child[i] = NULL;
+			}
+		}
+	}
+	else {
+		uint32_t i, children = zend_ast_get_num_children(ast);
+		zend_ast* new = (zend_ast*)buf;
+		new->kind = ast->kind;
+		new->attr = ast->attr;
+		buf = (void*)((char*)buf + zend_ast_size(children));
+		for (i = 0; i < children; i++) {
+			if (ast->child[i]) {
+				new->child[i] = (zend_ast*)buf;
+				buf = pthreads_store_copy_ast_tree(ast->child[i], buf); //changed
+			}
+			else {
+				new->child[i] = NULL;
+			}
+		}
+	}
+	return buf;
+}
+
+static zend_ast_ref* pthreads_store_copy_ast(zend_ast* ast) {
+	//this code is adapted from zend_ast_copy() in zend_ast.c
+	//sadly we have to duplicate all of this even though we only need to change a couple of lines
+
+	size_t tree_size;
+	zend_ast_ref* ref;
+
+	ZEND_ASSERT(ast != NULL);
+	tree_size = zend_ast_tree_size(ast) + sizeof(zend_ast_ref);
+	ref = emalloc(tree_size);
+	pthreads_store_copy_ast_tree(ast, GC_AST(ref));
+	GC_SET_REFCOUNT(ref, 1);
+	GC_TYPE_INFO(ref) = GC_CONSTANT_AST;
+	return ref;
+}
+
 static void pthreads_copy_attribute(HashTable **new, const zend_attribute *attr, zend_string *filename) {
 	uint32_t i;
 	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
 
 	for (i = 0; i < attr->argc; i++) {
-		if (pthreads_store_separate(&attr->args[i].value, &copy->args[i].value) == FAILURE) {
+		if (pthreads_store_copy_zval(&copy->args[i].value, &attr->args[i].value) == FAILURE) {
 			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
 			zend_error_at_noreturn(
 				E_CORE_ERROR,
@@ -80,7 +295,7 @@ static HashTable* pthreads_copy_statics(HashTable *old) {
 			while (Z_TYPE_P(next) == IS_REFERENCE)
 				next = &Z_REF_P(next)->val;
 
-			if (pthreads_store_separate(next, &copy) == SUCCESS) {
+			if (pthreads_store_copy_zval(&copy, next) == SUCCESS) {
 				zend_hash_add(statics, name, &copy);
 			} else {
 				zend_hash_add_empty_element(statics, name);
@@ -139,7 +354,10 @@ static zval* pthreads_copy_literals(zval *old, int last, void *memory) {
 
 	memcpy(memory, old, sizeof(zval) * last);
 	while (literal < end) {
-		pthreads_store_separate(old_literal, literal);
+		if (pthreads_store_copy_zval(literal, old_literal) == FAILURE) {
+			ZEND_ASSERT(0); //literals should always be copyable
+			ZVAL_NULL(literal);
+		}
 		old_literal++;
 		literal++;
 	}
