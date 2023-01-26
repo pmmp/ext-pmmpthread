@@ -35,7 +35,6 @@ typedef struct _pthreads_object_t {
 	zend_ulong options;
 	pthreads_monitor_t *monitor;
 	pthreads_store_t *props;
-	zval user_exception_handler;
 	pthreads_ident_t creator;
 	pthreads_ident_t local;
 } pthreads_object_t; /* }}} */
