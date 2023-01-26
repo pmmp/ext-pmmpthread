@@ -809,7 +809,7 @@ void pthreads_context_late_bindings(pthreads_object_t* thread) {
 	zend_class_entry *entry;
 	zend_string *name;
 
-	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->local.ls, class_table), name, entry) {
+	ZEND_HASH_FOREACH_STR_KEY_PTR(CG(class_table), name, entry) {
 		if (entry->type != ZEND_INTERNAL_CLASS) {
 			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
 		}
@@ -920,7 +920,7 @@ static inline void pthreads_prepare_functions(pthreads_object_t* thread) {
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->creator.ls, function_table), key, value) {
 		if (value->type == ZEND_INTERNAL_FUNCTION ||
-			zend_hash_exists(PTHREADS_CG(thread->local.ls, function_table), key))
+			zend_hash_exists(CG(function_table), key))
 			continue;
 
 		name = zend_string_new(key);
@@ -940,7 +940,7 @@ static inline void pthreads_prepare_classes(pthreads_object_t* thread) {
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->creator.ls, class_table), name, entry) {
-		if (!zend_hash_exists(PTHREADS_CG(thread->local.ls, class_table), name) && ZSTR_VAL(name)[0] != '\0') {
+		if (!zend_hash_exists(CG(class_table), name) && ZSTR_VAL(name)[0] != '\0') {
 			pthreads_create_entry(thread, entry, 0);
 		}
 	} ZEND_HASH_FOREACH_END();
