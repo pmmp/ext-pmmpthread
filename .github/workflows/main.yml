@@ -6,21 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}
+  build-php:
+    name: Build PHP ${{ matrix.php }}, Valgrind ${{ matrix.valgrind }}
     strategy:
-      fail-fast: false
       matrix:
         php: [8.0.27, 8.1.14, 8.2.1]
         valgrind: [0, 1]
-        opcache: [off, on, jit]
 
     runs-on: ubuntu-20.04
 
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
       - name: Install Valgrind
         if: matrix.valgrind == '1'
         run: |
@@ -52,6 +47,39 @@ jobs:
           cd $GITHUB_WORKSPACE/php-build
           ./install-dependencies.sh
           PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+
+  test-extension:
+    name: Build & test extension (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [8.0.27, 8.1.14, 8.2.1]
+        valgrind: [0, 1]
+        opcache: [off, on, jit]
+
+    needs: build-php
+    runs-on: ubuntu-20.04
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Install PHP build dependencies
+        run: sudo apt-get update && sudo apt-get install libzip5
+
+      - name: Restore PHP build cache
+        uses: actions/cache@v3
+        id: php-build-cache
+        with:
+          path: ${{ github.workspace }}/php 
+          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
+
+      - name: Install Valgrind
+        if: matrix.valgrind == '1'
+        run: |
+          sudo apt-get update && sudo apt-get install valgrind
+          echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
+          echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
 
       - name: Compile extension
         run: |
