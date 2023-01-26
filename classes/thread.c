@@ -32,9 +32,7 @@ PHP_METHOD(Thread, start)
 		Z_PARAM_LONG(options)
 	ZEND_PARSE_PARAMETERS_END();
 
-	thread->ts_obj->options = options;
-
-	RETURN_BOOL(pthreads_start(thread));
+	RETURN_BOOL(pthreads_start(thread, options));
 } /* }}} */
 
 /* {{{ proto Thread::isStarted()

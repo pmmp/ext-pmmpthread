@@ -104,8 +104,9 @@ zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval
 }
 
 /* {{{ */
-static void pthreads_routine_init(pthreads_routine_arg_t *r, pthreads_zend_object_t *thread) {
+static void pthreads_routine_init(pthreads_routine_arg_t *r, pthreads_zend_object_t *thread, zend_ulong thread_options) {
 	r->thread = thread;
+	r->options = thread_options;
 	r->ready  = pthreads_monitor_alloc();
 	pthreads_monitor_add(
 		r->thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED);
@@ -346,7 +347,6 @@ static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 	ts_obj->monitor = pthreads_monitor_alloc();
 	ts_obj->creator.ls = TSRMLS_CACHE;
 	ts_obj->creator.id = pthreads_self();
-	ts_obj->options = PTHREADS_INHERIT_ALL;
 	ts_obj->props   = pthreads_store_alloc();
 	return ts_obj;
 } /* }}} */
@@ -430,7 +430,7 @@ HashTable* pthreads_base_gc(zend_object *object, zval **table, int *n) {
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_start(pthreads_zend_object_t* thread) {
+zend_bool pthreads_start(pthreads_zend_object_t* thread, zend_ulong thread_options) {
 	pthreads_routine_arg_t routine;
 	pthreads_object_t *ts_obj = thread->ts_obj;
 
@@ -447,7 +447,7 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread) {
 		return 0;
 	}
 
-	pthreads_routine_init(&routine, thread);
+	pthreads_routine_init(&routine, thread, thread_options);
 
 	switch (pthread_create(&ts_obj->thread, NULL, (void* (*) (void*)) pthreads_routine, (void*)&routine)) {
 		case SUCCESS:
@@ -577,10 +577,11 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* ob
 /* {{{ */
 static void * pthreads_routine(pthreads_routine_arg_t *routine) {
 	pthreads_zend_object_t* thread = routine->thread;
+	zend_ulong thread_options = routine->options;
 	pthreads_object_t *ts_obj = thread->ts_obj;
 	pthreads_monitor_t* ready = routine->ready;
 
-	if (pthreads_prepared_startup(ts_obj, ready, thread->std.ce) == SUCCESS) {
+	if (pthreads_prepared_startup(ts_obj, ready, thread->std.ce, thread_options) == SUCCESS) {
 		pthreads_queue done_tasks_cache;
 
 		zend_first_try {

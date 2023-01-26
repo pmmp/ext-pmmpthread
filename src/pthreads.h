@@ -120,6 +120,7 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	pid_t pid;
 	int   signal;
 	zval  this;
+	zend_ulong options;
 	HashTable resolve;
 	HashTable filenames;
 	HashTable *resources;

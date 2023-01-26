@@ -274,7 +274,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 
 		dup->name = zend_string_new(info->name);
 		if (info->doc_comment) {
-			if (thread->options & PTHREADS_INHERIT_COMMENTS) {
+			if (PTHREADS_ZG(options) & PTHREADS_INHERIT_COMMENTS) {
 				dup->doc_comment = zend_string_new(info->doc_comment);
 			} else dup->doc_comment = NULL;
 		}
@@ -587,7 +587,7 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 
 	memcpy(&prepared->info.user, &candidate->info.user, sizeof(candidate->info.user));
 
-	if ((thread->options & PTHREADS_INHERIT_COMMENTS) &&
+	if ((PTHREADS_ZG(options) & PTHREADS_INHERIT_COMMENTS) &&
 	   (candidate->info.user.doc_comment)) {
 			prepared->info.user.doc_comment = zend_string_new(candidate->info.user.doc_comment);
 		} else prepared->info.user.doc_comment = NULL;
@@ -836,7 +836,7 @@ static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
 	zend_string *name;
 	HashTable *table[2] = {PTHREADS_EG(thread->creator.ls, ini_directives), EG(ini_directives)};
 
-	if (!(thread->options & PTHREADS_ALLOW_HEADERS)) {
+	if (!(PTHREADS_ZG(options) & PTHREADS_ALLOW_HEADERS)) {
 		zend_alter_ini_entry_chars(
 			PTHREADS_G(strings).session.cache_limiter,
 			"nocache", sizeof("nocache")-1,
@@ -969,14 +969,14 @@ static inline void pthreads_prepare_resource_destructor(pthreads_object_t* threa
 static inline void pthreads_prepare_sapi(pthreads_object_t* thread) {
 	SG(sapi_started) = 0;
 
-	if (!(thread->options & PTHREADS_ALLOW_HEADERS)) {
+	if (!(PTHREADS_ZG(options) & PTHREADS_ALLOW_HEADERS)) {
 		SG(headers_sent)=1;
 		SG(request_info).no_headers = 1;
 	}
 } /* }}} */
 
 /* {{{ */
-int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce) {
+int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options) {
 
 	PTHREADS_PREPARATION_BEGIN_CRITICAL() {
 		thread->local.id = pthreads_self();
@@ -1005,28 +1005,30 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 			} else auto_global->armed = 0;
 		} ZEND_HASH_FOREACH_END();
 
+		PTHREADS_ZG(options) = thread_options;
+
 		pthreads_prepare_sapi(thread);
 
-		if (thread->options & PTHREADS_INHERIT_INI)
+		if (thread_options & PTHREADS_INHERIT_INI)
 			pthreads_prepare_ini(thread);
 
-		if (thread->options & PTHREADS_INHERIT_CONSTANTS)
+		if (thread_options & PTHREADS_INHERIT_CONSTANTS)
 			pthreads_prepare_constants(thread);
 
 		zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
 
-		if (thread->options & PTHREADS_INHERIT_FUNCTIONS)
+		if (thread_options & PTHREADS_INHERIT_FUNCTIONS)
 			pthreads_prepare_functions(thread);
 		else pthreads_prepare_closures(thread);
 
-		if (thread->options & PTHREADS_INHERIT_CLASSES) {
+		if (thread_options & PTHREADS_INHERIT_CLASSES) {
 			pthreads_prepare_classes(thread);
 		} else {
 			pthreads_create_entry(thread, thread_ce, 0);
 			pthreads_context_late_bindings(thread);
 		}
 
-		if (thread->options & PTHREADS_INHERIT_INCLUDES)
+		if (thread_options & PTHREADS_INHERIT_INCLUDES)
 			pthreads_prepare_includes(thread);
 
 		pthreads_prepare_resource_destructor(thread);
