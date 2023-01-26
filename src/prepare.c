@@ -171,7 +171,6 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 					&CE_STATIC_MEMBERS(prepared)[i],
 					&candidate_static_members_table[i]
 				) == FAILURE) {
-					ZEND_ASSERT(0);
 					ZVAL_NULL(&CE_STATIC_MEMBERS(prepared)[i]);
 				}
 			}
@@ -209,8 +208,11 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 				&prepared->default_static_members_table[i],
 				&candidate->default_static_members_table[i]
 			)) {
-				ZEND_ASSERT(0); //default statics should never be non-copyable
+#if PHP_VERSION_ID >= 80100
+				ZEND_ASSERT(0);
+#else
 				ZVAL_NULL(&prepared->default_static_members_table[i]);
+#endif
 			}
 		}
 
