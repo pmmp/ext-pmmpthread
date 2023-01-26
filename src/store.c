@@ -340,7 +340,10 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 			rebuild_object_properties(&threaded->std);
 			if (Z_TYPE(member) == IS_LONG) {
 				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), read);
-			} else zend_hash_update(threaded->std.properties, Z_STR(member), read);
+			} else {
+				//we don't know where this string came from, so we can't use it directly
+				zend_hash_str_update(threaded->std.properties, Z_STRVAL(member), Z_STRLEN(member), read);
+			}
 			Z_ADDREF_P(read);
 		}
 	}
@@ -419,13 +422,8 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write) {
 
 			if (Z_TYPE(member) == IS_LONG) {
 				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), write);
-			} else {
-				zend_string *keyed = zend_string_dup(Z_STR(member), 0);
-				if (zend_hash_update(
-					threaded->std.properties, keyed, write)) {
-					result = SUCCESS;
-				}
-				zend_string_release(keyed);
+			} else if (zend_hash_str_update(threaded->std.properties, Z_STRVAL(member), Z_STRLEN(member), write)) {
+				result = SUCCESS;
 			}
 			Z_ADDREF_P(write);
 		}
