@@ -17,6 +17,7 @@
  */
 
 #include <src/copy.h>
+#include <src/object.h>
 
 static HashTable* pthreads_store_copy_hash(HashTable* source);
 static zend_ast_ref* pthreads_store_copy_ast(zend_ast* ast);
