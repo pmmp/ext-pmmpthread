@@ -30,15 +30,15 @@
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
 
 /* {{{ */
-static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate);
-static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings);
-static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias);
-static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence);
-static void pthreads_preparation_copy_trait_method_reference(pthreads_object_t* thread, zend_trait_method_reference *reference, zend_trait_method_reference *copy);
+static zend_class_entry* pthreads_prepared_entry(pthreads_ident_t* source, zend_class_entry *candidate);
+static zend_class_entry* pthreads_create_entry(pthreads_ident_t* source, zend_class_entry *candidate, int do_late_bindings);
+static zend_trait_alias * pthreads_preparation_copy_trait_alias(zend_trait_alias *alias);
+static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(zend_trait_precedence *precedence);
+static void pthreads_preparation_copy_trait_method_reference(zend_trait_method_reference *reference, zend_trait_method_reference *copy);
 static void pthreads_prepared_resource_dtor(zval *zv); /* }}} */
 
 /* {{{ */
-static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+static void prepare_class_constants(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	zend_string *key;
 	zval *value;
@@ -121,7 +121,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 					zend_get_type_by_const(Z_TYPE(zc->value))
 				);
 			}
-			rc->ce = pthreads_prepared_entry(thread, zc->ce);
+			rc->ce = pthreads_prepared_entry(source, zc->ce);
 
 			zend_hash_add_ptr(&prepared->constants_table, name, rc);
 		}
@@ -138,7 +138,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 #if PHP_VERSION_ID >= 80100
  /* {{{ */
-static void init_class_statics(pthreads_object_t* thread, zend_class_entry* candidate, zend_class_entry* prepared)
+static void init_class_statics(pthreads_ident_t* source, zend_class_entry* candidate, zend_class_entry* prepared)
 {
 	int i;
 	zval* p;
@@ -150,7 +150,7 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 
 	//the map_ptr won't be initialized if there are no declared static members, or if the class is opcached and not linked
 	zval* candidate_static_members_table = candidate->default_static_members_count && (candidate->ce_flags & ZEND_ACC_LINKED) ?
-		PTHREADS_MAP_PTR_GET(thread->creator.ls, candidate->static_members_table) :
+		PTHREADS_MAP_PTR_GET(source->ls, candidate->static_members_table) :
 		NULL;
 
 	if (candidate_static_members_table && !CE_STATIC_MEMBERS(prepared)) {
@@ -180,7 +180,7 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 #endif
 
 /* {{{ */
-static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+static void prepare_class_statics(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 	if (candidate->default_static_members_count) {
 		/* this code is adapted from ext/opcache/zend_accelerator_util_funcs.c */
 		int i, end;
@@ -258,7 +258,7 @@ static void prepare_class_function_table(zend_class_entry *candidate, zend_class
 } /* }}} */
 
 /* {{{ */
-static void prepare_class_property_table(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+static void prepare_class_property_table(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	zend_property_info *info;
 	zend_string *name;
@@ -282,7 +282,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 		if (info->ce) {
 			if (info->ce == candidate) {
 				dup->ce = prepared;
-			} else dup->ce = pthreads_prepared_entry(thread, info->ce);
+			} else dup->ce = pthreads_prepared_entry(source, info->ce);
 		}
 
 		memcpy(&dup->type, &info->type, sizeof(zend_type));
@@ -306,7 +306,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 				ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
 #if PHP_VERSION_ID < 80100
 			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
-				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(thread, ZEND_TYPE_CE(*single_type)));
+				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(source, ZEND_TYPE_CE(*single_type)));
 #endif
 			}
 		} ZEND_TYPE_FOREACH_END();
@@ -439,7 +439,7 @@ while(0)
 } /* }}} */
 
 /* {{{ */
-static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+static void prepare_class_traits(zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	if (candidate->num_traits) {
 		unsigned int trait;
@@ -464,9 +464,7 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 		alias = 0;
 
 		while (candidate->trait_aliases[alias]) {
-			prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(
-				thread, candidate->trait_aliases[alias]
-			);
+			prepared->trait_aliases[alias] = pthreads_preparation_copy_trait_alias(candidate->trait_aliases[alias]);
 			alias++;
 		}
 		prepared->trait_aliases[alias]=NULL;
@@ -483,9 +481,7 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 		precedence = 0;
 
 		while (candidate->trait_precedences[precedence]) {
-			prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(
-				thread, candidate->trait_precedences[precedence]
-			);
+			prepared->trait_precedences[precedence] = pthreads_preparation_copy_trait_precedence(candidate->trait_precedences[precedence]);
 			precedence++;
 		}
 		prepared->trait_precedences[precedence]=NULL;
@@ -493,7 +489,7 @@ static void prepare_class_traits(pthreads_object_t* thread, zend_class_entry *ca
 } /* }}} */
 
 /* {{{ */
-static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+static zend_class_entry* pthreads_complete_entry(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 	int old_ce_flags = prepared->ce_flags;
 	prepared->ce_flags = candidate->ce_flags;
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
@@ -501,7 +497,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 			zend_string_release(prepared->parent_name);
 		}
 		if (candidate->parent) {
-			prepared->parent = pthreads_prepared_entry(thread, candidate->parent);
+			prepared->parent = pthreads_prepared_entry(source, candidate->parent);
 		}
 	} else if (candidate->parent_name) {
 		prepared->parent_name = zend_string_new(candidate->parent_name);
@@ -519,7 +515,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 			}
 			prepared->interfaces = emalloc(sizeof(zend_class_entry*) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++)
-				prepared->interfaces[interface] = pthreads_prepared_entry(thread, candidate->interfaces[interface]);
+				prepared->interfaces[interface] = pthreads_prepared_entry(source, candidate->interfaces[interface]);
 		} else {
 			prepared->interface_names = emalloc(sizeof(zend_class_name) * candidate->num_interfaces);
 			for (interface = 0; interface < candidate->num_interfaces; interface++) {
@@ -530,7 +526,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_object_t* thread, zend
 		prepared->num_interfaces = candidate->num_interfaces;
 	} else prepared->num_interfaces = 0;
 
-	prepare_class_traits(thread, candidate, prepared);
+	prepare_class_traits(candidate, prepared);
 	prepare_class_handlers(candidate, prepared);
 	prepare_class_function_table(candidate, prepared);
 	prepare_class_interceptors(candidate, prepared);
@@ -573,7 +569,7 @@ static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
 #endif
 
 /* {{{ */
-static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
+static zend_class_entry* pthreads_copy_entry(pthreads_ident_t* source, zend_class_entry *candidate) {
 	zend_class_entry *prepared;
 
 	prepared = zend_arena_alloc(&CG(arena), sizeof(zend_class_entry));
@@ -618,13 +614,13 @@ static zend_class_entry* pthreads_copy_entry(pthreads_object_t* thread, zend_cla
 		prepared->info.user.filename = filename_copy;
 	}
 
-	return pthreads_complete_entry(thread, candidate, prepared);
+	return pthreads_complete_entry(source, candidate, prepared);
 } /* }}} */
 
 /* {{{ */
 static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int argc, va_list argv, zend_hash_key *key) {
 	zend_function *function = (zend_function*) Z_PTR_P(bucket);
-	pthreads_object_t* thread = va_arg(argv, pthreads_object_t*);
+	pthreads_ident_t* source = va_arg(argv, pthreads_ident_t*);
 	zend_class_entry *prepared = va_arg(argv, zend_class_entry*);
 	zend_class_entry *candidate = va_arg(argv, zend_class_entry*);
 	zend_class_entry *scope = function->common.scope;
@@ -633,17 +629,17 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 		function->common.scope = prepared;
 	} else {
 		if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
-			function->common.scope = pthreads_prepared_entry(thread, function->common.scope);
+			function->common.scope = pthreads_prepared_entry(source, function->common.scope);
 		}
 	}
 	return ZEND_HASH_APPLY_KEEP;
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_closures(pthreads_object_t *thread) {
+static inline void pthreads_prepare_closures(pthreads_ident_t* source) {
 	Bucket *bucket;
 
-	ZEND_HASH_FOREACH_BUCKET(PTHREADS_CG(thread->creator.ls, function_table), bucket) {
+	ZEND_HASH_FOREACH_BUCKET(PTHREADS_CG(source->ls, function_table), bucket) {
 		zend_function *function = Z_PTR(bucket->val),
 					  *prepared;
 		zend_string   *named;
@@ -667,27 +663,27 @@ static inline void pthreads_prepare_closures(pthreads_object_t *thread) {
 } /* }}} */
 
 /* {{{ */
-zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate) {
+zend_class_entry* pthreads_prepare_single_class(pthreads_ident_t* source, zend_class_entry *candidate) {
 	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
-	zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
-	return pthreads_prepared_entry(thread, candidate);
+	zend_map_ptr_extend(PTHREADS_CG(source->ls, map_ptr_last));
+	return pthreads_prepared_entry(source, candidate);
 } /* }}} */
 
 /* {{{ */
-static zend_class_entry* pthreads_prepared_entry(pthreads_object_t* thread, zend_class_entry *candidate) {
-	return pthreads_create_entry(thread, candidate, 1);
+static zend_class_entry* pthreads_prepared_entry(pthreads_ident_t* source, zend_class_entry *candidate) {
+	return pthreads_create_entry(source, candidate, 1);
 } /* }}} */
 
-static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_object_t* thread, zend_class_entry* candidate, int do_late_bindings) {
+static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_ident_t* source, zend_class_entry* candidate, int do_late_bindings) {
 	//assume that all dependencies of immutable classes are themselves immutable
 
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
 		if (candidate->parent) {
-			pthreads_create_entry(thread, candidate->parent, do_late_bindings);
+			pthreads_create_entry(source, candidate->parent, do_late_bindings);
 		}
 		if (candidate->num_interfaces) {
 			for (int i = 0; i < candidate->num_interfaces; i++) {
-				pthreads_create_entry(thread, candidate->interfaces[i], do_late_bindings);
+				pthreads_create_entry(source, candidate->interfaces[i], do_late_bindings);
 			}
 		}
 	}
@@ -699,7 +695,7 @@ static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_
 		ZEND_TYPE_FOREACH(info->type, type) {
 			if (ZEND_TYPE_HAS_NAME(*type)) {
 				zend_string* lookup = zend_string_tolower(ZEND_TYPE_NAME(*type));
-				ce = zend_hash_find_ptr(PTHREADS_EG(thread->creator.ls, class_table), lookup);
+				ce = zend_hash_find_ptr(PTHREADS_EG(source->ls, class_table), lookup);
 				zend_string_release(lookup);
 #if PHP_VERSION_ID < 80100
 			} else if (ZEND_TYPE_HAS_CLASS(*type)) {
@@ -709,14 +705,14 @@ static zend_class_entry* pthreads_prepare_immutable_class_dependencies(pthreads_
 				ce = NULL;
 			}
 			if (ce != NULL) {
-				pthreads_create_entry(thread, ce, do_late_bindings);
+				pthreads_create_entry(source, ce, do_late_bindings);
 			}
 		} ZEND_TYPE_FOREACH_END();
 	} ZEND_HASH_FOREACH_END();
 }
 
 /* {{{ */
-static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_class_entry *candidate, int do_late_bindings) {
+static zend_class_entry* pthreads_create_entry(pthreads_ident_t* source, zend_class_entry *candidate, int do_late_bindings) {
 	zend_class_entry *prepared = NULL;
 	zend_string *lookup = NULL;
 
@@ -744,10 +740,10 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 			//we can't modify an immutable class; fallthru to full copy
 			prepared = NULL;
 		} else {
-			pthreads_complete_entry(thread, candidate, prepared);
+			pthreads_complete_entry(source, candidate, prepared);
 			if (do_late_bindings) {
 				//linking might cause new statics and constants to become visible
-				pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
+				pthreads_prepared_entry_late_bindings(source, candidate, prepared);
 			}
 		}
 	}
@@ -762,29 +758,29 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 		//this may overwrite previously inserted immutable classes on 8.1 (e.g. unlinked opcached class -> linked opcached class)
 		zend_hash_update_ptr(EG(class_table), lookup, candidate);
 		zend_string_release(lookup);
-		pthreads_prepare_immutable_class_dependencies(thread, candidate, do_late_bindings);
+		pthreads_prepare_immutable_class_dependencies(source, candidate, do_late_bindings);
 		if (do_late_bindings) {
 			//this is needed to copy non-default statics from the origin thread
-			pthreads_prepared_entry_late_bindings(thread, candidate, candidate);
+			pthreads_prepared_entry_late_bindings(source, candidate, candidate);
 		}
 		return candidate;
 	}
 
-	if (!(prepared = pthreads_copy_entry(thread, candidate))) {
+	if (!(prepared = pthreads_copy_entry(source, candidate))) {
 		zend_string_release(lookup);
 		return NULL;
 	}
 	zend_hash_update_ptr(EG(class_table), lookup, prepared);
 
 	if(do_late_bindings) {
-		pthreads_prepared_entry_late_bindings(thread, candidate, prepared);
+		pthreads_prepared_entry_late_bindings(source, candidate, prepared);
 	}
-	pthreads_prepare_closures(thread);
+	pthreads_prepare_closures(source);
 
 	zend_hash_apply_with_arguments(
 		&prepared->function_table,
 		pthreads_prepared_entry_function_prepare,
-		3, thread, prepared, candidate);
+		3, source, prepared, candidate);
 
 	zend_string_release(lookup);
 
@@ -792,26 +788,26 @@ static zend_class_entry* pthreads_create_entry(pthreads_object_t* thread, zend_c
 } /* }}} */
 
 /* {{{ */
-void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared) {
+void pthreads_prepared_entry_late_bindings(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 	if (!(candidate->ce_flags & ZEND_ACC_IMMUTABLE)) {
-		prepare_class_property_table(thread, candidate, prepared);
-		prepare_class_statics(thread, candidate, prepared);
-		prepare_class_constants(thread, candidate, prepared);
+		prepare_class_property_table(source, candidate, prepared);
+		prepare_class_statics(source, candidate, prepared);
+		prepare_class_constants(source, candidate, prepared);
 	}
 #if PHP_VERSION_ID >= 80100
-	init_class_statics(thread, candidate, prepared);
+	init_class_statics(source, candidate, prepared);
 #endif
 } /* }}} */
 
 
 /* {{{ */
-void pthreads_context_late_bindings(pthreads_object_t* thread) {
+void pthreads_context_late_bindings(pthreads_ident_t* source) {
 	zend_class_entry *entry;
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(CG(class_table), name, entry) {
 		if (entry->type != ZEND_INTERNAL_CLASS) {
-			pthreads_prepared_entry_late_bindings(thread, zend_hash_find_ptr(PTHREADS_CG(thread->creator.ls, class_table), name), entry);
+			pthreads_prepared_entry_late_bindings(source, zend_hash_find_ptr(PTHREADS_CG(source->ls, class_table), name), entry);
 		}
 	} ZEND_HASH_FOREACH_END();
 }
@@ -831,10 +827,10 @@ static inline zend_bool pthreads_constant_exists(zend_string *name) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
+static inline void pthreads_prepare_ini(pthreads_ident_t* source) {
 	zend_ini_entry *entry[2];
 	zend_string *name;
-	HashTable *table[2] = {PTHREADS_EG(thread->creator.ls, ini_directives), EG(ini_directives)};
+	HashTable *table[2] = {PTHREADS_EG(source->ls, ini_directives), EG(ini_directives)};
 
 	if (!(PTHREADS_ZG(options) & PTHREADS_ALLOW_HEADERS)) {
 		zend_alter_ini_entry_chars(
@@ -882,11 +878,11 @@ static inline void pthreads_prepare_ini(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
+static inline void pthreads_prepare_constants(pthreads_ident_t* source) {
 	zend_constant *zconstant;
 	zend_string *name;
 
-	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_EG(thread->creator.ls, zend_constants), name, zconstant) {
+	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_EG(source->ls, zend_constants), name, zconstant) {
 		if (zconstant->name) {
 			if (Z_TYPE(zconstant->value) == IS_RESOURCE){
 				//we can't copy these
@@ -914,11 +910,11 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_functions(pthreads_object_t* thread) {
+static inline void pthreads_prepare_functions(pthreads_ident_t* source) {
 	zend_string *key, *name;
 	zend_function *value = NULL, *prepared = NULL;
 
-	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->creator.ls, function_table), key, value) {
+	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(source->ls, function_table), key, value) {
 		if (value->type == ZEND_INTERNAL_FUNCTION ||
 			zend_hash_exists(CG(function_table), key))
 			continue;
@@ -935,23 +931,23 @@ static inline void pthreads_prepare_functions(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_classes(pthreads_object_t* thread) {
+static inline void pthreads_prepare_classes(pthreads_ident_t* source) {
 	zend_class_entry *entry;
 	zend_string *name;
 
-	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(thread->creator.ls, class_table), name, entry) {
+	ZEND_HASH_FOREACH_STR_KEY_PTR(PTHREADS_CG(source->ls, class_table), name, entry) {
 		if (!zend_hash_exists(CG(class_table), name) && ZSTR_VAL(name)[0] != '\0') {
-			pthreads_create_entry(thread, entry, 0);
+			pthreads_create_entry(source, entry, 0);
 		}
 	} ZEND_HASH_FOREACH_END();
 
-	pthreads_context_late_bindings(thread);
+	pthreads_context_late_bindings(source);
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_includes(pthreads_object_t* thread) {
+static inline void pthreads_prepare_includes(pthreads_ident_t* source) {
 	zend_string *file;
-	ZEND_HASH_FOREACH_STR_KEY(&PTHREADS_EG(thread->creator.ls, included_files), file) {
+	ZEND_HASH_FOREACH_STR_KEY(&PTHREADS_EG(source->ls, included_files), file) {
 		zend_string *name = zend_string_new(file);
 		zend_hash_add_empty_element(&EG(included_files), name);
 		zend_string_release(name);
@@ -959,14 +955,14 @@ static inline void pthreads_prepare_includes(pthreads_object_t* thread) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_resource_destructor(pthreads_object_t* thread) {
+static inline void pthreads_prepare_resource_destructor(pthreads_ident_t* source) {
 	if (!PTHREADS_G(default_resource_dtor))
 		PTHREADS_G(default_resource_dtor)=(EG(regular_list).pDestructor);
 	EG(regular_list).pDestructor =  (dtor_func_t) pthreads_prepared_resource_dtor;
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_sapi(pthreads_object_t* thread) {
+static inline void pthreads_prepare_sapi(pthreads_ident_t* source) {
 	SG(sapi_started) = 0;
 
 	if (!(PTHREADS_ZG(options) & PTHREADS_ALLOW_HEADERS)) {
@@ -1007,31 +1003,31 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 
 		PTHREADS_ZG(options) = thread_options;
 
-		pthreads_prepare_sapi(thread);
+		pthreads_prepare_sapi(&thread->creator);
 
 		if (thread_options & PTHREADS_INHERIT_INI)
-			pthreads_prepare_ini(thread);
+			pthreads_prepare_ini(&thread->creator);
 
 		if (thread_options & PTHREADS_INHERIT_CONSTANTS)
-			pthreads_prepare_constants(thread);
+			pthreads_prepare_constants(&thread->creator);
 
 		zend_map_ptr_extend(PTHREADS_CG(thread->creator.ls, map_ptr_last));
 
 		if (thread_options & PTHREADS_INHERIT_FUNCTIONS)
-			pthreads_prepare_functions(thread);
-		else pthreads_prepare_closures(thread);
+			pthreads_prepare_functions(&thread->creator);
+		else pthreads_prepare_closures(&thread->creator);
 
 		if (thread_options & PTHREADS_INHERIT_CLASSES) {
-			pthreads_prepare_classes(thread);
+			pthreads_prepare_classes(&thread->creator);
 		} else {
-			pthreads_create_entry(thread, thread_ce, 0);
-			pthreads_context_late_bindings(thread);
+			pthreads_create_entry(&thread->creator, thread_ce, 0);
+			pthreads_context_late_bindings(&thread->creator);
 		}
 
 		if (thread_options & PTHREADS_INHERIT_INCLUDES)
-			pthreads_prepare_includes(thread);
+			pthreads_prepare_includes(&thread->creator);
 
-		pthreads_prepare_resource_destructor(thread);
+		pthreads_prepare_resource_destructor(&thread->creator);
 		pthreads_monitor_add(ready, PTHREADS_MONITOR_READY);
 	} PTHREADS_PREPARATION_END_CRITICAL();
 
@@ -1061,10 +1057,10 @@ int pthreads_prepared_shutdown(void) {
 } /* }}} */
 
 /* {{{ */
-static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_t* thread, zend_trait_alias *alias) {
+static zend_trait_alias * pthreads_preparation_copy_trait_alias(zend_trait_alias *alias) {
 	zend_trait_alias *copy = ecalloc(1, sizeof(zend_trait_alias));
 
-	pthreads_preparation_copy_trait_method_reference(thread, &alias->trait_method, &copy->trait_method);
+	pthreads_preparation_copy_trait_method_reference(&alias->trait_method, &copy->trait_method);
 
 	if (alias->alias) {
 		copy->alias = zend_string_new(alias->alias);
@@ -1076,10 +1072,10 @@ static zend_trait_alias * pthreads_preparation_copy_trait_alias(pthreads_object_
 } /* }}} */
 
 /* {{{ */
-static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthreads_object_t* thread, zend_trait_precedence *precedence) {
+static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(zend_trait_precedence *precedence) {
 	zend_trait_precedence *copy = ecalloc(1, sizeof(zend_trait_precedence) + (precedence->num_excludes - 1) * sizeof(zend_string *));
 
-	pthreads_preparation_copy_trait_method_reference(thread, &precedence->trait_method, &copy->trait_method);
+	pthreads_preparation_copy_trait_method_reference(&precedence->trait_method, &copy->trait_method);
 	copy->num_excludes = precedence->num_excludes;
 	int i;
 	for (i = 0; i < precedence->num_excludes; ++i) {
@@ -1090,7 +1086,7 @@ static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(pthrea
 } /* }}} */
 
 /* {{{ */
-static void pthreads_preparation_copy_trait_method_reference(pthreads_object_t* thread, zend_trait_method_reference *reference, zend_trait_method_reference *copy) {
+static void pthreads_preparation_copy_trait_method_reference(zend_trait_method_reference *reference, zend_trait_method_reference *copy) {
 	if (reference->method_name) {
 		copy->method_name = zend_string_new(reference->method_name);
 	}

@@ -21,13 +21,13 @@
 #include <src/pthreads.h>
 
 /* {{{ fetch prepared class entry */
-zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate); /* }}} */
+zend_class_entry* pthreads_prepare_single_class(pthreads_ident_t* source, zend_class_entry *candidate); /* }}} */
 
 /* {{{ */
-void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared); /* }}} */
+void pthreads_prepared_entry_late_bindings(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared); /* }}} */
 
 /* {{{ */
-void pthreads_context_late_bindings(pthreads_object_t* thread); /* }}} */
+void pthreads_context_late_bindings(pthreads_ident_t* source); /* }}} */
 
 /* {{{ */
 int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options); /* }}} */
