@@ -65,7 +65,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 
 			if (enum_value) {
 				zval copied_enum_value;
-				if (pthreads_store_copy_zval(&copied_enum_value, enum_value) == FAILURE) {
+				if (pthreads_copy_zval(&copied_enum_value, enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
 #if PHP_VERSION_ID >= 80100
@@ -106,7 +106,7 @@ static void prepare_class_constants(pthreads_object_t* thread, zend_class_entry 
 			}
 
 			memcpy(rc, zc, sizeof(zend_class_constant));
-			if (pthreads_store_copy_zval(&rc->value, &zc->value) != SUCCESS) {
+			if (pthreads_copy_zval(&rc->value, &zc->value) != SUCCESS) {
 				zend_error_at_noreturn(
 					E_CORE_ERROR,
 #if PHP_VERSION_ID >= 80100
@@ -167,7 +167,7 @@ static void init_class_statics(pthreads_object_t* thread, zend_class_entry* cand
 				ZVAL_DEINDIRECT(q);
 				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
 			} else {
-				if (pthreads_store_copy_zval(
+				if (pthreads_copy_zval(
 					&CE_STATIC_MEMBERS(prepared)[i],
 					&candidate_static_members_table[i]
 				) == FAILURE) {
@@ -204,7 +204,7 @@ static void prepare_class_statics(pthreads_object_t* thread, zend_class_entry *c
 		/* Copy static properties in this class */
 		end = parent ? parent->default_static_members_count : 0;
 		for (; i >= end; i--) {
-			if (pthreads_store_copy_zval(
+			if (pthreads_copy_zval(
 				&prepared->default_static_members_table[i],
 				&candidate->default_static_members_table[i]
 			)) {
@@ -337,7 +337,7 @@ static void prepare_class_property_table(pthreads_object_t* thread, zend_class_e
 
 		for (i=0; i<candidate->default_properties_count; i++) {
 			if (Z_REFCOUNTED(prepared->default_properties_table[i])) {
-				if (pthreads_store_copy_zval(
+				if (pthreads_copy_zval(
 					&prepared->default_properties_table[i],
 					&candidate->default_properties_table[i]
 				) == FAILURE) {
@@ -553,7 +553,7 @@ static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
 	zval* val;
 	ZEND_HASH_FOREACH_KEY_VAL(candidate_table, h, key, val) {
 		zval new_val;
-		if (pthreads_store_copy_zval(&new_val, val) == FAILURE) {
+		if (pthreads_copy_zval(&new_val, val) == FAILURE) {
 			ZEND_ASSERT(0);
 			continue;
 		}
@@ -897,7 +897,7 @@ static inline void pthreads_prepare_constants(pthreads_object_t* thread) {
 				if (!pthreads_constant_exists(name)) {
 					constant.name = zend_string_new(name);
 
-					if (pthreads_store_copy_zval(&constant.value, &zconstant->value) != SUCCESS) {
+					if (pthreads_copy_zval(&constant.value, &zconstant->value) != SUCCESS) {
 						zend_error_noreturn(
 							E_CORE_ERROR,
 							"pthreads encountered an unknown non-copyable constant %s of type %s",
