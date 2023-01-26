@@ -79,6 +79,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install valgrind
           echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
+          echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
 
       - name: Compile extension
         run: |
