@@ -65,7 +65,7 @@ static void prepare_class_constants(pthreads_ident_t* source, zend_class_entry *
 
 			if (enum_value) {
 				zval copied_enum_value;
-				if (pthreads_copy_zval(&copied_enum_value, enum_value) == FAILURE) {
+				if (pthreads_copy_zval(source, &copied_enum_value, enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
 #if PHP_VERSION_ID >= 80100
@@ -106,7 +106,7 @@ static void prepare_class_constants(pthreads_ident_t* source, zend_class_entry *
 			}
 
 			memcpy(rc, zc, sizeof(zend_class_constant));
-			if (pthreads_copy_zval(&rc->value, &zc->value) != SUCCESS) {
+			if (pthreads_copy_zval(source, &rc->value, &zc->value) != SUCCESS) {
 				zend_error_at_noreturn(
 					E_CORE_ERROR,
 #if PHP_VERSION_ID >= 80100
@@ -131,7 +131,7 @@ static void prepare_class_constants(pthreads_ident_t* source, zend_class_entry *
 			rc->doc_comment = zend_string_new(zc->doc_comment);
 		}
 		if (zc->attributes) {
-			rc->attributes = pthreads_copy_attributes(zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
+			rc->attributes = pthreads_copy_attributes(source, zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
 		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
@@ -167,10 +167,8 @@ static void init_class_statics(pthreads_ident_t* source, zend_class_entry* candi
 				ZVAL_DEINDIRECT(q);
 				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
 			} else {
-				if (pthreads_copy_zval(
-					&CE_STATIC_MEMBERS(prepared)[i],
-					&candidate_static_members_table[i]
-				) == FAILURE) {
+				if (pthreads_copy_zval(source,
+					&CE_STATIC_MEMBERS(prepared)[i], &candidate_static_members_table[i]) == FAILURE) {
 					ZVAL_NULL(&CE_STATIC_MEMBERS(prepared)[i]);
 				}
 			}
@@ -204,10 +202,8 @@ static void prepare_class_statics(pthreads_ident_t* source, zend_class_entry *ca
 		/* Copy static properties in this class */
 		end = parent ? parent->default_static_members_count : 0;
 		for (; i >= end; i--) {
-			if (pthreads_copy_zval(
-				&prepared->default_static_members_table[i],
-				&candidate->default_static_members_table[i]
-			)) {
+			if (pthreads_copy_zval(source,
+				&prepared->default_static_members_table[i], &candidate->default_static_members_table[i])) {
 #if PHP_VERSION_ID >= 80100
 				ZEND_ASSERT(0);
 #else
@@ -241,7 +237,7 @@ static void prepare_class_statics(pthreads_ident_t* source, zend_class_entry *ca
 } /* }}} */
 
 /* {{{ */
-static void prepare_class_function_table(zend_class_entry *candidate, zend_class_entry *prepared) {
+static void prepare_class_function_table(pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	zend_string *key;
 	zend_function *value;
@@ -250,7 +246,7 @@ static void prepare_class_function_table(zend_class_entry *candidate, zend_class
 		if (!zend_hash_exists(&prepared->function_table, key)) {
 			zend_string *name = zend_string_new(key);
 
-			value = pthreads_copy_function(value);
+			value = pthreads_copy_function(source, value);
 			zend_hash_add_ptr(&prepared->function_table, name, value);
 			zend_string_release(name);
 		}
@@ -312,7 +308,7 @@ static void prepare_class_property_table(pthreads_ident_t* source, zend_class_en
 		} ZEND_TYPE_FOREACH_END();
 
 		if (info->attributes) {
-			dup->attributes = pthreads_copy_attributes(info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
+			dup->attributes = pthreads_copy_attributes(source, info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
 		}
 
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
@@ -337,10 +333,8 @@ static void prepare_class_property_table(pthreads_ident_t* source, zend_class_en
 
 		for (i=0; i<candidate->default_properties_count; i++) {
 			if (Z_REFCOUNTED(prepared->default_properties_table[i])) {
-				if (pthreads_copy_zval(
-					&prepared->default_properties_table[i],
-					&candidate->default_properties_table[i]
-				) == FAILURE) {
+				if (pthreads_copy_zval(source,
+					&prepared->default_properties_table[i], &candidate->default_properties_table[i]) == FAILURE) {
 					ZEND_ASSERT(0);
 					ZVAL_NULL(&prepared->default_properties_table[i]);
 				}
@@ -528,7 +522,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_ident_t* source, zend_
 
 	prepare_class_traits(candidate, prepared);
 	prepare_class_handlers(candidate, prepared);
-	prepare_class_function_table(candidate, prepared);
+	prepare_class_function_table(source, candidate, prepared);
 	prepare_class_interceptors(candidate, prepared);
 
 	return prepared;
@@ -536,7 +530,7 @@ static zend_class_entry* pthreads_complete_entry(pthreads_ident_t* source, zend_
 
 #if PHP_VERSION_ID >= 80100
 /* {{{ */
-static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
+static HashTable* prepare_backed_enum_table(pthreads_ident_t* owner, const HashTable *candidate_table) {
 	if (!candidate_table) {
 		return NULL;
 	}
@@ -549,7 +543,7 @@ static HashTable* prepare_backed_enum_table(const HashTable *candidate_table) {
 	zval* val;
 	ZEND_HASH_FOREACH_KEY_VAL(candidate_table, h, key, val) {
 		zval new_val;
-		if (pthreads_copy_zval(&new_val, val) == FAILURE) {
+		if (pthreads_copy_zval(owner, &new_val, val) == FAILURE) {
 			ZEND_ASSERT(0);
 			continue;
 		}
@@ -589,13 +583,13 @@ static zend_class_entry* pthreads_copy_entry(pthreads_ident_t* source, zend_clas
 		} else prepared->info.user.doc_comment = NULL;
 	
 	if (candidate->attributes) {
-		prepared->attributes = pthreads_copy_attributes(candidate->attributes, prepared->info.user.filename);
+		prepared->attributes = pthreads_copy_attributes(source, candidate->attributes, prepared->info.user.filename);
 	}
 
 #if PHP_VERSION_ID >= 80100
 	prepared->enum_backing_type = candidate->enum_backing_type;
 	if (candidate->backed_enum_table) {
-		prepared->backed_enum_table = prepare_backed_enum_table(candidate->backed_enum_table);
+		prepared->backed_enum_table = prepare_backed_enum_table(source, candidate->backed_enum_table);
 	}
 #endif
 
@@ -651,7 +645,7 @@ static inline void pthreads_prepare_closures(pthreads_ident_t* source) {
 			}
 
 			named = zend_string_new(bucket->key);
-			prepared = pthreads_copy_function(function);
+			prepared = pthreads_copy_function(source, function);
 
 			if (!zend_hash_add_ptr(CG(function_table), named, prepared)) {
 				destroy_op_array((zend_op_array*) prepared);
@@ -893,7 +887,7 @@ static inline void pthreads_prepare_constants(pthreads_ident_t* source) {
 				if (!pthreads_constant_exists(name)) {
 					constant.name = zend_string_new(name);
 
-					if (pthreads_copy_zval(&constant.value, &zconstant->value) != SUCCESS) {
+					if (pthreads_copy_zval(source, &constant.value, &zconstant->value) != SUCCESS) {
 						zend_error_noreturn(
 							E_CORE_ERROR,
 							"pthreads encountered an unknown non-copyable constant %s of type %s",
@@ -920,7 +914,7 @@ static inline void pthreads_prepare_functions(pthreads_ident_t* source) {
 			continue;
 
 		name = zend_string_new(key);
-		prepared = pthreads_copy_function(value);
+		prepared = pthreads_copy_function(source, value);
 
 		if (!zend_hash_add_ptr(CG(function_table), name, prepared)) {
 			destroy_op_array((zend_op_array*)prepared);

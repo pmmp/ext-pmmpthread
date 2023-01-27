@@ -19,16 +19,17 @@
 #define HAVE_PTHREADS_COPY_H
 
 #include <src/pthreads.h>
+#include <src/thread.h>
 #include <Zend/zend_attributes.h>
 
 /* {{{ */
-int pthreads_copy_zval(zval* dest, zval* source); /* }}} */
+int pthreads_copy_zval(pthreads_ident_t* owner, zval* dest, zval* source); /* }}} */
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(HashTable *attributes, zend_string *filename); /* }}} */
+HashTable* pthreads_copy_attributes(pthreads_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
 
 /* {{{ */
-zend_function* pthreads_copy_function(const zend_function *function); /* }}} */
+zend_function* pthreads_copy_function(pthreads_ident_t* owner, const zend_function *function); /* }}} */
 
 #endif
 

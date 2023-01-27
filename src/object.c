@@ -500,7 +500,7 @@ zend_bool pthreads_join(pthreads_zend_object_t* thread) {
 
 	//now, synchronize all object properties that may have been assigned by the thread
 	if (pthreads_monitor_lock(thread->ts_obj->monitor)) {
-		pthreads_store_full_sync_local_properties(thread);
+		pthreads_store_full_sync_local_properties(&thread->std);
 		pthreads_monitor_unlock(thread->ts_obj->monitor);
 	}
 	if (thread->worker_data != NULL) {

@@ -19,8 +19,10 @@
 #define HAVE_PTHREADS_THREAD_H
 
 #include <src/pthreads.h>
+#include <src/monitor.h>
 #include <src/resources.h>
 #include <src/worker.h>
+#include <src/store.h>
 
 typedef struct _pthreads_ident_t {
 	zend_ulong id;

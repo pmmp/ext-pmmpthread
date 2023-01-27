@@ -190,6 +190,16 @@ typedef struct _pthreads_call_t {
 
 #define PTHREADS_CALL_EMPTY {empty_fcall_info, empty_fcall_info_cache}
 
+/* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
+typedef struct _zend_closure {
+	zend_object       std;
+	zend_function     func;
+	zval              this_ptr;
+	zend_class_entry* called_scope;
+	zif_handler       orig_internal_handler;
+} zend_closure;
+
+
 #include <src/monitor.h>
 #include <src/store.h>
 #include <src/thread.h>

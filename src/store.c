@@ -22,6 +22,9 @@
 #include <src/copy.h>
 #include <src/store.h>
 #include <src/globals.h>
+#include <src/prepare.h>
+#include <src/store_types.h>
+#include <src/thread.h>
 #include <Zend/zend_ast.h>
 #if PHP_VERSION_ID >= 80100
 #include <Zend/zend_enum.h>
@@ -30,7 +33,7 @@
 #define PTHREADS_STORAGE_EMPTY {0, 0, 0, 0, NULL}
 
 /* {{{ */
-static zend_result pthreads_store_save_zval(zval* zstorage, zval* write);
+static zend_result pthreads_store_save_zval(pthreads_ident_t* source, zval* zstorage, zval* write);
 static void pthreads_store_restore_zval_ex(zval* unstore, zval* zstorage, zend_bool* was_pthreads_storage);
 static void pthreads_store_restore_zval(zval* unstore, zval* zstorage); /* }}} */
 static void pthreads_store_storage_dtor(zval* element);
@@ -49,7 +52,8 @@ pthreads_store_t* pthreads_store_alloc() {
 	return store;
 } /* }}} */
 
-void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /* {{{ */
+void pthreads_store_sync_local_properties(zend_object* object) { /* {{{ */
+	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 	zend_ulong idx;
 	zend_string *name;
@@ -80,7 +84,7 @@ void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded) { /*
 						remove = 0;
 					}
 				} else if (ts_val->type == STORE_TYPE_CLOSURE && IS_PTHREADS_CLOSURE_OBJECT(val)) {
-					zend_closure* shared = (zend_closure*)ts_val->data;
+					zend_closure* shared = ((pthreads_closure_storage_t*)ts_val->data)->closure;
 					zend_closure* local = (zend_closure*)Z_OBJ_P(val);
 					if (shared == local) {
 						remove = 0;
@@ -127,7 +131,9 @@ static inline zend_bool pthreads_store_storage_is_cacheable(zval* zstorage) {
 } /* }}} */
 
 /* {{{ Syncs all the cacheable properties from TS storage into local cache */
-void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded) {
+void pthreads_store_full_sync_local_properties(zend_object *object) {
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
+
 	if (GC_IS_RECURSIVE(&threaded->std)) {
 		return;
 	}
@@ -137,7 +143,7 @@ void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded)
 	}
 	GC_PROTECT_RECURSION(&threaded->std);
 
-	pthreads_store_sync_local_properties(threaded); //remove any outdated cache elements
+	pthreads_store_sync_local_properties(object); //remove any outdated cache elements
 
 	pthreads_object_t* ts_obj = threaded->ts_obj;
 
@@ -164,7 +170,7 @@ void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded)
 			pthreads_store_restore_zval(&pzval, zstorage);
 
 			if (IS_PTHREADS_OBJECT(&pzval)) {
-				pthreads_store_full_sync_local_properties(PTHREADS_FETCH_FROM(Z_OBJ(pzval)));
+				pthreads_store_full_sync_local_properties(Z_OBJ(pzval));
 			}
 
 			//TODO: we need to recursively sync here if this is a closure or thread-safe object
@@ -338,7 +344,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 
 	if (pthreads_monitor_lock(ts_obj->monitor)) {
 		if (threaded->std.properties) {
-			pthreads_store_sync_local_properties(threaded);
+			pthreads_store_sync_local_properties(object);
 
 			/* check if there's still a ref in local cache after sync - this ensures ref reuse for Threaded and Closure objects */
 
@@ -447,7 +453,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		rebuild_object_properties(Z_OBJ_P(write));
 	}
 
-	if (pthreads_store_save_zval(&zstorage, write) != SUCCESS) {
+	if (pthreads_store_save_zval(&threaded->owner, &zstorage, write) != SUCCESS) {
 		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_get_type_by_const(Z_TYPE_P(write)));
 		return FAILURE;
 	}
@@ -476,7 +482,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached Threaded references that are dead, we have to take the opportunity
-		pthreads_store_sync_local_properties(threaded);
+		pthreads_store_sync_local_properties(object);
 
 		pthreads_monitor_unlock(ts_obj->monitor);
 	}
@@ -673,7 +679,7 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 		zval *zstorage;
 		zend_bool changed = 0;
 
-		pthreads_store_sync_local_properties(threaded);
+		pthreads_store_sync_local_properties(object);
 
 
 		ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props->hash, idx, name, zstorage) {
@@ -756,13 +762,13 @@ void pthreads_store_free(pthreads_store_t *store){
 } /* }}} */
 
 /* {{{ */
-static pthreads_storage* pthreads_store_create(zval *unstore){
+static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *unstore){
 	pthreads_storage *storage = NULL;
 
 	if (Z_TYPE_P(unstore) == IS_INDIRECT)
-		return pthreads_store_create(Z_INDIRECT_P(unstore));
+		return pthreads_store_create(source, Z_INDIRECT_P(unstore));
 	if (Z_TYPE_P(unstore) == IS_REFERENCE)
-		return pthreads_store_create(&Z_REF_P(unstore)->val);
+		return pthreads_store_create(source, &Z_REF_P(unstore)->val);
 
 	storage = (pthreads_storage*) calloc(1, sizeof(pthreads_storage));
 
@@ -803,7 +809,10 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 				//since we aren't copying this to persistent memory, a fault is going to
 				//happen if it's dereferenced after the original closure is destroyed
 				//(for what it's worth, this was always a problem.)
-				storage->data = closure;
+				pthreads_closure_storage_t* closure_info = malloc(sizeof(pthreads_closure_storage_t));
+				closure_info->closure = closure;
+				closure_info->owner = *source;
+				storage->data = closure_info;
 				break;
 			}
 
@@ -851,7 +860,7 @@ static pthreads_storage* pthreads_store_create(zval *unstore){
 /* }}} */
 
 /* {{{ */
-static zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
+static zend_result pthreads_store_save_zval(pthreads_ident_t* source, zval *zstorage, zval *write) {
 	zend_result result = FAILURE;
 	switch (Z_TYPE_P(write)) {
 		case IS_NULL:
@@ -867,7 +876,7 @@ static zend_result pthreads_store_save_zval(zval *zstorage, zval *write) {
 			result = SUCCESS;
 			break;
 		default: {
-			pthreads_storage *storage = pthreads_store_create(write);
+			pthreads_storage *storage = pthreads_store_create(source, write);
 			if (storage != NULL) {
 				ZVAL_PTR(zstorage, storage);
 				result = SUCCESS;
@@ -916,11 +925,17 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			char *name;
 			size_t name_len;
 			zend_string *zname;
-			const zend_closure *closure_obj = (const zend_closure *) storage->data;
-			zend_function *closure = pthreads_copy_function(&closure_obj->func);
+			const pthreads_closure_storage_t* closure_data = (const pthreads_closure_storage_t* )storage->data;
+			const zend_closure *closure_obj = closure_data->closure;
+			zend_function *closure = pthreads_copy_function(&closure_data->owner, &closure_obj->func);
 
-			//TODO: scopes aren't copied here - this will lead to faults if this is being copied from child -> parent
-			zend_create_closure(pzval, closure, closure->common.scope, closure_obj->called_scope, NULL);
+			zend_create_closure(
+				pzval,
+				closure,
+				pthreads_prepare_single_class(&closure_data->owner, closure->common.scope),
+				pthreads_prepare_single_class(&closure_data->owner, closure_obj->called_scope),
+				NULL
+			);
 
 			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
 			zname = zend_string_init(name, name_len, 0);
@@ -1170,6 +1185,7 @@ static void pthreads_store_storage_dtor (zval *zstorage){
 		switch (storage->type) {
 			case STORE_TYPE_RESOURCE:
 			case STORE_TYPE_SOCKET:
+			case STORE_TYPE_CLOSURE:
 				if (storage->data) {
 					free(storage->data);
 				}

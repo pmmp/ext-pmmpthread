@@ -87,8 +87,6 @@ zend_object_handlers pthreads_threaded_array_handlers;
 zend_object_handlers *zend_handlers;
 void ***pthreads_instance = NULL;
 
-#include <src/object.h>
-
 ZEND_DECLARE_MODULE_GLOBALS(pthreads)
 
 typedef struct _pthreads_supported_sapi_t {

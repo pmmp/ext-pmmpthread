@@ -81,7 +81,7 @@ PHP_METHOD(ThreadedBase, synchronized)
 
 	if (pthreads_monitor_lock(threaded->monitor)) {
 		/* synchronize property tables */
-		pthreads_store_sync_local_properties(PTHREADS_FETCH);
+		pthreads_store_sync_local_properties(Z_OBJ_P(getThis()));
 
 		zend_try {
 			/* call the closure */

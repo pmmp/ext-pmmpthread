@@ -30,11 +30,6 @@ typedef enum _pthreads_store_type {
 	STORE_TYPE_ENUM,
 } pthreads_store_type;
 
-typedef struct _pthreads_store_t {
-	HashTable hash;
-	zend_long modcount;
-} pthreads_store_t;
-
 typedef struct _pthreads_storage {
 	pthreads_store_type type;
 	void    	*data;
@@ -44,5 +39,10 @@ typedef struct _pthreads_enum_storage_t {
 	zend_string* class_name;
 	zend_string* member_name;
 } pthreads_enum_storage_t;
+
+typedef struct _pthreads_closure_storage_t {
+	zend_closure* closure;
+	pthreads_ident_t owner;
+} pthreads_closure_storage_t;
 
 #endif

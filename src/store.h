@@ -22,8 +22,6 @@
 #	include <config.h>
 #endif
 
-#include <src/store_types.h>
-#include <src/thread.h>
 #include <src/pthreads.h>
 
 #define PTHREADS_STORE_COERCE_ARRAY 1
@@ -40,18 +38,15 @@ typedef struct _pthreads_storage_socket {
 } pthreads_storage_socket;
 #endif
 
-/* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
-typedef struct _zend_closure {
-	zend_object       std;
-	zend_function     func;
-	zval              this_ptr;
-	zend_class_entry *called_scope;
-	zif_handler       orig_internal_handler;
-} zend_closure;
+
+typedef struct _pthreads_store_t {
+	HashTable hash;
+	zend_long modcount;
+} pthreads_store_t;
 
 pthreads_store_t* pthreads_store_alloc();
-void pthreads_store_sync_local_properties(pthreads_zend_object_t *threaded);
-void pthreads_store_full_sync_local_properties(pthreads_zend_object_t* threaded);
+void pthreads_store_sync_local_properties(zend_object* object);
+void pthreads_store_full_sync_local_properties(zend_object *object);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
