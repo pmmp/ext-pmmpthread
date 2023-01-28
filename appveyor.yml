@@ -6,24 +6,12 @@ environment:
   PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.2.0
 
   matrix:
-    - ARCH: x86
-      PHP_VER: 8.0
-      VC_VER: vs16
-      VCVARS_VER: ""
     - ARCH: x64
       PHP_VER: 8.0
       VC_VER: vs16
       VCVARS_VER: ""
-    - ARCH: x86
-      PHP_VER: 8.1
-      VC_VER: vs16
-      VCVARS_VER: ""
     - ARCH: x64
       PHP_VER: 8.1
-      VC_VER: vs16
-      VCVARS_VER: ""
-    - ARCH: x86
-      PHP_VER: 8.2
       VC_VER: vs16
       VCVARS_VER: ""
     - ARCH: x64
