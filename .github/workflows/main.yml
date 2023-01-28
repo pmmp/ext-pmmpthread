@@ -50,7 +50,7 @@ jobs:
           PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
   test-extension:
-    name: Build & test extension (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
+    name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
     strategy:
       fail-fast: false
       matrix:
