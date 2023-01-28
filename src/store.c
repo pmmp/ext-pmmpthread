@@ -929,6 +929,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			const zend_closure *closure_obj = closure_data->closure;
 			zend_function *closure = pthreads_copy_function(&closure_data->owner, &closure_obj->func);
 
+			PTHREADS_ZG(hard_copy_interned_strings) = 1;
 			zend_create_closure(
 				pzval,
 				closure,
@@ -936,6 +937,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 				pthreads_prepare_single_class(&closure_data->owner, closure_obj->called_scope),
 				NULL
 			);
+			PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
 			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
 			zname = zend_string_init(name, name_len, 0);
