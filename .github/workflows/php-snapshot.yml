@@ -71,10 +71,12 @@ jobs:
           $GITHUB_WORKSPACE/php/bin/php ./run-tests.php $TEST_PHP_ARGS -P -q --show-diff --show-slow 30000 -n -c $GITHUB_WORKSPACE/php.ini
 
       - name: Upload test results
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}
           path: |
-            ${{ github.workspace }}/tests/*
-            !${{ github.workspace }}/tests/*.phpt
+            ${{ github.workspace }}/tests/*.log
+            ${{ github.workspace }}/tests/*.diff
+            ${{ github.workspace }}/tests/*.mem
+          if-no-files-found: ignore
