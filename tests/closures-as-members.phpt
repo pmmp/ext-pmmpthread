@@ -4,13 +4,18 @@ Testing closure members
 This test verifies that closures can be set as members and called from anywhere
 --FILE--
 <?php
-$test = new ThreadedBase();
+$test = new class extends ThreadedBase{
+    public $some;
+};
 
 $test->some = function(){
     echo "Hello Some\n";
 };
 
 class T extends Thread {
+    private $test;
+    public $used;
+    public $set;
 
     public function __construct($test) {
         $this->test = $test;
