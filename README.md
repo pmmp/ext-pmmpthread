@@ -25,7 +25,7 @@ Legacy documentation for pthreads v2/v3 can be found [here](http://docs.php.net/
 This fork is used in production on thousands of [PocketMine-MP](https://github.com/pmmp/PocketMine-MP) servers worldwide. Therefore, the focus is on performance and stability.
 
 ## Changes compared to the original
-- PHP 7.4 and 8.0 support
+- PHP 8.0, 8.1 and 8.2 support
 - Many bug fixes which were never merged upstream
 - Performance improvements
 - Memory usage improvements
