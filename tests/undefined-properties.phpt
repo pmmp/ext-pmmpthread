@@ -8,6 +8,7 @@ class T extends \ThreadedBase{
 	public static $iAmStatic = 1;
 };
 
+#[\AllowDynamicProperties]
 class T2{
 	public static $iAmStatic = 1;
 }
