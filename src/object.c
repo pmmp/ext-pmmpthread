@@ -373,7 +373,12 @@ void pthreads_base_dtor(zend_object *object) {
 	if (base->original_zobj == NULL && PTHREADS_IN_CREATOR(base) && (PTHREADS_IS_THREAD(base)||PTHREADS_IS_WORKER(base)) &&
 		pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_STARTED) &&
 		!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
-		pthreads_join(base);
+		zend_call_method_with_0_params(object, object->ce, NULL, "join", NULL);
+
+		//in case the user join didn't call the parent - make sure we join, otherwise bad things may happen
+		if (!pthreads_monitor_check(base->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
+			pthreads_join(base);
+		}
 	}
 
 	zend_objects_destroy_object(object);
