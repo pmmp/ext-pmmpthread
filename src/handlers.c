@@ -81,8 +81,14 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info == ZEND_WRONG_PROPERTY_INFO) {
 			rv = &EG(uninitialized_zval);
-		} else if (info == NULL) { //dynamic property
+		} else if (info == NULL || (info->flags & ZEND_ACC_STATIC) != 0) { //dynamic property
 			pthreads_store_read(object, &zmember, type, rv);
+			if (Z_ISUNDEF_P(rv)) {
+				if (type != BP_VAR_IS) {
+					zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
+				}
+				rv = &EG(uninitialized_zval);
+			}
 		} else {
 			//defined property, use mangled name
 			ZVAL_STR(&zmember, info->name);
@@ -133,7 +139,7 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 		bool ok = true;
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL) {
+			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
 
 				zend_execute_data* execute_data = EG(current_execute_data);
@@ -187,9 +193,9 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 			zval_dtor(&rv);
 		}
 	} else {
-		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		zend_property_info* info = zend_get_property_info(object->ce, member, 1);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL) {
+			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
 			isset = pthreads_store_isset(object, &zmember, has_set_exists);
@@ -224,7 +230,7 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL) {
+			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
 			pthreads_store_delete(object, &zmember);
