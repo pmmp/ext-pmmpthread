@@ -67,9 +67,11 @@ zend_string* pthreads_globals_add_interned_string(zend_string* string) {
 		return string;
 	}
 
+	zend_string* result = NULL;
+
 	zend_string_hash_val(string); //interned strings must always have their hash values known
 	if (pthreads_globals_lock()) {
-		zend_string* result = pthreads_globals_find_interned_string(string);
+		result = pthreads_globals_find_interned_string(string);
 		if (result == NULL) {
 			zval value;
 
@@ -85,6 +87,8 @@ zend_string* pthreads_globals_add_interned_string(zend_string* string) {
 
 		pthreads_globals_unlock();
 	}
+
+	return result;
 }
 
 /* {{{ */
