@@ -23,13 +23,13 @@
 #include <Zend/zend_attributes.h>
 
 /* {{{ */
-int pthreads_copy_zval(pthreads_ident_t* owner, zval* dest, zval* source); /* }}} */
+int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source); /* }}} */
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(pthreads_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
+HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
 
 /* {{{ */
-zend_function* pthreads_copy_function(pthreads_ident_t* owner, const zend_function *function); /* }}} */
+zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function); /* }}} */
 
 #endif
 

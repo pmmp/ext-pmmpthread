@@ -19,11 +19,11 @@
 #include <src/copy.h>
 #include <src/object.h>
 
-static HashTable* pthreads_copy_hash(pthreads_ident_t* owner, HashTable* source);
-static zend_ast_ref* pthreads_copy_ast(pthreads_ident_t* owner, zend_ast* ast);
-static void* pthreads_copy_ast_tree(pthreads_ident_t* owner, zend_ast* ast, void* buf);
+static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* source);
+static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast);
+static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast, void* buf);
 
-int pthreads_copy_zval(pthreads_ident_t* owner, zval* dest, zval* source) {
+int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) {
 	if (Z_TYPE_P(source) == IS_INDIRECT)
 		return pthreads_copy_zval(owner, dest, Z_INDIRECT_P(source));
 	if (Z_TYPE_P(source) == IS_REFERENCE)
@@ -91,7 +91,7 @@ int pthreads_copy_zval(pthreads_ident_t* owner, zval* dest, zval* source) {
 	return result;
 }
 
-static HashTable* pthreads_copy_hash(pthreads_ident_t* owner, HashTable* source) {
+static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* source) {
 	zval newzval;
 
 	zend_ulong h;
@@ -162,7 +162,7 @@ static size_t zend_ast_tree_size(zend_ast* ast) {
 	return size;
 }
 
-static void* pthreads_copy_ast_tree(pthreads_ident_t* owner, zend_ast* ast, void* buf)
+static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast, void* buf)
 {
 	//this code is adapted from zend_ast_tree_copy() in zend_ast.c
 	//sadly we have to duplicate all of this even though we only need to change a couple of lines
@@ -218,7 +218,7 @@ static void* pthreads_copy_ast_tree(pthreads_ident_t* owner, zend_ast* ast, void
 	return buf;
 }
 
-static zend_ast_ref* pthreads_copy_ast(pthreads_ident_t* owner, zend_ast* ast) {
+static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast) {
 	//this code is adapted from zend_ast_copy() in zend_ast.c
 	//sadly we have to duplicate all of this even though we only need to change a couple of lines
 
@@ -234,7 +234,7 @@ static zend_ast_ref* pthreads_copy_ast(pthreads_ident_t* owner, zend_ast* ast) {
 	return ref;
 }
 
-static void pthreads_copy_attribute(pthreads_ident_t* owner, HashTable **new, const zend_attribute *attr, zend_string *filename) {
+static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **new, const zend_attribute *attr, zend_string *filename) {
 	uint32_t i;
 	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
 
@@ -259,7 +259,7 @@ static void pthreads_copy_attribute(pthreads_ident_t* owner, HashTable **new, co
 }
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(pthreads_ident_t* owner, HashTable *old, zend_string *filename) {
+HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *old, zend_string *filename) {
 	if (!old) {
 		return NULL;
 	}
@@ -277,7 +277,7 @@ HashTable* pthreads_copy_attributes(pthreads_ident_t* owner, HashTable *old, zen
 } /* }}} */
 
 /* {{{ */
-static HashTable* pthreads_copy_statics(pthreads_ident_t* owner, HashTable *old) {
+static HashTable* pthreads_copy_statics(const pthreads_ident_t* owner, HashTable *old) {
 	HashTable *statics = NULL;
 
 	if (old) {
@@ -347,7 +347,7 @@ static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) {
 } /* }}} */
 
 /* {{{ */
-static zval* pthreads_copy_literals(pthreads_ident_t* owner, zval *old, int last, void *memory) {
+static zval* pthreads_copy_literals(const pthreads_ident_t* owner, zval *old, int last, void *memory) {
 	zval *literals = (zval*) memory;
 	zval *literal = literals,
 		 *end = literals + last;
@@ -517,7 +517,7 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 
 #if PHP_VERSION_ID >= 80100
 /* {{{ */
-static zend_op_array** pthreads_copy_dynamic_func_defs(pthreads_ident_t* owner, const zend_op_array** old, uint32_t num_dynamic_func_defs) {
+static zend_op_array** pthreads_copy_dynamic_func_defs(const pthreads_ident_t* owner, const zend_op_array** old, uint32_t num_dynamic_func_defs) {
 	zend_op_array** new = (zend_op_array**) emalloc(num_dynamic_func_defs * sizeof(zend_op_array*));
 
 	for (int i = 0; i < num_dynamic_func_defs; i++) {
@@ -530,7 +530,7 @@ static zend_op_array** pthreads_copy_dynamic_func_defs(pthreads_ident_t* owner, 
 #endif
 
 /* {{{ */
-static inline zend_function* pthreads_copy_user_function(pthreads_ident_t* owner, const zend_function *function) {
+static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t* owner, const zend_function *function) {
 	zend_function  *copy;
 	zend_op_array  *op_array;
 	zend_string   **variables, *filename_copy;
@@ -651,7 +651,7 @@ static inline zend_function* pthreads_copy_internal_function(const zend_function
 } /* }}} */
 
 /* {{{ */
-zend_function* pthreads_copy_function(pthreads_ident_t* owner, const zend_function *function) {
+zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function) {
 	zend_function *copy;
 
 	if (function->common.fn_flags & ZEND_ACC_IMMUTABLE) {
