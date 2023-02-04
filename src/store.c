@@ -368,7 +368,7 @@ static inline void pthreads_store_update_local_property(zend_object* object, zva
 				zend_hash_update(object->properties, str_key, value);
 			}
 		}
-		Z_ADDREF_P(value);
+		Z_TRY_ADDREF_P(value);
 	}
 }
 
@@ -796,7 +796,7 @@ void pthreads_store_persist_local_properties(zend_object* object) {
 		ZEND_HASH_FOREACH_VAL(&ts_obj->props->hash, zstorage) {
 			pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
 
-			if (storage->type == STORE_TYPE_STRING_PTR) {
+			if (storage != NULL && storage->type == STORE_TYPE_STRING_PTR) {
 				pthreads_string_storage_t* string = (pthreads_string_storage_t*)storage->data;
 				if (string->owner.ls == TSRMLS_CACHE) {
 					//we can't guarantee this string will continue to be available once we stop referencing it on this thread,
