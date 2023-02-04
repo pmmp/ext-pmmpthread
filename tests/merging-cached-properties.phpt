@@ -18,11 +18,11 @@ $t1->merge($t2);
 var_dump($t1["a"], $t2["a"]); //should be the same object
 ?>
 --EXPECT--
-object(ThreadedArray)#5 (1) {
+object(ThreadedArray)#4 (1) {
   ["f"]=>
-  int(1)
+  int(2)
 }
-object(ThreadedArray)#5 (1) {
+object(ThreadedArray)#4 (1) {
   ["f"]=>
-  int(1)
+  int(2)
 }
