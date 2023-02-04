@@ -1120,10 +1120,12 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 							zval new_zstorage;
 							pthreads_store_hard_copy_storage(&new_zstorage, storage);
 							pthreads_store_update_shared_property(threaded[0], &key, &new_zstorage);
-							if (Z_TYPE(key) == IS_LONG) {
-								zend_hash_index_del(destination->properties, Z_LVAL(key));
-							} else {
-								zend_hash_del(destination->properties, Z_STR(key));
+							if (destination->properties != NULL) {
+								if (Z_TYPE(key) == IS_LONG) {
+									zend_hash_index_del(destination->properties, Z_LVAL(key));
+								} else {
+									zend_hash_del(destination->properties, Z_STR(key));
+								}
 							}
 						}
 						if (overwrote_pthreads_object) {
