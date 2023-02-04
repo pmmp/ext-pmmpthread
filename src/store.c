@@ -334,6 +334,26 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 	return isset;
 } /* }}} */
 
+static inline void pthreads_store_update_local_property(zend_object* object, zval* key, zval* value) {
+	if (pthreads_store_retain_in_local_cache(value)) {
+		rebuild_object_properties(object);
+		if (Z_TYPE_P(key) == IS_LONG) {
+			zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
+		} else {
+			zend_string* str_key = Z_STR_P(key);
+			if (GC_FLAGS(str_key) & IS_STR_PERSISTENT) {
+				//this string might have come from pthreads_store - we can't use it directly
+				//if a bucket with this key already exists, it'll be reused
+				zend_hash_str_update(object->properties, Z_STRVAL_P(key), Z_STRLEN_P(key), value);
+			} else {
+				//any other interned or emalloc'd strings should be safe to use directly here
+				zend_hash_update(object->properties, str_key, value);
+			}
+		}
+		Z_ADDREF_P(value);
+	}
+}
+
 /* {{{ */
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	int result = FAILURE;
@@ -386,16 +406,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	if (result != SUCCESS) {
 		ZVAL_UNDEF(read);
 	} else {
-		if (pthreads_store_retain_in_local_cache(read)) {
-			rebuild_object_properties(&threaded->std);
-			if (Z_TYPE(member) == IS_LONG) {
-				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), read);
-			} else {
-				//we don't know where this string came from, so we can't use it directly
-				zend_hash_str_update(threaded->std.properties, Z_STRVAL(member), Z_STRLEN(member), read);
-			}
-			Z_ADDREF_P(read);
-		}
+		pthreads_store_update_local_property(&threaded->std, &member, read);
 	}
 
 	if (coerced)
@@ -490,20 +501,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	if (result != SUCCESS) {
 		pthreads_store_storage_dtor(&zstorage);
 	} else {
-		if (pthreads_store_retain_in_local_cache(write)) {
-			/*
-				This could be a volatile object, but, we don't want to break
-				normal refcounting, we'll read the reference only at volatile objects
-			*/
-			rebuild_object_properties(&threaded->std);
-
-			if (Z_TYPE(member) == IS_LONG) {
-				zend_hash_index_update(threaded->std.properties, Z_LVAL(member), write);
-			} else if (zend_hash_str_update(threaded->std.properties, Z_STRVAL(member), Z_STRLEN(member), write)) {
-				result = SUCCESS;
-			}
-			Z_ADDREF_P(write);
-		}
+		pthreads_store_update_local_property(&threaded->std, &member, write);
 	}
 
 	if (coerced)
