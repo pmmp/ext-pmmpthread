@@ -31,6 +31,62 @@ static void pthreads_globals_shared_sockets_dtor_func(zval *pDest) {
 }
 #endif
 
+static void pthreads_globals_string_dtor_func(zval* pDest) {
+	free(Z_STR_P(pDest));
+}
+
+zend_string* pthreads_globals_find_interned_string(zend_string* string) {
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) {
+		//permanent strings should always safe to share
+		return string;
+	}
+
+	zend_string_hash_val(string); //interned strings must always have their hash values known
+
+	//try zend's table first
+	zend_string* result = zend_interned_string_find_permanent(string);
+	if (result != NULL) {
+		return result;
+	}
+
+	if (pthreads_globals_lock()) {
+		Bucket *bucket = zend_hash_find(&PTHREADS_G(interned_strings), string);
+		if (bucket != NULL) {
+			result = bucket->key;
+		}
+
+		pthreads_globals_unlock();
+	}
+
+	return result;
+}
+
+zend_string* pthreads_globals_add_interned_string(zend_string* string) {
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) {
+		//permanent strings should always safe to share
+		return string;
+	}
+
+	zend_string_hash_val(string); //interned strings must always have their hash values known
+	if (pthreads_globals_lock()) {
+		zend_string* result = pthreads_globals_find_interned_string(string);
+		if (result == NULL) {
+			zval value;
+
+			result = zend_string_init(ZSTR_VAL(string), ZSTR_LEN(string), 1);
+			GC_ADD_FLAGS(result, IS_STR_INTERNED | IS_STR_PERMANENT);
+			GC_SET_REFCOUNT(result, 1);
+			ZSTR_H(result) = ZSTR_H(string);
+
+			ZVAL_INTERNED_STR(&value, result);
+
+			zend_hash_add_new(&PTHREADS_G(interned_strings), result, &value);
+		}
+
+		pthreads_globals_unlock();
+	}
+}
+
 /* {{{ */
 zend_bool pthreads_globals_init(){
 	if (!PTHREADS_G(init)&&!PTHREADS_G(failed)) {
@@ -46,7 +102,15 @@ zend_bool pthreads_globals_init(){
 			zend_hash_init(
 				&PTHREADS_G(shared_sockets), 16, NULL, (dtor_func_t) pthreads_globals_shared_sockets_dtor_func, 1);
 #endif
+			zend_hash_init(
+				&PTHREADS_G(interned_strings),
+				1024,
+				NULL,
+				(dtor_func_t)pthreads_globals_string_dtor_func,
+				1
+			);
 			ZVAL_UNDEF(&PTHREADS_G(undef_zval));
+
 		}
 
 #define INIT_STRING(n, v) do { \
@@ -168,5 +232,6 @@ void pthreads_globals_shutdown() {
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 		zend_hash_destroy(&PTHREADS_G(shared_sockets));
 #endif
+		zend_hash_destroy(&PTHREADS_G(interned_strings));
 	}
 } /* }}} */

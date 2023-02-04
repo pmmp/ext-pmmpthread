@@ -53,6 +53,11 @@ struct _pthreads_globals {
 	*/
 	HashTable shared_sockets;
 #endif
+	/*
+	* Interned strings which can be used from any thread, like OPcache interned strings
+	* Used for long-lived things like defined property names
+	*/
+	HashTable interned_strings;
 
 	zval undef_zval;
 
@@ -88,6 +93,12 @@ void pthreads_globals_shared_socket_track(PHP_SOCKET socket);
 
 zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket);
 #endif
+
+/* {{{ Locate a permanent interned string, either in the Zend global table or pthreads' global table */
+zend_string* pthreads_globals_find_interned_string(zend_string* string); /* }}} */
+
+/* {{{ Add a new permanent interned string to pthreads' table, or returns an existing interned string if one already exists */
+zend_string* pthreads_globals_add_interned_string(zend_string* string); /* }}} */
 
 /* {{{ */
 pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length); /* }}} */

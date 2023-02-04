@@ -313,7 +313,9 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 				continue;
 			}
 
-			ZVAL_STR(&key, info->name);
+			zend_string* interned_name = pthreads_globals_add_interned_string(info->name);
+			ZVAL_INTERNED_STR(&key, interned_name);
+
 			value = OBJ_PROP(&base->std, info->offset);
 			if (!Z_ISUNDEF_P(value)) {
 				result = pthreads_store_write(
