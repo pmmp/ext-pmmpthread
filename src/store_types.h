@@ -28,6 +28,7 @@ typedef enum _pthreads_store_type {
 	STORE_TYPE_RESOURCE,
 	STORE_TYPE_SOCKET,
 	STORE_TYPE_ENUM,
+	STORE_TYPE_STRING_PTR,
 } pthreads_store_type;
 
 typedef struct _pthreads_storage {
@@ -45,4 +46,8 @@ typedef struct _pthreads_closure_storage_t {
 	pthreads_ident_t owner;
 } pthreads_closure_storage_t;
 
+typedef struct _pthreads_string_storage_t {
+	zend_string* string;
+	pthreads_ident_t owner;
+} pthreads_string_storage_t;
 #endif
