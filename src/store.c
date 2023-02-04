@@ -341,8 +341,8 @@ static inline void pthreads_store_update_local_property(zend_object* object, zva
 			zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
 		} else {
 			zend_string* str_key = Z_STR_P(key);
-			if (GC_FLAGS(str_key) & IS_STR_PERSISTENT) {
-				//this string might have come from pthreads_store - we can't use it directly
+			if ((GC_FLAGS(str_key) & (IS_STR_PERSISTENT|IS_STR_INTERNED)) == IS_STR_PERSISTENT) {
+				//refcounted persistent string from pthreads_store - we can't use it directly
 				//if a bucket with this key already exists, it'll be reused
 				zend_hash_str_update(object->properties, Z_STRVAL_P(key), Z_STRLEN_P(key), value);
 			} else {
