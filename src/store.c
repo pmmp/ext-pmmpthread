@@ -354,6 +354,29 @@ static inline void pthreads_store_update_local_property(zend_object* object, zva
 	}
 }
 
+static inline zend_bool pthreads_store_update_shared_property(pthreads_object_t* ts_obj, zval* key, zval* zstorage) {
+	zend_bool result = FAILURE;
+	if (Z_TYPE_P(key) == IS_LONG) {
+		if (zend_hash_index_update(&ts_obj->props->hash, Z_LVAL_P(key), zstorage))
+			result = SUCCESS;
+	} else {
+		zend_string* str_key = Z_STR_P(key);
+		if (GC_FLAGS(str_key) & IS_STR_PERMANENT) {
+			//only permanent strings can be used directly
+			if (zend_hash_update(&ts_obj->props->hash, str_key, zstorage)) {
+				result = SUCCESS;
+			}
+		} else {
+			//refcounted or request-local interned string - this must be hard-copied, regardless of where it came from
+			if (zend_hash_str_update(&ts_obj->props->hash, ZSTR_VAL(str_key), ZSTR_LEN(str_key), zstorage)) {
+				result = SUCCESS;
+			}
+		}
+	}
+
+	return result;
+}
+
 /* {{{ */
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	int result = FAILURE;
@@ -479,15 +502,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		}
 
 		zend_bool was_pthreads_object = pthreads_store_member_is_cacheable(object, &member);
-		if (Z_TYPE(member) == IS_LONG) {
-			if (zend_hash_index_update(&ts_obj->props->hash, Z_LVAL(member), &zstorage))
-				result = SUCCESS;
-		} else {
-			/* do not use zend_hash_update_ptr() here - the string key must be hard-copied, even if it's interned */
-			if (zend_hash_str_update(&ts_obj->props->hash, Z_STRVAL(member), Z_STRLEN(member), &zstorage)) {
-				result = SUCCESS;
-			}
-		}
+		result = pthreads_store_update_shared_property(ts_obj, &member, &zstorage);
 		if (result == SUCCESS && was_pthreads_object) {
 			_pthreads_store_bump_modcount_nolock(threaded);
 		}
@@ -1104,12 +1119,7 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 
 							zval new_zstorage;
 							pthreads_store_hard_copy_storage(&new_zstorage, storage);
-							if (Z_TYPE(key) == IS_LONG) {
-								zend_hash_index_update(tables[0], Z_LVAL(key), &new_zstorage);
-							} else {
-								/* do not use zend_hash_update_ptr() here - the string key must be hard-copied to avoid races */
-								zend_hash_str_update(tables[0], Z_STRVAL(key), Z_STRLEN(key), &new_zstorage);
-							}
+							pthreads_store_update_shared_property(threaded[0], &key, &new_zstorage);
 						}
 						if (overwrote_pthreads_object) {
 							_pthreads_store_bump_modcount_nolock(PTHREADS_FETCH_FROM(destination));
