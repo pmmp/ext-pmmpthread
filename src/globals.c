@@ -50,9 +50,9 @@ zend_string* pthreads_globals_find_interned_string(zend_string* string) {
 	}
 
 	if (pthreads_globals_lock()) {
-		Bucket *bucket = zend_hash_find(&PTHREADS_G(interned_strings), string);
-		if (bucket != NULL) {
-			result = bucket->key;
+		zval *zv = zend_hash_find(&PTHREADS_G(interned_strings), string);
+		if (zv != NULL) {
+			result = Z_STR_P(zv);
 		}
 
 		pthreads_globals_unlock();
