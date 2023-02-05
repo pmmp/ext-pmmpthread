@@ -1113,7 +1113,7 @@ static void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_b
 			{
 				/* threaded object, serialized object, resource */
 				pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
-				*was_pthreads_storage = storage->type == STORE_TYPE_PTHREADS;
+				*was_pthreads_storage = pthreads_store_storage_is_cacheable(zstorage);
 				pthreads_store_convert(storage, unstore);
 			}
 			break;
