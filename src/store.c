@@ -97,6 +97,15 @@ void pthreads_store_sync_local_properties(zend_object* object) { /* {{{ */
 						remove = 0;
 					}
 #endif
+				} else if (ts_val->type == STORE_TYPE_STRING_PTR && Z_TYPE_P(val) == IS_STRING) {
+					pthreads_string_storage_t* string = (pthreads_string_storage_t*)ts_val->data;
+					if (string->owner.ls == TSRMLS_CACHE && string->string == Z_STR_P(val)) {
+						//local caching of this by other threads is probably fine too, but fully caching it would probably
+						//require bytewise comparison, which isn't gonna be very performant
+						//it should be sufficient to only persist the owner thread's ref, since that's where copies will be
+						//made from anyway.
+						remove = 0;
+					}
 				}
 			}
 
@@ -115,7 +124,7 @@ void pthreads_store_sync_local_properties(zend_object* object) { /* {{{ */
 } /* }}} */
 
 static inline zend_bool pthreads_store_retain_in_local_cache(zval* val) {
-	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val);
+	return IS_PTHREADS_OBJECT(val) || IS_PTHREADS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val) || Z_TYPE_P(val) == IS_STRING;
 }
 
 static inline zend_bool pthreads_store_valid_local_cache_item(zval* val) {
@@ -127,7 +136,7 @@ static inline zend_bool pthreads_store_valid_local_cache_item(zval* val) {
 /* {{{ */
 static inline zend_bool pthreads_store_storage_is_cacheable(zval* zstorage) {
 	pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
-	return storage && (storage->type == STORE_TYPE_PTHREADS || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET);
+	return storage && (storage->type == STORE_TYPE_PTHREADS || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET || storage->type == STORE_TYPE_STRING_PTR);
 } /* }}} */
 
 /* {{{ Syncs all the cacheable properties from TS storage into local cache */
@@ -314,6 +323,15 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 							isset = 0;
 						}
 						break;
+					case IS_PTR: {
+						pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
+						if (storage->type == STORE_TYPE_STRING_PTR) {
+							pthreads_string_storage_t* string = (pthreads_string_storage_t*)storage->data;
+							if (ZSTR_LEN(string->string) == 0 || ZSTR_VAL(string->string)[0] == '0') {
+								isset = 0;
+							}
+						}
+					} break;
 					default:
 						break;
 				}
@@ -350,7 +368,7 @@ static inline void pthreads_store_update_local_property(zend_object* object, zva
 				zend_hash_update(object->properties, str_key, value);
 			}
 		}
-		Z_ADDREF_P(value);
+		Z_TRY_ADDREF_P(value);
 	}
 }
 
@@ -769,6 +787,34 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 } /* }}} */
 
 /* {{{ */
+void pthreads_store_persist_local_properties(zend_object* object) {
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
+	pthreads_object_t* ts_obj = threaded->ts_obj;
+
+	if (pthreads_monitor_lock(ts_obj->monitor)) {
+		zval *zstorage;
+		ZEND_HASH_FOREACH_VAL(&ts_obj->props->hash, zstorage) {
+			pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
+
+			if (storage != NULL && storage->type == STORE_TYPE_STRING_PTR) {
+				pthreads_string_storage_t* string = (pthreads_string_storage_t*)storage->data;
+				if (string->owner.ls == TSRMLS_CACHE) {
+					//we can't guarantee this string will continue to be available once we stop referencing it on this thread,
+					//so we must create a persistent copy now
+
+					zend_string* persistent_string = pthreads_store_save_string(string->string);
+					pthreads_store_storage_dtor(zstorage);
+
+					ZVAL_STR(zstorage, persistent_string);
+				}
+			}
+		} ZEND_HASH_FOREACH_END();
+
+		pthreads_monitor_unlock(ts_obj->monitor);
+	}
+} /* }}} */
+
+/* {{{ */
 void pthreads_store_free(pthreads_store_t *store){
 	zend_hash_destroy(&store->hash);
 	free(store);
@@ -787,6 +833,14 @@ static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *u
 
 
 	switch(Z_TYPE_P(unstore)){
+		case IS_STRING: {
+			storage->type = STORE_TYPE_STRING_PTR;
+			pthreads_string_storage_t* string = malloc(sizeof(pthreads_string_storage_t));
+			string->owner = *source;
+			string->string = Z_STR_P(unstore);
+			storage->data = string;
+		} break;
+
 		case IS_RESOURCE: {
 			pthreads_resource resource = malloc(sizeof(*resource));
 			storage->type = STORE_TYPE_RESOURCE;
@@ -885,9 +939,14 @@ static zend_result pthreads_store_save_zval(pthreads_ident_t* source, zval *zsto
 			result = SUCCESS;
 			break;
 		case IS_STRING:
-			ZVAL_STR(zstorage, pthreads_store_save_string(Z_STR_P(write)));
-			result = SUCCESS;
-			break;
+			//permanent strings can be used directly
+			//non-permanent strings are handled differently
+			if (GC_FLAGS(Z_STR_P(write)) & IS_STR_PERMANENT) {
+				ZVAL_STR(zstorage, Z_STR_P(write));
+
+				result = SUCCESS;
+				break;
+			}
 		default: {
 			pthreads_storage *storage = pthreads_store_create(source, write);
 			if (storage != NULL) {
@@ -906,6 +965,17 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 	int result = SUCCESS;
 
 	switch(storage->type) {
+		case STORE_TYPE_STRING_PTR: {
+			pthreads_string_storage_t* string = (pthreads_string_storage_t*)storage->data;
+
+			if (string->owner.ls == TSRMLS_CACHE) {
+				//this thread owns the string - we can use it directly
+				ZVAL_STR_COPY(pzval, string->string);
+			} else {
+				//this thread does not own the string - create a copy
+				ZVAL_STR(pzval, pthreads_store_restore_string(string->string));
+			}
+		} break;
 		case STORE_TYPE_RESOURCE: {
 			pthreads_resource stored = (pthreads_resource) storage->data;
 
@@ -1036,6 +1106,7 @@ static void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_b
 			ZVAL_COPY(unstore, zstorage);
 			break;
 		case IS_STRING:
+			/* permanent interned string, or persisted string from a dead thread */
 			ZVAL_STR(unstore, pthreads_store_restore_string(Z_STR_P(zstorage)));
 			break;
 		case IS_PTR:
@@ -1061,13 +1132,21 @@ static void pthreads_store_restore_zval(zval *unstore, zval *zstorage) {
 static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage) {
 	if (Z_TYPE_P(zstorage) == IS_PTR) {
 		pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
-		pthreads_storage *copy = malloc(sizeof(pthreads_storage));
+		if (storage->type == STORE_TYPE_STRING_PTR) {
+			//hard-copy string ptrs here, since the destination object might not exist on the thread which owns the string
+			//this means that the owning thread may not be aware that this new ref now exists and won't persist the string when it dies
+			pthreads_string_storage_t* string = (pthreads_string_storage_t*)storage->data;
+			ZVAL_STR(new_zstorage, pthreads_store_save_string(string->string));
 
-		memcpy(copy, storage, sizeof(pthreads_storage));
+		} else {
+			pthreads_storage* copy = malloc(sizeof(pthreads_storage));
 
-		//if we add new store types, their internal data might need to be copied here
+			memcpy(copy, storage, sizeof(pthreads_storage));
 
-		ZVAL_PTR(new_zstorage, copy);
+			//if we add new store types, their internal data might need to be copied here
+
+			ZVAL_PTR(new_zstorage, copy);
+		}
 	} else if (Z_TYPE_P(zstorage) == IS_STRING) {
 		ZVAL_STR(new_zstorage, pthreads_store_save_string(Z_STR_P(zstorage)));
 	} else {
@@ -1200,6 +1279,7 @@ static void pthreads_store_storage_dtor (zval *zstorage){
 	if (Z_TYPE_P(zstorage) == IS_PTR) {
 		pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
 		switch (storage->type) {
+			case STORE_TYPE_STRING_PTR:
 			case STORE_TYPE_RESOURCE:
 			case STORE_TYPE_SOCKET:
 			case STORE_TYPE_CLOSURE:

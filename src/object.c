@@ -415,6 +415,8 @@ void pthreads_base_free(zend_object *object) {
 	if (pthreads_globals_lock()) {
 		if (--base->ts_obj->refcount == 0) {
 			pthreads_ts_object_free(base);
+		} else {
+			pthreads_store_persist_local_properties(object);
 		}
 		pthreads_globals_object_delete(base);
 		pthreads_globals_unlock();
