@@ -668,7 +668,7 @@ static zend_class_entry* pthreads_prepared_entry(const pthreads_ident_t* source,
 	return pthreads_create_entry(source, candidate, 1);
 } /* }}} */
 
-static zend_class_entry* pthreads_prepare_immutable_class_dependencies(const pthreads_ident_t* source, zend_class_entry* candidate, int do_late_bindings) {
+static void pthreads_prepare_immutable_class_dependencies(const pthreads_ident_t* source, zend_class_entry* candidate, int do_late_bindings) {
 	//assume that all dependencies of immutable classes are themselves immutable
 
 	if (candidate->ce_flags & ZEND_ACC_LINKED) {
