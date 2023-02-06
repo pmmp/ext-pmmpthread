@@ -23,6 +23,9 @@
 #include <Zend/zend_attributes.h>
 
 /* {{{ */
+zend_string* pthreads_copy_string(zend_string* s); /* }}} */
+
+/* {{{ */
 int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source); /* }}} */
 
 /* {{{ */

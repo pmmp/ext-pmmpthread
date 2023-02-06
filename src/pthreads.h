@@ -160,28 +160,6 @@ ZEND_END_MODULE_GLOBALS(pthreads)
 		((void**)(ZEND_MAP_PTR(ptr)))))
 #endif
 
-static zend_string *zend_string_new(zend_string *s)
-{
-	zend_string *ret;
-	if (ZSTR_IS_INTERNED(s)) {
-		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
-			return s;
-		}
-#if PHP_VERSION_ID < 80100
-		//we can no longer risk sharing request-local interned strings in 8.1, because their CE_CACHE may be populated
-		//and cause bad stuff to happen when opcache is not used. This sucks for memory usage, but we don't have a choice.
-		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
-			return s;
-		}
-#endif
-		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
-	} else {
-		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
-	}
-	ZSTR_H(ret) = ZSTR_H(s);
-	return ret;
-}
-
 /* {{{ */
 typedef struct _pthreads_call_t {
 	zend_fcall_info fci;

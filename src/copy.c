@@ -23,6 +23,28 @@ static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* s
 static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast);
 static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast, void* buf);
 
+zend_string* pthreads_copy_string(zend_string* s) {
+	zend_string* ret;
+	if (ZSTR_IS_INTERNED(s)) {
+		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
+			return s;
+		}
+#if PHP_VERSION_ID < 80100
+		//we can no longer risk sharing request-local interned strings in 8.1, because their CE_CACHE may be populated
+		//and cause bad stuff to happen when opcache is not used. This sucks for memory usage, but we don't have a choice.
+		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
+			return s;
+		}
+#endif
+		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
+	}
+	else {
+		ret = zend_string_dup(s, GC_FLAGS(s) & IS_STR_PERSISTENT);
+	}
+	ZSTR_H(ret) = ZSTR_H(s);
+	return ret;
+}
+
 int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) {
 	if (Z_TYPE_P(source) == IS_INDIRECT)
 		return pthreads_copy_zval(owner, dest, Z_INDIRECT_P(source));
@@ -41,7 +63,7 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 		break;
 
 	case IS_STRING:
-		ZVAL_STR(dest, zend_string_new(Z_STR_P(source)));
+		ZVAL_STR(dest, pthreads_copy_string(Z_STR_P(source)));
 		result = SUCCESS;
 		break;
 
@@ -108,7 +130,7 @@ static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* s
 		}
 
 		if (key) {
-			zend_hash_update(ht, zend_string_new(key), &newzval);
+			zend_hash_update(ht, pthreads_copy_string(key), &newzval);
 		}
 		else {
 			zend_hash_index_update(ht, h, &newzval);
@@ -178,7 +200,7 @@ static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast
 		zend_ast_zval* new = (zend_ast_zval*)buf;
 		new->kind = ZEND_AST_CONSTANT;
 		new->attr = ast->attr;
-		ZVAL_STR(&new->val, zend_string_new(zend_ast_get_constant_name(ast))); //changed
+		ZVAL_STR(&new->val, pthreads_copy_string(zend_ast_get_constant_name(ast))); //changed
 		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
 	}
 	else if (zend_ast_is_list(ast)) {
@@ -236,7 +258,7 @@ static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* 
 
 static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **new, const zend_attribute *attr, zend_string *filename) {
 	uint32_t i;
-	zend_attribute *copy = zend_add_attribute(new, zend_string_new(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
+	zend_attribute *copy = zend_add_attribute(new, pthreads_copy_string(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
 
 	for (i = 0; i < attr->argc; i++) {
 		if (pthreads_copy_zval(owner, &copy->args[i].value, &attr->args[i].value) == FAILURE) {
@@ -254,7 +276,7 @@ static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **n
 				zend_get_type_by_const(Z_TYPE(attr->args[i].value))
 			);
 		}
-		copy->args[i].name = attr->args[i].name ? zend_string_new(attr->args[i].name) : NULL;
+		copy->args[i].name = attr->args[i].name ? pthreads_copy_string(attr->args[i].name) : NULL;
 	}
 }
 
@@ -290,7 +312,7 @@ static HashTable* pthreads_copy_statics(const pthreads_ident_t* owner, HashTable
 			NULL, ZVAL_PTR_DTOR, 0);
 
 		ZEND_HASH_FOREACH_STR_KEY_VAL(old, key, value) {
-			zend_string *name = zend_string_new(key);
+			zend_string *name = pthreads_copy_string(key);
 			zval *next = value;
 			zval copy;
 			while (Z_TYPE_P(next) == IS_REFERENCE)
@@ -315,7 +337,7 @@ static zend_string** pthreads_copy_variables(zend_string **old, int end) {
 
 	while (it < end) {
 		variables[it] =
-			zend_string_new(old[it]);
+			pthreads_copy_string(old[it]);
 		it++;
 	}
 
@@ -477,7 +499,7 @@ static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_ty
 		if (ZEND_TYPE_HAS_LIST(*single_type)) {
 			pthreads_copy_zend_type(single_type, single_type);
 		} else if (ZEND_TYPE_HAS_NAME(*single_type)) {
-			ZEND_TYPE_SET_PTR(*single_type, zend_string_new(ZEND_TYPE_NAME(*single_type)));
+			ZEND_TYPE_SET_PTR(*single_type, pthreads_copy_string(ZEND_TYPE_NAME(*single_type)));
 		}
 	} ZEND_TYPE_FOREACH_END();
 } /* }}} */
@@ -502,7 +524,7 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 
 	while (it < end) {
 		if (info[it].name)
-			info[it].name = zend_string_new(old[it].name);
+			info[it].name = pthreads_copy_string(old[it].name);
 
 		pthreads_copy_zend_type(&old[it].type, &info[it].type);
 		it++;
@@ -546,7 +568,7 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 	literals = op_array->literals;
 	arg_info = op_array->arg_info;
 
-	op_array->function_name = zend_string_new(op_array->function_name);
+	op_array->function_name = pthreads_copy_string(op_array->function_name);
 	/* we don't care about prototypes */
 	op_array->prototype = NULL;
 	if (function->op_array.refcount) { //refcount will be NULL if opcodes are allocated on SHM
@@ -578,11 +600,11 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 	}
 
 	if (op_array->doc_comment) {
-		op_array->doc_comment = zend_string_new(op_array->doc_comment);
+		op_array->doc_comment = pthreads_copy_string(op_array->doc_comment);
 	}
 
 	if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), op_array->filename))) {
-		filename_copy = zend_string_new(op_array->filename);
+		filename_copy = pthreads_copy_string(op_array->filename);
 		zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
 		zend_string_release(filename_copy);
 	}
