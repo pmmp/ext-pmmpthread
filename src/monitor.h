@@ -18,10 +18,10 @@
 #ifndef HAVE_PTHREADS_MONITOR_H
 #define HAVE_PTHREADS_MONITOR_H
 
-typedef volatile unsigned long pthreads_monitor_state_t;
+typedef unsigned long pthreads_monitor_state_t;
 
 typedef struct _pthreads_monitor_t {
-	pthreads_monitor_state_t state;
+	volatile pthreads_monitor_state_t state;
 	pthread_mutex_t          mutex;
 	pthread_cond_t           cond;
 } pthreads_monitor_t;
