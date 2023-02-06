@@ -77,10 +77,13 @@ void pthreads_store_sync_local_properties(zend_object* object) { /* {{{ */
 			if (ts_val) {
 				ZVAL_DEINDIRECT(val);
 				if (ts_val->type == STORE_TYPE_PTHREADS && IS_PTHREADS_OBJECT(val)) {
-					pthreads_object_t* threadedStorage = ((pthreads_zend_object_t*)ts_val->data)->ts_obj;
-					pthreads_object_t* threadedProperty = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(val));
+					pthreads_zend_object_t* shared = (pthreads_zend_object_t*)ts_val->data;
+					pthreads_zend_object_t* local = PTHREADS_FETCH_FROM(Z_OBJ_P(val));
 
-					if (threadedStorage->monitor == threadedProperty->monitor) {
+					if (
+						shared == local || //same object
+						(pthreads_globals_object_valid(shared) && shared->ts_obj == local->ts_obj) //connection to a valid foreign object
+					) {
 						remove = 0;
 					}
 				} else if (ts_val->type == STORE_TYPE_CLOSURE && IS_PTHREADS_CLOSURE_OBJECT(val)) {
