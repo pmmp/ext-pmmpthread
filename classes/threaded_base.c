@@ -32,7 +32,7 @@ PHP_METHOD(ThreadedBase, wait)
 		Z_PARAM_LONG(timeout)
 	ZEND_PARSE_PARAMETERS_END();
 	
-	RETURN_BOOL(pthreads_monitor_wait(threaded->monitor, timeout) == SUCCESS);
+	RETURN_BOOL(pthreads_monitor_wait(&threaded->monitor, timeout) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto boolean ThreadedBase::notify()
@@ -44,7 +44,7 @@ PHP_METHOD(ThreadedBase, notify)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_notify(threaded->monitor) == SUCCESS);
+	RETURN_BOOL(pthreads_monitor_notify(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto boolean ThreadedBase::notifyOne()
@@ -56,7 +56,7 @@ PHP_METHOD(ThreadedBase, notifyOne)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_notify_one(threaded->monitor) == SUCCESS);
+	RETURN_BOOL(pthreads_monitor_notify_one(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto void ThreadedBase::synchronized(Callable function, ...)
@@ -79,7 +79,7 @@ PHP_METHOD(ThreadedBase, synchronized)
 
 	call.fci.retval = return_value;
 
-	if (pthreads_monitor_lock(threaded->monitor)) {
+	if (pthreads_monitor_lock(&threaded->monitor)) {
 		/* synchronize property tables */
 		pthreads_store_sync_local_properties(Z_OBJ_P(getThis()));
 
@@ -90,7 +90,7 @@ PHP_METHOD(ThreadedBase, synchronized)
 			ZVAL_UNDEF(return_value);
 		} zend_end_try ();
 
-		pthreads_monitor_unlock(threaded->monitor);
+		pthreads_monitor_unlock(&threaded->monitor);
 	}
 
 	zend_fcall_info_args_clear(&call.fci, 1);

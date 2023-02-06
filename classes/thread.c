@@ -43,7 +43,7 @@ PHP_METHOD(Thread, isStarted)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_STARTED));
+	RETURN_BOOL(pthreads_monitor_check(&thread->monitor, PTHREADS_MONITOR_STARTED));
 } /* }}} */
 
 /* {{{ proto Thread::isJoined()
@@ -54,7 +54,7 @@ PHP_METHOD(Thread, isJoined)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(thread->monitor, PTHREADS_MONITOR_JOINED));
+	RETURN_BOOL(pthreads_monitor_check(&thread->monitor, PTHREADS_MONITOR_JOINED));
 } /* }}} */
 
 /* {{{ proto boolean Thread::join()

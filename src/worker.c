@@ -147,9 +147,9 @@ zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t* worke
 		pthreads_queue_item_t* item = worker_data->gc.head;
 		while (item) {
 			pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(Z_OBJ(item->value));
-			if (pthreads_monitor_lock(threaded->ts_obj->monitor)) {
+			if (pthreads_monitor_lock(&threaded->ts_obj->monitor)) {
 				pthreads_store_full_sync_local_properties(Z_OBJ(item->value));
-				pthreads_monitor_unlock(threaded->ts_obj->monitor);
+				pthreads_monitor_unlock(&threaded->ts_obj->monitor);
 			}
 			item = item->next;
 		}

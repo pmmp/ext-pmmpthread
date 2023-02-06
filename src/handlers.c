@@ -258,7 +258,7 @@ int pthreads_compare_objects(PTHREADS_COMPARE_PASSTHRU_D) {
 
 	/* comparing property tables is not useful or efficient for threaded objects */
 	/* in addition, it might be useful to know if two variables are infact the same physical threaded object */
-	if (left->monitor == right->monitor) {
+	if (left == right) {
 		return 0;
 	}
 

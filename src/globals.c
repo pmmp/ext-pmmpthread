@@ -95,7 +95,7 @@ zend_string* pthreads_globals_add_interned_string(zend_string* string) {
 zend_bool pthreads_globals_init(){
 	if (!PTHREADS_G(init)&&!PTHREADS_G(failed)) {
 		PTHREADS_G(init)=1;
-		if (!(PTHREADS_G(monitor)=pthreads_monitor_alloc()))
+		if (pthreads_monitor_init(&PTHREADS_G(monitor)) == FAILURE)
 			PTHREADS_G(failed)=1;
 		if (PTHREADS_G(failed)) {
 			PTHREADS_G(init)=0;
@@ -136,12 +136,12 @@ zend_bool pthreads_globals_init(){
 
 /* {{{ */
 zend_bool pthreads_globals_lock(){
-	return pthreads_monitor_lock(PTHREADS_G(monitor));
+	return pthreads_monitor_lock(&PTHREADS_G(monitor));
 } /* }}} */
 
 /* {{{ */
 void pthreads_globals_unlock() {
-	pthreads_monitor_unlock(PTHREADS_G(monitor));
+	pthreads_monitor_unlock(&PTHREADS_G(monitor));
 } /* }}} */
 
 /* {{{ */
@@ -231,7 +231,7 @@ void pthreads_globals_shutdown() {
 		PTHREADS_G(init)=0;
 		PTHREADS_G(failed)=0;
 		/* we allow proc shutdown to destroy tables, and global strings */
-		pthreads_monitor_free(PTHREADS_G(monitor));
+		pthreads_monitor_destroy(&PTHREADS_G(monitor));
 		zend_hash_destroy(&PTHREADS_G(objects));
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 		zend_hash_destroy(&PTHREADS_G(shared_sockets));

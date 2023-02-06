@@ -26,7 +26,7 @@ PHP_METHOD(ThreadedRunnable, isRunning)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_RUNNING));
+	RETURN_BOOL(pthreads_monitor_check(&threaded->monitor, PTHREADS_MONITOR_RUNNING));
 } /* }}} */
 
 /* {{{ proto boolean ThreadedRunnable::isTerminated()
@@ -37,5 +37,5 @@ PHP_METHOD(ThreadedRunnable, isTerminated)
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(threaded->monitor, PTHREADS_MONITOR_ERROR));
+	RETURN_BOOL(pthreads_monitor_check(&threaded->monitor, PTHREADS_MONITOR_ERROR));
 } /* }}} */

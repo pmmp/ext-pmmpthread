@@ -17,17 +17,12 @@
  */
 
 #include <src/pthreads.h>
+#include <src/monitor.h>
 
-struct _pthreads_monitor_t {
-	pthreads_monitor_state_t state;
-	pthread_mutex_t          mutex;
-	pthread_cond_t           cond;
-};
-
-pthreads_monitor_t* pthreads_monitor_alloc() {
+zend_result pthreads_monitor_init(pthreads_monitor_t* m) {
 	pthread_mutexattr_t at;
-	pthreads_monitor_t *m =
-		(pthreads_monitor_t*) calloc(1, sizeof(pthreads_monitor_t));
+
+	m->state = 0;
 
 	pthread_mutexattr_init(&at);
 #if defined(PTHREAD_MUTEX_RECURSIVE) || defined(__FreeBSD__)
@@ -39,16 +34,21 @@ pthreads_monitor_t* pthreads_monitor_alloc() {
 	pthread_mutexattr_destroy(&at);
 	if (ret != 0) {
 		free(m);
-		return NULL;
+		return FAILURE;
 	}
 
 	if (pthread_cond_init(&m->cond, NULL) != 0) {
 		pthread_mutex_destroy(&m->mutex);
 		free(m);
-		return NULL;
+		return FAILURE;
 	}
 
-	return m;
+	return SUCCESS;
+}
+
+void pthreads_monitor_destroy(pthreads_monitor_t* m) {
+	pthread_mutex_destroy(&m->mutex);
+	pthread_cond_destroy(&m->cond);
 }
 
 zend_bool pthreads_monitor_lock(pthreads_monitor_t *m) {
@@ -118,10 +118,4 @@ void pthreads_monitor_remove(pthreads_monitor_t *m, pthreads_monitor_state_t sta
 		pthreads_monitor_notify(m);
 		pthreads_monitor_unlock(m);
 	}
-}
-
-void pthreads_monitor_free(pthreads_monitor_t *m) {
-	pthread_mutex_destroy(&m->mutex);
-	pthread_cond_destroy(&m->cond);
-	free(m);
 }

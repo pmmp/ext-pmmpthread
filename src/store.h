@@ -29,22 +29,13 @@
 
 #define TRY_PTHREADS_STORAGE_PTR_P(zval) ((zval) != NULL && Z_TYPE_P(zval) == IS_PTR ? (pthreads_storage *) Z_PTR_P(zval) : NULL)
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-typedef struct _pthreads_storage_socket {
-        PHP_SOCKET bsd_socket;
-        int        type;
-        int        error;
-        int        blocking;
-} pthreads_storage_socket;
-#endif
-
-
 typedef struct _pthreads_store_t {
 	HashTable hash;
 	zend_long modcount;
 } pthreads_store_t;
 
-pthreads_store_t* pthreads_store_alloc();
+void pthreads_store_init(pthreads_store_t* store);
+void pthreads_store_destroy(pthreads_store_t* store);
 void pthreads_store_sync_local_properties(zend_object* object);
 void pthreads_store_full_sync_local_properties(zend_object *object);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
@@ -59,8 +50,6 @@ int pthreads_store_pop(zend_object *object, zval *member);
 int pthreads_store_count(zend_object *object, zend_long *count);
 /* {{{ Copies any thread-local data to permanent storage when an object ref is destroyed */
 void pthreads_store_persist_local_properties(zend_object* object); /* }}} */
-
-void pthreads_store_free(pthreads_store_t *store);
 
 /* {{{ * iteration helpers */
 void pthreads_store_reset(zend_object *object, HashPosition *position);

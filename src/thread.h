@@ -34,8 +34,8 @@ typedef struct _pthreads_object_t {
 	zend_ulong refcount;
 	pthread_t thread;
 	unsigned int scope;
-	pthreads_monitor_t *monitor;
-	pthreads_store_t *props;
+	pthreads_monitor_t monitor;
+	pthreads_store_t props;
 	pthreads_ident_t creator;
 	pthreads_ident_t local;
 } pthreads_object_t; /* }}} */
@@ -56,7 +56,7 @@ struct _pthreads_zend_object_t {
 /* {{{ */
 typedef struct _pthreads_routine_arg_t {
 	pthreads_zend_object_t *thread;
-	pthreads_monitor_t *ready;
+	pthreads_monitor_t ready;
 	zend_ulong options;
 } pthreads_routine_arg_t; /* }}} */
 

@@ -35,7 +35,7 @@ struct _pthreads_globals {
 	/*
 	* Global Monitor
 	*/
-	pthreads_monitor_t *monitor;
+	pthreads_monitor_t monitor;
 
 	/*
 	* Global/Default Resource Destructor

@@ -28,7 +28,7 @@ static void pthreads_resources_ht_dtor(zval* ptr) {
 }
 
 /* {{{ mark a resource for keeping */
-zend_bool pthreads_resources_keep(pthreads_resource res) {
+zend_bool pthreads_resources_keep(pthreads_resource *res) {
 	if (!PTHREADS_ZG(resources)) {
 		ALLOC_HASHTABLE(PTHREADS_ZG(resources));
 		zend_hash_init(PTHREADS_ZG(resources), 15, NULL, pthreads_resources_ht_dtor, 0);
@@ -43,7 +43,7 @@ zend_bool pthreads_resources_keep(pthreads_resource res) {
 /* {{{ tells if a resource is being kept */
 zend_bool pthreads_resources_kept(zend_resource *entry) {
 	if (PTHREADS_ZG(resources)) {
-		pthreads_resource data = zend_hash_index_find_ptr(PTHREADS_ZG(resources), (zend_long) entry);
+		pthreads_resource *data = zend_hash_index_find_ptr(PTHREADS_ZG(resources), (zend_long) entry);
 		if (data) {
 			if (data->ls != TSRMLS_CACHE) {
 				return 1;
