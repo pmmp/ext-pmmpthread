@@ -16,6 +16,7 @@ class T extends Thread {
 	public function run() : void{
 		$array = $this->array;
 		$this->array = null; //erase the child thread cache and TS storage
+		$array["otherThing"] = new \ThreadedArray();
 		$this->synchronized(function() : void{
 			$this->dereferenced1 = true;
 			$this->notify();
@@ -25,6 +26,7 @@ class T extends Thread {
 				$this->wait();
 			}
 		});
+		$array["abc"] = new \ThreadedArray(); //trigger pthreads_store_sync_local_properties()
 		var_dump($array["sub"]); //this is now the only remaining reference, and all gateways to "sub" have been destroyed because we never dereferenced ours
 	}
 }
@@ -40,6 +42,7 @@ $t->synchronized(function() use ($t) : void{
 	}
 });
 $t->array = null; //destroy the cached ref from our side - now there is no chain of ownership
+$array["otherThing"] = new class extends \ThreadedBase{}; //overwrite their object with one that will soon no longer exist
 unset($array); //destroy our ref and all its descendents
 $t->synchronized(function() use ($t) : void{
 	$t->destroyedFromMain = true;
