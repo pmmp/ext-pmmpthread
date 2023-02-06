@@ -56,7 +56,7 @@ jobs:
       matrix:
         php: [8.0.27, 8.1.14, 8.2.1]
         valgrind: [0, 1]
-        opcache: [off, on, jit]
+        opcache: [off, on, jit, jit-tracing]
 
     needs: build-php
     runs-on: ubuntu-20.04
@@ -98,6 +98,9 @@ jobs:
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
             if [[ "${{ matrix.opcache }}" == "jit" ]]; then
               echo "opcache.jit=1205" >> $GITHUB_WORKSPACE/php.ini
+              echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
+            elif [[ "${{ matrix.opcache }}" == "jit-tracing" ]]; then
+              echo "opcache.jit=tracing" >> $GITHUB_WORKSPACE/php.ini
               echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
             fi
           else
