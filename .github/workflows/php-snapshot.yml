@@ -6,20 +6,74 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}
+  build-php:
+    name: Build PHP ${{ matrix.php }}, Valgrind ${{ matrix.valgrind }}
+    concurrency: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
+    strategy:
+      matrix:
+        php: [8.3snapshot]
+        valgrind: [0, 1]
+
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Install PHP build dependencies
+        run: sudo apt-get update && sudo apt-get install libzip5
+
+      - name: Restore PHP build cache
+        uses: actions/cache@v3
+        id: php-build-cache
+        with:
+          path: ${{ github.workspace }}/php 
+          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
+          
+      - name: Clone php-build repository
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
+        uses: actions/checkout@v3
+        with:
+          repository: php-build/php-build
+          path: php-build
+
+      - name: Install Valgrind
+        if: matrix.valgrind == '1' && steps.php-build-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install valgrind
+          echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
+          echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
+          echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
+
+      - name: Compile PHP
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
+        run: |
+          cd $GITHUB_WORKSPACE/php-build
+          ./install-dependencies.sh
+          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+
+  test-extension:
+    name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
     strategy:
       fail-fast: false
       matrix:
         php: [8.3snapshot]
         valgrind: [0, 1]
-        opcache: [off, on, jit]
+        opcache: [off, on, jit, jit-tracing]
 
+    needs: build-php
     runs-on: ubuntu-20.04
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
+
+      - name: Install PHP build dependencies
+        run: sudo apt-get update && sudo apt-get install libzip5
+
+      - name: Restore PHP build cache
+        uses: actions/cache@v3
+        id: php-build-cache
+        with:
+          path: ${{ github.workspace }}/php 
+          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
 
       - name: Install Valgrind
         if: matrix.valgrind == '1'
@@ -27,22 +81,6 @@ jobs:
           sudo apt-get update && sudo apt-get install valgrind
           echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
           echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
-          echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
-
-      - name: Install PHP build dependencies
-        run: sudo apt-get update && sudo apt-get install libzip5
-          
-      - name: Clone php-build repository
-        uses: actions/checkout@v3
-        with:
-          repository: php-build/php-build
-          path: php-build
-
-      - name: Compile PHP
-        run: |
-          cd $GITHUB_WORKSPACE/php-build
-          ./install-dependencies.sh
-          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
 
       - name: Compile extension
         run: |
@@ -60,6 +98,9 @@ jobs:
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
             if [[ "${{ matrix.opcache }}" == "jit" ]]; then
               echo "opcache.jit=1205" >> $GITHUB_WORKSPACE/php.ini
+              echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
+            elif [[ "${{ matrix.opcache }}" == "jit-tracing" ]]; then
+              echo "opcache.jit=tracing" >> $GITHUB_WORKSPACE/php.ini
               echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
             fi
           else
