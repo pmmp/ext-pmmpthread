@@ -23,14 +23,18 @@
 
 #include <src/resources.h>
 
+static void pthreads_resources_ht_dtor(zval* ptr) {
+	efree(Z_PTR_P(ptr));
+}
+
 /* {{{ mark a resource for keeping */
 zend_bool pthreads_resources_keep(pthreads_resource res) {
 	if (!PTHREADS_ZG(resources)) {
 		ALLOC_HASHTABLE(PTHREADS_ZG(resources));
-		zend_hash_init(PTHREADS_ZG(resources), 15, NULL, NULL, 0);
+		zend_hash_init(PTHREADS_ZG(resources), 15, NULL, pthreads_resources_ht_dtor, 0);
 	}
 
-	if (zend_hash_index_update_ptr(PTHREADS_ZG(resources), (zend_long) res->original, res)) {
+	if (zend_hash_index_update_mem(PTHREADS_ZG(resources), (zend_long) res->original, res, sizeof(*res))) {
 		return 1;
 	}
 	return 0;
