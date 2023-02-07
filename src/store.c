@@ -501,12 +501,6 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		write = &vol;
 	}
 
-	if (Z_TYPE_P(write) == IS_OBJECT) {
-		/* when we copy out in another context, we want properties table
-			to be initialized */
-		rebuild_object_properties(Z_OBJ_P(write));
-	}
-
 	if (pthreads_store_save_zval(&threaded->owner, &zstorage, write) != SUCCESS) {
 		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_get_type_by_const(Z_TYPE_P(write)));
 		return FAILURE;
