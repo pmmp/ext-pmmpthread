@@ -115,7 +115,6 @@ extern struct _pthreads_globals pthreads_globals;
 
 ZEND_EXTERN_MODULE_GLOBALS(pthreads)
 
-#ifndef PTHREADS_ZG
 ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	pid_t pid;
 	int   signal;
@@ -130,9 +129,9 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	zend_object_handlers custom_socket_object_handlers;
 #endif
 ZEND_END_MODULE_GLOBALS(pthreads)
-#	define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
-#   define PTHREADS_PID() PTHREADS_ZG(pid) ? PTHREADS_ZG(pid) : (PTHREADS_ZG(pid)=getpid())
-#endif
+
+#define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
+#define PTHREADS_PID() PTHREADS_ZG(pid) ? PTHREADS_ZG(pid) : (PTHREADS_ZG(pid)=getpid())
 
 #define PTHREADS_FETCH_ALL(ls, id, type) ((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])
 #define PTHREADS_FETCH_CTX(ls, id, type, element) (((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])->element)
