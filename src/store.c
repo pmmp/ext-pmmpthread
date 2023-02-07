@@ -51,6 +51,15 @@ void pthreads_store_destroy(pthreads_store_t* store) {
 	zend_hash_destroy(&store->hash);
 } /* }}} */
 
+/* {{{ Prepares local property table to cache items.
+We may use integer keys, so the ht must be explicitly initialized to avoid zend allocating it as packed, which will cause assert failures. */
+static void pthreads_store_init_local_properties(zend_object* object) {
+	rebuild_object_properties(object);
+	if (HT_FLAGS(object->properties) & HASH_FLAG_UNINITIALIZED) {
+		zend_hash_real_init_mixed(object->properties);
+	}
+} /* }}} */
+
 void pthreads_store_sync_local_properties(zend_object* object) { /* {{{ */
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
@@ -162,7 +171,7 @@ void pthreads_store_full_sync_local_properties(zend_object *object) {
 	zend_string* name;
 	zval* zstorage;
 
-	rebuild_object_properties(&threaded->std);
+	pthreads_store_init_local_properties(&threaded->std);
 
 	ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
 		zval* cached;
@@ -356,7 +365,7 @@ zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exist
 
 static inline void pthreads_store_update_local_property(zend_object* object, zval* key, zval* value) {
 	if (pthreads_store_retain_in_local_cache(value)) {
-		rebuild_object_properties(object);
+		pthreads_store_init_local_properties(object);
 		if (Z_TYPE_P(key) == IS_LONG) {
 			zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
 		} else {
@@ -698,7 +707,7 @@ void pthreads_store_tohash(zend_object *object, HashTable *hash) {
 	pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(object);
 	pthreads_object_t *ts_obj = threaded->ts_obj;
 
-	rebuild_object_properties(&threaded->std);
+	pthreads_store_init_local_properties(&threaded->std);
 
 	if (pthreads_monitor_lock(&ts_obj->monitor)) {
 		zend_string *name = NULL;
