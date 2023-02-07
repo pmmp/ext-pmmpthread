@@ -109,7 +109,7 @@ zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval
 }
 
 zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pthreads_call_t *call, pthreads_worker_collect_function_t collect) {
-	zend_long size = 0, offset = 0;
+	zend_long size = 0;
 
 	if (pthreads_monitor_lock(worker_data->monitor)) {
 		pthreads_queue_item_t *item;
