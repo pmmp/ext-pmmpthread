@@ -69,14 +69,27 @@ static inline void pthreads_object_iterator_rewind(pthreads_iterator_t* iterator
 	pthreads_store_reset(Z_OBJ(iterator->object), &iterator->position);
 }
 
+static HashTable* pthreads_object_iterator_get_gc(pthreads_iterator_t* iterator, zval** table, int* n) {
+	if (Z_TYPE(iterator->zit.data) != IS_UNDEF) {
+		*n = 1;
+		*table = &iterator->zit.data;
+	} else {
+		*n = 0;
+		*table = NULL;
+	}
+
+	return NULL;
+}
+
 static zend_object_iterator_funcs pthreads_object_iterator_funcs = {
-	(void (*) (zend_object_iterator*))         pthreads_object_iterator_dtor,
-	(int (*)(zend_object_iterator *))          pthreads_object_iterator_validate,
-	(zval* (*)(zend_object_iterator *))        pthreads_object_iterator_current_data,
-	(void (*)(zend_object_iterator *, zval *)) pthreads_object_iterator_current_key,
-	(void (*)(zend_object_iterator *))         pthreads_object_iterator_move_forward,
-	(void (*)(zend_object_iterator *))         pthreads_object_iterator_rewind,
-	NULL
+	(void (*) (zend_object_iterator*))                    pthreads_object_iterator_dtor,
+	(int (*)(zend_object_iterator *))                     pthreads_object_iterator_validate,
+	(zval* (*)(zend_object_iterator *))                   pthreads_object_iterator_current_data,
+	(void (*)(zend_object_iterator *, zval *))            pthreads_object_iterator_current_key,
+	(void (*)(zend_object_iterator *))                    pthreads_object_iterator_move_forward,
+	(void (*)(zend_object_iterator *))                    pthreads_object_iterator_rewind,
+	NULL,
+	(HashTable* (*)(zend_object_iterator*, zval**, int*)) pthreads_object_iterator_get_gc,
 };
 
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref) {
