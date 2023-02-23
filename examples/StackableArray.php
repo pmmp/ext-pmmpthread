@@ -22,7 +22,7 @@ $hammers = 500;
 *		referencing an array in this way would keep switching in and out of the VM to call your handlers,
 *		because these arrays are meant to provide efficiency using the ArrayAccess interface is unsuitable.
 */
-class StackableArray extends Threaded {
+class StackableArray extends ThreadedArray {
 
 	/*
 	* Always think about caching these types of objects, don't waste the run method or your workers

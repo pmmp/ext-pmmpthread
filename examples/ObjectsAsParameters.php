@@ -3,7 +3,7 @@
 * Because we plan for two contexts to manipulate this object we extend the Threaded declaration
 * This connects automatically the reference in the creating context and the reference in the threading context
 */
-class Response extends Threaded {
+class Response extends ThreadedRunnable {
 	
 	public function __construct($url){
 		$this->url = $url;

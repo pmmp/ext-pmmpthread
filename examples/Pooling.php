@@ -31,7 +31,7 @@ class WebWorker extends Worker {
 	private static $connection;
 }
 
-class WebWork extends Threaded {
+class WebWork extends ThreadedRunnable {
 	/*
 	* An example of some work that depends upon a shared logger
 	* and a thread-local PDO connection
@@ -48,7 +48,7 @@ class WebWork extends Threaded {
 	}
 }
 
-class SafeLog extends Threaded {
+class SafeLog extends ThreadedRunnable {
 	
 	/*
 	* If logging were allowed to occur without synchronizing

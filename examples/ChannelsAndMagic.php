@@ -7,7 +7,7 @@
  *  We can't have language level support easily, but we can implement channels using magic PHP.
  */
 
-class Channel extends Threaded {
+class Channel extends ThreadedRunnable {
     /* setting a value on the channel shall cause waiters to wake up */
     final public function __set($key, $value) {
         return $this->synchronized(function() use ($key, $value) {
@@ -26,7 +26,7 @@ class Channel extends Threaded {
     }
 }
 
-class Routine extends Threaded {
+class Routine extends ThreadedRunnable {
     public function __construct(Channel $channel) {
         $this->channel = $channel;
     }
