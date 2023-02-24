@@ -38,6 +38,7 @@ typedef struct _pthreads_storage {
 typedef struct _pthreads_closure_storage_t {
 	pthreads_storage common;
 	zend_closure* closure;
+	pthreads_zend_object_t* this_obj;
 	pthreads_ident_t owner;
 } pthreads_closure_storage_t;
 
