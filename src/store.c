@@ -1041,47 +1041,8 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 		} break;
 
 		case STORE_TYPE_CLOSURE: {
-			char *name;
-			size_t name_len;
-			zend_string *zname;
 			const pthreads_closure_storage_t* closure_data = (const pthreads_closure_storage_t* )storage;
-			const zend_closure *closure_obj = closure_data->closure;
-			zend_function *closure = pthreads_copy_function(&closure_data->owner, &closure_obj->func);
-
-			pthreads_zend_object_t* this_object = closure_data->this_obj;
-			zval this_zv;
-			if (this_object != NULL) {
-				if (!pthreads_globals_object_connect(this_object, NULL, &this_zv)) {
-					zend_throw_exception_ex(
-						pthreads_ce_ThreadedConnectionException, 0,
-						"pthreads detected an attempt to connect to an object which has already been destroyed");
-					result = FAILURE;
-					break;
-				}
-			} else {
-				ZVAL_UNDEF(&this_zv);
-			}
-
-			PTHREADS_ZG(hard_copy_interned_strings) = 1;
-			zend_create_closure(
-				pzval,
-				closure,
-				pthreads_prepare_single_class(&closure_data->owner, closure->common.scope),
-				pthreads_prepare_single_class(&closure_data->owner, closure_obj->called_scope),
-				&this_zv
-			);
-			PTHREADS_ZG(hard_copy_interned_strings) = 0;
-			zval_ptr_dtor(&this_zv);
-
-			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
-			zname = zend_string_init(name, name_len, 0);
-
-			if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
-				result = FAILURE;
-				zval_dtor(pzval);
-			} else result = SUCCESS;
-			efree(name);
-			zend_string_release(zname);
+			result = pthreads_copy_closure(&closure_data->owner, closure_data->closure, 0, pzval);
 		} break;
 
 		case STORE_TYPE_PTHREADS: {

@@ -21,6 +21,7 @@
 #include <src/pthreads.h>
 #include <src/thread.h>
 #include <Zend/zend_attributes.h>
+#include <src/prepare.h>
 
 /* {{{ */
 zend_string* pthreads_copy_string(zend_string* s); /* }}} */
@@ -34,5 +35,7 @@ HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *at
 /* {{{ */
 zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function); /* }}} */
 
+/* {{{ */
+zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval); /* }}} */
 #endif
 

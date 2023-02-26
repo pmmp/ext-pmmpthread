@@ -18,6 +18,7 @@
 
 #include <src/copy.h>
 #include <src/object.h>
+#include <src/prepare.h>
 
 static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* source);
 static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast);
@@ -78,28 +79,8 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 			result = SUCCESS;
 		}
 		else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
-			const zend_closure* closure_obj = (const zend_closure*)Z_OBJ_P(source);
-
-			char* name;
-			size_t name_len;
-			zend_string* zname;
-			zend_function* closure = pthreads_copy_function(owner, &closure_obj->func);
-
-			//TODO: scopes aren't being copied here - this will lead to faults if we're copying from child -> parent
-			zend_create_closure(dest, closure, closure->common.scope, closure_obj->called_scope, NULL);
-
-			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(dest)));
-			zname = zend_string_init(name, name_len, 0);
-
-			if (!zend_hash_update_ptr(EG(function_table), zname, closure)) {
-				result = FAILURE;
-				zval_dtor(dest);
-			}
-			else result = SUCCESS;
-			efree(name);
-			zend_string_release(zname);
-
-			result = SUCCESS;
+			//no exceptions here - we're probably in a class copy context
+			result = pthreads_copy_closure(owner, (zend_closure*) Z_OBJ_P(source), 1, dest);
 		}
 		break;
 
@@ -653,7 +634,6 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 	}
 
 	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
-	//TODO: we should be able to avoid copying this in some cases (sometimes already persisted by opcache, check GC_COLLECTABLE)
 	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(owner, op_array->static_variables);
 #if PHP_VERSION_ID >= 80200
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, NULL);
@@ -709,3 +689,51 @@ zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_
 	return zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong) function, copy);
 } /* }}} */
 
+/* {{{ */
+zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval) {
+	char* name;
+	size_t name_len;
+	zend_string* zname;
+	zend_function* closure_func = pthreads_copy_function(owner, &closure_obj->func);
+	zval this_zv;
+	zend_result result = FAILURE;
+
+	if (IS_PTHREADS_OBJECT(&closure_obj->this_ptr)) {
+		if (!pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), NULL, &this_zv)) {
+			if (!silent) {
+				zend_throw_exception_ex(
+					pthreads_ce_ThreadedConnectionException, 0,
+					"Closure $this references a thread-safe object from another thread which no longer exists");
+			}
+			return FAILURE;
+		}
+	} else {
+		ZVAL_UNDEF(&this_zv);
+	}
+
+	//strings must always be hard-copied here
+	PTHREADS_ZG(hard_copy_interned_strings) = 1;
+	zend_create_closure(
+		pzval,
+		closure_func,
+		pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
+		pthreads_prepare_single_class(owner, closure_obj->called_scope),
+		&this_zv
+	);
+	PTHREADS_ZG(hard_copy_interned_strings) = 0;
+	zval_ptr_dtor(&this_zv);
+
+	name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
+	zname = zend_string_init(name, name_len, 0);
+
+	if (!zend_hash_update_ptr(EG(function_table), zname, closure_func)) {
+		zval_dtor(pzval);
+		result = FAILURE;
+	} else {
+		result = SUCCESS;
+	}
+	efree(name);
+	zend_string_release(zname);
+
+	return result;
+} /* }}} */
