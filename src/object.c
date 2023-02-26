@@ -185,45 +185,6 @@ zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_threaded_serialize(zval *object, unsigned char **buffer, size_t *buflen, zend_serialize_data *data) {
-	pthreads_zend_object_t *address = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
-	if (address->original_zobj != NULL) {
-		address = address->original_zobj;
-	}
-	(*buflen) = snprintf(NULL, 0, ":%" PRIuPTR ":", (uintptr_t) address);
-	(*buffer) = emalloc((*buflen) + 1);
-	sprintf((char*) (*buffer), ":%" PRIuPTR ":", (uintptr_t) address);
-	(*buffer)[(*buflen)] = 0;
-
-	return SUCCESS;
-} /* }}} */
-
-/* {{{ */
-int pthreads_threaded_unserialize(zval *object, zend_class_entry *ce, const unsigned char *buffer, size_t buflen, zend_unserialize_data *data) {
-	pthreads_zend_object_t *address = NULL;
-
-	if (!sscanf((const char*) buffer, ":%" PRIuPTR ":", (uintptr_t*)&address)) {
-		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
-			"pthreads detected an attempt to connect to a corrupted object");
-		return FAILURE;
-	}
-
-	if (!address) {
-		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
-			"pthreads detected an attempt to connect to an invalid object");
-		return FAILURE;
-	}
-
-	if (!pthreads_globals_object_connect(address, ce, object)) {
-		zend_throw_exception_ex(pthreads_ce_ThreadedConnectionException, 0,
-			"pthreads detected an attempt to connect to an object which has already been destroyed");
-		return FAILURE;
-	}
-
-	return SUCCESS;
-} /* }}} */
-
-/* {{{ */
 void pthreads_current_thread(zval *return_value) {
 	if (Z_TYPE(PTHREADS_ZG(this)) != IS_UNDEF) {
 		ZVAL_COPY(return_value, &PTHREADS_ZG(this));

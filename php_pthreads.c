@@ -144,9 +144,13 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	pthreads_threaded_base_entry = register_class_ThreadedBase(zend_ce_aggregate);
 	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
-	pthreads_threaded_base_entry->serialize = pthreads_threaded_serialize;
-	pthreads_threaded_base_entry->unserialize = pthreads_threaded_unserialize;
 	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
+#if PHP_VERSION_ID < 80100
+	pthreads_threaded_base_entry->serialize = zend_class_serialize_deny;
+	pthreads_threaded_base_entry->unserialize = zend_class_unserialize_deny;
+#else
+	pthreads_threaded_base_entry->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
+#endif
 
 	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_countable, zend_ce_arrayaccess);
 	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
