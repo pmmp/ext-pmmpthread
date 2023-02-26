@@ -819,6 +819,44 @@ void pthreads_store_persist_local_properties(zend_object* object) {
 	}
 } /* }}} */
 
+static zend_bool pthreads_closure_thread_safe(zend_closure* closure) {
+	if (
+		!Z_ISUNDEF(closure->this_ptr) &&
+		!(Z_TYPE(closure->this_ptr) == IS_OBJECT && instanceof_function(Z_OBJCE(closure->this_ptr), pthreads_threaded_base_entry))
+	) {
+		//closures must be unbound or static when assigned, because they won't be bound when restored onto another thread
+		//however, this is OK for thread-safe objects which we can copy
+		return 0;
+	}
+
+	zend_function* func = &closure->func;
+	if (
+		func->common.type == ZEND_USER_FUNCTION &&
+		!(func->common.fn_flags & ZEND_ACC_FAKE_CLOSURE)
+	) {
+		HashTable* static_variables = ZEND_MAP_PTR_GET(func->op_array.static_variables_ptr);
+		if (static_variables != NULL) {
+			//TODO: we need to check for non-thread-safe objects and other variables here
+
+			//copied closures must not have static variables or use-by-ref - their state may change in ways that
+			//we can't control, potentially making them unsafe after assignment (e.g. a static variable assigned
+			//an object)
+			//fake closures (first-class callables) are allowed to have statics, since they directly refer to the
+			//statics of the original function, so we can just treat them as if they are a classic callable.
+			zend_op* opline = func->op_array.opcodes;
+			zend_op* last = func->op_array.opcodes + func->op_array.last;
+			for (; opline < last; opline++) {
+				if (opline->opcode == ZEND_BIND_STATIC && opline->extended_value & ZEND_BIND_REF) {
+					//TODO: we need better errors for this
+					return 0;
+				}
+			}
+		}
+	}
+
+	return 1;
+
+}
 /* {{{ */
 static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *unstore){
 	pthreads_storage *result = NULL;
@@ -863,13 +901,23 @@ static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *u
 #endif
 
 			if (instanceof_function(Z_OBJCE_P(unstore), zend_ce_closure)) {
-				const zend_closure *closure = (const zend_closure *) Z_OBJ_P(unstore);
+				zend_closure* closure = (zend_closure*)Z_OBJ_P(unstore);
+
+				if (!pthreads_closure_thread_safe(closure)) {
+					break;
+				}
 
 				MAKE_STORAGE(STORE_TYPE_CLOSURE, pthreads_closure_storage_t);
 				//TODO: this might result in faults because it's not copied properly
 				//since we aren't copying this to persistent memory, a fault is going to
 				//happen if it's dereferenced after the original closure is destroyed
 				//(for what it's worth, this was always a problem.)
+				if (Z_TYPE(closure->this_ptr) == IS_OBJECT) {
+					pthreads_zend_object_t* this_object = PTHREADS_FETCH_FROM(Z_OBJ(closure->this_ptr));
+					storage->this_obj = this_object;
+				} else {
+					storage->this_obj = NULL;
+				}
 				storage->closure = closure;
 				storage->owner = *source;
 				break;
@@ -1000,15 +1048,30 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 			const zend_closure *closure_obj = closure_data->closure;
 			zend_function *closure = pthreads_copy_function(&closure_data->owner, &closure_obj->func);
 
+			pthreads_zend_object_t* this_object = closure_data->this_obj;
+			zval this_zv;
+			if (this_object != NULL) {
+				if (!pthreads_globals_object_connect(this_object, NULL, &this_zv)) {
+					zend_throw_exception_ex(
+						pthreads_ce_ThreadedConnectionException, 0,
+						"pthreads detected an attempt to connect to an object which has already been destroyed");
+					result = FAILURE;
+					break;
+				}
+			} else {
+				ZVAL_UNDEF(&this_zv);
+			}
+
 			PTHREADS_ZG(hard_copy_interned_strings) = 1;
 			zend_create_closure(
 				pzval,
 				closure,
 				pthreads_prepare_single_class(&closure_data->owner, closure->common.scope),
 				pthreads_prepare_single_class(&closure_data->owner, closure_obj->called_scope),
-				NULL
+				&this_zv
 			);
 			PTHREADS_ZG(hard_copy_interned_strings) = 0;
+			zval_ptr_dtor(&this_zv);
 
 			name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
 			zname = zend_string_init(name, name_len, 0);
