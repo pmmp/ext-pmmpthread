@@ -17,18 +17,17 @@ $t = new class extends \Thread{
 	public $shutdown = false;
 
 	public function run() : void{
-		$chan = $this->synchronized(function() : \ThreadedArray{
+		$this->synchronized(function() : void{
 			$chan = new \ThreadedArray;
 			$chan[] = 1;
-			$this->chan = serialize($chan);
+			$this->chan = $chan;
 			$this->notify();
-			return $chan;
 		});
-		$this->synchronized(function() use(&$chan) : void{
+		$this->synchronized(function() : void{
 			while(!$this->shutdown){
 				$this->wait();
 			}
-			$chan = null; //destroy from creator context
+			$this->chan = null; //destroy from creator context
 		});
 	}
 };
@@ -38,7 +37,7 @@ $chan = $t->synchronized(function() use($t) : \ThreadedArray{
 	while($t->chan === null){
 		$t->wait();
 	}
-	return unserialize($t->chan);
+	return $t->chan;
 });
 $t->synchronized(function() use($t) : void{
 	$t->shutdown = true;
