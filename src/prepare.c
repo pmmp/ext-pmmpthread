@@ -631,6 +631,7 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 
 /* {{{ */
 static inline void pthreads_prepare_closures(const pthreads_ident_t* source) {
+#if PHP_VERSION_ID < 80100
 	Bucket *bucket;
 
 	ZEND_HASH_FOREACH_BUCKET(PTHREADS_CG(source->ls, function_table), bucket) {
@@ -654,6 +655,7 @@ static inline void pthreads_prepare_closures(const pthreads_ident_t* source) {
 			zend_string_release(named);
 		}
 	} ZEND_HASH_FOREACH_END();
+#endif
 } /* }}} */
 
 /* {{{ */
