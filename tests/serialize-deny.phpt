@@ -1,5 +1,7 @@
 --TEST--
 Test that thread-safe object throw the correct exceptions when attempting to serialize them
+--SKIPIF--
+<?php if(PHP_VERSION_ID < 80100) die("skip __serialize() has broken behaviour on 8.0 (https://bugs.php.net/bug.php?id=81111)"); ?>
 --FILE--
 <?php
 
