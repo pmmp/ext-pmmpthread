@@ -809,7 +809,10 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		if (static_variables != NULL) {
 			zend_closure* new_closure = (zend_closure*)Z_OBJ_P(pzval);
 			ZEND_ASSERT(new_closure->func.type == ZEND_USER_FUNCTION);
-			ZEND_ASSERT(new_closure->func.op_array.static_variables == NULL); //we just created this from a clean definition, so it shouldn't have any static variables
+			if (new_closure->func.op_array.static_variables != NULL) {
+				//the closure may have static_variables allocated from its original creation by zend_compile.c
+				zend_array_destroy(new_closure->func.op_array.static_variables);
+			}
 			new_closure->func.op_array.static_variables = static_variables;
 		}
 
