@@ -122,6 +122,7 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	zend_ulong options;
 	HashTable resolve;
 	HashTable filenames;
+	HashTable closure_base_op_arrays;
 	HashTable *resources;
 	int hard_copy_interned_strings;
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT

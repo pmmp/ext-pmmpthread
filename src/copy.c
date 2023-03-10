@@ -556,29 +556,20 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 		op_array->refcount = emalloc(sizeof(uint32_t));
 		(*op_array->refcount) = 1;
 	}
-	/* we never want to share the same runtime cache */
-	if (op_array->fn_flags & ZEND_ACC_HEAP_RT_CACHE) {
-		//TODO: we really shouldn't need to initialize this here, but right now it's the most convenient way to do it.
-		//the primary problem is zend_create_closure(), which doesn't like being given an op_array that has a NULL
-		//map_ptr. However, when allocated on heap, Zend expects the map ptr and the runtime cache to be part of the
-		//same contiguous memory block freed with a single call to efree(), and the cache won't be resized.
+
+	/*
+	 * we never want to share the same runtime cache
+	 * since we're producing function definitions here, runtime cache should never be allocated on the heap
+	 * we may be producing this definition from a closure's copy of the original definition, which might have used a heap-allocated cache
+	 * heap runtime caches are only used by closures' copies of function definitions, not the definition itself
+	 */
+	op_array->fn_flags &= ~ZEND_ACC_HEAP_RT_CACHE;
 #if PHP_VERSION_ID >= 80200
-		void* ptr = ecalloc(1, op_array->cache_size);
-		ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
+	ZEND_MAP_PTR_INIT(op_array->run_time_cache, NULL);
 #else
-		void *ptr = ecalloc(1, sizeof(void*) + op_array->cache_size);
-		ZEND_MAP_PTR_INIT(op_array->run_time_cache, ptr);
-		ptr = (char*)ptr + sizeof(void*);
-		ZEND_MAP_PTR_SET(op_array->run_time_cache, ptr);
+	ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
+	ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
 #endif
-	} else {
-#if PHP_VERSION_ID >= 80200
-		ZEND_MAP_PTR_INIT(op_array->run_time_cache, NULL);
-#else
-		ZEND_MAP_PTR_INIT(op_array->run_time_cache, zend_arena_alloc(&CG(arena), sizeof(void*)));
-		ZEND_MAP_PTR_SET(op_array->run_time_cache, NULL);
-#endif
-	}
 
 	if (op_array->doc_comment) {
 		op_array->doc_comment = pthreads_copy_string(op_array->doc_comment);
@@ -652,6 +643,15 @@ static inline zend_function* pthreads_copy_internal_function(const zend_function
 	return copy;
 } /* }}} */
 
+static inline void pthreads_add_function_ref(zend_function* function) {
+	if (function) {
+		if (function->type == ZEND_USER_FUNCTION && function->op_array.refcount) {
+			(*function->op_array.refcount)++;
+		}
+		zend_string_addref(function->op_array.function_name);
+	}
+}
+
 /* {{{ */
 zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function) {
 	zend_function *copy;
@@ -663,17 +663,14 @@ zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_
 
 	if (!(function->op_array.fn_flags & ZEND_ACC_CLOSURE)) {
 		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
+	} else {
+		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
+		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes);
+	}
 
-		if (copy) {
-			if (copy->type == ZEND_USER_FUNCTION && copy->op_array.refcount) {
-				(*copy->op_array.refcount)++;
-			}
-			//TODO: I think we're actually supposed to dup the entire structure (see zend_inheritance.c zend_duplicate_function)
-			//the only time functions usually get reused is for inheritance and we're not generally supposed to reuse the actual
-			//structure for that, just its members ...
-			zend_string_addref(copy->op_array.function_name);
-			return copy;
-		}
+	if (copy) {
+		pthreads_add_function_ref(copy);
+		return copy;
 	}
 
 	if (function->type == ZEND_USER_FUNCTION) {
@@ -682,11 +679,19 @@ zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_
 		copy = pthreads_copy_internal_function(function);
 	}
 
-	if (function->op_array.fn_flags & ZEND_ACC_CLOSURE) { //don't cache closures
-		return copy;
+	if (function->op_array.fn_flags & ZEND_ACC_CLOSURE) {
+		//closure objects copy their base zend_function, but don't copy the opcodes
+		//this means we can use the opcodes to identify the base op_array a closure should use for zend_create_closure()
+		//instead of creating a bunch of useless copies
+		zend_hash_index_add_ptr(&PTHREADS_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes, copy);
+
+		//this may be the only place the definition is referenced from - make sure it doesn't get destroyed
+		pthreads_add_function_ref(copy);
+	} else {
+		zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function, copy);
 	}
 
-	return zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong) function, copy);
+	return copy;
 } /* }}} */
 
 /* {{{ */
@@ -694,9 +699,8 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 	char* name;
 	size_t name_len;
 	zend_string* zname;
-	zend_function* closure_func = pthreads_copy_function(owner, &closure_obj->func);
+	zend_function* func_def = NULL;
 	zval this_zv;
-	zend_result result = FAILURE;
 
 	if (IS_PTHREADS_OBJECT(&closure_obj->this_ptr)) {
 		if (!pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), NULL, &this_zv)) {
@@ -711,29 +715,94 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		ZVAL_UNDEF(&this_zv);
 	}
 
-	//strings must always be hard-copied here
-	PTHREADS_ZG(hard_copy_interned_strings) = 1;
-	zend_create_closure(
-		pzval,
-		closure_func,
-		pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
-		pthreads_prepare_single_class(owner, closure_obj->called_scope),
-		&this_zv
-	);
-	PTHREADS_ZG(hard_copy_interned_strings) = 0;
+	if (closure_obj->func.common.fn_flags & ZEND_ACC_FAKE_CLOSURE) {
+		//fake closures behave as a pointer to another function, and share the original function's static variables
+		//they may also point to other, real closures, but we can't do much about that case.
+		zend_class_entry* origin_class = NULL;
+
+		if (closure_obj->called_scope != NULL) {
+			origin_class = closure_obj->called_scope;
+		} else if (closure_obj->func.common.scope != NULL) {
+			origin_class = closure_obj->func.common.scope;
+		}
+
+		if (origin_class != NULL) {
+			zend_class_entry* local_class = pthreads_prepare_single_class(owner, origin_class);
+			func_def = (zend_function*)zend_hash_find_ptr(&local_class->function_table, closure_obj->func.common.function_name);
+
+			if (func_def == NULL) {
+				//this could happen if a different version of the class was autoloaded onto this thread
+				if (!silent) {
+					zend_throw_exception_ex(
+						pthreads_ce_ThreadedConnectionException,
+						0,
+						"First-class callable references an unknown class method %s::%s()",
+						ZSTR_VAL(local_class->name),
+						ZSTR_VAL(closure_obj->func.common.function_name)
+					);
+				}
+
+				return FAILURE;
+			}
+		} else {
+			func_def = (zend_function*)zend_hash_find_ptr(EG(function_table), closure_obj->func.common.function_name);
+
+			if (func_def == NULL) {
+				//the referenced function isn't available in the local EG(function_table)
+				//we can't add this closure to EG(function_table) because it might have fake static variables (uses) and we
+				//can't tell them apart from real static variables, so we don't know which to remove
+				if (!silent) {
+					zend_throw_exception_ex(
+						pthreads_ce_ThreadedConnectionException,
+						0,
+						"First-class callable references an unknown function %s()",
+						ZSTR_VAL(closure_obj->func.common.function_name)
+					);
+				}
+				return FAILURE;
+			}
+		}
+
+		//strings must always be hard-copied here
+		PTHREADS_ZG(hard_copy_interned_strings) = 1;
+		zend_create_fake_closure(
+			pzval,
+			func_def,
+			pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
+			pthreads_prepare_single_class(owner, closure_obj->called_scope),
+			&this_zv
+		);
+		PTHREADS_ZG(hard_copy_interned_strings) = 0;
+
+	} else {
+		//non-fake closures are a copy of their original anonymous definition, with separate static variables
+		//copy these as normal
+		//it would be nice to avoid double-copying this (since zend_create_closure() will also copy it) but that's
+		//a problem for another time.
+		func_def = pthreads_copy_function(owner, &closure_obj->func);
+
+		//strings must always be hard-copied here
+		PTHREADS_ZG(hard_copy_interned_strings) = 1;
+		zend_create_closure(
+			pzval,
+			func_def,
+			pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
+			pthreads_prepare_single_class(owner, closure_obj->called_scope),
+			&this_zv
+		);
+		if (closure_obj->func.type == ZEND_USER_FUNCTION && closure_obj->func.op_array.static_variables != NULL) {
+			//if this is a real closure, we need to update the static variables from the original closure object
+			//this should not modify the original closure
+			zend_closure* new_closure = (zend_closure*)Z_OBJ_P(pzval);
+			new_closure->func.op_array.static_variables = pthreads_copy_statics(owner, closure_obj->func.op_array.static_variables);
+		}
+		PTHREADS_ZG(hard_copy_interned_strings) = 0;
+
+		//pthreads_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
+		destroy_zend_function(func_def);
+	}
+
 	zval_ptr_dtor(&this_zv);
 
-	name_len = spprintf(&name, 0, "Closure@%p", zend_get_closure_method_def(Z_OBJ_P(pzval)));
-	zname = zend_string_init(name, name_len, 0);
-
-	if (!zend_hash_update_ptr(EG(function_table), zname, closure_func)) {
-		zval_dtor(pzval);
-		result = FAILURE;
-	} else {
-		result = SUCCESS;
-	}
-	efree(name);
-	zend_string_release(zname);
-
-	return result;
+	return SUCCESS;
 } /* }}} */

@@ -251,6 +251,7 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads)
 		PTHREADS_ZG(resources) = NULL;
 	}
 	zend_hash_destroy(&PTHREADS_ZG(resolve));
+	zend_hash_destroy(&PTHREADS_ZG(closure_base_op_arrays));
 
 	return SUCCESS;
 }
@@ -260,6 +261,7 @@ PHP_RINIT_FUNCTION(pthreads) {
 
 	zend_hash_init(&PTHREADS_ZG(resolve), 15, NULL, NULL, 0);
 	zend_hash_init(&PTHREADS_ZG(filenames), 15, NULL, NULL, 0);
+	zend_hash_init(&PTHREADS_ZG(closure_base_op_arrays), 15, NULL, ZEND_FUNCTION_DTOR, 0);
 
 	PTHREADS_ZG(hard_copy_interned_strings) = 0;
 	PTHREADS_ZG(options) = PTHREADS_INHERIT_ALL;
