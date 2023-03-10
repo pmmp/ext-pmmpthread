@@ -653,10 +653,12 @@ static inline void pthreads_add_function_ref(zend_function* function) {
 		}
 		zend_string_addref(function->op_array.function_name);
 
+#if PHP_VERSION_ID < 80100
 		if (function->op_array.static_variables != NULL
 			&& !(GC_FLAGS(function->op_array.static_variables) & IS_ARRAY_IMMUTABLE)) {
 			GC_ADDREF(function->op_array.static_variables);
 		}
+#endif
 	}
 }
 
