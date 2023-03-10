@@ -18,6 +18,7 @@
 
 #include <src/pthreads.h>
 #include <src/object.h>
+#include <src/routine.h>
 
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success

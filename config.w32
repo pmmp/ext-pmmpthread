@@ -19,7 +19,7 @@ if (PHP_PTHREADS != "no") {
 		ADD_EXTENSION_DEP("pthreads", "sockets", true);
 		ADD_SOURCES(
 			PTHREADS_EXT_DIR + "/src",
-			"copy.c monitor.c worker.c globals.c prepare.c store.c resources.c handlers.c object.c queue.c ext_sockets_hacks.c", 
+			"copy.c monitor.c worker.c globals.c prepare.c store.c resources.c handlers.c object.c routine.c queue.c ext_sockets_hacks.c",
 			PTHREADS_EXT_NAME
 		);
 		ADD_SOURCES(
