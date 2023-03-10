@@ -1,6 +1,7 @@
 #include <src/globals.h>
 #include <src/monitor.h>
 #include <src/prepare.h>
+#include <src/object.h>
 #include <src/pthreads.h>
 #include <src/store.h>
 #include <src/thread.h>
