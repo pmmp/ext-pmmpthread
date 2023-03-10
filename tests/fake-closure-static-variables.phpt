@@ -5,6 +5,8 @@ Calling a fake closure behaves exactly the same as if the target function was di
 This means that fake closures don't have their own unique static variables - they use the static variables of the original function.
 
 This test verifies that this behaviour is preserved when first-class callables are copied to another thread.
+--SKIPIF--
+<?php if(PHP_VERSION_ID < 80100) die("skip broken on 8.0 due to broken behaviour in php-src (https://wiki.php.net/rfc/static_variable_inheritance)"); ?>
 --FILE--
 <?php
 
