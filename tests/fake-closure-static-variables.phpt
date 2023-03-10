@@ -18,24 +18,37 @@ class A{
 	}
 }
 
+function b() : void{
+	static $b = 0;
+	$b++;
+	var_dump("b = $b");
+}
+
 function test(\Closure $fcc) : void{
 	$fcc();
 	A::test();
 }
 
+function test2(\Closure $fcc) : void{
+	$fcc();
+	b();
+}
+
 
 $fcc = \Closure::fromCallable([A::class, 'test']);
 test($fcc);
+$fcc2 = \Closure::fromCallable('b');
+test2($fcc2);
 echo "end\n";
-$t = new class($fcc) extends \Thread{
-	private \Closure $fcc;
-
-	public function __construct(\Closure $fcc){
-		$this->fcc = $fcc;
-	}
+$t = new class($fcc, $fcc2) extends \Thread{
+	public function __construct(
+		private \Closure $fcc,
+		private \Closure $fcc2
+	){}
 
 	public function run() : void{
 		test($this->fcc);
+		test2($this->fcc2);
 	}
 };
 $t->start();
@@ -45,6 +58,10 @@ $t->join();
 --EXPECT--
 string(5) "a = 1"
 string(5) "a = 2"
+string(5) "b = 1"
+string(5) "b = 2"
 end
 string(5) "a = 1"
 string(5) "a = 2"
+string(5) "b = 1"
+string(5) "b = 2"
