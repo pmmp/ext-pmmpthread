@@ -251,7 +251,6 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads)
 		PTHREADS_ZG(resources) = NULL;
 	}
 	zend_hash_destroy(&PTHREADS_ZG(resolve));
-	zend_hash_destroy(&PTHREADS_ZG(closure_base_op_arrays));
 
 	return SUCCESS;
 }
@@ -281,6 +280,7 @@ PHP_RINIT_FUNCTION(pthreads) {
 
 PHP_RSHUTDOWN_FUNCTION(pthreads) {
 	zend_hash_destroy(&PTHREADS_ZG(filenames));
+	zend_hash_destroy(&PTHREADS_ZG(closure_base_op_arrays));
 
 	return SUCCESS;
 }

@@ -652,6 +652,11 @@ static inline void pthreads_add_function_ref(zend_function* function) {
 			(*function->op_array.refcount)++;
 		}
 		zend_string_addref(function->op_array.function_name);
+
+		if (function->op_array.static_variables != NULL
+			&& !(GC_FLAGS(function->op_array.static_variables) & IS_ARRAY_IMMUTABLE)) {
+			GC_ADDREF(function->op_array.static_variables);
+		}
 	}
 }
 
@@ -811,7 +816,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			ZEND_ASSERT(new_closure->func.type == ZEND_USER_FUNCTION);
 			if (new_closure->func.op_array.static_variables != NULL) {
 				//the closure may have static_variables allocated from its original creation by zend_compile.c
-				zend_array_destroy(new_closure->func.op_array.static_variables);
+				zend_array_release(new_closure->func.op_array.static_variables);
 			}
 			new_closure->func.op_array.static_variables = static_variables;
 		}
