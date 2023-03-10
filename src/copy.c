@@ -533,7 +533,7 @@ static zend_op_array** pthreads_copy_dynamic_func_defs(const pthreads_ident_t* o
 #endif
 
 /* {{{ */
-static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t* owner, const zend_function *function) {
+static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t* owner, const zend_function *function, zend_bool copy_static_variables) {
 	zend_function  *copy;
 	zend_op_array  *op_array;
 	zend_string   **variables, *filename_copy;
@@ -624,8 +624,11 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 #endif
 	}
 
-	//closures realloc static vars even if they were already persisted, so they always have to be copied (I guess for use()?)
-	if (op_array->static_variables) op_array->static_variables = pthreads_copy_statics(owner, op_array->static_variables);
+	if (copy_static_variables && op_array->static_variables) {
+		op_array->static_variables = pthreads_copy_statics(owner, op_array->static_variables);
+	} else {
+		op_array->static_variables = NULL;
+	}
 #if PHP_VERSION_ID >= 80200
 	ZEND_MAP_PTR_INIT(op_array->static_variables_ptr, NULL);
 #else
@@ -653,7 +656,7 @@ static inline void pthreads_add_function_ref(zend_function* function) {
 }
 
 /* {{{ */
-zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function) {
+static zend_function* pthreads_copy_function_ex(const pthreads_ident_t* owner, const zend_function* function, zend_bool copy_static_variables) {
 	zend_function *copy;
 
 	if (function->common.fn_flags & ZEND_ACC_IMMUTABLE) {
@@ -674,7 +677,7 @@ zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_
 	}
 
 	if (function->type == ZEND_USER_FUNCTION) {
-		copy = pthreads_copy_user_function(owner, function);
+		copy = pthreads_copy_user_function(owner, function, copy_static_variables);
 	} else {
 		copy = pthreads_copy_internal_function(function);
 	}
@@ -692,6 +695,11 @@ zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_
 	}
 
 	return copy;
+} /* }}} */
+
+/* {{{ */
+zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function* function) {
+	return pthreads_copy_function_ex(owner, function, 1);
 } /* }}} */
 
 /* {{{ */
@@ -775,11 +783,19 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
 	} else {
-		//non-fake closures are a copy of their original anonymous definition, with separate static variables
-		//copy these as normal
-		//it would be nice to avoid double-copying this (since zend_create_closure() will also copy it) but that's
-		//a problem for another time.
-		func_def = pthreads_copy_function(owner, &closure_obj->func);
+		HashTable* static_variables = NULL;
+		if (closure_obj->func.type == ZEND_USER_FUNCTION && closure_obj->func.op_array.static_variables != NULL) {
+			//if this is a real closure, we need to update the static_variables from the original closure object
+			//so that the copied closure has the correct use()d variables
+			//this should not modify the original closure
+			//these have to be copied before the closure is created, to maintain the original behaviour
+			static_variables = pthreads_copy_statics(owner, closure_obj->func.op_array.static_variables);
+		}
+
+		//we don't know where the definition for this closure is, so create a definition from this copy of it
+		//assume there are no real static variables and don't copy them from this definition (thread-safe
+		//closures are not allowed to have static variables anyway)
+		func_def = pthreads_copy_function_ex(owner, &closure_obj->func, 0);
 
 		//strings must always be hard-copied here
 		PTHREADS_ZG(hard_copy_interned_strings) = 1;
@@ -790,12 +806,13 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			pthreads_prepare_single_class(owner, closure_obj->called_scope),
 			&this_zv
 		);
-		if (closure_obj->func.type == ZEND_USER_FUNCTION && closure_obj->func.op_array.static_variables != NULL) {
-			//if this is a real closure, we need to update the static variables from the original closure object
-			//this should not modify the original closure
+		if (static_variables != NULL) {
 			zend_closure* new_closure = (zend_closure*)Z_OBJ_P(pzval);
-			new_closure->func.op_array.static_variables = pthreads_copy_statics(owner, closure_obj->func.op_array.static_variables);
+			ZEND_ASSERT(new_closure->func.type == ZEND_USER_FUNCTION);
+			ZEND_ASSERT(new_closure->func.op_array.static_variables == NULL); //we just created this from a clean definition, so it shouldn't have any static variables
+			new_closure->func.op_array.static_variables = static_variables;
 		}
+
 		PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
 		//pthreads_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
