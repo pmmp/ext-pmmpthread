@@ -21,5 +21,5 @@ foreach([
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
-Cannot assign non-thread-safe value of type object to ThreadedArray
+Cannot assign non-thread-safe value of type stdClass to ThreadedArray
 

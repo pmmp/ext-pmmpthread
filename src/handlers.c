@@ -113,8 +113,9 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE){
 		zend_throw_error(
 			NULL,
-			"Cannot assign non-thread-safe value of type %s to ThreadedArray",
-			zend_get_type_by_const(Z_TYPE_P(value))
+			"Cannot assign non-thread-safe value of type %s to %s",
+			zend_zval_type_name(value),
+			ZSTR_VAL(object->ce->name)
 		);
 	}
 }
@@ -155,8 +156,8 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
 				zend_throw_error(
 					NULL,
-					"Cannot assign non-thread-safe value of type %s to Threaded class property %s::$%s",
-					zend_get_type_by_const(Z_TYPE_P(value)),
+					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
+					zend_zval_type_name(value),
 					ZSTR_VAL(object->ce->name),
 					ZSTR_VAL(member)
 				);

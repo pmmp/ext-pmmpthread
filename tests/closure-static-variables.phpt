@@ -19,4 +19,4 @@ try{
 }
 ?>
 --EXPECT--
-Cannot assign non-thread-safe value of type object to ThreadedArray
+Cannot assign non-thread-safe value of type Closure to ThreadedArray

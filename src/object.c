@@ -277,8 +277,8 @@ static inline void pthreads_base_init(pthreads_zend_object_t* base) {
 				if (result == FAILURE) {
 					zend_throw_error(
 						NULL,
-						"Cannot use non-thread-safe default of type %s for Threaded class property %s::$%s",
-						zend_get_type_by_const(Z_TYPE_P(value)),
+						"Cannot use non-thread-safe default of type %s for thread-safe class property %s::$%s",
+						zend_zval_type_name(value),
 						ZSTR_VAL(ce->name),
 						ZSTR_VAL(Z_STR(key))
 					);

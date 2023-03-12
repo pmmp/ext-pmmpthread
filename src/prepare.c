@@ -77,7 +77,7 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 						"pthreads encountered a non-copyable enum case %s::%s with backing value of type %s",
 						ZSTR_VAL(prepared->name),
 						ZSTR_VAL(name),
-						zend_get_type_by_const(Z_TYPE_P(enum_value))
+						zend_zval_type_name(enum_value)
 					);
 				}
 				ZEND_ASSERT(prepared->backed_enum_table);
@@ -118,7 +118,7 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 					"pthreads encountered a non-copyable class constant %s::%s with value of type %s",
 					ZSTR_VAL(prepared->name),
 					ZSTR_VAL(name),
-					zend_get_type_by_const(Z_TYPE(zc->value))
+					zend_zval_type_name(&zc->value)
 				);
 			}
 			rc->ce = pthreads_prepared_entry(source, zc->ce);
@@ -894,7 +894,7 @@ static inline void pthreads_prepare_constants(const pthreads_ident_t* source) {
 							E_CORE_ERROR,
 							"pthreads encountered an unknown non-copyable constant %s of type %s",
 							ZSTR_VAL(zconstant->name),
-							zend_get_type_by_const(Z_TYPE(zconstant->value))
+							zend_zval_type_name(&zconstant->value)
 						);
 					}
 					ZEND_CONSTANT_SET_FLAGS(&constant, ZEND_CONSTANT_FLAGS(zconstant), ZEND_CONSTANT_MODULE_NUMBER(zconstant));

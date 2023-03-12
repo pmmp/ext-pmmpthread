@@ -511,7 +511,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	}
 
 	if (pthreads_store_save_zval(&threaded->owner, &zstorage, write) != SUCCESS) {
-		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_get_type_by_const(Z_TYPE_P(write)));
+		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_zval_type_name(write));
 		return FAILURE;
 	}
 

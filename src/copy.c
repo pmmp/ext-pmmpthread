@@ -254,7 +254,7 @@ static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **n
 				attr->lineno,
 				"pthreads encountered a non-copyable attribute argument %s of type %s",
 				ZSTR_VAL(attr->name),
-				zend_get_type_by_const(Z_TYPE(attr->args[i].value))
+				zend_zval_type_name(&attr->args[i].value)
 			);
 		}
 		copy->args[i].name = attr->args[i].name ? pthreads_copy_string(attr->args[i].name) : NULL;
