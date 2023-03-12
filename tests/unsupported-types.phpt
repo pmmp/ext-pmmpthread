@@ -33,5 +33,5 @@ Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type stdClass to ThreadedArray
-Indirect modification of non-Threaded members of ThreadedBase@anonymous is not supported
+Indirect modification of non-ThreadedBase members of ThreadedBase@anonymous is not supported
 
