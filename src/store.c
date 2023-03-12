@@ -825,6 +825,10 @@ static zend_bool pthreads_closure_thread_safe(zend_closure* closure) {
 	) {
 		//closures must be unbound or static when assigned, because they won't be bound when restored onto another thread
 		//however, this is OK for thread-safe objects which we can copy
+		zend_throw_error(
+			zend_ce_error,
+			"Closures with non-thread-safe $this cannot be made thread-safe"
+		);
 		return 0;
 	}
 
@@ -846,7 +850,10 @@ static zend_bool pthreads_closure_thread_safe(zend_closure* closure) {
 			zend_op* last = func->op_array.opcodes + func->op_array.last;
 			for (; opline < last; opline++) {
 				if (opline->opcode == ZEND_BIND_STATIC && opline->extended_value & ZEND_BIND_REF) {
-					//TODO: we need better errors for this
+					zend_throw_error(
+						zend_ce_error,
+						"Closures with local static variables or use-by-reference cannot be made thread-safe"
+					);
 					return 0;
 				}
 			}

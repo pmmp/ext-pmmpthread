@@ -110,7 +110,7 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 
 /* {{{ */
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
-	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE){
+	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
 		zend_throw_error(
 			NULL,
 			"Cannot assign non-thread-safe value of type %s to %s",
@@ -153,7 +153,7 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 				}
 			}
 
-			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE) {
+			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
 				zend_throw_error(
 					NULL,
 					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",

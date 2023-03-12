@@ -27,4 +27,4 @@ try{
 
 ?>
 --EXPECT--
-Cannot assign non-thread-safe value of type Closure to ThreadedArray
+Closures with non-thread-safe $this cannot be made thread-safe

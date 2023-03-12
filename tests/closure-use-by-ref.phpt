@@ -19,4 +19,4 @@ try{
 }
 ?>
 --EXPECT--
-Cannot assign non-thread-safe value of type Closure to ThreadedArray
+Closures with local static variables or use-by-reference cannot be made thread-safe
