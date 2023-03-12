@@ -511,7 +511,6 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	}
 
 	if (pthreads_store_save_zval(&threaded->owner, &zstorage, write) != SUCCESS) {
-		zend_throw_error(zend_ce_error, "Unsupported data type %s", zend_zval_type_name(write));
 		return FAILURE;
 	}
 
@@ -1270,24 +1269,46 @@ int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwri
 					if (Z_TYPE(key) == IS_STRING)
 						zend_string_delref(Z_STR(key));
 
+					while (Z_TYPE_P(pzval) == IS_INDIRECT) {
+						pzval = Z_INDIRECT_P(pzval);
+					}
 					switch (Z_TYPE(key)) {
 						case IS_LONG:
 							if (!overwrite && zend_hash_index_exists(&ts_obj->props.hash, Z_LVAL(key))) {
 								goto next;
 							}
-							pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded);
+							if (pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
+								zend_throw_error(
+									zend_ce_error,
+									"Cannot merge non-thread-safe value of type %s (input key %zd) into %s",
+									zend_zval_type_name(pzval),
+									Z_LVAL(key),
+									ZSTR_VAL(destination->ce->name)
+								);
+							}
 						break;
 
 						case IS_STRING:
 							if (!overwrite && zend_hash_exists(&ts_obj->props.hash, Z_STR(key))) {
 								goto next;
 							}
-							pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded);
+							if (pthreads_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
+								zend_throw_error(
+									zend_ce_error,
+									"Cannot merge non-thread-safe value of type %s (input key \"%s\") into %s",
+									zend_zval_type_name(pzval),
+									Z_STRVAL(key),
+									ZSTR_VAL(destination->ce->name)
+								);
+							}
 						break;
 					}
 
 next:
 					index++;
+					if (EG(exception)) {
+						break;
+					}
 				}
 
 				pthreads_monitor_unlock(&ts_obj->monitor);
@@ -1295,7 +1316,7 @@ next:
 		} break;
 	}
 
-	return SUCCESS;
+	return EG(exception) ? FAILURE : SUCCESS;
 } /* }}} */
 
 
