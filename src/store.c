@@ -445,7 +445,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 			pthreads_storage *serialized = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
 			/* strictly only reads are supported */
 			if ((serialized == NULL || serialized->type != STORE_TYPE_PTHREADS) && type != BP_VAR_R && type != BP_VAR_IS){
-				zend_throw_error(zend_ce_error, "Indirect modification of non-Threaded members of %s is not supported", ZSTR_VAL(object->ce->name));
+				zend_throw_error(zend_ce_error, "Indirect modification of non-thread-safe members of %s is not supported", ZSTR_VAL(object->ce->name));
 				result = FAILURE;
 			} else {
 				pthreads_store_restore_zval(read, zstorage);

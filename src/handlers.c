@@ -95,7 +95,7 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 			pthreads_store_read(object, &zmember, type, rv);
 
 			if (Z_ISUNDEF_P(rv)) {
-				if (type != BP_VAR_IS) {
+				if (type != BP_VAR_IS && !EG(exception)) {
 					zend_throw_error(NULL, "Typed property %s::$%s must not be accessed before initialization",
 						ZSTR_VAL(info->ce->name),
 						ZSTR_VAL(member));

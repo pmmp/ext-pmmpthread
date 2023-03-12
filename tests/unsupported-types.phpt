@@ -16,10 +16,22 @@ foreach([
 		echo $e->getMessage() . PHP_EOL;
 	}
 }
+
+$tsObj = new class extends \ThreadedBase{
+	public $ref = 2;
+};
+$var = 1;
+try{
+	$tsObj->ref = &$var;
+	echo "references should not work" . PHP_EOL;
+}catch(\Error $e){
+	echo $e->getMessage() . PHP_EOL;
+}
 ?>
 --EXPECT--
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type stdClass to ThreadedArray
+Indirect modification of non-Threaded members of ThreadedBase@anonymous is not supported
 
