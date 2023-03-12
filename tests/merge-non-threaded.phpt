@@ -20,7 +20,13 @@ $safe->merge($array);
 $safe["foo"] = "bar";
 $safe->merge($stdClass, false);
 
+$anonymous = new class{
+	public int $anonProp = 1;
+};
+$safe->merge($anonymous);
+
 var_dump($safe);
+
 ?>
 --EXPECTF--
 object(ThreadedArray)#%d (%d) {
@@ -50,4 +56,6 @@ object(ThreadedArray)#%d (%d) {
   string(3) "bar"
   ["baz"]=>
   string(3) "baz"
+  ["anonProp"]=>
+  int(1)
 }
