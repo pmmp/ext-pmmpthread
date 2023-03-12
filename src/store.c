@@ -860,11 +860,6 @@ static zend_bool pthreads_closure_thread_safe(zend_closure* closure) {
 static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *unstore){
 	pthreads_storage *result = NULL;
 
-	if (Z_TYPE_P(unstore) == IS_INDIRECT)
-		return pthreads_store_create(source, Z_INDIRECT_P(unstore));
-	if (Z_TYPE_P(unstore) == IS_REFERENCE)
-		return pthreads_store_create(source, &Z_REF_P(unstore)->val);
-
 #define MAKE_STORAGE(enum_type, struct_type) \
 	struct_type *storage = malloc(sizeof(struct_type)); \
 	if (storage == NULL) { \
