@@ -92,7 +92,14 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 		} else {
 			//defined property, use mangled name
 			ZVAL_STR(&zmember, info->name);
+
+#if PHP_VERSION_ID >= 80100
+			if ((info->flags & ZEND_ACC_READONLY) == 0 || pthreads_store_read_local_property(object, member, type, rv) == FAILURE) {
+				pthreads_store_read(object, &zmember, type, rv);
+			}
+#else
 			pthreads_store_read(object, &zmember, type, rv);
+#endif
 
 			if (Z_ISUNDEF_P(rv)) {
 				if (type != BP_VAR_IS && !EG(exception)) {
@@ -139,28 +146,57 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 	} else {
 		bool ok = true;
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
-				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
+			bool overwrite = true;
 
-				zend_execute_data* execute_data = EG(current_execute_data);
-				bool strict = execute_data
-					&& execute_data->func
-					&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
+			if (info != NULL) {
+				if ((info->flags & ZEND_ACC_STATIC) == 0) {
+					ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
 
-				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
-					ok = false;
+					zend_execute_data* execute_data = EG(current_execute_data);
+					bool strict = execute_data
+						&& execute_data->func
+						&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
+
+					if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
+						ok = false;
+					}
 				}
+#if PHP_VERSION_ID >= 80100
+				overwrite = (info->flags & ZEND_ACC_READONLY) == 0;
+#endif
 			}
 
-			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
-				zend_throw_error(
-					NULL,
-					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
-					zend_zval_type_name(value),
-					ZSTR_VAL(object->ce->name),
-					ZSTR_VAL(member)
-				);
+			if (ok) {
+				pthreads_store_write_result result = pthreads_store_write_ex(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY, overwrite);
+				if (result != WRITE_SUCCESS && !EG(exception)) {
+					switch (result) {
+						case WRITE_FAIL_NOT_THREAD_SAFE: {
+							zend_throw_error(
+								NULL,
+								"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
+								zend_zval_type_name(value),
+								ZSTR_VAL(object->ce->name),
+								ZSTR_VAL(member)
+							);
+							break;
+						}
+						case WRITE_FAIL_WOULD_OVERWRITE: {
+							zend_throw_error(
+								NULL,
+								"Cannot modify readonly property %s::$%s",
+								ZSTR_VAL(object->ce->name),
+								ZSTR_VAL(member)
+							);
+							break;
+						}
+						default: {
+							ZEND_ASSERT(0);
+							break;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -231,10 +267,28 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
-				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
+			zend_bool ok = true;
+			if (info != NULL) {
+				if ((info->flags & ZEND_ACC_STATIC) == 0) {
+					ZVAL_STR(&zmember, info->name); //defined property, use mangled name
+				}
+
+#if PHP_VERSION_ID >= 80100
+				if ((info->flags & ZEND_ACC_READONLY) != 0) {
+					zend_throw_error(
+						NULL,
+						"Cannot unset readonly property %s::$%s",
+						ZSTR_VAL(object->ce->name),
+						ZSTR_VAL(member)
+					);
+					ok = false;
+				}
+#endif
 			}
-			pthreads_store_delete(object, &zmember);
+
+			if (ok) {
+				pthreads_store_delete(object, &zmember);
+			}
 		}
 	}
 }

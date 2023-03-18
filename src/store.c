@@ -407,6 +407,25 @@ static inline zend_bool pthreads_store_update_shared_property(pthreads_object_t*
 }
 
 /* {{{ */
+int pthreads_store_read_local_property(zend_object* object, zend_string* key, int type, zval* read) {
+	zval* property;
+	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
+
+	if (threaded->std.properties) {
+		property = zend_hash_find(threaded->std.properties, key);
+
+		if (property && pthreads_store_valid_local_cache_item(property)) {
+			pthreads_monitor_unlock(&threaded->ts_obj->monitor);
+			ZVAL_DEINDIRECT(property);
+			ZVAL_COPY(read, property);
+			return SUCCESS;
+		}
+	}
+
+	return FAILURE;
+} /* }}} */
+
+/* {{{ */
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 	int result = FAILURE;
 	zval member, *property = NULL;
@@ -492,8 +511,8 @@ static zend_string* pthreads_store_restore_string(zend_string* string) {
 }
 
 /* {{{ */
-int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded) {
-	int result = FAILURE;
+pthreads_store_write_result pthreads_store_write_ex(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded, zend_bool overwrite) {
+	pthreads_store_write_result result = WRITE_FAIL_UNKNOWN;
 	zval vol, member, zstorage;
 	pthreads_zend_object_t *threaded =
 		PTHREADS_FETCH_FROM(object);
@@ -511,7 +530,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	}
 
 	if (pthreads_store_save_zval(&threaded->owner, &zstorage, write) != SUCCESS) {
-		return FAILURE;
+		return WRITE_FAIL_NOT_THREAD_SAFE;
 	}
 
 	if (pthreads_monitor_lock(&ts_obj->monitor)) {
@@ -523,10 +542,26 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 			coerced = pthreads_store_coerce(key, &member);
 		}
 
-		zend_bool was_pthreads_object = pthreads_store_member_is_cacheable(object, &member);
-		result = pthreads_store_update_shared_property(ts_obj, &member, &zstorage);
-		if (result == SUCCESS && was_pthreads_object) {
-			_pthreads_store_bump_modcount_nolock(threaded);
+		zend_bool ok = true;
+		if (!overwrite) {
+			if (Z_TYPE(member) == IS_LONG) {
+				ok = !zend_hash_index_exists(&ts_obj->props.hash, Z_LVAL(member));
+			} else {
+				ok = !zend_hash_exists(&ts_obj->props.hash, Z_STR(member));
+			}
+			if (!ok) {
+				result = WRITE_FAIL_WOULD_OVERWRITE;
+			}
+		}
+
+		if (ok) {
+			zend_bool was_pthreads_object = pthreads_store_member_is_cacheable(object, &member);
+			if (pthreads_store_update_shared_property(ts_obj, &member, &zstorage) == SUCCESS) {
+				result = WRITE_SUCCESS;
+				if (was_pthreads_object) {
+					_pthreads_store_bump_modcount_nolock(threaded);
+				}
+			}
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached Threaded references that are dead, we have to take the opportunity
@@ -535,7 +570,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 		pthreads_monitor_unlock(&ts_obj->monitor);
 	}
 
-	if (result != SUCCESS) {
+	if (result != WRITE_SUCCESS) {
 		pthreads_store_storage_dtor(&zstorage);
 	} else {
 		pthreads_store_update_local_property(&threaded->std, &member, write);
@@ -546,6 +581,10 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 
 	return result;
 } /* }}} */
+
+int pthreads_store_write(zend_object* object, zval* key, zval* write, zend_bool coerce_array_to_threaded) {
+	return pthreads_store_write_ex(object, key, write, coerce_array_to_threaded, true) == WRITE_SUCCESS ? SUCCESS : FAILURE;
+}
 
 /* {{{ */
 int pthreads_store_count(zend_object *object, zend_long *count) {
