@@ -113,6 +113,8 @@ extern zend_object_handlers *zend_handlers;
 
 extern struct _pthreads_globals pthreads_globals;
 
+typedef struct _pthreads_zend_object_t pthreads_zend_object_t;
+
 ZEND_EXTERN_MODULE_GLOBALS(pthreads)
 
 ZEND_BEGIN_MODULE_GLOBALS(pthreads)
@@ -125,6 +127,7 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	HashTable closure_base_op_arrays;
 	HashTable *resources;
 	int hard_copy_interned_strings;
+	pthreads_zend_object_t* connecting_object;
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 	zend_object_handlers *original_socket_object_handlers;
 	zend_object_handlers custom_socket_object_handlers;

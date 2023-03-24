@@ -131,8 +131,10 @@ zend_object* pthreads_worker_ctor(zend_class_entry *entry) {
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
 	pthreads_base_ctor(worker, entry, PTHREADS_SCOPE_WORKER);
-
-	worker->worker_data = pthreads_worker_data_alloc(&worker->ts_obj->monitor);
+	if (worker->original_zobj == NULL) {
+		//this may be a connection and not the original object
+		worker->worker_data = pthreads_worker_data_alloc(&worker->ts_obj->monitor);
+	}
 
 	worker->std.handlers = &pthreads_threaded_base_handlers;
 
@@ -171,16 +173,6 @@ void pthreads_current_thread(zval *return_value) {
 /* {{{ */
 static inline int _pthreads_connect_nolock(pthreads_zend_object_t* source, pthreads_zend_object_t* destination) {
 	if (source && destination) {
-		//TODO: avoid these things being allocated to begin with...
-		if (destination->worker_data) {
-			pthreads_worker_data_free(destination->worker_data);
-			destination->worker_data = NULL;
-		}
-
-		if (destination->ts_obj && --destination->ts_obj->refcount == 0) {
-			pthreads_ts_object_free(destination);
-		}
-
 		destination->ts_obj = source->ts_obj;
 		++destination->ts_obj->refcount;
 		if (source->original_zobj != NULL) {
@@ -236,9 +228,10 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 					ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
 					PTHREADS_ZG(hard_copy_interned_strings) = 0;
 				}
+				PTHREADS_ZG(connecting_object) = pthreads;
 				object_init_ex(object, ce);
+				PTHREADS_ZG(connecting_object) = NULL;
 				connection = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
-				_pthreads_connect_nolock(pthreads, connection);
 				zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)connection->ts_obj, connection);
 			}
 		}
@@ -249,7 +242,7 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_base_init(pthreads_zend_object_t* base) {
+static inline void pthreads_base_write_property_defaults(pthreads_zend_object_t* base) {
 	zend_property_info *info;
 	zval key;
 
@@ -306,7 +299,6 @@ static pthreads_object_t* pthreads_ts_object_ctor(unsigned int scope) {
 
 /* {{{ */
 static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *entry, unsigned int scope) {
-	base->ts_obj = pthreads_ts_object_ctor(scope);
 	base->owner.ls = TSRMLS_CACHE;
 	base->owner.id = pthreads_self();
 	base->original_zobj = NULL;
@@ -314,7 +306,14 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 
 	zend_object_std_init(&base->std, entry);
 	object_properties_init(&base->std, entry);
-	pthreads_base_init(base);
+
+	if (PTHREADS_ZG(connecting_object) != NULL) {
+		pthreads_connect(PTHREADS_ZG(connecting_object), base);
+	} else {
+		base->ts_obj = pthreads_ts_object_ctor(scope);
+		pthreads_base_write_property_defaults(base);
+	}
+
 	base->local_props_modcount = base->ts_obj->props.modcount - 1;
 } /* }}} */
 
