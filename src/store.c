@@ -184,6 +184,9 @@ void pthreads_store_full_sync_local_properties(zend_object *object) {
 			cached = zend_hash_find(threaded->std.properties, name);
 		}
 		if (cached && pthreads_store_valid_local_cache_item(cached)) {
+			if (IS_PTHREADS_OBJECT(cached)) {
+				pthreads_store_full_sync_local_properties(Z_OBJ_P(cached));
+			}
 			continue;
 		}
 		if (pthreads_store_storage_is_cacheable(zstorage)) {
