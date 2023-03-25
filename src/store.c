@@ -150,6 +150,12 @@ static inline zend_bool pthreads_store_storage_is_cacheable(zval* zstorage) {
 	return storage && (storage->type == STORE_TYPE_PTHREADS || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET || storage->type == STORE_TYPE_STRING_PTR);
 } /* }}} */
 
+/* {{{ */
+static inline zend_bool pthreads_store_storage_is_pthreads_obj(zval* zstorage) {
+	pthreads_storage* storage = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
+	return storage != NULL && (storage->type == STORE_TYPE_PTHREADS);
+} /* }}} */
+
 /* {{{ Syncs all the cacheable properties from TS storage into local cache */
 void pthreads_store_full_sync_local_properties(zend_object *object) {
 	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
@@ -184,7 +190,7 @@ void pthreads_store_full_sync_local_properties(zend_object *object) {
 			cached = zend_hash_find(threaded->std.properties, name);
 		}
 		if (cached && pthreads_store_valid_local_cache_item(cached)) {
-			if (IS_PTHREADS_OBJECT(cached)) {
+			if (pthreads_store_storage_is_pthreads_obj(zstorage)) {
 				pthreads_store_full_sync_local_properties(Z_OBJ_P(cached));
 			}
 			continue;
@@ -192,7 +198,7 @@ void pthreads_store_full_sync_local_properties(zend_object *object) {
 		if (pthreads_store_storage_is_cacheable(zstorage)) {
 			pthreads_store_restore_zval(&pzval, zstorage);
 
-			if (IS_PTHREADS_OBJECT(&pzval)) {
+			if (pthreads_store_storage_is_pthreads_obj(zstorage)) {
 				pthreads_store_full_sync_local_properties(Z_OBJ(pzval));
 			}
 
