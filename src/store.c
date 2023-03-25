@@ -202,7 +202,6 @@ void pthreads_store_full_sync_local_properties(zend_object *object) {
 				pthreads_store_full_sync_local_properties(Z_OBJ(pzval));
 			}
 
-			//TODO: we need to recursively sync here if this is a closure or thread-safe object
 			if (!name) {
 				if (!zend_hash_index_update(threaded->std.properties, idx, &pzval)) {
 					zval_ptr_dtor(&pzval);
