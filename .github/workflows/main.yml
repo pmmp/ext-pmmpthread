@@ -56,7 +56,11 @@ jobs:
       matrix:
         php: [8.1.14, 8.2.1]
         valgrind: [0, 1]
-        opcache: [off, on, jit, jit-tracing]
+        opcache:
+          - "off"
+          - "on"
+          - "jit"
+          #- "jit-tracing" #borked until 8.3 due to php-src bugs
 
     needs: build-php
     runs-on: ubuntu-20.04
