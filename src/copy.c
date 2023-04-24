@@ -71,7 +71,7 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 
 	case IS_OBJECT:
 		if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_base_entry)) {
-			pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), dest);
+			pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), dest);
 			result = SUCCESS;
 		}
 		else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
@@ -691,7 +691,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 	zval this_zv;
 
 	if (IS_PTHREADS_OBJECT(&closure_obj->this_ptr)) {
-		if (!pthreads_globals_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), &this_zv)) {
+		if (!pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), &this_zv)) {
 			if (!silent) {
 				zend_throw_exception_ex(
 					pthreads_ce_ThreadedConnectionException, 0,

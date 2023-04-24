@@ -38,10 +38,7 @@ HashTable*   pthreads_base_gc(zend_object *object, zval **table, int *n);
 void pthreads_current_thread(zval *return_value); /* }}} */
 
 /* {{{ */
-int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* destination); /* }}} */
-
-/* {{{ */
-zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zval *object); /* }}} */
+zend_bool pthreads_object_connect(pthreads_zend_object_t* address, zval *object); /* }}} */
 
 /* {{{ */
 zend_object_iterator* pthreads_object_iterator_create(zend_class_entry *ce, zval *object, int by_ref); /* }}} */

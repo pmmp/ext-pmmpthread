@@ -189,7 +189,7 @@ static inline int _pthreads_connect_nolock(pthreads_zend_object_t* source, pthre
 } /* }}} */
 
 /* {{{ */
-int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* destination) {
+static int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* destination) {
 	int result = FAILURE;
 	if(pthreads_globals_lock()){
 		result = _pthreads_connect_nolock(source, destination);
@@ -199,8 +199,7 @@ int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* des
 } /* }}} */
 
 /* {{{ */
-//TODO: rename this
-zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zval *object) {
+zend_bool pthreads_object_connect(pthreads_zend_object_t* address, zval *object) {
 	zend_bool valid = 0;
 	if (!pthreads_globals_lock()) {
 		return valid;
