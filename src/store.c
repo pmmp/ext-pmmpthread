@@ -18,7 +18,6 @@
 
 #include <src/pthreads.h>
 #include <src/object.h>
-#include <src/resources.h>
 #include <src/copy.h>
 #include <src/store.h>
 #include <src/globals.h>
@@ -890,13 +889,6 @@ static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *u
 			storage->string = Z_STR_P(unstore);
 		} break;
 
-		case IS_RESOURCE: {
-			MAKE_STORAGE(STORE_TYPE_RESOURCE, pthreads_resource_storage_t);
-			storage->resource.original = Z_RES_P(unstore);
-			storage->resource.ls = TSRMLS_CACHE;
-			Z_ADDREF_P(unstore);
-		} break;
-
 		case IS_OBJECT:
 #if PHP_VERSION_ID >= 80100
 			if (Z_OBJCE_P(unstore)->ce_flags & ZEND_ACC_ENUM) {
@@ -1021,33 +1013,6 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 				ZVAL_STR(pzval, pthreads_store_restore_string(string->string));
 			}
 		} break;
-		case STORE_TYPE_RESOURCE: {
-			pthreads_resource_storage_t *stored = (pthreads_resource_storage_t*) storage;
-
-			if (stored->resource.ls != TSRMLS_CACHE) {
-				zval *search = NULL;
-				zend_resource *resource, *found = NULL;
-
-				ZEND_HASH_FOREACH_VAL(&EG(regular_list), search) {
-					resource = Z_RES_P(search);
-					if (resource->ptr == stored->resource.original->ptr) {
-						found = resource;
-						break;
-					}
-				} ZEND_HASH_FOREACH_END();
-
-				if (!found) {
-					ZVAL_RES(pzval, stored->resource.original);
-					if (zend_hash_next_index_insert(&EG(regular_list), pzval)) {
-						pthreads_resources_keep(&stored->resource);
-					} else ZVAL_NULL(pzval);
-					Z_ADDREF_P(pzval);
-				} else ZVAL_COPY(pzval, search);
-			} else {
-				ZVAL_RES(pzval, stored->resource.original);
-				Z_ADDREF_P(pzval);
-			}
-		} break;
 
 		case STORE_TYPE_CLOSURE: {
 			const pthreads_closure_storage_t* closure_data = (const pthreads_closure_storage_t* )storage;
@@ -1132,7 +1097,7 @@ static void pthreads_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_b
 			break;
 		case IS_PTR:
 			{
-				/* threaded object, serialized object, resource */
+				/* thread-safe object */
 				pthreads_storage *storage = (pthreads_storage *) Z_PTR_P(zstorage);
 				*was_pthreads_storage = pthreads_store_storage_is_cacheable(zstorage);
 				pthreads_store_convert(storage, unstore);
@@ -1171,7 +1136,6 @@ static void pthreads_store_hard_copy_storage(zval *new_zstorage, zval *zstorage)
 			switch (storage->type) {
 				CASE_STORAGE(STORE_TYPE_CLOSURE, pthreads_closure_storage_t);
 				CASE_STORAGE(STORE_TYPE_PTHREADS, pthreads_zend_object_storage_t);
-				CASE_STORAGE(STORE_TYPE_RESOURCE, pthreads_resource_storage_t);
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 				CASE_STORAGE(STORE_TYPE_SOCKET, pthreads_socket_storage_t);
 #endif
@@ -1339,7 +1303,6 @@ static void pthreads_store_storage_dtor (zval *zstorage){
 		switch (storage->type) {
 			case STORE_TYPE_CLOSURE:
 			case STORE_TYPE_PTHREADS:
-			case STORE_TYPE_RESOURCE:
 			case STORE_TYPE_SOCKET:
 			case STORE_TYPE_STRING_PTR:
 				/* no extra action necessary */

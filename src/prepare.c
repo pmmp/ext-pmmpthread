@@ -18,7 +18,6 @@
 
 #include <src/prepare.h>
 #include <src/object.h>
-#include <src/resources.h>
 #include <src/globals.h>
 #include <src/copy.h>
 
@@ -35,7 +34,6 @@ static zend_class_entry* pthreads_create_entry(const pthreads_ident_t* source, z
 static zend_trait_alias * pthreads_preparation_copy_trait_alias(zend_trait_alias *alias);
 static zend_trait_precedence * pthreads_preparation_copy_trait_precedence(zend_trait_precedence *precedence);
 static void pthreads_preparation_copy_trait_method_reference(zend_trait_method_reference *reference, zend_trait_method_reference *copy);
-static void pthreads_prepared_resource_dtor(zval *zv); /* }}} */
 
 /* {{{ */
 static void prepare_class_constants(const pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
@@ -951,13 +949,6 @@ static inline void pthreads_prepare_includes(const pthreads_ident_t* source) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_resource_destructor(const pthreads_ident_t* source) {
-	if (!PTHREADS_G(default_resource_dtor))
-		PTHREADS_G(default_resource_dtor)=(EG(regular_list).pDestructor);
-	EG(regular_list).pDestructor =  (dtor_func_t) pthreads_prepared_resource_dtor;
-} /* }}} */
-
-/* {{{ */
 static inline void pthreads_prepare_sapi(const pthreads_ident_t* source) {
 	SG(sapi_started) = 0;
 
@@ -1023,7 +1014,6 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 		if (thread_options & PTHREADS_INHERIT_INCLUDES)
 			pthreads_prepare_includes(&thread->creator);
 
-		pthreads_prepare_resource_destructor(&thread->creator);
 		pthreads_monitor_add(ready, PTHREADS_MONITOR_READY);
 	} PTHREADS_PREPARATION_END_CRITICAL();
 
@@ -1031,17 +1021,8 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 } /* }}} */
 
 /* {{{ */
-static inline int pthreads_resources_cleanup(zval *bucket) {
-	if (pthreads_resources_kept(Z_RES_P(bucket))) {
-		return ZEND_HASH_APPLY_REMOVE;
-	} else return ZEND_HASH_APPLY_KEEP;
-} /* }}} */
-
-/* {{{ */
 int pthreads_prepared_shutdown(void) {
 	PTHREADS_PREPARATION_BEGIN_CRITICAL() {
-		zend_hash_apply(&EG(regular_list), pthreads_resources_cleanup);
-
 		PG(report_memleaks) = 0;
 
 		php_request_shutdown((void*)NULL);
@@ -1089,13 +1070,4 @@ static void pthreads_preparation_copy_trait_method_reference(zend_trait_method_r
 	if (reference->class_name) {
 		copy->class_name = pthreads_copy_string(reference->class_name);
 	}
-} /* }}} */
-
-/* {{{ */
-static void pthreads_prepared_resource_dtor(zval *zv) {
-	zend_try {
-		if (!pthreads_resources_kept(Z_RES_P(zv)) && PTHREADS_G(default_resource_dtor)){
-			PTHREADS_G(default_resource_dtor)(zv);
-		}
-	} zend_end_try();
 } /* }}} */

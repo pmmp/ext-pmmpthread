@@ -120,7 +120,6 @@ static inline void pthreads_globals_ctor(zend_pthreads_globals *pg) {
 	ZVAL_UNDEF(&pg->this);
 	pg->pid = 0L;
 	pg->signal = 0;
-	pg->resources = NULL;
 }
 
 PHP_MINIT_FUNCTION(pthreads)
@@ -245,11 +244,6 @@ PHP_MSHUTDOWN_FUNCTION(pthreads)
 
 ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads)
 {
-	if (PTHREADS_ZG(resources)) {
-		zend_hash_destroy(PTHREADS_ZG(resources));
-		FREE_HASHTABLE(PTHREADS_ZG(resources));
-		PTHREADS_ZG(resources) = NULL;
-	}
 	zend_hash_destroy(&PTHREADS_ZG(resolve));
 
 	return SUCCESS;

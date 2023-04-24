@@ -9,6 +9,7 @@ foreach([
 	[1, 2, 3],
 	array_fill(0, 10, 0),
 	new \stdClass,
+	tmpfile()
 ] as $bannedType){
 	try{
 		$threaded[] = $bannedType;
@@ -33,5 +34,6 @@ Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type array to ThreadedArray
 Cannot assign non-thread-safe value of type stdClass to ThreadedArray
+Cannot assign non-thread-safe value of type resource to ThreadedArray
 Indirect modification of non-ThreadedBase members of ThreadedBase@anonymous is not supported
 

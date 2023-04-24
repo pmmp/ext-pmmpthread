@@ -20,7 +20,6 @@
 
 #include <src/pthreads.h>
 #include <src/monitor.h>
-#include <src/resources.h>
 #include <src/worker.h>
 #include <src/store.h>
 

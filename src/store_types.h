@@ -25,7 +25,6 @@
 typedef enum _pthreads_store_type {
 	STORE_TYPE_CLOSURE,
 	STORE_TYPE_PTHREADS,
-	STORE_TYPE_RESOURCE,
 	STORE_TYPE_SOCKET,
 	STORE_TYPE_ENUM,
 	STORE_TYPE_STRING_PTR,
@@ -46,11 +45,6 @@ typedef struct _pthreads_zend_object_storage_t {
 	pthreads_storage common;
 	pthreads_zend_object_t* object;
 } pthreads_zend_object_storage_t;
-
-typedef struct _pthreads_resource_storage_t {
-	pthreads_storage common;
-	pthreads_resource resource;
-} pthreads_resource_storage_t;
 
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 typedef struct _pthreads_socket_storage {

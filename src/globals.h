@@ -38,11 +38,6 @@ struct _pthreads_globals {
 	pthreads_monitor_t monitor;
 
 	/*
-	* Global/Default Resource Destructor
-	*/
-	dtor_func_t (default_resource_dtor);
-
-	/*
 	* Objects Cache
 	*/
 	HashTable objects;
