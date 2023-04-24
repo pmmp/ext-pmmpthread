@@ -20,10 +20,7 @@
 #include <src/object.h>
 #include <src/globals.h>
 #include <src/copy.h>
-
-#if PHP_VERSION_ID >= 80100
 #include <Zend/zend_enum.h>
-#endif
 
 #define PTHREADS_PREPARATION_BEGIN_CRITICAL() pthreads_globals_lock();
 #define PTHREADS_PREPARATION_END_CRITICAL()   pthreads_globals_unlock()
@@ -53,7 +50,6 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 
 		name = pthreads_copy_string(key);
 
-#if PHP_VERSION_ID >= 80100
 		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE && Z_TYPE(zc->value) == IS_OBJECT) {
 			//resolved enum members require special treatment, because serializing and unserializing them just gives
 			//back the original enum member.
@@ -66,11 +62,7 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 				if (pthreads_copy_zval(source, &copied_enum_value, enum_value) == FAILURE) {
 					zend_error_at_noreturn(
 						E_CORE_ERROR,
-#if PHP_VERSION_ID >= 80100
 						prepared->info.user.filename,
-#else
-						ZSTR_VAL(prepared->info.user.filename),
-#endif
 						0,
 						"pthreads encountered a non-copyable enum case %s::%s with backing value of type %s",
 						ZSTR_VAL(prepared->name),
@@ -93,9 +85,6 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 
 			rc = zend_hash_find_ptr(&prepared->constants_table, name);
 			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
-#else
-		if (0) {
-#endif
 		} else {
 			if (zc->ce->type == ZEND_INTERNAL_CLASS) {
 				rc = pemalloc(sizeof(zend_class_constant), 1);
@@ -107,11 +96,7 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 			if (pthreads_copy_zval(source, &rc->value, &zc->value) != SUCCESS) {
 				zend_error_at_noreturn(
 					E_CORE_ERROR,
-#if PHP_VERSION_ID >= 80100
 					prepared->info.user.filename,
-#else
-					ZSTR_VAL(prepared->info.user.filename),
-#endif
 					0,
 					"pthreads encountered a non-copyable class constant %s::%s with value of type %s",
 					ZSTR_VAL(prepared->name),
@@ -133,47 +118,6 @@ static void prepare_class_constants(const pthreads_ident_t* source, zend_class_e
 		}
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
-
-#if PHP_VERSION_ID >= 80100
- /* {{{ */
-static void init_class_statics(const pthreads_ident_t* source, zend_class_entry* candidate, zend_class_entry* prepared)
-{
-	int i;
-	zval* p;
-
-	//to maintain parity with 8.0 behaviour, we manually copy the current static members.
-	//While it would make sense to just stick with the default ones to avoid doing wacky stuff, we
-	//would need to drop 8.0 to make that happen consistently, which isn't currently an option.
-	//this code is adapted from zend_class_init_statics()
-
-	//the map_ptr won't be initialized if there are no declared static members, or if the class is opcached and not linked
-	zval* candidate_static_members_table = candidate->default_static_members_count && (candidate->ce_flags & ZEND_ACC_LINKED) ?
-		PTHREADS_MAP_PTR_GET(source->ls, candidate->static_members_table) :
-		NULL;
-
-	if (candidate_static_members_table && !CE_STATIC_MEMBERS(prepared)) {
-		if ((prepared->ce_flags & ZEND_ACC_LINKED) && prepared->parent) {
-			zend_class_init_statics(prepared->parent);
-		}
-
-		ZEND_MAP_PTR_SET(prepared->static_members_table, emalloc(sizeof(zval) * prepared->default_static_members_count));
-		for (i = prepared->default_static_members_count - 1; i >= 0; i--) {
-			//copy in reverse order, to ensure object ID consistency with 8.0
-			p = &prepared->default_static_members_table[i];
-			if (Z_TYPE_P(p) == IS_INDIRECT) {
-				zval* q = &CE_STATIC_MEMBERS(prepared->parent)[i];
-				ZVAL_DEINDIRECT(q);
-				ZVAL_INDIRECT(&CE_STATIC_MEMBERS(prepared)[i], q);
-			} else {
-				if (pthreads_copy_zval(source,
-					&CE_STATIC_MEMBERS(prepared)[i], &candidate_static_members_table[i]) == FAILURE) {
-					ZVAL_NULL(&CE_STATIC_MEMBERS(prepared)[i]);
-				}
-			}
-		}
-	}
-} /* }}} */
-#endif
 
 /* {{{ */
 static void prepare_class_statics(const pthreads_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
@@ -202,11 +146,7 @@ static void prepare_class_statics(const pthreads_ident_t* source, zend_class_ent
 		for (; i >= end; i--) {
 			if (pthreads_copy_zval(source,
 				&prepared->default_static_members_table[i], &candidate->default_static_members_table[i])) {
-#if PHP_VERSION_ID >= 80100
 				ZEND_ASSERT(0);
-#else
-				ZVAL_NULL(&prepared->default_static_members_table[i]);
-#endif
 			}
 		}
 
@@ -223,13 +163,11 @@ static void prepare_class_statics(const pthreads_ident_t* source, zend_class_ent
 
 #if PHP_VERSION_ID >= 80200
 		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to NULL, so nothing to do here
-#elif PHP_VERSION_ID >= 80100
+#else
 		if (!ZEND_MAP_PTR(prepared->static_members_table)) {
 			ZEND_MAP_PTR_INIT(prepared->static_members_table, zend_arena_alloc(&CG(arena), sizeof(zval*)));
 			ZEND_MAP_PTR_SET(prepared->static_members_table, NULL);
 		}
-#else
-		//zend_initialize_class_data() already inits the MAP_PTR(static_members_table) to ptr(default_static_members_table), so nothing to do here
 #endif
 	} else prepared->default_static_members_count = 0;
 } /* }}} */
@@ -298,10 +236,6 @@ static void prepare_class_property_table(const pthreads_ident_t* source, zend_cl
 		ZEND_TYPE_FOREACH(dup->type, single_type) {
 			if (ZEND_TYPE_HAS_NAME(*single_type)) {
 				ZEND_TYPE_SET_PTR(*single_type, pthreads_copy_string(ZEND_TYPE_NAME(*single_type)));
-#if PHP_VERSION_ID < 80100
-			} else if (ZEND_TYPE_HAS_CE(*single_type)) {
-				ZEND_TYPE_SET_PTR(*single_type, pthreads_prepared_entry(source, ZEND_TYPE_CE(*single_type)));
-#endif
 			}
 		} ZEND_TYPE_FOREACH_END();
 
@@ -526,7 +460,6 @@ static zend_class_entry* pthreads_complete_entry(const pthreads_ident_t* source,
 	return prepared;
 } /* }}} */
 
-#if PHP_VERSION_ID >= 80100
 /* {{{ */
 static HashTable* prepare_backed_enum_table(const pthreads_ident_t* owner, const HashTable *candidate_table) {
 	if (!candidate_table) {
@@ -558,7 +491,6 @@ static HashTable* prepare_backed_enum_table(const pthreads_ident_t* owner, const
 	return result;
 }
 /* }}} */
-#endif
 
 /* {{{ */
 static zend_class_entry* pthreads_copy_entry(const pthreads_ident_t* source, zend_class_entry *candidate) {
@@ -584,12 +516,10 @@ static zend_class_entry* pthreads_copy_entry(const pthreads_ident_t* source, zen
 		prepared->attributes = pthreads_copy_attributes(source, candidate->attributes, prepared->info.user.filename);
 	}
 
-#if PHP_VERSION_ID >= 80100
 	prepared->enum_backing_type = candidate->enum_backing_type;
 	if (candidate->backed_enum_table) {
 		prepared->backed_enum_table = prepare_backed_enum_table(source, candidate->backed_enum_table);
 	}
-#endif
 
 	if (prepared->info.user.filename) {
 		zend_string *filename_copy;
@@ -628,35 +558,6 @@ static inline int pthreads_prepared_entry_function_prepare(zval *bucket, int arg
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_prepare_closures(const pthreads_ident_t* source) {
-#if PHP_VERSION_ID < 80100
-	Bucket *bucket;
-
-	ZEND_HASH_FOREACH_BUCKET(PTHREADS_CG(source->ls, function_table), bucket) {
-		zend_function *function = Z_PTR(bucket->val),
-					  *prepared;
-		zend_string   *named;
-
-
-		if (function->common.fn_flags & ZEND_ACC_CLOSURE) {
-			if (zend_hash_exists(CG(function_table), bucket->key)) {
-				continue;
-			}
-
-			named = pthreads_copy_string(bucket->key);
-			prepared = pthreads_copy_function(source, function);
-
-			if (!zend_hash_add_ptr(CG(function_table), named, prepared)) {
-				destroy_op_array((zend_op_array*) prepared);
-			}
-
-			zend_string_release(named);
-		}
-	} ZEND_HASH_FOREACH_END();
-#endif
-} /* }}} */
-
-/* {{{ */
 zend_class_entry* pthreads_prepare_single_class(const pthreads_ident_t* source, zend_class_entry *candidate) {
 	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
 	zend_map_ptr_extend(PTHREADS_CG(source->ls, map_ptr_last));
@@ -691,10 +592,6 @@ static void pthreads_prepare_immutable_class_dependencies(const pthreads_ident_t
 				zend_string* lookup = zend_string_tolower(ZEND_TYPE_NAME(*type));
 				ce = zend_hash_find_ptr(PTHREADS_EG(source->ls, class_table), lookup);
 				zend_string_release(lookup);
-#if PHP_VERSION_ID < 80100
-			} else if (ZEND_TYPE_HAS_CLASS(*type)) {
-				ce = ZEND_TYPE_CE(*type);
-#endif
 			} else {
 				ce = NULL;
 			}
@@ -769,7 +666,6 @@ static zend_class_entry* pthreads_create_entry(const pthreads_ident_t* source, z
 	if(do_late_bindings) {
 		pthreads_prepared_entry_late_bindings(source, candidate, prepared);
 	}
-	pthreads_prepare_closures(source);
 
 	zend_hash_apply_with_arguments(
 		&prepared->function_table,
@@ -788,9 +684,6 @@ void pthreads_prepared_entry_late_bindings(const pthreads_ident_t* source, zend_
 		prepare_class_statics(source, candidate, prepared);
 		prepare_class_constants(source, candidate, prepared);
 	}
-#if PHP_VERSION_ID >= 80100
-	init_class_statics(source, candidate, prepared);
-#endif
 } /* }}} */
 
 
@@ -1002,7 +895,6 @@ int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *rea
 
 		if (thread_options & PTHREADS_INHERIT_FUNCTIONS)
 			pthreads_prepare_functions(&thread->creator);
-		else pthreads_prepare_closures(&thread->creator);
 
 		if (thread_options & PTHREADS_INHERIT_CLASSES) {
 			pthreads_prepare_classes(&thread->creator);

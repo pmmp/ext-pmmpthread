@@ -125,7 +125,6 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 	HashTable resolve;
 	HashTable filenames;
 	HashTable closure_base_op_arrays;
-	int hard_copy_interned_strings;
 	pthreads_zend_object_t* connecting_object;
 #if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
 	zend_object_handlers *original_socket_object_handlers;

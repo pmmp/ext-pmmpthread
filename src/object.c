@@ -224,9 +224,7 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 				if (!ce) {
 					/* we may not know the class, can't use ce directly
 						from zend_object because it is from another context */
-					PTHREADS_ZG(hard_copy_interned_strings) = 1;
 					ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
-					PTHREADS_ZG(hard_copy_interned_strings) = 0;
 				}
 				PTHREADS_ZG(connecting_object) = pthreads;
 				object_init_ex(object, ce);

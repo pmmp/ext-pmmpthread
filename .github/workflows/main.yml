@@ -11,7 +11,7 @@ jobs:
     concurrency: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.ref }}
     strategy:
       matrix:
-        php: [8.0.27, 8.1.14, 8.2.1]
+        php: [8.1.14, 8.2.1]
         valgrind: [0, 1]
 
     runs-on: ubuntu-20.04
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: [8.0.27, 8.1.14, 8.2.1]
+        php: [8.1.14, 8.2.1]
         valgrind: [0, 1]
         opcache: [off, on, jit, jit-tracing]
 

@@ -30,13 +30,9 @@ zend_string* pthreads_copy_string(zend_string* s) {
 		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
 			return s;
 		}
-#if PHP_VERSION_ID < 80100
+
 		//we can no longer risk sharing request-local interned strings in 8.1, because their CE_CACHE may be populated
 		//and cause bad stuff to happen when opcache is not used. This sucks for memory usage, but we don't have a choice.
-		if (!PTHREADS_ZG(hard_copy_interned_strings)) {
-			return s;
-		}
-#endif
 		ret = zend_new_interned_string(zend_string_init(ZSTR_VAL(s), ZSTR_LEN(s), GC_FLAGS(s) & IS_STR_PERSISTENT));
 	}
 	else {
@@ -120,14 +116,6 @@ static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* s
 
 	return ht;
 }
-
-#if PHP_VERSION_ID < 80100
-static inline size_t zend_ast_size(uint32_t children) {
-	//this is an exact copy of zend_ast_size() in zend_ast.c, which we can't use because it's static :(
-	//this is in the header in 8.1, so it's only needed for 8.0
-	return sizeof(zend_ast) - sizeof(zend_ast*) + sizeof(zend_ast*) * children;
-}
-#endif
 
 static inline size_t zend_ast_list_size(uint32_t children) {
 	//this is an exact copy of zend_ast_list_size() in zend_ast.c, which we can't use because it's static :(
@@ -246,11 +234,7 @@ static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **n
 			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
 			zend_error_at_noreturn(
 				E_CORE_ERROR,
-#if PHP_VERSION_ID >= 80100
 				filename,
-#else
-				ZSTR_VAL(filename),
-#endif
 				attr->lineno,
 				"pthreads encountered a non-copyable attribute argument %s of type %s",
 				ZSTR_VAL(attr->name),
@@ -518,7 +502,6 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 	return info;
 } /* }}} */
 
-#if PHP_VERSION_ID >= 80100
 /* {{{ */
 static zend_op_array** pthreads_copy_dynamic_func_defs(const pthreads_ident_t* owner, const zend_op_array** old, uint32_t num_dynamic_func_defs) {
 	zend_op_array** new = (zend_op_array**) emalloc(num_dynamic_func_defs * sizeof(zend_op_array*));
@@ -530,7 +513,6 @@ static zend_op_array** pthreads_copy_dynamic_func_defs(const pthreads_ident_t* o
 
 	return new;
 } /* }}} */
-#endif
 
 /* {{{ */
 static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t* owner, const zend_function *function, zend_bool copy_static_variables) {
@@ -619,9 +601,7 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
 		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(owner, op_array->attributes, op_array->filename);
 
-#if PHP_VERSION_ID >= 80100
 		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(owner, op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
-#endif
 	}
 
 	if (copy_static_variables && op_array->static_variables) {
@@ -652,13 +632,6 @@ static inline void pthreads_add_function_ref(zend_function* function) {
 			(*function->op_array.refcount)++;
 		}
 		zend_string_addref(function->op_array.function_name);
-
-#if PHP_VERSION_ID < 80100
-		if (function->op_array.static_variables != NULL
-			&& !(GC_FLAGS(function->op_array.static_variables) & IS_ARRAY_IMMUTABLE)) {
-			GC_ADDREF(function->op_array.static_variables);
-		}
-#endif
 	}
 }
 
@@ -778,8 +751,6 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			}
 		}
 
-		//strings must always be hard-copied here
-		PTHREADS_ZG(hard_copy_interned_strings) = 1;
 		zend_create_fake_closure(
 			pzval,
 			func_def,
@@ -787,8 +758,6 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			pthreads_prepare_single_class(owner, closure_obj->called_scope),
 			&this_zv
 		);
-		PTHREADS_ZG(hard_copy_interned_strings) = 0;
-
 	} else {
 		HashTable* static_variables = NULL;
 		if (closure_obj->func.type == ZEND_USER_FUNCTION && closure_obj->func.op_array.static_variables != NULL) {
@@ -804,8 +773,6 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		//closures are not allowed to have static variables anyway)
 		func_def = pthreads_copy_function_ex(owner, &closure_obj->func, 0);
 
-		//strings must always be hard-copied here
-		PTHREADS_ZG(hard_copy_interned_strings) = 1;
 		zend_create_closure(
 			pzval,
 			func_def,
@@ -822,8 +789,6 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			}
 			new_closure->func.op_array.static_variables = static_variables;
 		}
-
-		PTHREADS_ZG(hard_copy_interned_strings) = 0;
 
 		//pthreads_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
 		destroy_zend_function(func_def);

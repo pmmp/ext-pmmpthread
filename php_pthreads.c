@@ -34,8 +34,8 @@
 #	error "pthreads requires that Thread Safety is enabled, add --enable-maintainer-zts to your PHP build configuration"
 #endif
 
-#if PHP_VERSION_ID < 80000
-#	error "pthreads requires PHP 8.0 or later"
+#if PHP_VERSION_ID < 80100
+#	error "pthreads requires PHP 8.1 or later"
 #endif
 
 #if COMPILE_DL_PTHREADS
@@ -144,12 +144,7 @@ PHP_MINIT_FUNCTION(pthreads)
 	pthreads_threaded_base_entry = register_class_ThreadedBase(zend_ce_aggregate);
 	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
 	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
-#if PHP_VERSION_ID < 80100
-	pthreads_threaded_base_entry->serialize = zend_class_serialize_deny;
-	pthreads_threaded_base_entry->unserialize = zend_class_unserialize_deny;
-#else
 	pthreads_threaded_base_entry->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
-#endif
 
 	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_countable, zend_ce_arrayaccess);
 	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
@@ -256,7 +251,6 @@ PHP_RINIT_FUNCTION(pthreads) {
 	zend_hash_init(&PTHREADS_ZG(filenames), 15, NULL, NULL, 0);
 	zend_hash_init(&PTHREADS_ZG(closure_base_op_arrays), 15, NULL, ZEND_FUNCTION_DTOR, 0);
 
-	PTHREADS_ZG(hard_copy_interned_strings) = 0;
 	PTHREADS_ZG(options) = PTHREADS_INHERIT_ALL;
 	PTHREADS_ZG(connecting_object) = NULL;
 
