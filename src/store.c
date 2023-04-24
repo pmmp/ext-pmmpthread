@@ -1018,7 +1018,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 		case STORE_TYPE_PTHREADS: {
 			pthreads_zend_object_t* threaded = ((pthreads_zend_object_storage_t*)storage)->object;
 
-			if (!pthreads_globals_object_connect(threaded, NULL, pzval)) {
+			if (!pthreads_globals_object_connect(threaded, pzval)) {
 				zend_throw_exception_ex(
 					pthreads_ce_ThreadedConnectionException, 0,
 					"pthreads detected an attempt to connect to an object which has already been destroyed");

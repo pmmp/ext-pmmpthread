@@ -200,7 +200,7 @@ int pthreads_connect(pthreads_zend_object_t* source, pthreads_zend_object_t* des
 
 /* {{{ */
 //TODO: rename this
-zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_class_entry *ce, zval *object) {
+zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zval *object) {
 	zend_bool valid = 0;
 	if (!pthreads_globals_lock()) {
 		return valid;
@@ -220,12 +220,9 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 				/* a connection already exists on this thread, reuse it */
 				ZVAL_OBJ_COPY(object, &connection->std);
 			} else {
+				zend_class_entry* ce = NULL;
 				/* no connection exists, create a new one */
-				if (!ce) {
-					/* we may not know the class, can't use ce directly
-						from zend_object because it is from another context */
-					ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
-				}
+				ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
 				PTHREADS_ZG(connecting_object) = pthreads;
 				object_init_ex(object, ce);
 				PTHREADS_ZG(connecting_object) = NULL;
