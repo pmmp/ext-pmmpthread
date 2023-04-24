@@ -7,11 +7,11 @@
  *  We can't have language level support easily, but we can implement channels using magic PHP.
  */
 
-class Channel extends Threaded {
+class Channel extends ThreadedBase {
     /* setting a value on the channel shall cause waiters to wake up */
     final public function __set($key, $value) {
         return $this->synchronized(function() use ($key, $value) {
-            $this[$key] = $value;
+            $this->{$key} = $value;
             return $this->notify();
         });
     }
@@ -19,27 +19,23 @@ class Channel extends Threaded {
     /* getting a value on the channel shall cause callers to wait until it's available */
     final public function __get($key) {
         return $this->synchronized(function() use($key) {
-            while (!isset($this[$key]))
+            while (!isset($this->{$key}))
                 $this->wait();
-            return $this[$key];
+            return $this->{$key};
         });
     }
 }
 
-class Routine extends Threaded {
-    public function __construct(Channel $channel) {
-        $this->channel = $channel;
-    }
+class Routine extends ThreadedRunnable {
+    public function __construct(
+		private Channel $channel
+	) {}
     
-    public function run() {
+    public function run() : void {
         /* sending on the channel */
-        $this
-            ->channel["message"] = "Hello World";
-        $this
-            ->channel["gold"] = 3.462;
+        $this->channel->message = "Hello World";
+        $this->channel->gold = 3.462;
     }
-
-    protected $channel;
 }
 
 $channel = new Channel();
@@ -50,8 +46,8 @@ $pool->submit(
 
 /* recving on the channel */
 printf("Message: %s, Gold: %.3f\n", 
-    $channel["message"], 
-    $channel["gold"]);
+    $channel->message, 
+    $channel->gold);
 
 $pool->shutdown();
 ?>

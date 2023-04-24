@@ -5,7 +5,7 @@
 		2. only ever wait FOR something
 		3. only ever wait FOR something
 
-	Only one thread may use synchronized() on a Threaded object at any given time, unless the synchronized closure calls wait().
+	Only one thread may enter synchronized() on a Threaded object at any given time, unless the synchronized closure calls wait().
 	Other threads which try to use synchronized() at the same time will block until either:
 		a) the currently-executing synchronized callable calls wait() on the Threaded object
 		b) the currently-executing synchronized callable returns.
@@ -28,7 +28,7 @@ class BadCode extends Thread{
 	}
 }
 class GoodCode extends Thread{
-	public function run() {
+	public function run() : void{
 		/* The following is GOOD CODE
 		 * One of two things might happen:
 		 *     1) this synchronized block executes first, awake becomes true, and the main thread will never go to sleep,

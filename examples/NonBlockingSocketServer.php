@@ -15,7 +15,7 @@ class SocketServer extends Thread {
 		$this->port = $port;
 		$this->backlog = $backlog;
 	}
-	public function run() {
+	public function run() : void {
 		$this->socket = new Socket ( AF_INET, SOCK_STREAM, SOL_TCP );
 		
 		$this->socket->setOption ( SOL_SOCKET, SO_REUSEADDR, 1 );
@@ -63,7 +63,7 @@ class RequestHandler extends Thread {
 		$this->mainSocket = $socket;
 		$this->isRunning = false;
 	}
-	public function run() {
+	public function run() : void {
 		$this->isRunning = true;
 		
 		while ( $this->isRunning ) {

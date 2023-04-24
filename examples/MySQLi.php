@@ -42,14 +42,14 @@ class Connect extends Worker {
     protected static $link;
 }
 
-class Query extends Threaded {
+class Query extends ThreadedRunnable {
 
-    public function __construct(string $sql, Threaded $store) {
+    public function __construct(string $sql, ThreadedArray $store) {
         $this->sql = $sql;
         $this->result = $store;
     }
     
-    public function run() {
+    public function run() : void {
         $mysqli = $this->worker->getConnection();
         
         $result = $mysqli->query($this->sql);
@@ -69,7 +69,7 @@ $pool = new Pool(4, "Connect", ["localhost", "root", "", "mysql"]);
 $stores = [];
 
 for ($i = 0; $i < 6; ++$i) {
-    $store = new Threaded(); // store all results in here for the Query object
+    $store = new ThreadedArray(); // store all results in here for the Query object
     $pool->submit(new Query("SHOW PROCESSLIST;", $store));
     $stores[] = $store; // maintain a list of stores to retrieve their results later
 }

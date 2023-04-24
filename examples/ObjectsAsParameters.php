@@ -3,7 +3,7 @@
 * Because we plan for two contexts to manipulate this object we extend the Threaded declaration
 * This connects automatically the reference in the creating context and the reference in the threading context
 */
-class Response extends Threaded {
+class Response extends ThreadedBase {
 	
 	public function __construct($url){
 		$this->url = $url;
@@ -26,11 +26,6 @@ class Response extends Threaded {
 	public function getData()		{ return $this->data; }
 	public function getStart()		{ return $this->start; }
 	public function getFinish()		{ return $this->finish; }
-	
-	public function run(){
-		/* this particular object won't run */
-	}
-	
 }
 
 class Request extends Thread {
@@ -44,7 +39,7 @@ class Request extends Thread {
 	/*
 	* Populate the response object for creating context
 	*/
-	public function run(){
+	public function run() : void {
 		
 		/*
 		* NOTE:

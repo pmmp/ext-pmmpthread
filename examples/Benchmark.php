@@ -13,7 +13,11 @@
 $max = @$argv[1] ? $argv[1] : 100;
 $sample = @$argv[2] ? $argv[2] : 5;
 
-class MyThread extends Thread{}
+class MyThread extends Thread{
+	public function run() : void{
+
+	}
+}
 
 printf("Start(%d) ...", $max);
 $it = 0;

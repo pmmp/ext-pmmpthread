@@ -1,7 +1,5 @@
 <?php
-/*
-* Please don't use resources, it's dangerous ...
-*/
+
 class Test extends Thread {
 	public $stop = false;
 	
@@ -9,7 +7,7 @@ class Test extends Thread {
 		$this->socket = $socket;
 	}
 	
-	public function run(){
+	public function run() : void {
 		while(++$clients < 10 &&
 			($client = socket_accept($this->socket))){
 			printf("Accept in %lu\n", $this->getThreadId());

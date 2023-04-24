@@ -11,15 +11,15 @@ class WebWorker extends Worker {
 	*/
 	public function __construct(SafeLog $logger, array $config = []) {
 		$this->logger = $logger;
-		$this->config = $config;
+		$this->config = serialize($config);
 	}
 
 	/*
 	* The only thing to do here is setup the PDO object
 	*/
-	public function run() {
+	public function run() : void {
 		if (isset($this->config)) {
-			self::$connection = new PDO(... $this->config);
+			self::$connection = new PDO(... unserialize($this->config));
 		}
 	}
 
@@ -31,12 +31,12 @@ class WebWorker extends Worker {
 	private static $connection;
 }
 
-class WebWork extends Threaded {
+class WebWork extends ThreadedRunnable {
 	/*
 	* An example of some work that depends upon a shared logger
 	* and a thread-local PDO connection
 	*/
-	public function run() {
+	public function run() : void {
 		$logger = $this->worker->getLogger();
 		$logger->log("%s executing in Thread #%lu", 
 			__CLASS__, $this->worker->getThreadId());
@@ -48,7 +48,7 @@ class WebWork extends Threaded {
 	}
 }
 
-class SafeLog extends Threaded {
+class SafeLog extends ThreadedBase {
 	
 	/*
 	* If logging were allowed to occur without synchronizing

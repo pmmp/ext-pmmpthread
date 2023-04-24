@@ -1,23 +1,11 @@
 <?php
-/*
-* @NOTE
-*	RESOURCES ARE BEING TRIED OUT, THIS MAY CRASH OR KILL THE EXECUTOR OF THE SCRIPT: NOT MY FAULT
-*
-*	It's pretty clear that people want resources to work, and I cannot deny it would be useful.
-*	Officially, resources are unsupported, if it doesn't work there is NOTHING I can do about it.
-*	I do NOT have the time to make every kind of resource safe, or ensure compatibility.
-*	I can apply some cleverness to make sure resources are destroyed by whoever creates them, that is ALL.
-*	In the case of sockets, this appears to work, the code below ran all day on pthreads.org without interruption.
-*	AGAIN: 	If this does not work, there is NOTHING more I can do. 
-			If a particular type of resource wigs out, there is NOTHING I can do.
-			If this kills you, horribly, there is NOTHING I can do.
-*/
+
 class Client extends Thread {
 	public function __construct($socket){
 		$this->socket = $socket;
 		$this->start();
 	}
-	public function run(){
+	public function run() : void {
 		$client = $this->socket;
 		if ($client) {
 			$header = 0;

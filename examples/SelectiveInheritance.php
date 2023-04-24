@@ -20,7 +20,7 @@ function my_function(){
 define ("my_constant", 1);
 
 class Selective extends Thread {
-    public function run() {
+    public function run() : void {
         /* functions exist where PTHREADS_INHERIT_FUNCTIONS is set */
         var_dump(function_exists("my_function"));
         /* classes exist where PTHREADS_INHERIT_CLASSES is set **BE CAREFUL** */

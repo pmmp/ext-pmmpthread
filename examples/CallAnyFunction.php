@@ -17,7 +17,7 @@ class Caller extends Thread {
 	**/
 	public function __construct(callable $method, ...$params){
 		$this->method = $method;
-		$this->params = $params;
+		$this->params = serialize($params);
 		$this->result = null;
 		$this->joined = false;
 	}
@@ -25,9 +25,9 @@ class Caller extends Thread {
 	/**
 	* The smallest thread in the world
 	**/
-	public function run() {
+	public function run() : void{
 		$this->result = 
-			($this->method)(...$this->params); /* gotta love php7 :) */
+			($this->method)(...unserialize($this->params)); /* gotta love php7 :) */
 	}
 
 	/**

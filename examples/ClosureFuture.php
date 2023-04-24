@@ -12,13 +12,13 @@ class Future extends Thread {
 
     private function __construct(Closure $closure, array $args = []) {
         $this->closure = $closure;
-        $this->args    = $args;	
+        $this->args    = serialize($args);
     }
 
-    public function run() {
+    public function run() : void {
         $this->synchronized(function() {
-            $this->result = 
-               ($this->closure)(...$this->args);
+            $result = ($this->closure)(...unserialize($this->args));
+			$this->result = serialize($result);
             $this->notify();
         });
     }
@@ -27,7 +27,7 @@ class Future extends Thread {
         return $this->synchronized(function(){
             while (!$this->result)
                 $this->wait();
-            return $this->result;
+            return unserialize($this->result);
         });
     }
     

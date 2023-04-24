@@ -9,7 +9,7 @@ class WebRequest extends Thread {
 		$this->url = $url;
 	}
 	
-	public function run(){
+	public function run() : void{
 		if(($url = $this->url)){
 			/*
 			* If a large amount of data is being requested, you might want to
