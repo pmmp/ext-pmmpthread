@@ -29,29 +29,34 @@ static void pthreads_routine_free(pthreads_routine_arg_t* r) {
 } /* }}} */
 
 /* {{{ */
-static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* object, pthreads_zend_object_t* connection, zval* work) {
+static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* object, zval* zv) {
 	zend_function* run;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	zval zresult;
 	zend_execute_data execute_data;
+
 	memset(&execute_data, 0, sizeof(execute_data));
-
-	if (pthreads_connect(object, connection) != SUCCESS) {
-		return 0;
-	}
-
-	if (pthreads_monitor_check(&object->ts_obj->monitor, PTHREADS_MONITOR_ERROR)) {
-		return 0;
-	}
-
 	ZVAL_UNDEF(&zresult);
+	ZVAL_UNDEF(zv);
 
-	pthreads_monitor_add(&object->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
+	zend_try {
+		object_init_ex(zv, pthreads_prepare_single_class(&object->owner, object->std.ce));
 
-	if (work)
-		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this), PTHREADS_STORE_NO_COERCE_ARRAY);
+		pthreads_zend_object_t* connection = PTHREADS_FETCH_FROM(Z_OBJ_P(zv));
 
-	zend_try{
+		if (pthreads_connect(object, connection) != SUCCESS) {
+			return 0;
+		}
+
+		if (pthreads_monitor_check(&object->ts_obj->monitor, PTHREADS_MONITOR_ERROR)) {
+			return 0;
+		}
+
+		pthreads_monitor_add(&object->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
+
+		if (Z_OBJ_P(zv) != Z_OBJ_P(&PTHREADS_ZG(this)))
+			pthreads_store_write(Z_OBJ_P(zv), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this), PTHREADS_STORE_NO_COERCE_ARRAY);
+
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
 			if (run->type == ZEND_USER_FUNCTION) {
 				EG(current_execute_data) = &execute_data;
@@ -101,9 +106,7 @@ static void* pthreads_routine(pthreads_routine_arg_t* routine) {
 		pthreads_queue done_tasks_cache;
 
 		zend_first_try{
-			ZVAL_UNDEF(&PTHREADS_ZG(this));
-			object_init_ex(&PTHREADS_ZG(this), pthreads_prepare_single_class(&thread->owner, thread->std.ce));
-			pthreads_routine_run_function(thread, PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this))), NULL);
+			pthreads_routine_run_function(thread, &PTHREADS_ZG(this));
 
 			if (PTHREADS_IS_WORKER(thread)) {
 				zval task;
@@ -112,9 +115,7 @@ static void* pthreads_routine(pthreads_routine_arg_t* routine) {
 
 				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &task) != PTHREADS_MONITOR_JOINED) {
 					zval that;
-					pthreads_zend_object_t* work = PTHREADS_FETCH_FROM(Z_OBJ(task));
-					object_init_ex(&that, pthreads_prepare_single_class(&work->owner, work->std.ce));
-					pthreads_routine_run_function(work, PTHREADS_FETCH_FROM(Z_OBJ(that)), &that);
+					pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ(task)), &that);
 					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, &that);
 					zval_ptr_dtor(&that);
 				}

@@ -90,7 +90,9 @@ void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_q
 		pthreads_queue_push(&worker_data->gc, worker_data->running);
 		worker_data->running = NULL;
 		pthreads_monitor_unlock(worker_data->monitor);
-		pthreads_queue_push_new(done_tasks_cache, work_zval);
+		if (!Z_ISUNDEF_P(work_zval)) { //we may have failed to init the local connection object due to an autoloading error
+			pthreads_queue_push_new(done_tasks_cache, work_zval);
+		}
 	} else {
 		ZEND_ASSERT(0);
 	}

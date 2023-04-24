@@ -224,13 +224,21 @@ zend_bool pthreads_globals_object_connect(pthreads_zend_object_t* address, zend_
 				if (!ce) {
 					/* we may not know the class, can't use ce directly
 						from zend_object because it is from another context */
-					ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
+					zend_try{
+						ce = pthreads_prepare_single_class(&pthreads->owner, pthreads->std.ce);
+					} zend_catch {
+						//beware of autoloading errors
+						ce = NULL;
+						valid = 0;
+					} zend_end_try();
 				}
-				PTHREADS_ZG(connecting_object) = pthreads;
-				object_init_ex(object, ce);
-				PTHREADS_ZG(connecting_object) = NULL;
-				connection = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
-				zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)connection->ts_obj, connection);
+				if (ce) {
+					PTHREADS_ZG(connecting_object) = pthreads;
+					object_init_ex(object, ce);
+					PTHREADS_ZG(connecting_object) = NULL;
+					connection = PTHREADS_FETCH_FROM(Z_OBJ_P(object));
+					zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)connection->ts_obj, connection);
+				}
 			}
 		}
 	}

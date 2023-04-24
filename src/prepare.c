@@ -611,10 +611,15 @@ static zend_class_entry* pthreads_create_entry(const pthreads_ident_t* source, z
 		return NULL;
 	}
 
-	if (candidate->type == ZEND_INTERNAL_CLASS
-		|| candidate->ce_flags & ZEND_ACC_PRELOADED
-	) {
-		return zend_lookup_class(candidate->name);
+	if ((candidate->ce_flags & ZEND_ACC_ANON_CLASS) == 0) {
+		//call autoloaders if available for named classes
+		prepared = zend_lookup_class(candidate->name);
+		if (prepared) {
+			return prepared;
+		} else if (candidate->type == ZEND_INTERNAL_CLASS || candidate->ce_flags & ZEND_ACC_PRELOADED) {
+			zend_error_noreturn(E_CORE_ERROR, "Internal and preloaded classes should always be able to be looked up");
+			return NULL;
+		}
 	}
 
 	lookup = zend_string_tolower(candidate->name);
