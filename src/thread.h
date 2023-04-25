@@ -52,20 +52,6 @@ struct _pthreads_zend_object_t {
 	zend_object std;
 }; /* }}} */
 
-/* {{{ */
-typedef struct _pthreads_routine_arg_t {
-	pthreads_zend_object_t *thread;
-	pthreads_monitor_t ready;
-	zend_ulong options;
-} pthreads_routine_arg_t; /* }}} */
-
-/* {{{ object iterator structure */
-typedef struct _pthreads_iterator_t {
-	zend_object_iterator zit;
-	zval object;
-	HashPosition position;
-} pthreads_iterator_t; /* }}} */
-
 static inline pthreads_zend_object_t* _pthreads_fetch_object(zend_object *object) {
 	return (pthreads_zend_object_t*) ((char*)object - XtOffsetOf(pthreads_zend_object_t, std));
 }

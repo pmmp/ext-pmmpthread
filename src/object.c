@@ -31,6 +31,14 @@ static void pthreads_base_ctor(pthreads_zend_object_t* base, zend_class_entry *e
 /* {{{ */
 static void pthreads_ts_object_free(pthreads_zend_object_t* base); /* }}} */
 
+
+/* {{{ object iterator structure */
+typedef struct _pthreads_iterator_t {
+	zend_object_iterator zit;
+	zval object;
+	HashPosition position;
+} pthreads_iterator_t; /* }}} */
+
 static inline void pthreads_object_iterator_dtor(pthreads_iterator_t* iterator) {
 	if (Z_TYPE(iterator->zit.data) != IS_UNDEF)
 		zval_ptr_dtor(&iterator->zit.data);

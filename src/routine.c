@@ -8,6 +8,13 @@
 #include <src/worker.h>
 
 /* {{{ */
+typedef struct _pthreads_routine_arg_t {
+	pthreads_zend_object_t* thread;
+	pthreads_monitor_t ready;
+	zend_ulong options;
+} pthreads_routine_arg_t; /* }}} */
+
+/* {{{ */
 static void pthreads_routine_init(pthreads_routine_arg_t* r, pthreads_zend_object_t* thread, zend_ulong thread_options) {
 	r->thread = thread;
 	r->options = thread_options;
