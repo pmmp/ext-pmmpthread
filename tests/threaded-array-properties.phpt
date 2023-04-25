@@ -35,7 +35,7 @@ unset($array->thing->otherThing); //does nothing - this doesn't match zend for n
 var_dump($array);
 
 ?>
---EXPECT--
+--EXPECTF--
 Warning: Undefined property: ThreadedArray::$thing in %s on line %d
 NULL
 bool(false)
