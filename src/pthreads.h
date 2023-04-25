@@ -118,8 +118,6 @@ typedef struct _pthreads_zend_object_t pthreads_zend_object_t;
 ZEND_EXTERN_MODULE_GLOBALS(pthreads)
 
 ZEND_BEGIN_MODULE_GLOBALS(pthreads)
-	pid_t pid;
-	int   signal;
 	zval  this;
 	zend_ulong options;
 	HashTable resolve;
@@ -133,7 +131,6 @@ ZEND_BEGIN_MODULE_GLOBALS(pthreads)
 ZEND_END_MODULE_GLOBALS(pthreads)
 
 #define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
-#define PTHREADS_PID() PTHREADS_ZG(pid) ? PTHREADS_ZG(pid) : (PTHREADS_ZG(pid)=getpid())
 
 #define PTHREADS_FETCH_ALL(ls, id, type) ((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])
 #define PTHREADS_FETCH_CTX(ls, id, type, element) (((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])->element)

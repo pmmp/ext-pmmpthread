@@ -118,8 +118,6 @@ static inline zend_bool pthreads_is_supported_sapi(char *name) {
 
 static inline void pthreads_globals_ctor(zend_pthreads_globals *pg) {
 	ZVAL_UNDEF(&pg->this);
-	pg->pid = 0L;
-	pg->signal = 0;
 }
 
 PHP_MINIT_FUNCTION(pthreads)
