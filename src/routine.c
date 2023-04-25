@@ -29,7 +29,7 @@ static void pthreads_routine_free(pthreads_routine_arg_t* r) {
 } /* }}} */
 
 /* {{{ */
-static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* connection, zval* work) {
+static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* connection) {
 	zend_function* run;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	zval zresult;
@@ -43,9 +43,6 @@ static inline zend_bool pthreads_routine_run_function(pthreads_zend_object_t* co
 	ZVAL_UNDEF(&zresult);
 
 	pthreads_monitor_add(&connection->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
-
-	if (work)
-		pthreads_store_write(Z_OBJ_P(work), &PTHREADS_G(strings).worker, &PTHREADS_ZG(this), PTHREADS_STORE_NO_COERCE_ARRAY);
 
 	zend_try{
 		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
@@ -99,7 +96,7 @@ static void* pthreads_routine(pthreads_routine_arg_t* routine) {
 		zend_first_try{
 			ZVAL_UNDEF(&PTHREADS_ZG(this));
 			pthreads_object_connect(thread, &PTHREADS_ZG(this));
-			pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this))), NULL);
+			pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this))));
 
 			if (PTHREADS_IS_WORKER(thread)) {
 				zval original;
@@ -109,7 +106,7 @@ static void* pthreads_routine(pthreads_routine_arg_t* routine) {
 				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &original) != PTHREADS_MONITOR_JOINED) {
 					zval connection;
 					pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(original)), &connection);
-					pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ(connection)), &connection);
+					pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ(connection)));
 					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, &connection);
 					zval_ptr_dtor(&connection);
 				}

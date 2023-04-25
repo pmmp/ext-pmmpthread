@@ -20,9 +20,6 @@ var_dump($pool);
 ?>
 --EXPECTF--
 object(Work)#%d (%d) {
-  ["worker"]=>
-  object(Worker)#%d (0) {
-  }
 }
 object(Pool)#%d (%d) {
   ["size":protected]=>

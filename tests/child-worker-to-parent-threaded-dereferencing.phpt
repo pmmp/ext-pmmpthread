@@ -32,10 +32,7 @@ while(!$done){
 }
 ?>
 --EXPECT--
-object(ThreadedRunnable@anonymous)#2 (2) {
-  ["worker"]=>
-  object(Worker)#1 (0) {
-  }
+object(ThreadedRunnable@anonymous)#2 (1) {
   ["array"]=>
   object(ThreadedArray)#4 (2) {
     ["sub"]=>

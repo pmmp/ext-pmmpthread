@@ -126,10 +126,6 @@ zend_bool pthreads_globals_init(){
 		INIT_STRING(session.use_cookies, ZEND_STRL("use_cookies"));
 #undef INIT_STRING
 
-		ZVAL_INTERNED_STR(
-			&PTHREADS_G(strings).worker,
-			zend_new_interned_string(zend_string_init(ZEND_STRL("worker"), 1)));
-
 		return PTHREADS_G(init);
 	} else return 0;
 } /* }}} */

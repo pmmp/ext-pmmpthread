@@ -18,10 +18,11 @@ class WebWork extends ThreadedRunnable {
 	}
 
 	public function run() : void{
-		$this->worker
+		$worker = \Thread::getCurrentThread();
+		$worker
 			->logger
 			->log("%s(%d) executing in Thread #%lu",
-				  __CLASS__, $this->id, $this->worker->getThreadId());
+				  __CLASS__, $this->id, $worker->getThreadId());
 	}
 
 	protected $id;
