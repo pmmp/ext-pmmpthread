@@ -55,18 +55,22 @@ zval *pthreads_get_property_ptr_ptr_stub(zend_object *object, zend_string *membe
 
 /* {{{ read a property from the referenced object */
 zval * pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D);
+zval * pthreads_read_property_deny(PTHREADS_READ_PROPERTY_PASSTHRU_D);
 zval * pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ write a property to the referenced object */
 zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D);
+zval* pthreads_write_property_deny(PTHREADS_WRITE_PROPERTY_PASSTHRU_D);
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ check if the referenced object has a specific property */
 int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D);
+int pthreads_has_property_deny(PTHREADS_HAS_PROPERTY_PASSTHRU_D);
 int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ unset a property in the referenced object */
 void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D);
+void pthreads_unset_property_deny(PTHREADS_UNSET_PROPERTY_PASSTHRU_D);
 void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D); /* }}} */
 
 /* {{{ count properties in storage */

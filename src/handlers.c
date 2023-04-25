@@ -109,6 +109,15 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
+zval* pthreads_read_property_deny(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
+	if (type != BP_VAR_IS) {
+		zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
+	}
+	rv = &EG(uninitialized_zval);
+	return rv;
+} /* }}} */
+
+/* {{{ */
 void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
 		zend_throw_error(
@@ -170,6 +179,13 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
+zval* pthreads_write_property_deny(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
+	zend_throw_error(NULL, "Cannot create dynamic property %s::$%s",
+		ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
+	return &EG(uninitialized_zval);
+} /* }}} */
+
+/* {{{ */
 int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
 	return pthreads_store_isset(object, member, has_set_exists);
 }
@@ -207,6 +223,11 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
+int pthreads_has_property_deny(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
+	return 0;
+} /* }}} */
+
+/* {{{ */
 void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) {
 	pthreads_store_delete(object, member);
 }
@@ -239,6 +260,11 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 	}
 }
 /* }}} */
+
+/* {{{ */
+void pthreads_unset_property_deny(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
+	//NOOP
+} /* }}} */
 
 /* {{{ */
 int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
