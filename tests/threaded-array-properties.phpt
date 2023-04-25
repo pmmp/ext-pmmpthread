@@ -36,16 +36,16 @@ var_dump($array);
 
 ?>
 --EXPECT--
-Warning: Undefined property: ThreadedArray::$thing in C:\Users\dylan-work\Documents\projects\php-dev\php-src\ext\pthreads\tests\threaded-array-properties.php on line 6
+Warning: Undefined property: ThreadedArray::$thing in %s on line %d
 NULL
 bool(false)
 bool(false)
 Cannot create dynamic property ThreadedArray::$thing
 
-Warning: Undefined property: ThreadedArray::$thing in C:\Users\dylan-work\Documents\projects\php-dev\php-src\ext\pthreads\tests\threaded-array-properties.php on line 19
+Warning: Undefined property: ThreadedArray::$thing in %s on line %d
 Attempt to assign property "otherThing" on null
 
-Warning: Undefined property: ThreadedArray::$thing in C:\Users\dylan-work\Documents\projects\php-dev\php-src\ext\pthreads\tests\threaded-array-properties.php on line 26
+Warning: Undefined property: ThreadedArray::$thing in %s on line %d
 object(ThreadedArray)#1 (1) {
   ["thing"]=>
   int(2)
