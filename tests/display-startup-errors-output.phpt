@@ -18,19 +18,20 @@ function undefined(){
 
 $w = new \Worker();
 $w->start();
-
 $w->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		throwException();
 	}
 });
+$w->shutdown();
 
+$w = new \Worker();
+$w->start();
 $w->stack(new class extends \ThreadedRunnable{
 	public function run() : void{
 		undefined();
 	}
 });
-
 $w->shutdown();
 --EXPECTF--
 Fatal error: Uncaught Exception: Exception in %s:%d
