@@ -146,7 +146,7 @@ zend_object* pthreads_threaded_base_ctor(zend_class_entry *entry) {
 	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
-	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_THREADED);
+	pthreads_base_ctor(threaded, entry, 0);
 	threaded->std.handlers = &pthreads_threaded_base_handlers;
 
 	return &threaded->std;
@@ -157,7 +157,7 @@ zend_object* pthreads_threaded_array_ctor(zend_class_entry *entry) {
 	pthreads_zend_object_t* threaded = pthreads_globals_object_alloc(
 		sizeof(pthreads_zend_object_t) + zend_object_properties_size(entry));
 
-	pthreads_base_ctor(threaded, entry, PTHREADS_SCOPE_THREADED);
+	pthreads_base_ctor(threaded, entry, 0);
 	threaded->std.handlers = &pthreads_threaded_array_handlers;
 
 	return &threaded->std;
