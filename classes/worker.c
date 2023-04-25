@@ -38,6 +38,16 @@ PHP_METHOD(Worker, stack)
 			thread->std.ce->name->val);
 		return;
 	}
+	if (pthreads_monitor_check(&thread->ts_obj->monitor, PTHREADS_MONITOR_AWAIT_JOIN | PTHREADS_MONITOR_JOINED)) {
+		//allow submitting tasks before the worker starts, but not after it exits
+		zend_throw_exception_ex(
+			spl_ce_RuntimeException,
+			0,
+			"this %s is no longer running and cannot accept tasks",
+			ZSTR_VAL(thread->std.ce->name)
+		);
+		return;
+	}
 
 	RETURN_LONG(pthreads_worker_add_task(thread->worker_data, work));
 } /* }}} */
