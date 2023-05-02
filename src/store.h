@@ -34,6 +34,13 @@ typedef struct _pthreads_store_t {
 	zend_long modcount;
 } pthreads_store_t;
 
+typedef enum {
+	WRITE_SUCCESS = 0,
+	WRITE_FAIL_UNKNOWN = -1,
+	WRITE_FAIL_NOT_THREAD_SAFE = -2,
+	WRITE_FAIL_WOULD_OVERWRITE = -3
+} pthreads_store_write_result;
+
 void pthreads_store_init(pthreads_store_t* store);
 void pthreads_store_destroy(pthreads_store_t* store);
 void pthreads_store_sync_local_properties(zend_object* object);
@@ -41,8 +48,10 @@ void pthreads_store_full_sync_local_properties(zend_object *object);
 int pthreads_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
 int pthreads_store_delete(zend_object *object, zval *key);
 int pthreads_store_read(zend_object *object, zval *key, int type, zval *read);
+int pthreads_store_read_local_property(zend_object* object, zend_string* key, int type, zval* read);
 zend_bool pthreads_store_isset(zend_object *object, zval *key, int has_set_exists);
 int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded);
+pthreads_store_write_result pthreads_store_write_ex(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded, zend_bool overwrite);
 void pthreads_store_tohash(zend_object *object, HashTable *hash);
 int pthreads_store_shift(zend_object *object, zval *member);
 int pthreads_store_chunk(zend_object *object, zend_long size, zend_bool preserve, zval *chunk);
