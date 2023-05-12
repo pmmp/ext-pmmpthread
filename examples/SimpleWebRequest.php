@@ -1,4 +1,7 @@
 <?php
+
+use pmmp\thread\Thread;
+
 error_reporting(E_ALL);
 
 class WebRequest extends Thread {

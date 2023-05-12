@@ -1,12 +1,19 @@
 <?php
 
 /**
- * ThreadedArray objects are similar to regular arrays, with the exception that they can be shared between threads.
- *
  * @generate-class-entries
+ */
+
+namespace pmmp\thread;
+
+/**
+ * ThreadSafeArray objects are similar to regular arrays, with the exception that they can be shared between threads.
+ *
+ * @since 6.0.0
+ *
  * @strict-properties
  */
-final class ThreadedArray extends ThreadedBase implements Countable, ArrayAccess
+final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAccess
 {
     /**
      * Fetches a chunk of the objects properties table of the given size
@@ -24,15 +31,15 @@ final class ThreadedArray extends ThreadedBase implements Countable, ArrayAccess
     public function count() : int{}
 
     /**
-     * Converts the given array into a ThreadedArray object (recursively)
+     * Converts the given array into a ThreadSafeArray object (recursively)
      * @param array $array
      *
-     * @return ThreadedArray A ThreadedArray object created from the provided array
+     * @return ThreadSafeArray A ThreadSafeArray object created from the provided array
      */
-    public static function fromArray(array $array) : ThreadedArray {}
+    public static function fromArray(array $array) : ThreadSafeArray {}
 
     /**
-     * Merges data into the current ThreadedArray
+     * Merges data into the current ThreadSafeArray
      *
      * @param mixed $from The data to merge
      * @param bool $overwrite Overwrite existing keys flag

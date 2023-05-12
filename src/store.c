@@ -423,7 +423,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 		if (threaded->std.properties) {
 			pthreads_store_sync_local_properties(object);
 
-			/* check if there's still a ref in local cache after sync - this ensures ref reuse for Threaded and Closure objects */
+			/* check if there's still a ref in local cache after sync - this ensures ref reuse for ThreadSafe and Closure objects */
 
 			if (Z_TYPE(member) == IS_LONG) {
 				property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
@@ -450,7 +450,7 @@ int pthreads_store_read(zend_object *object, zval *key, int type, zval *read) {
 			pthreads_storage *serialized = TRY_PTHREADS_STORAGE_PTR_P(zstorage);
 			/* strictly only reads are supported */
 			if ((serialized == NULL || serialized->type != STORE_TYPE_PTHREADS) && type != BP_VAR_R && type != BP_VAR_IS){
-				zend_throw_error(zend_ce_error, "Indirect modification of non-ThreadedBase members of %s is not supported", ZSTR_VAL(object->ce->name));
+				zend_throw_error(zend_ce_error, "Indirect modification of non-ThreadSafe members of %s is not supported", ZSTR_VAL(object->ce->name));
 				result = FAILURE;
 			} else {
 				pthreads_store_restore_zval(read, zstorage);
@@ -508,7 +508,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 	if (Z_TYPE_P(write) == IS_ARRAY && coerce_array_to_threaded == PTHREADS_STORE_COERCE_ARRAY) {
 		/* coerce arrays into threaded objects */
 		object_init_ex(
-			&vol, pthreads_threaded_array_entry);
+			&vol, pthreads_ce_array);
 		pthreads_store_merge(Z_OBJ(vol), write, 1, PTHREADS_STORE_COERCE_ARRAY);
 		/* this will be addref'd when caching the object */
 		Z_SET_REFCOUNT(vol, 0);
@@ -534,7 +534,7 @@ int pthreads_store_write(zend_object *object, zval *key, zval *write, zend_bool 
 			_pthreads_store_bump_modcount_nolock(threaded);
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
-		//cached Threaded references that are dead, we have to take the opportunity
+		//cached ThreadSafe references that are dead, we have to take the opportunity
 		pthreads_store_sync_local_properties(object);
 
 		pthreads_monitor_unlock(&ts_obj->monitor);
@@ -826,7 +826,7 @@ void pthreads_store_persist_local_properties(zend_object* object) {
 static zend_bool pthreads_closure_thread_safe(zend_closure* closure) {
 	if (
 		!Z_ISUNDEF(closure->this_ptr) &&
-		!(Z_TYPE(closure->this_ptr) == IS_OBJECT && instanceof_function(Z_OBJCE(closure->this_ptr), pthreads_threaded_base_entry))
+		!(Z_TYPE(closure->this_ptr) == IS_OBJECT && instanceof_function(Z_OBJCE(closure->this_ptr), pthreads_ce_thread_safe))
 	) {
 		//closures must be unbound or static when assigned, because they won't be bound when restored onto another thread
 		//however, this is OK for thread-safe objects which we can copy
@@ -920,7 +920,7 @@ static pthreads_storage* pthreads_store_create(pthreads_ident_t* source, zval *u
 				break;
 			}
 
-			if (instanceof_function(Z_OBJCE_P(unstore), pthreads_threaded_base_entry)) {
+			if (instanceof_function(Z_OBJCE_P(unstore), pthreads_ce_thread_safe)) {
 				pthreads_zend_object_t *threaded = PTHREADS_FETCH_FROM(Z_OBJ_P(unstore));
 				if (threaded->original_zobj != NULL) {
 					threaded = threaded->original_zobj;
@@ -1020,7 +1020,7 @@ static int pthreads_store_convert(pthreads_storage *storage, zval *pzval){
 
 			if (!pthreads_object_connect(threaded, pzval)) {
 				zend_throw_exception_ex(
-					pthreads_ce_ThreadedConnectionException, 0,
+					pthreads_ce_connection_exception, 0,
 					"pthreads detected an attempt to connect to an object which has already been destroyed");
 				result = FAILURE;
 			}

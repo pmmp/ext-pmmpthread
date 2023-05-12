@@ -10,6 +10,8 @@
 * Nothing
 */
 
+use pmmp\thread\Thread;
+
 $max = @$argv[1] ? $argv[1] : 100;
 $sample = @$argv[2] ? $argv[2] : 5;
 

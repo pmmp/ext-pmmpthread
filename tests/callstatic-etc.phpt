@@ -10,7 +10,7 @@ class Test {
     }
 }
 
-class UserThread extends Thread {
+class UserThread extends \pmmp\thread\Thread {
     public function run() : void{
         Test::called_func("argument");
     }

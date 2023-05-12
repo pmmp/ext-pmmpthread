@@ -11,7 +11,7 @@ trait Hello {
 class Foo {
     use Hello { world as sun; }
 }
-$t = new class extends Thread {
+$t = new class extends \pmmp\thread\Thread {
     public function run() : void{
         $foo = new Foo();
 

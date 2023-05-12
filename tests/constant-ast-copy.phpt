@@ -12,7 +12,7 @@ class Test
 	}
 }
 
-$t = new class extends \Thread {
+$t = new class extends \pmmp\thread\Thread {
     public function run() : void{
         throw new \Exception();
     }

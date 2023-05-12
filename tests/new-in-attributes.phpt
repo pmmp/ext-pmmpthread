@@ -18,7 +18,7 @@ function test() : void{
 	var_dump(array_map(fn(ReflectionAttribute $attribute) => $attribute->newInstance(), (new ReflectionClass(A::class))->getAttributes()));
 }
 
-$w = new class extends \Thread{
+$w = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		test();
 	}

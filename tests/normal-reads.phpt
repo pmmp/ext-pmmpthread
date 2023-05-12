@@ -4,7 +4,7 @@ Test reading object properties without debug info
 This test verifies that reading properties from the object without var_dump/print_r will work
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 	public function run() : void{ 
 		$this->name = sprintf("%s", __CLASS__);
 	}

@@ -1,4 +1,10 @@
 <?php
+
+use pmmp\thread\Worker;
+use pmmp\thread\ThreadSafeArray;
+use pmmp\thread\Runnable;
+use pmmp\thread\Pool;
+
 /**
 * This example illustrates best practice with regard to using MySQLi in multiple threads
 *
@@ -42,9 +48,9 @@ class Connect extends Worker {
     protected static $link;
 }
 
-class Query extends ThreadedRunnable {
+class Query extends Runnable {
 
-    public function __construct(string $sql, ThreadedArray $store) {
+    public function __construct(string $sql, ThreadSafeArray $store) {
         $this->sql = $sql;
         $this->result = $store;
     }
@@ -69,7 +75,7 @@ $pool = new Pool(4, "Connect", ["localhost", "root", "", "mysql"]);
 $stores = [];
 
 for ($i = 0; $i < 6; ++$i) {
-    $store = new ThreadedArray(); // store all results in here for the Query object
+    $store = new ThreadSafeArray(); // store all results in here for the Query object
     $pool->submit(new Query("SHOW PROCESSLIST;", $store));
     $stores[] = $store; // maintain a list of stores to retrieve their results later
 }

@@ -6,7 +6,7 @@ This is not the case when binding anonymous classes, because a previously unknow
 cause the anonymous class to have more interfaces after linking.
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
 $worker->start();
 
@@ -16,7 +16,7 @@ interface Dummy {
 interface Dummy2 {
 }
 
-class Base extends ThreadedRunnable implements Dummy {
+class Base extends \pmmp\thread\Runnable implements Dummy {
 	public function run() : void{}
 }
 $collectable = new class extends Base implements Dummy2 {

@@ -10,12 +10,12 @@ This test verifies that this behaviour works as intended.
 --FILE--
 <?php
 
-$worker = new class extends \Thread{
-	public \ThreadedArray $array;
+$worker = new class extends \pmmp\thread\Thread{
+	public \pmmp\thread\ThreadSafeArray $array;
 
 	public function run() : void{
-		$this->array = new \ThreadedArray();
-		$this->array["sub"] = new \ThreadedArray();
+		$this->array = new \pmmp\thread\ThreadSafeArray();
+		$this->array["sub"] = new \pmmp\thread\ThreadSafeArray();
 		$this->array["recursive"] = $this->array;
 	}
 };
@@ -24,11 +24,11 @@ $worker->join();
 var_dump($worker);
 ?>
 --EXPECT--
-object(Thread@anonymous)#1 (1) {
+object(pmmp\thread\Thread@anonymous)#1 (1) {
   ["array"]=>
-  object(ThreadedArray)#2 (2) {
+  object(pmmp\thread\ThreadSafeArray)#2 (2) {
     ["sub"]=>
-    object(ThreadedArray)#3 (0) {
+    object(pmmp\thread\ThreadSafeArray)#3 (0) {
     }
     ["recursive"]=>
     *RECURSION*

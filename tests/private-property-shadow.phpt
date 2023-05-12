@@ -7,7 +7,7 @@ multiple private properties in a hierarchy with the same name should not become 
 --FILE--
 <?php
 
-class A extends \ThreadedBase{
+class A extends \pmmp\thread\ThreadSafe{
 	private $test = 1;
 
 	protected function dump() : void{
@@ -25,10 +25,10 @@ class B extends A{
 	}
 }
 
-$t = new \Worker();
+$t = new \pmmp\thread\Worker();
 
 $t->start();
-$t->stack(new class extends \ThreadedRunnable{
+$t->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		$b = new B;
 		$b->run();

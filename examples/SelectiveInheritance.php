@@ -11,6 +11,8 @@
 * Note: the included_files table is only populated where PTHREADS_INHERIT_INCLUDES is set
 */
 
+use pmmp\thread\Thread;
+
 class my_class {}
 
 function my_function(){

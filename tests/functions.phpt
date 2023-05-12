@@ -8,7 +8,7 @@ function TestFunction(){
 	return __FUNCTION__;
 }
 
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{ 
 		printf("%s\n", TestFunction()); 
 	}

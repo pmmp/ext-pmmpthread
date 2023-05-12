@@ -13,7 +13,7 @@ class StaticClass{
     }
 }
 
-class ThreadClass extends Thread{   
+class ThreadClass extends \pmmp\thread\Thread{   
     public function run() : void{}
 }
 

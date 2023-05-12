@@ -3,7 +3,7 @@ Test that unsupported types are correctly rejected
 --FILE--
 <?php
 
-$threaded = new ThreadedArray;
+$threaded = new \pmmp\thread\ThreadSafeArray;
 foreach([
 	[],
 	[1, 2, 3],
@@ -18,7 +18,7 @@ foreach([
 	}
 }
 
-$tsObj = new class extends \ThreadedBase{
+$tsObj = new class extends \pmmp\thread\ThreadSafe{
 	public $ref = 2;
 };
 $var = 1;
@@ -30,10 +30,10 @@ try{
 }
 ?>
 --EXPECT--
-Cannot assign non-thread-safe value of type array to ThreadedArray
-Cannot assign non-thread-safe value of type array to ThreadedArray
-Cannot assign non-thread-safe value of type array to ThreadedArray
-Cannot assign non-thread-safe value of type stdClass to ThreadedArray
-Cannot assign non-thread-safe value of type resource to ThreadedArray
-Indirect modification of non-ThreadedBase members of ThreadedBase@anonymous is not supported
+Cannot assign non-thread-safe value of type array to pmmp\thread\ThreadSafeArray
+Cannot assign non-thread-safe value of type array to pmmp\thread\ThreadSafeArray
+Cannot assign non-thread-safe value of type array to pmmp\thread\ThreadSafeArray
+Cannot assign non-thread-safe value of type stdClass to pmmp\thread\ThreadSafeArray
+Cannot assign non-thread-safe value of type resource to pmmp\thread\ThreadSafeArray
+Indirect modification of non-ThreadSafe members of pmmp\thread\ThreadSafe@anonymous is not supported
 

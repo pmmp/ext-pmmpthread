@@ -4,7 +4,7 @@ Test basic threading
 This test will create and join a simple thread
 --FILE--
 <?php
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public function run() : void{
 		/* nothing to do */
 	}

@@ -8,7 +8,7 @@ interface TestInterface {}
 
 class DebugClass implements TestInterface {}
 
-class Some extends ThreadedBase {
+class Some extends \pmmp\thread\ThreadSafe {
     public static function staticNess() {
         $closure = function() : DebugClass {
             return (new \DebugClass());
@@ -20,7 +20,7 @@ class Some extends ThreadedBase {
     }
 }
 
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
     public function run() : void{
         Some::staticNess();
     }
@@ -28,7 +28,7 @@ class Test extends Thread {
 
 Some::staticNess();
 
-$test = new class extends Thread {
+$test = new class extends \pmmp\thread\Thread {
 	public function run() : void{
 		Some::staticNess();
 	}

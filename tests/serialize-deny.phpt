@@ -5,20 +5,20 @@ Test that thread-safe object throw the correct exceptions when attempting to ser
 --FILE--
 <?php
 
-$array = new \ThreadedArray();
+$array = new \pmmp\thread\ThreadSafeArray();
 try{
 	serialize($array);
 }catch(\Throwable $e){
 	echo $e->getMessage() . PHP_EOL;
 }
 
-class Test extends \ThreadedBase{
+class Test extends \pmmp\thread\ThreadSafe{
 	public function __serialize() : array{
 		return ["test" => 1];
 	}
 }
 
-class TestSleep extends \ThreadedBase{
+class TestSleep extends \pmmp\thread\ThreadSafe{
 	public $test = 1;
 	public function __sleep() : array{
 		return ["test"];
@@ -39,6 +39,6 @@ try{
 
 ?>
 --EXPECT--
-Serialization of 'ThreadedArray' is not allowed
+Serialization of 'pmmp\thread\ThreadSafeArray' is not allowed
 Serialization of 'Test' is not allowed
 Serialization of 'TestSleep' is not allowed

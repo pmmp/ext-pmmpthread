@@ -1,5 +1,7 @@
 <?php
 
+use pmmp\thread\Thread;
+
 class Test extends Thread {
 	public $stop = false;
 	

@@ -5,7 +5,7 @@ This is yet another variation of static properties that has highlighted regressi
 --FILE--
 <?php
 
-$worker = new \Worker();
+$worker = new \pmmp\thread\Worker();
 $worker->start();
 
 class TestAsyncTask extends ManInTheMiddle {
@@ -20,7 +20,7 @@ class TestAsyncTask extends ManInTheMiddle {
 	}
 }
 
-abstract class ManInTheMiddle extends \ThreadedRunnable{}
+abstract class ManInTheMiddle extends \pmmp\thread\Runnable{}
 
 error_reporting(-1);
 

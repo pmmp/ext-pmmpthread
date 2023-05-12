@@ -1,9 +1,9 @@
 --TEST--
-Test that ThreadedBase coerces values to the proper type when assigned to typed properties in weak type mode
+Test that ThreadSafe coerces values to the proper type when assigned to typed properties in weak type mode
 --FILE--
 <?php
 
-class A extends \ThreadedBase{
+class A extends \pmmp\thread\ThreadSafe{
 	public int $x;
 }
 

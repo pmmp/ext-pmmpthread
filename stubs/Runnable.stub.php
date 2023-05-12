@@ -1,17 +1,23 @@
 <?php
 
 /**
- * ThreadedRunnable class
- *
- * ThreadedRunnable represents a unit of work. It provides methods to determine its execution state.
  * @generate-class-entries
  */
-abstract class ThreadedRunnable extends ThreadedBase
+
+namespace pmmp\thread;
+
+/**
+ * Runnable class
+ *
+ * Runnable represents a unit of work. It provides methods to determine its execution state.
+ *
+ * @since 6.0.0
+ */
+abstract class Runnable extends ThreadSafe
 {
     /**
      * Tell if the referenced object is executing
      *
-     * @link http://www.php.net/manual/en/threaded.isrunning.php
      * @return bool A boolean indication of state
      */
     public function isRunning() : bool{}
@@ -19,7 +25,6 @@ abstract class ThreadedRunnable extends ThreadedBase
     /**
      * Tell if the referenced object exited, suffered fatal errors, or threw uncaught exceptions during execution
      *
-     * @link http://www.php.net/manual/en/threaded.isterminated.php
      * @return bool A boolean indication of state
      */
     public function isTerminated() : bool{}
@@ -27,8 +32,7 @@ abstract class ThreadedRunnable extends ThreadedBase
     /**
      * The programmer should always implement the run method for objects that are intended for execution.
      *
-     * @link http://www.php.net/manual/en/threaded.run.php
      * @return void The methods return value, if used, will be ignored
      */
-    abstract public function run() : void{}
+    abstract public function run() : void;
 }

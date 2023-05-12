@@ -50,7 +50,7 @@ opcache.enable_cli=1
 to your `php.ini` file.
 
 ## Why not drop pthreads and move on to something newer and easier to work with, like [krakjoe/parallel](https://github.com/krakjoe/parallel)?
-- We found parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded`, it might be more usable.
+- We found parallel too limited for the use cases we needed it for. If it had some thread-safe class base like `Threaded` (`ThreadedBase` or `ThreadSafe` in newer versions), it might be more usable.
 - It's possible to implement parallel's API using pthreads, but not the other way round.
 - parallel requires significant migration efforts for code using pthreads.
 

@@ -37,7 +37,7 @@ class MyIterator implements \Iterator {
         protected function myProtectedMethod() {}
 }
 
-class MyThread extends \Thread {
+class MyThread extends \pmmp\thread\Thread {
         public function run() : void{
                 $it = new \MyIterator();
                 foreach ($it as $item) {}

@@ -16,18 +16,18 @@ function undefined(){
 	if($a === true);
 }
 
-$w = new \Worker();
+$w = new \pmmp\thread\Worker();
 $w->start();
-$w->stack(new class extends \ThreadedRunnable{
+$w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		throwException();
 	}
 });
 $w->shutdown();
 
-$w = new \Worker();
+$w = new \pmmp\thread\Worker();
 $w->start();
-$w->stack(new class extends \ThreadedRunnable{
+$w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		undefined();
 	}

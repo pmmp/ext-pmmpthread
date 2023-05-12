@@ -11,9 +11,9 @@ interface Logger{
 }
 
 abstract class ThreadedLogger implements Logger{}
-abstract class AttachableThreadedLogger extends ThreadedLogger{}
+abstract class AttachableThreadedLogger extends \ThreadedLogger{}
 
-$w = new Worker();
+$w = new \pmmp\thread\Worker();
 $w->start(PTHREADS_INHERIT_ALL);
 $w->shutdown();
 echo "ok\n";

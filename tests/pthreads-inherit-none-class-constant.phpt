@@ -4,7 +4,7 @@ Class constant in PTHREADS_INHERIT_NONE thread
 This test ensures that class constants are available inside in PTHREADS_INHERIT_NONE threads without error.
 --FILE--
 <?php
-class testClass extends \Thread {
+class testClass extends \pmmp\thread\Thread {
 
     const TEST_CONSTANT=0x00;
 

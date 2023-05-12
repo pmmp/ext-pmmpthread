@@ -1,11 +1,11 @@
 --TEST--
 Threads shouldn't be auto-joined while connections still exist on the creator thread
 --DESCRIPTION--
-After refcounting on Threaded internal structures was introduced, the distinction between an original Threaded object and connections was removed.
+After refcounting on ThreadSafe internal structures was introduced, the distinction between an original ThreadSafe object and connections was removed.
 
 This was fine until we ran into a problem with threads: they have to be joined by their creators, regardless of how many references to them remain.
 
-Because of the removal of distinction, it became possible to have two distinct Threaded objects referring to the same internal structure on the same thread, leading to implicit destruction of the thread unexpectedly when one of the references was destroyed.
+Because of the removal of distinction, it became possible to have two distinct ThreadSafe objects referring to the same internal structure on the same thread, leading to implicit destruction of the thread unexpectedly when one of the references was destroyed.
 
 In this test, creating a duplicate connection to the Worker context by dereferencing the connection provided by the worker thread caused the Worker to be incorrectly stopped when the duplicate connection goes out of scope.
 --SKIPIF--
@@ -13,8 +13,8 @@ In this test, creating a duplicate connection to the Worker context by dereferen
 --FILE--
 <?php
 
-$w = new Worker;
-class Dummy extends ThreadedRunnable{
+$w = new \pmmp\thread\Worker;
+class Dummy extends \pmmp\thread\Runnable{
 	/** @var Worker */
 	public $worker;
 

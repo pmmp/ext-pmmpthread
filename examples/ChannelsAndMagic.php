@@ -1,4 +1,9 @@
 <?php
+
+use pmmp\thread\ThreadSafe;
+use pmmp\thread\Runnable;
+use pmmp\thread\Pool;
+
 /*
  * This example demonstrates the use of magic methods, and is a possible answer to the question:
  *   "Can we have something like go channels with pthreads?"
@@ -7,7 +12,7 @@
  *  We can't have language level support easily, but we can implement channels using magic PHP.
  */
 
-class Channel extends ThreadedBase {
+class Channel extends ThreadSafe {
     /* setting a value on the channel shall cause waiters to wake up */
     final public function __set($key, $value) {
         return $this->synchronized(function() use ($key, $value) {
@@ -26,7 +31,7 @@ class Channel extends ThreadedBase {
     }
 }
 
-class Routine extends ThreadedRunnable {
+class Routine extends Runnable {
     public function __construct(
 		private Channel $channel
 	) {}

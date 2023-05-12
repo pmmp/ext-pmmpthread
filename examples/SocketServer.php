@@ -1,5 +1,7 @@
 <?php
 
+use pmmp\thread\Thread;
+
 class Client extends Thread {
 	public function __construct($socket){
 		$this->socket = $socket;

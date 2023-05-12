@@ -1,5 +1,5 @@
 --TEST--
-Test Threaded::fromArray()
+Test ThreadSafeArray::fromArray()
 --FILE--
 <?php
 
@@ -14,7 +14,7 @@ $array = [
 ];
 var_dump($array);
 
-$threaded = ThreadedArray::fromArray($array);
+$threaded = \pmmp\thread\ThreadSafeArray::fromArray($array);
 var_dump($threaded);
 ?>
 --EXPECTF--
@@ -32,15 +32,15 @@ array(2) {
     }
   }
 }
-object(ThreadedArray)#1 (2) {
+object(pmmp\thread\ThreadSafeArray)#1 (2) {
   ["greeting"]=>
   string(11) "Hello World"
   ["child"]=>
-  object(ThreadedArray)#2 (2) {
+  object(pmmp\thread\ThreadSafeArray)#2 (2) {
     ["of"]=>
     string(4) "mine"
     ["grandchild"]=>
-    object(ThreadedArray)#3 (1) {
+    object(pmmp\thread\ThreadSafeArray)#3 (1) {
       ["of"]=>
       string(7) "parents"
     }

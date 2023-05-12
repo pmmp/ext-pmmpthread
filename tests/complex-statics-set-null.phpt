@@ -6,7 +6,7 @@ class file {
 	public static $fps;
 
 	public static function __callstatic($method, $args) {
-		$tid = Thread::getCurrentThreadId();
+		$tid = \pmmp\thread\Thread::getCurrentThreadId();
 		if (isset(self::$fps[$tid])) {
 			return call_user_func_array(array("file", "_{$method}"), array_merge($args, array($tid)));
 		} else {
@@ -22,7 +22,7 @@ class file {
 	}
 }
 
-class UserThread extends Thread {
+class UserThread extends \pmmp\thread\Thread {
 	public function run () : void{
 		/* execute calls */
 		$i = 2;

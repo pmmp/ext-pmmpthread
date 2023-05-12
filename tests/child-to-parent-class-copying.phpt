@@ -6,7 +6,7 @@ with interned strings (since they were not being copied).
 --FILE--
 <?php
 
-class Foo extends Thread
+class Foo extends \pmmp\thread\Thread
 {
 	public $running = true;
 	public $shared;
@@ -28,7 +28,7 @@ class Foo extends Thread
 }
 
 $foo = new Foo();
-$foo->shared = new ThreadedArray();
+$foo->shared = new \pmmp\thread\ThreadSafeArray();
 $foo->start();
 
 $foo->synchronized(function() use ($foo) : void{

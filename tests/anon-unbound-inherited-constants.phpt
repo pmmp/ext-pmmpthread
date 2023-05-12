@@ -5,7 +5,7 @@ Linking an anonymous class can cause new constants to become available. These sh
 from copied versions of the anonymous class.
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
 $worker->start();
 
@@ -17,7 +17,7 @@ interface Dummy2 {
 	public const A_CONSTANT_2 = 2;
 }
 
-abstract class Base extends ThreadedRunnable implements Dummy {
+abstract class Base extends \pmmp\thread\Runnable implements Dummy {
 	public const BASE_CONSTANT = 3;
 }
 

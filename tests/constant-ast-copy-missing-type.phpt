@@ -5,7 +5,7 @@ AST in op array literals caused corrupted heaps because it wasn't copied properl
 --FILE--
 <?php
 namespace any\name\space {
-	class Test extends \Thread {
+	class Test extends \pmmp\thread\Thread {
 		const KEY = '';
 
 		public function run() : void{

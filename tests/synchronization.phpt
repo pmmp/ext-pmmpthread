@@ -4,7 +4,7 @@ Test synchronized blocks
 This test verifies that syncronization is working
 --FILE--
 <?php
-class T extends Thread {
+class T extends \pmmp\thread\Thread {
         public $data;
         public function run() : void{
             $this->synchronized(function($thread){

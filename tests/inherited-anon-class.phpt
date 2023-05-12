@@ -4,9 +4,9 @@ Test fix for #658 with inheritance
 Unbound anon class causing segfaults, we delay copy but still cannot serialize the anon
 --FILE--
 <?php
-$task = new class extends Thread {
+$task = new class extends \pmmp\thread\Thread {
     public function run() : void{
-        $this->prop = new class extends ThreadedBase {};
+        $this->prop = new class extends \pmmp\thread\ThreadSafe {};
 		var_dump($this->prop);
     }
 };

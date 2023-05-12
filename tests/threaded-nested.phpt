@@ -1,15 +1,15 @@
 --TEST--
-Test nested Threaded objects
+Test nested ThreadSafe objects
 --DESCRIPTION--
-This test verifies the possibility to nest Threaded objects
+This test verifies the possibility to nest ThreadSafe objects
 --FILE--
 <?php
-class Node extends ThreadedBase {}
+class Node extends \pmmp\thread\ThreadSafe {}
 
-class TestNestedWrite extends Thread {
+class TestNestedWrite extends \pmmp\thread\Thread {
     private $shared;
 
-    public function __construct(ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
@@ -23,7 +23,7 @@ class TestNestedWrite extends Thread {
         //unset($this->shared['queue'][0]);
 
         // or replace ref
-        $this->shared['queue'][0] = new ThreadedArray();
+        $this->shared['queue'][0] = new \pmmp\thread\ThreadSafeArray();
 
         $this->shared['lock'] = true;
         $this->shared->synchronized(function() : void{
@@ -45,10 +45,10 @@ class TestNestedWrite extends Thread {
     }
 }
 
-class TestNestedRead extends Thread {
+class TestNestedRead extends \pmmp\thread\Thread {
     private $shared;
 
-    public function __construct(ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
@@ -75,12 +75,12 @@ class TestNestedRead extends Thread {
     }
 }
 
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
     public function run() : void{
-        $queue = new ThreadedArray();
-        $queue[0] = new ThreadedArray();
+        $queue = new \pmmp\thread\ThreadSafeArray();
+        $queue[0] = new \pmmp\thread\ThreadSafeArray();
 
-        $shared = new ThreadedArray();
+        $shared = new \pmmp\thread\ThreadSafeArray();
         $shared['queue'] = $queue;
 
         $thread = new TestNestedWrite($shared);
@@ -109,9 +109,9 @@ $thread->start();
 $thread->join();
 ?>
 --EXPECT--
-object(ThreadedArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#4 (0) {
 }
-object(ThreadedArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#4 (0) {
 }
 object(Node)#4 (0) {
 }

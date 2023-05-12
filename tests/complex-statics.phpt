@@ -8,7 +8,7 @@ class sql {
 	public static $connection;
 
 	public static function __callstatic($method, $args){
-		$tid = Thread::getCurrentThreadId();
+		$tid = \pmmp\thread\Thread::getCurrentThreadId();
 		if (isset(self::$connection[$tid])) {
 			return call_user_func_array(array(self::$connection[$tid], "_{$method}"), $args);
 		} else {
@@ -23,7 +23,7 @@ class sql {
 	}
 }
 
-class UserThread extends Thread {
+class UserThread extends \pmmp\thread\Thread {
     public function run () : void{
         /* execute queries */
 		sql::query("SELECT * FROM mysql.user");

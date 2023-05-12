@@ -1,11 +1,11 @@
 --TEST--
-Test that unsupported types are correctly rejected from ThreadedArray::merge()
+Test that unsupported types are correctly rejected from ThreadSafeArray::merge()
 --FILE--
 <?php
 
-$t1 = new \ThreadedArray();
+$t1 = new \pmmp\thread\ThreadSafeArray();
 
-function test(\ThreadedArray $t1, array|object $input) : void{
+function test(\pmmp\thread\ThreadSafeArray $t1, array|object $input) : void{
 	try{
 		$t1->merge($input);
 		echo "success" . PHP_EOL;
@@ -35,7 +35,7 @@ $object->b = new \stdClass();
 test($t1, $object);
 ?>
 --EXPECT--
-Cannot merge non-thread-safe value of type stdClass (input key "b") into ThreadedArray
-Cannot merge non-thread-safe value of type stdClass (input key 2) into ThreadedArray
-Cannot merge non-thread-safe value of type stdClass (input key -1) into ThreadedArray
-Cannot merge non-thread-safe value of type stdClass (input key "b") into ThreadedArray
+Cannot merge non-thread-safe value of type stdClass (input key "b") into pmmp\thread\ThreadSafeArray
+Cannot merge non-thread-safe value of type stdClass (input key 2) into pmmp\thread\ThreadSafeArray
+Cannot merge non-thread-safe value of type stdClass (input key -1) into pmmp\thread\ThreadSafeArray
+Cannot merge non-thread-safe value of type stdClass (input key "b") into pmmp\thread\ThreadSafeArray

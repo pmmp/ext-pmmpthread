@@ -1,56 +1,56 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 4d940aff2680785e0149c2ffa4b4081e41f11d55 */
+ * Stub hash: 57fb77307c0b83087c06aa3852b4f227d255ec2c */
 
-ZEND_BEGIN_ARG_INFO_EX(arginfo_class_Pool___construct, 0, 0, 1)
+ZEND_BEGIN_ARG_INFO_EX(arginfo_class_pmmp_thread_Pool___construct, 0, 0, 1)
 	ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
-	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, class, IS_STRING, 0, "Worker::class")
+	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, class, IS_STRING, 0, "pmmp\\thread\\Worker::class")
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, ctor, IS_ARRAY, 0, "[]")
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Pool_collect, 0, 0, IS_LONG, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Pool_collect, 0, 0, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, collector, IS_CALLABLE, 0, "null")
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Pool_resize, 0, 1, IS_VOID, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Pool_resize, 0, 1, IS_VOID, 0)
 	ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Pool_shutdown, 0, 0, IS_VOID, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Pool_shutdown, 0, 0, IS_VOID, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Pool_submit, 0, 1, IS_LONG, 0)
-	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Pool_submit, 0, 1, IS_LONG, 0)
+	ZEND_ARG_OBJ_INFO(0, task, pmmp\\thread\\Runnable, 0)
 ZEND_END_ARG_INFO()
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_Pool_submitTo, 0, 2, IS_LONG, 0)
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Pool_submitTo, 0, 2, IS_LONG, 0)
 	ZEND_ARG_TYPE_INFO(0, worker, IS_LONG, 0)
-	ZEND_ARG_OBJ_INFO(0, task, ThreadedRunnable, 0)
+	ZEND_ARG_OBJ_INFO(0, task, pmmp\\thread\\Runnable, 0)
 ZEND_END_ARG_INFO()
 
 
-ZEND_METHOD(Pool, __construct);
-ZEND_METHOD(Pool, collect);
-ZEND_METHOD(Pool, resize);
-ZEND_METHOD(Pool, shutdown);
-ZEND_METHOD(Pool, submit);
-ZEND_METHOD(Pool, submitTo);
+ZEND_METHOD(pmmp_thread_Pool, __construct);
+ZEND_METHOD(pmmp_thread_Pool, collect);
+ZEND_METHOD(pmmp_thread_Pool, resize);
+ZEND_METHOD(pmmp_thread_Pool, shutdown);
+ZEND_METHOD(pmmp_thread_Pool, submit);
+ZEND_METHOD(pmmp_thread_Pool, submitTo);
 
 
-static const zend_function_entry class_Pool_methods[] = {
-	ZEND_ME(Pool, __construct, arginfo_class_Pool___construct, ZEND_ACC_PUBLIC)
-	ZEND_ME(Pool, collect, arginfo_class_Pool_collect, ZEND_ACC_PUBLIC)
-	ZEND_ME(Pool, resize, arginfo_class_Pool_resize, ZEND_ACC_PUBLIC)
-	ZEND_ME(Pool, shutdown, arginfo_class_Pool_shutdown, ZEND_ACC_PUBLIC)
-	ZEND_ME(Pool, submit, arginfo_class_Pool_submit, ZEND_ACC_PUBLIC)
-	ZEND_ME(Pool, submitTo, arginfo_class_Pool_submitTo, ZEND_ACC_PUBLIC)
+static const zend_function_entry class_pmmp_thread_Pool_methods[] = {
+	ZEND_ME(pmmp_thread_Pool, __construct, arginfo_class_pmmp_thread_Pool___construct, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_thread_Pool, collect, arginfo_class_pmmp_thread_Pool_collect, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_thread_Pool, resize, arginfo_class_pmmp_thread_Pool_resize, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_thread_Pool, shutdown, arginfo_class_pmmp_thread_Pool_shutdown, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_thread_Pool, submit, arginfo_class_pmmp_thread_Pool_submit, ZEND_ACC_PUBLIC)
+	ZEND_ME(pmmp_thread_Pool, submitTo, arginfo_class_pmmp_thread_Pool_submitTo, ZEND_ACC_PUBLIC)
 	ZEND_FE_END
 };
 
-static zend_class_entry *register_class_Pool(void)
+static zend_class_entry *register_class_pmmp_thread_Pool(void)
 {
 	zend_class_entry ce, *class_entry;
 
-	INIT_CLASS_ENTRY(ce, "Pool", class_Pool_methods);
+	INIT_NS_CLASS_ENTRY(ce, "pmmp\\thread", "Pool", class_pmmp_thread_Pool_methods);
 	class_entry = zend_register_internal_class_ex(&ce, NULL);
 
 	zval property_size_default_value;

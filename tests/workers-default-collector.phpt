@@ -4,12 +4,12 @@ Test pthreads workers default collector
 This test verifies that the default collector works as expected
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 $worker->start();
 
 $i = 0;
 while ($i<10) {
-	$worker->stack(new class extends ThreadedRunnable{
+	$worker->stack(new class extends \pmmp\thread\Runnable{
 		public function run() : void{}
 	});
 	$i++;

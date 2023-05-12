@@ -50,7 +50,7 @@ echo "--- main thread start ---\n";
 test();
 echo "--- main thread end ---\n";
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		echo "--- child thread start ---\n";
 		test();

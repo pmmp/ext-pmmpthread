@@ -4,7 +4,7 @@ Test shutdown handlers #204
 Shutdown handlers that were closures were causing segfaults
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
         public function run() : void{
                 register_shutdown_function(function(){
                         var_dump(new stdClass());

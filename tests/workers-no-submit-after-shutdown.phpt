@@ -3,12 +3,12 @@ Test that workers don't accept tasks after shutdown
 --FILE--
 <?php
 
-$w = new \Worker();
+$w = new \pmmp\thread\Worker();
 $w->start();
 $w->join();
 
 try{
-	$w->stack(new class extends \ThreadedRunnable{
+	$w->stack(new class extends \pmmp\thread\Runnable{
 		public function run() : void{
 			echo "hi\n";
 		}
@@ -18,4 +18,4 @@ try{
 }
 ?>
 --EXPECT--
-this Worker is no longer running and cannot accept tasks
+this pmmp\thread\Worker is no longer running and cannot accept tasks

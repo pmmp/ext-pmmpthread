@@ -4,7 +4,7 @@ Test stateful fatalities
 This test verifies that state includes fatalities
 --FILE--
 <?php
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{
 		i_do_not_exist();
 	}

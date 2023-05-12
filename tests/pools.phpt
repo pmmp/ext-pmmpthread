@@ -4,7 +4,7 @@ Test pooling
 This test verifies the functionality of selective inheritance
 --FILE--
 <?php
-class WebWorker extends Worker {
+class WebWorker extends \pmmp\thread\Worker {
 	public function __construct(SafeLog $logger) {
 		$this->logger = $logger;
 	}
@@ -12,13 +12,13 @@ class WebWorker extends Worker {
 	public $logger;
 }
 
-class WebWork extends ThreadedRunnable {
+class WebWork extends \pmmp\thread\Runnable {
 	public function __construct(int $id) {
 		$this->id = $id;
 	}
 
 	public function run() : void{
-		$worker = \Thread::getCurrentThread();
+		$worker = \pmmp\thread\Thread::getCurrentThread();
 		$worker
 			->logger
 			->log("%s(%d) executing in Thread #%lu",
@@ -28,7 +28,7 @@ class WebWork extends ThreadedRunnable {
 	protected $id;
 }
 
-class SafeLog extends ThreadedBase {
+class SafeLog extends \pmmp\thread\ThreadSafe {
 	public function log($message, ... $args) {
 		$this->synchronized(function($message, ... $args) {
 			echo vsprintf("{$message}\n", ...$args);
@@ -36,7 +36,7 @@ class SafeLog extends ThreadedBase {
 	}
 }
 
-$pool = new Pool(8, 'WebWorker', array(new SafeLog()));
+$pool = new \pmmp\thread\Pool(8, 'WebWorker', array(new SafeLog()));
 while (@$i++<10)
 	$pool->submit(new WebWork($i));
 $pool->shutdown();
@@ -53,7 +53,7 @@ WebWork(%d) executing in Thread #%d
 WebWork(%d) executing in Thread #%d
 WebWork(%d) executing in Thread #%d
 WebWork(%d) executing in Thread #%d
-object(Pool)#%d (%d) {
+object(pmmp\thread\Pool)#%d (%d) {
   ["size":protected]=>
   int(8)
   ["class":protected]=>

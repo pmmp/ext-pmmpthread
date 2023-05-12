@@ -4,10 +4,10 @@ Test Worker::unstack while a task is currently executing
 Unstacking a task would cause it to be freed from the worker stack, but a currently-executing task would not be told not to point to the destroyed task, resulting in an attempted double-free when collecting garbage from workers
 --FILE--
 <?php
-$w = new Worker();
+$w = new \pmmp\thread\Worker();
 $w->start();
 
-class Task extends ThreadedRunnable{
+class Task extends \pmmp\thread\Runnable{
     public function run() : void{
         sleep(1);
     }

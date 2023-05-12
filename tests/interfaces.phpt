@@ -16,7 +16,7 @@ class MY implements iMY{
     }
 }
 
-class TEST extends Thread {
+class TEST extends \pmmp\thread\Thread {
     public function __construct() {
 
     }

@@ -10,21 +10,21 @@ This test verifies that this behaviour works as intended.
 --FILE--
 <?php
 
-$worker = new \Worker();
+$worker = new \pmmp\thread\Worker();
 $worker->start();
 
-$worker->stack(new class extends \ThreadedRunnable{
-	public \ThreadedArray $array;
+$worker->stack(new class extends \pmmp\thread\Runnable{
+	public \pmmp\thread\ThreadSafeArray $array;
 
 	public function run() : void{
-		$this->array = new \ThreadedArray();
-		$this->array["sub"] = new \ThreadedArray();
+		$this->array = new \pmmp\thread\ThreadSafeArray();
+		$this->array["sub"] = new \pmmp\thread\ThreadSafeArray();
 		$this->array["recursive"] = $this->array;
 	}
 });
 $done = false;
 while(!$done){
-	$worker->collect(function(\ThreadedRunnable $work) use (&$done) : void{
+	$worker->collect(function(\pmmp\thread\Runnable $work) use (&$done) : void{
 		var_dump($work);
 		$done = true;
 	});
@@ -32,11 +32,11 @@ while(!$done){
 }
 ?>
 --EXPECT--
-object(ThreadedRunnable@anonymous)#2 (1) {
+object(pmmp\thread\Runnable@anonymous)#2 (1) {
   ["array"]=>
-  object(ThreadedArray)#4 (2) {
+  object(pmmp\thread\ThreadSafeArray)#4 (2) {
     ["sub"]=>
-    object(ThreadedArray)#5 (0) {
+    object(pmmp\thread\ThreadSafeArray)#5 (0) {
     }
     ["recursive"]=>
     *RECURSION*

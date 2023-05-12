@@ -19,9 +19,11 @@
 #include <src/pthreads.h>
 #include <src/store.h>
 
-/* {{{ proto boolean ThreadedArray::merge(mixed $data, [boolean $overwrite = true])
-	Will merge data with the referenced ThreadedArray */
-PHP_METHOD(ThreadedArray, merge)
+#define ThreadSafeArray_method(name) PHP_METHOD(pmmp_thread_ThreadSafeArray, name)
+
+/* {{{ proto boolean ThreadSafeArray::merge(mixed $data, [boolean $overwrite = true])
+	Will merge data with the referenced ThreadSafeArray */
+ThreadSafeArray_method(merge)
 {
 	zval *from;
 	zend_bool overwrite = 1;
@@ -35,18 +37,18 @@ PHP_METHOD(ThreadedArray, merge)
 	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite, PTHREADS_STORE_COERCE_ARRAY)==SUCCESS));
 } /* }}} */
 
-/* {{{ proto mixed ThreadedArray::shift()
+/* {{{ proto mixed ThreadSafeArray::shift()
 	Will shift the first member from the object */
-PHP_METHOD(ThreadedArray, shift)
+ThreadSafeArray_method(shift)
 {
 	zend_parse_parameters_none_throw();
 
 	pthreads_store_shift(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
-/* {{{ proto mixed ThreadedArray::chunk(integer $size [, boolean $preserve = false])
+/* {{{ proto mixed ThreadSafeArray::chunk(integer $size [, boolean $preserve = false])
 	Will shift the first member from the object */
-PHP_METHOD(ThreadedArray, chunk)
+ThreadSafeArray_method(chunk)
 {
 	zend_long size;
 	zend_bool preserve = 0;
@@ -60,18 +62,18 @@ PHP_METHOD(ThreadedArray, chunk)
 	pthreads_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
 } /* }}} */
 
-/* {{{ proto mixed ThreadedArray::pop()
+/* {{{ proto mixed ThreadSafeArray::pop()
 	Will pop the last member from the object */
-PHP_METHOD(ThreadedArray, pop)
+ThreadSafeArray_method(pop)
 {
 	zend_parse_parameters_none_throw();
 
 	pthreads_store_pop(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
-/* {{{ proto boolean ThreadedArray::count()
+/* {{{ proto boolean ThreadSafeArray::count()
 	Will return the size of the properties table */
-PHP_METHOD(ThreadedArray, count)
+ThreadSafeArray_method(count)
 {
 	zend_parse_parameters_none_throw();
 
@@ -81,9 +83,9 @@ PHP_METHOD(ThreadedArray, count)
 		Z_OBJ_P(getThis()), &Z_LVAL_P(return_value));
 } /* }}} */
 
-/* {{{ proto ThreadedArray ThreadedArray::fromArray(array $array)
-	Converts the given array to a ThreadedArray object (recursively) */
-PHP_METHOD(ThreadedArray, fromArray)
+/* {{{ proto ThreadSafeArray ThreadSafeArray::fromArray(array $array)
+	Converts the given array to a ThreadSafeArray object (recursively) */
+ThreadSafeArray_method(fromArray)
 {
 	zval *input;
 
@@ -91,13 +93,13 @@ PHP_METHOD(ThreadedArray, fromArray)
 		Z_PARAM_ARRAY(input)
 	ZEND_PARSE_PARAMETERS_END();
 
-	object_init_ex(return_value, pthreads_threaded_array_entry);
+	object_init_ex(return_value, pthreads_ce_array);
 	pthreads_store_merge(Z_OBJ_P(return_value), input, 1, PTHREADS_STORE_COERCE_ARRAY);
 } /* }}} */
 
-/* {{{ proto mixed ThreadedArray::offsetGet(mixed $offset)
+/* {{{ proto mixed ThreadSafeArray::offsetGet(mixed $offset)
 	Gets an offset from the array */
-PHP_METHOD(ThreadedArray, offsetGet)
+ThreadSafeArray_method(offsetGet)
 {
 	zval* key;
 
@@ -108,9 +110,9 @@ PHP_METHOD(ThreadedArray, offsetGet)
 	pthreads_store_read(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
 } /* }}} */
 
-/* {{{ proto void ThreadedArray::offsetSet(mixed $offset, mixed $value)
+/* {{{ proto void ThreadSafeArray::offsetSet(mixed $offset, mixed $value)
 	Sets an offset to the given value */
-PHP_METHOD(ThreadedArray, offsetSet)
+ThreadSafeArray_method(offsetSet)
 {
 	zval* key;
 	zval* value;
@@ -123,9 +125,9 @@ PHP_METHOD(ThreadedArray, offsetSet)
 	pthreads_store_write(Z_OBJ_P(getThis()), key, value, PTHREADS_STORE_NO_COERCE_ARRAY);
 } /* }}} */
 
-/* {{{ proto bool ThreadedArray::offsetExists(mixed $offset)
+/* {{{ proto bool ThreadSafeArray::offsetExists(mixed $offset)
 	Returns whether an offset exists in the array */
-PHP_METHOD(ThreadedArray, offsetExists)
+ThreadSafeArray_method(offsetExists)
 {
 	zval* key;
 
@@ -136,9 +138,9 @@ PHP_METHOD(ThreadedArray, offsetExists)
 	RETURN_BOOL(pthreads_store_isset(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
 } /* }}} */
 
-/* {{{ proto void ThreadedArray::offsetUnset(mixed $offset)
+/* {{{ proto void ThreadSafeArray::offsetUnset(mixed $offset)
 	Removes an offset from the array, if it exists */
-PHP_METHOD(ThreadedArray, offsetUnset)
+ThreadSafeArray_method(offsetUnset)
 {
 	zval* key;
 

@@ -15,10 +15,10 @@ class B {
   }
 }
 
-class My extends Thread{
+class My extends \pmmp\thread\Thread{
     public function run() : void{
         for($i=1;$i<2;$i++){
-            echo Thread::getCurrentThreadId();
+            echo \pmmp\thread\Thread::getCurrentThreadId();
         }
     }
 }

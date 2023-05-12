@@ -70,7 +70,7 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 		break;
 
 	case IS_OBJECT:
-		if (instanceof_function(Z_OBJCE_P(source), pthreads_threaded_base_entry)) {
+		if (instanceof_function(Z_OBJCE_P(source), pthreads_ce_thread_safe)) {
 			pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), dest);
 			result = SUCCESS;
 		}
@@ -694,7 +694,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		if (!pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), &this_zv)) {
 			if (!silent) {
 				zend_throw_exception_ex(
-					pthreads_ce_ThreadedConnectionException, 0,
+					pthreads_ce_connection_exception, 0,
 					"Closure $this references a thread-safe object from another thread which no longer exists");
 			}
 			return FAILURE;
@@ -722,7 +722,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 				//this could happen if a different version of the class was autoloaded onto this thread
 				if (!silent) {
 					zend_throw_exception_ex(
-						pthreads_ce_ThreadedConnectionException,
+						pthreads_ce_connection_exception,
 						0,
 						"First-class callable references an unknown class method %s::%s()",
 						ZSTR_VAL(local_class->name),
@@ -741,7 +741,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 				//can't tell them apart from real static variables, so we don't know which to remove
 				if (!silent) {
 					zend_throw_exception_ex(
-						pthreads_ce_ThreadedConnectionException,
+						pthreads_ce_connection_exception,
 						0,
 						"First-class callable references an unknown function %s()",
 						ZSTR_VAL(closure_obj->func.common.function_name)

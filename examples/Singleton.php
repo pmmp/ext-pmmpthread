@@ -1,4 +1,9 @@
 <?php
+
+use pmmp\thread\Worker;
+use pmmp\thread\Pool;
+use pmmp\thread\Runnable;
+
 /*
 * Often an application will have singleton-like objects, such as PDO connections or such.
 * 
@@ -47,7 +52,7 @@ $pool = new Pool(4, PDOWorker::class, [["sqlite:example.db"]]);
 */
 
 while (@$i++<10) {
-	$pool->submit(new class extends ThreadedRunnable {
+	$pool->submit(new class extends Runnable {
 		public function run() : void {
 			var_dump($this->worker->getConnection());
 		}

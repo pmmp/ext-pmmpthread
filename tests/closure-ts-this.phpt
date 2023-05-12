@@ -6,7 +6,7 @@ Since the closure's $this is thread-safe, it should be restored onto the destina
 --FILE--
 <?php
 
-class A extends \ThreadedBase{
+class A extends \pmmp\thread\ThreadSafe{
 	public function getClosure() : \Closure{
 		return function() : void{
 			var_dump($this);
@@ -17,7 +17,7 @@ class A extends \ThreadedBase{
 $a = new A();
 $closure = $a->getClosure();
 
-$thread = new class($closure) extends \Thread{
+$thread = new class($closure) extends \pmmp\thread\Thread{
 	public function __construct(private \Closure $closure){}
 
 	public function run() : void{

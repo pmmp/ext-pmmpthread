@@ -5,7 +5,7 @@ This tests that isset and unset are working properly
 --FILE--
 <?php
 
-$storage = new ThreadedArray();
+$storage = new \pmmp\thread\ThreadSafeArray();
 $storage->merge(range(1, 10));
 var_dump($storage);
 
@@ -18,7 +18,7 @@ for($i = 0; $i < 10; $i ++) {
 }
 ?>
 --EXPECT--
-object(ThreadedArray)#1 (10) {
+object(pmmp\thread\ThreadSafeArray)#1 (10) {
   [0]=>
   int(1)
   [1]=>

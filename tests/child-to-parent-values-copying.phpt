@@ -6,7 +6,7 @@ This test ensures that we still copy interned stuff when needed to avoid UAF.
 --FILE--
 <?php
 
-class Test extends \Thread{
+class Test extends \pmmp\thread\Thread{
 
 	public $permanentInternedString;
 
@@ -27,7 +27,7 @@ var_dump($t);
 --EXPECT--
 object(Test)#1 (3) {
   ["permanentInternedString"]=>
-  string(6) "Thread"
+  string(18) "pmmp\thread\Thread"
   ["requestInternedString"]=>
   string(27) "i am a request-local string"
   ["refcountedString"]=>

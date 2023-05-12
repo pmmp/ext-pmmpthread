@@ -32,7 +32,7 @@ function test() : void{
 	}
 }
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		test();
 	}

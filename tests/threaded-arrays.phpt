@@ -1,14 +1,14 @@
 --TEST--
-Test ThreadedArray behaviour
+Test ThreadSafeArray behaviour
 --DESCRIPTION--
 Arrays were difficult to use in pthreads, their behaviour was strange and inconsistent with Zend arrays.
 
-ThreadedArray objects can mostly serve as a drop-in replacement for an array, with similar behaviour.
+ThreadSafeArray objects can mostly serve as a drop-in replacement for an array, with similar behaviour.
 --FILE--
 <?php
-$threaded = new ThreadedArray();
+$threaded = new \pmmp\thread\ThreadSafeArray();
 
-$threaded["test"] = ThreadedArray::fromArray([
+$threaded["test"] = \pmmp\thread\ThreadSafeArray::fromArray([
 	"greeting" => "Hello World", 
 	"child" => [
 		"of" => "mine",
@@ -21,8 +21,8 @@ $threaded["test"] = ThreadedArray::fromArray([
 /*
  This looks strange, but needs to be consistent with zend, so we'll test here ... 
 */
-$threaded["0"] = new ThreadedArray;
-$threaded[1] = new ThreadedArray;
+$threaded["0"] = new \pmmp\thread\ThreadSafeArray;
+$threaded[1] = new \pmmp\thread\ThreadSafeArray;
 $threaded[2] = 'foo';
 $threaded['3'] = 'bar';
 $threaded[null] = 'null key';
@@ -45,27 +45,27 @@ $threaded["test"]["child"]["grandchild"]["of"] = "devil";
 var_dump($threaded);
 ?>
 --EXPECTF--
-object(ThreadedArray)#%d (%d) {
+object(pmmp\thread\ThreadSafeArray)#%d (%d) {
   ["test"]=>
-  object(ThreadedArray)#%d (%d) {
+  object(pmmp\thread\ThreadSafeArray)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(ThreadedArray)#%d (%d) {
+    object(pmmp\thread\ThreadSafeArray)#%d (%d) {
       ["of"]=>
       string(4) "mine"
       ["grandchild"]=>
-      object(ThreadedArray)#%d (%d) {
+      object(pmmp\thread\ThreadSafeArray)#%d (%d) {
         ["of"]=>
         string(7) "parents"
       }
     }
   }
   [0]=>
-  object(ThreadedArray)#%d (0) {
+  object(pmmp\thread\ThreadSafeArray)#%d (0) {
   }
   [1]=>
-  object(ThreadedArray)#%d (0) {
+  object(pmmp\thread\ThreadSafeArray)#%d (0) {
   }
   [2]=>
   string(3) "foo"
@@ -80,27 +80,27 @@ bool(true)
 bool(true)
 string(8) "null key"
 string(8) "appended"
-object(ThreadedArray)#%d (%d) {
+object(pmmp\thread\ThreadSafeArray)#%d (%d) {
   ["test"]=>
-  object(ThreadedArray)#%d (%d) {
+  object(pmmp\thread\ThreadSafeArray)#%d (%d) {
     ["greeting"]=>
     string(11) "Hello World"
     ["child"]=>
-    object(ThreadedArray)#%d (%d) {
+    object(pmmp\thread\ThreadSafeArray)#%d (%d) {
       ["of"]=>
       string(5) "yours"
       ["grandchild"]=>
-      object(ThreadedArray)#%d (%d) {
+      object(pmmp\thread\ThreadSafeArray)#%d (%d) {
         ["of"]=>
         string(5) "devil"
       }
     }
   }
   [0]=>
-  object(ThreadedArray)#%d (0) {
+  object(pmmp\thread\ThreadSafeArray)#%d (0) {
   }
   [1]=>
-  object(ThreadedArray)#%d (0) {
+  object(pmmp\thread\ThreadSafeArray)#%d (0) {
   }
 }
 

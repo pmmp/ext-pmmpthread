@@ -7,7 +7,7 @@ This test verifies that the object handlers correctly reject incorrect usages.
 --FILE--
 <?php
 
-$array = new \ThreadedArray();
+$array = new \pmmp\thread\ThreadSafeArray();
 $array["thing"] = 2;
 
 var_dump($array->thing); //generates warning
@@ -36,17 +36,17 @@ var_dump($array);
 
 ?>
 --EXPECTF--
-Warning: Undefined property: ThreadedArray::$thing in %s on line %d
+Warning: Undefined property: pmmp\thread\ThreadSafeArray::$thing in %s on line %d
 NULL
 bool(false)
 bool(false)
-Cannot create dynamic property ThreadedArray::$thing
+Cannot create dynamic property pmmp\thread\ThreadSafeArray::$thing
 
-Warning: Undefined property: ThreadedArray::$thing in %s on line %d
+Warning: Undefined property: pmmp\thread\ThreadSafeArray::$thing in %s on line %d
 Attempt to assign property "otherThing" on null
 
-Warning: Undefined property: ThreadedArray::$thing in %s on line %d
-object(ThreadedArray)#1 (1) {
+Warning: Undefined property: pmmp\thread\ThreadSafeArray::$thing in %s on line %d
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   ["thing"]=>
   int(2)
 }

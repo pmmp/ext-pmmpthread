@@ -80,21 +80,21 @@
 #include <dmalloc.h>
 #endif
 
-extern zend_class_entry *pthreads_threaded_base_entry;
-extern zend_class_entry *pthreads_threaded_array_entry;
-extern zend_class_entry *pthreads_threaded_runnable_entry;
-extern zend_class_entry *pthreads_thread_entry;
-extern zend_class_entry *pthreads_worker_entry;
-extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
+extern zend_class_entry *pthreads_ce_thread_safe;
+extern zend_class_entry *pthreads_ce_array;
+extern zend_class_entry *pthreads_ce_runnable;
+extern zend_class_entry *pthreads_ce_thread;
+extern zend_class_entry *pthreads_ce_worker;
+extern zend_class_entry *pthreads_ce_connection_exception;
 
 #define IS_PTHREADS_CLASS(c) \
-	(instanceof_function(c, pthreads_threaded_base_entry))
+	(instanceof_function(c, pthreads_ce_thread_safe))
 
 #define IS_PTHREADS_OBJECT(o)   \
         (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
 
 #define IS_PTHREADS_THREADED_ARRAY(o) \
-	instanceof_function(o, pthreads_threaded_array_entry)
+	instanceof_function(o, pthreads_ce_array)
 
 #define IS_PTHREADS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
@@ -106,8 +106,8 @@ extern zend_class_entry *pthreads_ce_ThreadedConnectionException;
 #define IS_EXT_SOCKETS_OBJECT(z) 0
 #endif
 
-extern zend_object_handlers pthreads_threaded_base_handlers;
-extern zend_object_handlers pthreads_threaded_array_handlers;
+extern zend_object_handlers pthreads_ts_ce_handlers;
+extern zend_object_handlers pthreads_array_ce_handlers;
 extern zend_object_handlers pthreads_socket_handlers;
 extern zend_object_handlers *zend_handlers;
 

@@ -4,7 +4,7 @@ Test exception handler (nested caught) bug #498
 More mishandling of exceptions, regression test
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
     public function run() : void{
         set_exception_handler(function($message) {
             var_dump('Uncaught', $message);

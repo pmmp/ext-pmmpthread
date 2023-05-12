@@ -5,7 +5,7 @@ This test will ensure that INI directives are inherited and or created upon init
 --FILE--
 <?php
 ini_set("include_path", ":/var/lib/other");
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 	public function run() : void{
 		printf("%s: %s\n", __METHOD__, ini_get("include_path"));
 	}

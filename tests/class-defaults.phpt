@@ -4,7 +4,7 @@ Test class defaults
 Class defaults should now initialize defaults properly
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 
 	public function __construct(){
 		$this->string = strrev($this->string);

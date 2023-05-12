@@ -6,7 +6,7 @@ property with the same name.
 --FILE--
 <?php
 
-class A extends \ThreadedRunnable{
+class A extends \pmmp\thread\Runnable{
 	public static $a = [];
 
 	public function run() : void{}
@@ -26,7 +26,7 @@ function doTest() : void{
 	var_dump(A::$a);
 }
 
-$t = new \Worker();
+$t = new \pmmp\thread\Worker();
 $t->start();
 
 $t->stack(new B);

@@ -8,7 +8,7 @@ class Test{
 	public function run() : void{}
 }
 
-class Test2 extends \ThreadedBase{
+class Test2 extends \pmmp\thread\ThreadSafe{
 	public function run() : void{}
 }
 $test = new Test();

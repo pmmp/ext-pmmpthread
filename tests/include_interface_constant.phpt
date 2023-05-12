@@ -20,7 +20,7 @@ class MyClass implements ExternalConstantsInterface {}
 
 var_dump(MyClass::BUZZ);
 
-$thread = new class extends Thread{
+$thread = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		var_dump(MyClass::BUZZ);
 	}

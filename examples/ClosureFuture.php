@@ -1,4 +1,7 @@
 <?php
+
+use pmmp\thread\Thread;
+
 /**
 * A synchronized Future for a Closure
 *

@@ -1,9 +1,9 @@
 --TEST--
-Test that ArrayAccess works properly when implemented by ThreadedBase
+Test that ArrayAccess works properly when implemented by ThreadSafe
 --FILE--
 <?php
 
-$t = new class extends \ThreadedBase implements ArrayAccess{
+$t = new class extends \pmmp\thread\ThreadSafe implements ArrayAccess{
 	public function offsetGet($offset) : mixed{
 		var_dump("get: $offset");
 		return null;

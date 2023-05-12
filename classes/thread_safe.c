@@ -18,11 +18,13 @@
 
 #include <src/pthreads.h>
 
-/* {{{ proto boolean ThreadedBase::wait([long timeout])
+#define ThreadSafe_method(name) PHP_METHOD(pmmp_thread_ThreadSafe, name)
+
+/* {{{ proto boolean ThreadSafe::wait([long timeout])
 		Will cause the calling thread to wait for notification from the referenced object
 		When a timeout is used and reached boolean false will return
 		Otherwise returns a boolean indication of success */
-PHP_METHOD(ThreadedBase, wait)
+ThreadSafe_method(wait)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 	zend_long timeout = 0L;
@@ -35,10 +37,10 @@ PHP_METHOD(ThreadedBase, wait)
 	RETURN_BOOL(pthreads_monitor_wait(&threaded->monitor, timeout) == SUCCESS);
 } /* }}} */
 
-/* {{{ proto boolean ThreadedBase::notify()
-		Send notification to everyone waiting on the ThreadedBase
+/* {{{ proto boolean ThreadSafe::notify()
+		Send notification to everyone waiting on the ThreadSafe
 		Will return a boolean indication of success */
-PHP_METHOD(ThreadedBase, notify)
+ThreadSafe_method(notify)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
@@ -47,10 +49,10 @@ PHP_METHOD(ThreadedBase, notify)
 	RETURN_BOOL(pthreads_monitor_notify(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
-/* {{{ proto boolean ThreadedBase::notifyOne()
-		Send notification to one context waiting on the ThreadedBase
+/* {{{ proto boolean ThreadSafe::notifyOne()
+		Send notification to one context waiting on the ThreadSafe
 		Will return a boolean indication of success */
-PHP_METHOD(ThreadedBase, notifyOne)
+ThreadSafe_method(notifyOne)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
@@ -59,10 +61,10 @@ PHP_METHOD(ThreadedBase, notifyOne)
 	RETURN_BOOL(pthreads_monitor_notify_one(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
-/* {{{ proto void ThreadedBase::synchronized(Callable function, ...)
+/* {{{ proto void ThreadSafe::synchronized(Callable function, ...)
 	Will synchronize the object, call the function, passing anything after the function as parameters
 	 */
-PHP_METHOD(ThreadedBase, synchronized)
+ThreadSafe_method(synchronized)
 {
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;
 	int argc = 0;
@@ -96,8 +98,8 @@ PHP_METHOD(ThreadedBase, synchronized)
 	zend_fcall_info_args_clear(&call.fci, 1);
 } /* }}} */
 
-/* {{{ proto Iterator ThreadedBase::getIterator() */
-PHP_METHOD(ThreadedBase, getIterator)
+/* {{{ proto Iterator ThreadSafe::getIterator() */
+ThreadSafe_method(getIterator)
 {
 	ZEND_PARSE_PARAMETERS_NONE();
 	zend_create_internal_iterator_zval(return_value, getThis());

@@ -9,7 +9,7 @@ interface INamedThread {
 	function getName();
 }
 
-class TestThread extends Thread implements INamedThread {
+class TestThread extends \pmmp\thread\Thread implements INamedThread {
 	public function setName($name) {
 		$this->name = $name;
 	}

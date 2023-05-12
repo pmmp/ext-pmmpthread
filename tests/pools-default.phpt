@@ -4,13 +4,13 @@ Test pool defaults
 This test verifies pool defaults
 --FILE--
 <?php
-class Work extends ThreadedRunnable {
+class Work extends \pmmp\thread\Runnable {
 	public function run() : void{
 		var_dump($this);
 	}
 }
 
-$pool = new Pool(1);
+$pool = new \pmmp\thread\Pool(1);
 $pool->submit(new Work());
 $pool->shutdown();
 
@@ -21,11 +21,11 @@ var_dump($pool);
 --EXPECTF--
 object(Work)#%d (%d) {
 }
-object(Pool)#%d (%d) {
+object(pmmp\thread\Pool)#%d (%d) {
   ["size":protected]=>
   int(1)
   ["class":protected]=>
-  string(6) "Worker"
+  string(18) "pmmp\thread\Worker"
   ["workers":protected]=>
   array(0) {
   }

@@ -9,7 +9,7 @@ function test(\stdClass $object = new \stdClass()){
 	var_dump($object);
 }
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		test();
 	}

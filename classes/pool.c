@@ -18,10 +18,12 @@
 
 #include <src/pthreads.h>
 
+#define Pool_method(name) PHP_METHOD(pmmp_thread_Pool, name)
+
 /* {{{ proto Pool Pool::__construct(integer size, [class worker, [array $ctor]])
 	Construct a pool ready to create a maximum of $size workers of class $worker
 	$ctor will be used as arguments to constructor when spawning workers */
-PHP_METHOD(Pool, __construct)
+Pool_method(__construct)
 {
 	zend_long size = 0;
 	zend_class_entry *clazz = NULL;
@@ -34,9 +36,9 @@ PHP_METHOD(Pool, __construct)
 		Z_PARAM_ARRAY(ctor)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (clazz == NULL) clazz = pthreads_worker_entry;
+	if (clazz == NULL) clazz = pthreads_ce_worker;
 
-	if (!instanceof_function(clazz, pthreads_worker_entry)) {
+	if (!instanceof_function(clazz, pthreads_ce_worker)) {
 		zend_throw_exception_ex(NULL, 0,
 			"The class provided (%s) does not extend Worker", clazz->name->val);
 	}
@@ -51,7 +53,7 @@ PHP_METHOD(Pool, __construct)
 /* {{{ proto void Pool::resize(integer size)
 	Resize the pool to the given number of workers, if the pool size is being reduced
 	then the last workers started will be shutdown until the pool is the requested size */
-PHP_METHOD(Pool, resize) {
+Pool_method(resize) {
 	zval tmp[2];
 	zend_long newsize = 0;
 	zval *workers = NULL;
@@ -84,9 +86,9 @@ PHP_METHOD(Pool, resize) {
 	ZVAL_LONG(size, newsize);
 } /* }}} */
 
-/* {{{ proto integer Pool::submit(ThreadedRunnable task)
+/* {{{ proto integer Pool::submit(Runnable task)
 	Will submit the given task to the next worker in the pool, by default workers are selected round robin */
-PHP_METHOD(Pool, submit) {
+Pool_method(submit) {
 	zval tmp[5];
 	zval *task = NULL;
 	zval *last = NULL;
@@ -100,7 +102,7 @@ PHP_METHOD(Pool, submit) {
 	zend_class_entry *ce = NULL;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	last = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("last"), 1, &tmp[0]);
@@ -185,9 +187,9 @@ PHP_METHOD(Pool, submit) {
 	Z_LVAL_P(last)++;
 } /* }}} */
 
-/* {{{ proto integer Pool::submitTo(integer $worker, ThreadedRunnable task)
+/* {{{ proto integer Pool::submitTo(integer $worker, Runnable task)
 	Will submit the given task to the specified worker */
-PHP_METHOD(Pool, submitTo) {
+Pool_method(submitTo) {
 	zval tmp;
 	zval *task = NULL;
 	zval *workers = NULL;
@@ -196,7 +198,7 @@ PHP_METHOD(Pool, submitTo) {
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
 		Z_PARAM_LONG(worker)
-		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_threaded_runnable_entry)
+		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp);
@@ -219,7 +221,7 @@ PHP_METHOD(Pool, submitTo) {
 	Shall execute the collector on each of the tasks in the working set
 		removing the task if the collector returns positively
 		the collector should be a function accepting a single task */
-PHP_METHOD(Pool, collect) {
+Pool_method(collect) {
 	zval tmp;
 	pthreads_call_t call;
 	zval *workers = NULL,
@@ -284,7 +286,7 @@ static inline void pthreads_pool_shutdown(zval *pool) {
 
 /* {{{ proto void Pool::shutdown(void)
 	Will cause all the workers to finish executing their stacks and shutdown */
-PHP_METHOD(Pool, shutdown) {
+Pool_method(shutdown) {
 	zend_parse_parameters_none_throw();
 
 	pthreads_pool_shutdown(getThis());

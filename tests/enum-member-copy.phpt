@@ -10,7 +10,7 @@ enum TestEnum{
 	case B;
 }
 
-$t = new class extends Thread{
+$t = new class extends \pmmp\thread\Thread{
 	private TestEnum $enum;
 
 	public function __construct(){

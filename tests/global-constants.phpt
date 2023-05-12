@@ -10,7 +10,7 @@ define ("DCONST", 1.19);
 define ("NCONST", null);
 define ("BCONST", true);
 
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{
 		foreach (array(
 			"string" => SCONST,

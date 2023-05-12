@@ -14,7 +14,7 @@ Test that doc comments are copied, no leaking/errors
 /**
 * Comment
 */
-class T extends Thread {  
+class T extends \pmmp\thread\Thread {  
     /**
     * @var testing
     */

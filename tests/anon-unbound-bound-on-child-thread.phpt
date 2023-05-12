@@ -95,9 +95,9 @@ function test(){
 	var_dump($anon::$secondParentProp);
 	var_dump($anon::$myOwnStaticProp);
 }
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 $worker->start();
-$worker->stack(new class extends \ThreadedRunnable{
+$worker->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";
 		test();

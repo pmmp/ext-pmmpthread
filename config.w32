@@ -24,7 +24,7 @@ if (PHP_PTHREADS != "no") {
 		);
 		ADD_SOURCES(
 			PTHREADS_EXT_DIR + "/classes",
-			"pool.c thread.c threaded_array.c threaded_base.c threaded_runnable.c worker.c",
+			"pool.c thread.c thread_safe_array.c thread_safe.c runnable.c worker.c",
 			PTHREADS_EXT_NAME
 		);
 	} else {

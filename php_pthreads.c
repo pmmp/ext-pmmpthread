@@ -21,10 +21,10 @@
 
 #include <stubs/Pool_arginfo.h>
 #include <stubs/Thread_arginfo.h>
-#include <stubs/ThreadedArray_arginfo.h>
-#include <stubs/ThreadedBase_arginfo.h>
-#include <stubs/ThreadedRunnable_arginfo.h>
-#include <stubs/ThreadedConnectionException_arginfo.h>
+#include <stubs/ThreadSafeArray_arginfo.h>
+#include <stubs/ThreadSafe_arginfo.h>
+#include <stubs/Runnable_arginfo.h>
+#include <stubs/ConnectionException_arginfo.h>
 #include <stubs/Worker_arginfo.h>
 
 #include <php_pthreads.h>
@@ -74,16 +74,16 @@ zend_module_entry pthreads_module_entry = {
   STANDARD_MODULE_PROPERTIES_EX
 };
 
-zend_class_entry *pthreads_threaded_base_entry;
-zend_class_entry *pthreads_threaded_array_entry;
-zend_class_entry *pthreads_threaded_runnable_entry;
-zend_class_entry *pthreads_thread_entry;
-zend_class_entry *pthreads_worker_entry;
-zend_class_entry *pthreads_pool_entry;
-zend_class_entry *pthreads_ce_ThreadedConnectionException;
+zend_class_entry *pthreads_ce_thread_safe;
+zend_class_entry *pthreads_ce_array;
+zend_class_entry *pthreads_ce_runnable;
+zend_class_entry *pthreads_ce_thread;
+zend_class_entry *pthreads_ce_worker;
+zend_class_entry *pthreads_ce_pool;
+zend_class_entry *pthreads_ce_connection_exception;
 
-zend_object_handlers pthreads_threaded_base_handlers;
-zend_object_handlers pthreads_threaded_array_handlers;
+zend_object_handlers pthreads_ts_ce_handlers;
+zend_object_handlers pthreads_array_ce_handlers;
 zend_object_handlers *zend_handlers;
 void ***pthreads_instance = NULL;
 
@@ -139,64 +139,64 @@ PHP_MINIT_FUNCTION(pthreads)
 
 	REGISTER_LONG_CONSTANT("PTHREADS_ALLOW_HEADERS", PTHREADS_ALLOW_HEADERS, CONST_CS | CONST_PERSISTENT);
 
-	pthreads_threaded_base_entry = register_class_ThreadedBase(zend_ce_aggregate);
-	pthreads_threaded_base_entry->create_object = pthreads_threaded_base_ctor;
-	pthreads_threaded_base_entry->get_iterator = pthreads_object_iterator_create;
-	pthreads_threaded_base_entry->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
+	pthreads_ce_thread_safe = register_class_pmmp_thread_ThreadSafe(zend_ce_aggregate);
+	pthreads_ce_thread_safe->create_object = pthreads_threaded_base_ctor;
+	pthreads_ce_thread_safe->get_iterator = pthreads_object_iterator_create;
+	pthreads_ce_thread_safe->ce_flags |= ZEND_ACC_NOT_SERIALIZABLE;
 
-	pthreads_threaded_array_entry = register_class_ThreadedArray(pthreads_threaded_base_entry, zend_ce_countable, zend_ce_arrayaccess);
-	pthreads_threaded_array_entry->create_object = pthreads_threaded_array_ctor;
+	pthreads_ce_array = register_class_pmmp_thread_ThreadSafeArray(pthreads_ce_thread_safe, zend_ce_countable, zend_ce_arrayaccess);
+	pthreads_ce_array->create_object = pthreads_threaded_array_ctor;
 
-	pthreads_ce_ThreadedConnectionException = register_class_ThreadedConnectionException(spl_ce_RuntimeException);
+	pthreads_ce_connection_exception = register_class_pmmp_thread_ConnectionException(spl_ce_RuntimeException);
 
-	pthreads_threaded_runnable_entry = register_class_ThreadedRunnable(pthreads_threaded_base_entry);
+	pthreads_ce_runnable = register_class_pmmp_thread_Runnable(pthreads_ce_thread_safe);
 
-	pthreads_thread_entry = register_class_Thread(pthreads_threaded_runnable_entry);
-	pthreads_thread_entry->create_object = pthreads_thread_ctor;
+	pthreads_ce_thread = register_class_pmmp_thread_Thread(pthreads_ce_runnable);
+	pthreads_ce_thread->create_object = pthreads_thread_ctor;
 
-	pthreads_worker_entry = register_class_Worker(pthreads_thread_entry);
-	pthreads_worker_entry->create_object = pthreads_worker_ctor;
+	pthreads_ce_worker = register_class_pmmp_thread_Worker(pthreads_ce_thread);
+	pthreads_ce_worker->create_object = pthreads_worker_ctor;
 
-	pthreads_pool_entry = register_class_Pool();
+	pthreads_ce_pool = register_class_pmmp_thread_Pool();
 
 	/*
 	* Setup object handlers
 	*/
 	zend_handlers = (zend_object_handlers*)zend_get_std_object_handlers();
 
-	memcpy(&pthreads_threaded_base_handlers, zend_handlers, sizeof(zend_object_handlers));
+	memcpy(&pthreads_ts_ce_handlers, zend_handlers, sizeof(zend_object_handlers));
 
-	pthreads_threaded_base_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
+	pthreads_ts_ce_handlers.offset = XtOffsetOf(pthreads_zend_object_t, std);
 
-	pthreads_threaded_base_handlers.free_obj = pthreads_base_free;
-	pthreads_threaded_base_handlers.dtor_obj = pthreads_base_dtor;
-	pthreads_threaded_base_handlers.cast_object = pthreads_cast_object;
+	pthreads_ts_ce_handlers.free_obj = pthreads_base_free;
+	pthreads_ts_ce_handlers.dtor_obj = pthreads_base_dtor;
+	pthreads_ts_ce_handlers.cast_object = pthreads_cast_object;
 
-	pthreads_threaded_base_handlers.get_debug_info = pthreads_read_debug;
-	pthreads_threaded_base_handlers.get_properties = pthreads_read_properties;
+	pthreads_ts_ce_handlers.get_debug_info = pthreads_read_debug;
+	pthreads_ts_ce_handlers.get_properties = pthreads_read_properties;
 
-	pthreads_threaded_base_handlers.read_property = pthreads_read_property;
-	pthreads_threaded_base_handlers.write_property = pthreads_write_property;
-	pthreads_threaded_base_handlers.has_property = pthreads_has_property;
-	pthreads_threaded_base_handlers.unset_property = pthreads_unset_property;
+	pthreads_ts_ce_handlers.read_property = pthreads_read_property;
+	pthreads_ts_ce_handlers.write_property = pthreads_write_property;
+	pthreads_ts_ce_handlers.has_property = pthreads_has_property;
+	pthreads_ts_ce_handlers.unset_property = pthreads_unset_property;
 
 
-	pthreads_threaded_base_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
-	pthreads_threaded_base_handlers.get_gc = pthreads_base_gc;
+	pthreads_ts_ce_handlers.get_property_ptr_ptr = pthreads_get_property_ptr_ptr_stub;
+	pthreads_ts_ce_handlers.get_gc = pthreads_base_gc;
 
-	pthreads_threaded_base_handlers.clone_obj = NULL;
-	pthreads_threaded_base_handlers.compare = pthreads_compare_objects;
+	pthreads_ts_ce_handlers.clone_obj = NULL;
+	pthreads_ts_ce_handlers.compare = pthreads_compare_objects;
 
-	memcpy(&pthreads_threaded_array_handlers, &pthreads_threaded_base_handlers, sizeof(zend_object_handlers));
-	pthreads_threaded_array_handlers.count_elements = pthreads_count_properties;
-	pthreads_threaded_array_handlers.read_dimension = pthreads_read_dimension;
-	pthreads_threaded_array_handlers.write_dimension = pthreads_write_dimension;
-	pthreads_threaded_array_handlers.has_dimension = pthreads_has_dimension;
-	pthreads_threaded_array_handlers.unset_dimension = pthreads_unset_dimension;
-	pthreads_threaded_array_handlers.read_property = pthreads_read_property_deny;
-	pthreads_threaded_array_handlers.write_property = pthreads_write_property_deny;
-	pthreads_threaded_array_handlers.has_property = pthreads_has_property_deny;
-	pthreads_threaded_array_handlers.unset_property = pthreads_unset_property_deny;
+	memcpy(&pthreads_array_ce_handlers, &pthreads_ts_ce_handlers, sizeof(zend_object_handlers));
+	pthreads_array_ce_handlers.count_elements = pthreads_count_properties;
+	pthreads_array_ce_handlers.read_dimension = pthreads_read_dimension;
+	pthreads_array_ce_handlers.write_dimension = pthreads_write_dimension;
+	pthreads_array_ce_handlers.has_dimension = pthreads_has_dimension;
+	pthreads_array_ce_handlers.unset_dimension = pthreads_unset_dimension;
+	pthreads_array_ce_handlers.read_property = pthreads_read_property_deny;
+	pthreads_array_ce_handlers.write_property = pthreads_write_property_deny;
+	pthreads_array_ce_handlers.has_property = pthreads_has_property_deny;
+	pthreads_array_ce_handlers.unset_property = pthreads_unset_property_deny;
 
 	ZEND_INIT_MODULE_GLOBALS(pthreads, pthreads_globals_ctor, NULL);
 

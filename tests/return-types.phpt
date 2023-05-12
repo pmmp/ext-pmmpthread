@@ -8,7 +8,7 @@ function some() : string {
 	return __FUNCTION__;
 }
 
-$thread = new class extends Thread {
+$thread = new class extends \pmmp\thread\Thread {
 	public function run() : void{
 		var_dump(some());
 	}

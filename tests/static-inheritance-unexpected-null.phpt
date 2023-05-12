@@ -14,7 +14,7 @@ class B extends A{
     public static $var = 'B';
 }
 
-class thr extends Thread{
+class thr extends \pmmp\thread\Thread{
     public function run() : void{
         $a = new A();
         var_dump($a->gVar());

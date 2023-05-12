@@ -20,10 +20,12 @@
 #include <src/object.h>
 #include <src/routine.h>
 
+#define Thread_method(name) PHP_METHOD(pmmp_thread_Thread, name)
+
 /* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
 		$options should be a mask of inheritance constants */
-PHP_METHOD(Thread, start)
+Thread_method(start)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zend_long options = PTHREADS_INHERIT_ALL;
@@ -38,7 +40,7 @@ PHP_METHOD(Thread, start)
 
 /* {{{ proto Thread::isStarted()
 	Will return true if a Thread has been started */
-PHP_METHOD(Thread, isStarted)
+Thread_method(isStarted)
 {
 	pthreads_object_t* thread = PTHREADS_FETCH_TS;
 
@@ -49,7 +51,7 @@ PHP_METHOD(Thread, isStarted)
 
 /* {{{ proto Thread::isJoined()
 	Will return true if a Thread has been joined already */
-PHP_METHOD(Thread, isJoined)
+Thread_method(isJoined)
 {
 	pthreads_object_t* thread = PTHREADS_FETCH_TS;
 
@@ -60,7 +62,7 @@ PHP_METHOD(Thread, isJoined)
 
 /* {{{ proto boolean Thread::join()
 		Will return a boolean indication of success */
-PHP_METHOD(Thread, join)
+Thread_method(join)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
@@ -71,7 +73,7 @@ PHP_METHOD(Thread, join)
 
 /* {{{ proto long Thread::getThreadId()
 	Will return the identifier of the referenced Thread */
-PHP_METHOD(Thread, getThreadId)
+Thread_method(getThreadId)
 {
 	zend_parse_parameters_none_throw();
 
@@ -80,7 +82,7 @@ PHP_METHOD(Thread, getThreadId)
 
 /* {{{ proto long Thread::getCurrentThreadId()
 	Will return the identifier of the current Thread */
-PHP_METHOD(Thread, getCurrentThreadId)
+Thread_method(getCurrentThreadId)
 {
 	zend_parse_parameters_none_throw();
 
@@ -89,7 +91,7 @@ PHP_METHOD(Thread, getCurrentThreadId)
 
 /* {{{ proto Thread Thread::getCurrentThread()
 	Will return the currently executing Thread */
-PHP_METHOD(Thread, getCurrentThread)
+Thread_method(getCurrentThread)
 {
 	zend_parse_parameters_none_throw();
 
@@ -98,7 +100,7 @@ PHP_METHOD(Thread, getCurrentThread)
 
 /* {{{ proto long Thread::getCreatorId()
 	Will return the identifier of the thread ( or process ) that created the referenced Thread */
-PHP_METHOD(Thread, getCreatorId)
+Thread_method(getCreatorId)
 {
 	zend_parse_parameters_none_throw();
 

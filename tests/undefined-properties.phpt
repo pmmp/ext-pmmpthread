@@ -1,10 +1,10 @@
 --TEST--
-Test that ThreadedBase undefined properties have the correct behaviour
+Test that ThreadSafe undefined properties have the correct behaviour
 --FILE--
 <?php
 
 #[\AllowDynamicProperties]
-class T extends \ThreadedBase{
+class T extends \pmmp\thread\ThreadSafe{
 	public static $iAmStatic = 1;
 };
 

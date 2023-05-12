@@ -1,6 +1,12 @@
 <?php
 
 /**
+ * @generate-class-entries
+ */
+
+namespace pmmp\thread;
+
+/**
  * Worker
  *
  * Worker Threads have a persistent context, as such should be used over Threads in most cases.
@@ -12,9 +18,6 @@
  *   - the script dies
  * This means the programmer can reuse the context throughout execution; placing objects on the stack of
  * the Worker will cause the Worker to execute the stacked objects run method.
- *
- * @link http://www.php.net/manual/en/class.worker.php
- * @generate-class-entries
  */
 class Worker extends Thread
 {
@@ -29,15 +32,14 @@ class Worker extends Thread
     /**
      * Default collection function called by collect(), if a collect callback wasn't given.
      *
-     * @param ThreadedRunnable $collectable The collectable object to run the collector on
+     * @param Runnable $collectable The collectable object to run the collector on
      * @return bool Whether or not the object can be disposed of
      */
-    public function collector(ThreadedRunnable $collectable) : bool{}
+    public function collector(Runnable $collectable) : bool{}
 
     /**
      * Returns the number of threaded tasks waiting to be executed by the referenced Worker
      *
-     * @link http://www.php.net/manual/en/worker.getstacked.php
      * @return int An integral value
      */
     public function getStacked() : int{}
@@ -45,38 +47,34 @@ class Worker extends Thread
     /**
      * Tell if the referenced Worker has been shutdown
      *
-     * @link http://www.php.net/manual/en/worker.isshutdown.php
      * @return bool A boolean indication of state
-	 * @alias Thread::isJoined
+	 * @alias pmmp\thread\Thread::isJoined
      */
     public function isShutdown() : bool{}
 
     /**
      * Shuts down the Worker after executing all the threaded tasks previously stacked
      *
-     * @link http://www.php.net/manual/en/worker.shutdown.php
      * @return bool A boolean indication of success
-	 * @alias Thread::join
+	 * @alias pmmp\thread\Thread::join
      */
     public function shutdown() : bool{}
 
     /**
      * Appends the referenced object to the stack of the referenced Worker
      *
-     * @param ThreadedRunnable $work Threaded object to be executed by the referenced Worker
+     * @param Runnable $work object to be executed by the referenced Worker
      *
-     * @link http://www.php.net/manual/en/worker.stack.php
      * @return int The new length of the stack
      */
-    public function stack(ThreadedRunnable $work) : int{}
+    public function stack(Runnable $work) : int{}
 
     /**
      * Removes the first task (the oldest one) in the stack.
      *
-     * @link http://www.php.net/manual/en/worker.unstack.php
-     * @return ThreadedRunnable|null The item removed from the stack
+     * @return Runnable|null The item removed from the stack
      */
-    public function unstack() : ?ThreadedRunnable{}
+    public function unstack() : ?Runnable{}
 
     /**
      * Performs initialization actions when the Worker is started.

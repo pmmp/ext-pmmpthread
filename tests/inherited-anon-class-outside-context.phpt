@@ -7,7 +7,7 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 
 interface TestInterface{}
 
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 	/**
 	 * doccomment run
 	 */
@@ -16,7 +16,7 @@ class Test extends Thread {
 		/**
 		 * doccomment anonymous
 		 */
-		$this->anonymous = new class extends Thread implements TestInterface {
+		$this->anonymous = new class extends \pmmp\thread\Thread implements TestInterface {
 			const CONSTANT = 'constant';
 			/**
 			 * @var
@@ -64,21 +64,21 @@ $test->synchronized(function() use ($test) : void{
 });
 $test->join();
 --EXPECT--
-object(Thread@anonymous)#2 (3) {
+object(pmmp\thread\Thread@anonymous)#2 (3) {
   ["pubProp"]=>
   NULL
   ["protProp":protected]=>
   NULL
-  ["privProp":"Thread@anonymous":private]=>
+  ["privProp":"pmmp\thread\Thread@anonymous":private]=>
   NULL
 }
 string(13) "anonymous run"
-object(Thread@anonymous)#3 (4) {
+object(pmmp\thread\Thread@anonymous)#3 (4) {
   ["pubProp"]=>
   NULL
   ["protProp":protected]=>
   NULL
-  ["privProp":"Thread@anonymous":private]=>
+  ["privProp":"pmmp\thread\Thread@anonymous":private]=>
   NULL
   ["ready"]=>
   bool(true)

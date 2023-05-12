@@ -18,7 +18,7 @@ class A{
 $a = new A();
 $closure = $a->getClosure();
 
-$t = new \ThreadedArray();
+$t = new \pmmp\thread\ThreadSafeArray();
 try{
 	$t["closure"] = $closure;
 }catch(\Error $e){

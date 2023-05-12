@@ -4,7 +4,7 @@ Test constants (bug 19)
 This test verifies that constant members in declarations made outside of threads are available inside threads without error
 --FILE--
 <?php
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{ printf("%s\n", DateTime::ISO8601 ); }
 }
 

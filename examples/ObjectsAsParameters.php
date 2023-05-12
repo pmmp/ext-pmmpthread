@@ -1,9 +1,13 @@
 <?php
+
+use pmmp\thread\ThreadSafe;
+use pmmp\thread\Thread;
+
 /*
-* Because we plan for two contexts to manipulate this object we extend the Threaded declaration
+* Because we plan for two contexts to manipulate this object we extend the ThreadSafe declaration
 * This connects automatically the reference in the creating context and the reference in the threading context
 */
-class Response extends ThreadedBase {
+class Response extends ThreadSafe {
 	
 	public function __construct($url){
 		$this->url = $url;
@@ -43,12 +47,12 @@ class Request extends Thread {
 		
 		/*
 		* NOTE:
-		* Referencing threaded objects inside a thread:
-		*	If you plan to heavily manipulate any object then retain a reference in the method scope
-		*	Anytime you read and write the object context of a threaded object locking occurs
-		*	Retaining method scope references avoids some
+		* Referencing thread-safe objects inside a thread:
+		*	If you plan to heavily manipulate any property of a thread-safe object, retain it in a local variable, and set it back to the property when you're done (best performance)
+		*	Anytime you read and write the object context of a thread-safe object locking occurs
+		*	You can avoid unnecessary locking by avoiding repeated property reads when the property isn't being modified, and don't write data until you're done with it
 		*	$response retains the connection to the reference in the thread that created the request
-		* If you have a threaded member that you only plan to execute ONE time:
+		* If you have a property of a thread-safe object that you only plan to dereference ONE time:
 		*	(isWaiting/isRunning for example) then it is acceptable to reference the member via the object context
 		* Referencing the object context on every call will have no adverse affects ( no leaks/errors )
 		* The hints above are best practices but not required.
@@ -69,7 +73,7 @@ $response = new Response(
 );
 
 /*
-* Initialize a new threaded request with a response object as the only parameter
+* Initialize a new request with a response object as the only parameter
 */
 $request = new Request($response);
 

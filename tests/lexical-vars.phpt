@@ -5,19 +5,19 @@ In pthreads v2, it was difficult to support lexical or function-static
 scope vars, for various reasons.
 
 In pthreads v3, it is now possible to have some support, the following things will work
-	Threaded objects
+	ThreadSafe objects
 	Closures
 	Arrays
 	Scalars
 
 The following things will not work:
-	Non-threaded objects
+	Non-thread-safe objects
 	Resources
 
 Unsupported types should not raise notices, they will simply be undefined in the function scope.
 --FILE--
 <?php
-class TestThread extends \Thread
+class TestThread extends \pmmp\thread\Thread
 {
     private $function;
     public function __construct(callable $function)
@@ -34,7 +34,7 @@ class TestThread extends \Thread
 $scalar = 1; # will work
 $string = "thing"; # will work
 $res = fopen("php://stdin", "r"); # won't work
-$threaded = new ThreadedArray(); # will work
+$threaded = new \pmmp\thread\ThreadSafeArray(); # will work
 $closure = function() { # will work
 	echo "hi";
 };
@@ -49,7 +49,7 @@ $thread->start();
 int(1)
 string(5) "thing"
 NULL
-object(ThreadedArray)#2 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
 object(Closure)#3 (0) {
 }

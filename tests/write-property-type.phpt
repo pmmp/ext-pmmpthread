@@ -1,7 +1,7 @@
 --TEST--
-Test that ThreadedBase objects verify assigned types properly
+Test that ThreadSafe objects verify assigned types properly
 --DESCRIPTION--
-Since ThreadedBase uses custom property read/write handlers, we have to verify types ourselves.
+Since ThreadSafe uses custom property read/write handlers, we have to verify types ourselves.
 In the past, we simply didn't verify them, but this is problematic particularly when JIT is used,
 which makes hard assumptions about property types for optimisations. Therefore, assigning incorrect
 types leads to segfaults and other strange behaviour.
@@ -11,10 +11,10 @@ This test ensures that property types are enforced correctly on typed properties
 
 declare(strict_types=1);
 
-class A extends \ThreadedBase{
+class A extends \pmmp\thread\ThreadSafe{
 	public int $x;
 
-	public \ThreadedBase $threaded;
+	public \pmmp\thread\ThreadSafe $threaded;
 }
 
 $a = new A();
@@ -34,4 +34,4 @@ try{
 ?>
 --EXPECT--
 Cannot assign string to property A::$x of type int
-Cannot assign string to property A::$threaded of type ThreadedBase
+Cannot assign string to property A::$threaded of type pmmp\thread\ThreadSafe

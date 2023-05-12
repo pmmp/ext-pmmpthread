@@ -18,18 +18,20 @@
 
 #include <src/pthreads.h>
 
-/* {{{ */
-PHP_METHOD(Worker, run) {} /* }}} */
+#define Worker_method(name) PHP_METHOD(pmmp_thread_Worker, name)
 
-/* {{{ proto int Worker::stack(ThreadedRunnable $work)
+/* {{{ */
+Worker_method(run) {} /* }}} */
+
+/* {{{ proto int Worker::stack(Runnable $work)
 	Pushes an item onto the stack, returns the size of stack */
-PHP_METHOD(Worker, stack)
+Worker_method(stack)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 	zval *work;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(work, pthreads_threaded_runnable_entry)
+		Z_PARAM_OBJECT_OF_CLASS(work, pthreads_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
@@ -52,9 +54,9 @@ PHP_METHOD(Worker, stack)
 	RETURN_LONG(pthreads_worker_add_task(thread->worker_data, work));
 } /* }}} */
 
-/* {{{ proto ThreadedRunnable Worker::unstack()
+/* {{{ proto Runnable Worker::unstack()
 	Removes the first item from the stack */
-PHP_METHOD(Worker, unstack)
+Worker_method(unstack)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
@@ -72,7 +74,7 @@ PHP_METHOD(Worker, unstack)
 
 /* {{{ proto int Worker::getStacked()
 	Returns the current size of the stack */
-PHP_METHOD(Worker, getStacked)
+Worker_method(getStacked)
 {
 	pthreads_zend_object_t* thread = PTHREADS_FETCH;
 
@@ -81,19 +83,19 @@ PHP_METHOD(Worker, getStacked)
 	RETURN_LONG(pthreads_worker_task_queue_size(thread->worker_data));
 }
 
-/* {{{ proto bool Worker::collector(ThreadedRunnable collectable) */
-PHP_METHOD(Worker, collector) {
+/* {{{ proto bool Worker::collector(Runnable collectable) */
+Worker_method(collector) {
 	zval *collectable;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(collectable, pthreads_threaded_runnable_entry)
+		Z_PARAM_OBJECT_OF_CLASS(collectable, pthreads_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	RETURN_TRUE;
 } /* }}} */
 
 /* {{{ proto int Worker::collect([callable collector]) */
-PHP_METHOD(Worker, collect)
+Worker_method(collect)
 {
 	pthreads_zend_object_t *thread = PTHREADS_FETCH;
 	pthreads_call_t call = PTHREADS_CALL_EMPTY;

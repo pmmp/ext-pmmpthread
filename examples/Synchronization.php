@@ -1,13 +1,16 @@
 <?php
+
+use pmmp\thread\Thread;
+
 /*
 	Rules:
 		1. only ever wait FOR something
 		2. only ever wait FOR something
 		3. only ever wait FOR something
 
-	Only one thread may enter synchronized() on a Threaded object at any given time, unless the synchronized closure calls wait().
+	Only one thread may enter synchronized() on a ThreadSafe object at any given time, unless the synchronized closure calls wait().
 	Other threads which try to use synchronized() at the same time will block until either:
-		a) the currently-executing synchronized callable calls wait() on the Threaded object
+		a) the currently-executing synchronized callable calls wait() on the ThreadSafe object
 		b) the currently-executing synchronized callable returns.
 	
 	Threads are not guaranteed to execute in any particular order; therefore, the following code could execute in one of two ways:
@@ -47,7 +50,7 @@ $thread = new GoodCode();
 
 $thread->start();
 /*
- * wait() can ONLY be reliably used inside a synchronized block on the SAME Threaded object that you're synchronizing with.
+ * wait() can ONLY be reliably used inside a synchronized block on the SAME ThreadSafe object that you're synchronizing with.
  * The behaviour of wait() is undefined if used outside a synchronized() block on the same object that you're wait()ing on.
  * (This means it might or might not do what you expect).
  *

@@ -6,12 +6,12 @@ This test verifies the basic functionality, with a string that will be single-co
 --FILE--
 <?php
 
-$thread = new class extends \Thread{
+$thread = new class extends \pmmp\thread\Thread{
 
-	public \ThreadedArray $buffer;
+	public \pmmp\thread\ThreadSafeArray $buffer;
 
 	public function __construct(){
-		$this->buffer = new \ThreadedArray();
+		$this->buffer = new \pmmp\thread\ThreadSafeArray();
 	}
 
 	public ?string $str = null;

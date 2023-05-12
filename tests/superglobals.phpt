@@ -8,7 +8,7 @@ variables_order=ES
 --FILE--
 <?php
 
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{
 		var_dump(is_array($GLOBALS));
 		var_dump(is_array($_SERVER));

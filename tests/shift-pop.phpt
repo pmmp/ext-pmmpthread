@@ -4,7 +4,7 @@ Test shift and pop
 This test verifies that shift and pop functionality are working
 --FILE--
 <?php
-$s = new ThreadedArray();
+$s = new \pmmp\thread\ThreadSafeArray();
 
 $s["string"] = "string";
 var_dump($s);
@@ -31,35 +31,35 @@ while (($next = $s->pop())) {
 }
 ?>
 --EXPECT--
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   ["string"]=>
   string(6) "string"
 }
 string(6) "string"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#1 (0) {
 }
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   ["string"]=>
   string(6) "string"
 }
 string(6) "string"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#1 (0) {
 }
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   [0]=>
   string(4) "help"
 }
 string(4) "help"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#1 (0) {
 }
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   [1]=>
   string(4) "next"
 }
 string(4) "next"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#1 (0) {
 }
-object(ThreadedArray)#1 (100) {
+object(pmmp\thread\ThreadSafeArray)#1 (100) {
   [1]=>
   int(1)
   [2]=>

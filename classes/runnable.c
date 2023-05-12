@@ -18,9 +18,11 @@
 
 #include <src/pthreads.h>
 
-/* {{{ proto boolean ThreadedRunnable::isRunning()
-	Will return true while the referenced ThreadedRunnable is executing */
-PHP_METHOD(ThreadedRunnable, isRunning)
+#define Runnable_method(name) PHP_METHOD(pmmp_thread_Runnable, name)
+
+/* {{{ proto boolean Runnable::isRunning()
+	Will return true while the referenced Runnable is executing */
+Runnable_method(isRunning)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 
@@ -29,9 +31,9 @@ PHP_METHOD(ThreadedRunnable, isRunning)
 	RETURN_BOOL(pthreads_monitor_check(&threaded->monitor, PTHREADS_MONITOR_RUNNING));
 } /* }}} */
 
-/* {{{ proto boolean ThreadedRunnable::isTerminated()
-	Will return true if the referenced ThreadedRunnable suffered fatal errors or uncaught exceptions */
-PHP_METHOD(ThreadedRunnable, isTerminated)
+/* {{{ proto boolean Runnable::isTerminated()
+	Will return true if the referenced Runnable suffered fatal errors or uncaught exceptions */
+Runnable_method(isTerminated)
 {
 	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
 

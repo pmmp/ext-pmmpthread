@@ -7,7 +7,7 @@ class NTS{
 	public string $b = "hello";
 	public $c;
 }
-class TS extends \ThreadedBase{
+class TS extends \pmmp\thread\ThreadSafe{
 	public int $a = 1;
 	public string $b = "hello";
 	public $c;

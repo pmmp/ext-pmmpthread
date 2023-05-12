@@ -4,7 +4,7 @@ Test statics (bug 19)
 This test verifies that static members in declarations made outside of threads are available inside threads without error
 --FILE--
 <?php
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	static $static = "pthreads rocks!";
 
 	public function run() : void{ var_dump(self::$static); }

@@ -1,17 +1,17 @@
 --TEST--
-Test that Threaded doesn't crash when overwriting a member with a non-Threaded member
+Test that ThreadSafe doesn't crash when overwriting a member with a non-ThreadSafe member
 --FILE--
 <?php
 
-$v = new \ThreadedBase();
-$v2 = new \ThreadedBase();
+$v = new \pmmp\thread\ThreadSafe();
+$v2 = new \pmmp\thread\ThreadSafe();
 $v->a = function(){};
 
-$thread = new class($v, $v2) extends \Thread{
+$thread = new class($v, $v2) extends \pmmp\thread\Thread{
 	private $v;
 	private $v2;
 
-	public function __construct(\ThreadedBase $v, \ThreadedBase $v2){
+	public function __construct(\pmmp\thread\ThreadSafe $v, \pmmp\thread\ThreadSafe $v2){
 		$this->v = $v;
 		$this->v2 = $v2;
 	}
@@ -25,5 +25,5 @@ var_dump($v->a);
 
 ?>
 --EXPECT--
-object(ThreadedBase)#2 (0) {
+object(pmmp\thread\ThreadSafe)#2 (0) {
 }

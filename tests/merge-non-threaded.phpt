@@ -14,7 +14,7 @@ $stdClass->foo = "foo";
 $stdClass->bar = "bar";
 $stdClass->baz = "baz";
 
-$safe = new ThreadedArray();
+$safe = new \pmmp\thread\ThreadSafeArray();
 $safe->merge($array);
 
 $safe["foo"] = "bar";
@@ -29,7 +29,7 @@ var_dump($safe);
 
 ?>
 --EXPECTF--
-object(ThreadedArray)#%d (%d) {
+object(pmmp\thread\ThreadSafeArray)#%d (%d) {
   [0]=>
   int(0)
   [1]=>

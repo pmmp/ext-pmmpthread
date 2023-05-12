@@ -16,7 +16,7 @@ class standard {
     public $aNotEmpty;
 }
 
-class threadedObject extends \ThreadedBase {
+class threadedObject extends \pmmp\thread\ThreadSafe {
     public $t_false = false;
     public $t_null = null;
     public $t_emptyStr = "";

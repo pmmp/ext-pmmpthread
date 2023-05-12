@@ -10,7 +10,7 @@ This bug has not been fixed yet
 --FILE--
 <?php
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public $closure;
 
 	public function run() : void{

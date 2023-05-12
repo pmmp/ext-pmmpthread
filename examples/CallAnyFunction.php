@@ -1,4 +1,7 @@
 <?php
+
+use pmmp\thread\Thread;
+
 /*
 	This isn't built in as it's a pretty simple task to achieve for your self
 	I can't really think of any functions that are labourious enough that you

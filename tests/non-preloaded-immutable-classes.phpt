@@ -14,9 +14,9 @@ opcache.enable_cli=1
 
 require __DIR__ . '/assets/preloaded-stuff.php';
 
-$w = new Worker;
+$w = new \pmmp\thread\Worker;
 $w->start(PTHREADS_INHERIT_ALL);
-$w->stack(new class extends \ThreadedRunnable{
+$w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		var_dump(class_exists(SomeClass::class));
 		iAmPreloaded();

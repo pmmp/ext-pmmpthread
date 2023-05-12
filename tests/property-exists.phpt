@@ -1,7 +1,7 @@
 --TEST--
-Test that property_exists() works as expected with dynamic Threaded properties
+Test that property_exists() works as expected with dynamic ThreadSafe properties
 --DESCRIPTION--
-has_property() handler wasn't correctly implemented on Threaded objects, leading to inconsistent behaviour when assigning dynamic properties.
+has_property() handler wasn't correctly implemented on ThreadSafe objects, leading to inconsistent behaviour when assigning dynamic properties.
 --FILE--
 <?php
 
@@ -12,7 +12,7 @@ function test(object $t) : void{
 }
 
 test(new \stdClass);
-test(new \ThreadedBase);
+test(new \pmmp\thread\ThreadSafe);
 ?>
 --EXPECT--
 bool(true)

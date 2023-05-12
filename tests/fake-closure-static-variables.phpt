@@ -40,7 +40,7 @@ test($fcc);
 $fcc2 = \Closure::fromCallable('b');
 test2($fcc2);
 echo "end\n";
-$t = new class($fcc, $fcc2) extends \Thread{
+$t = new class($fcc, $fcc2) extends \pmmp\thread\Thread{
 	public function __construct(
 		private \Closure $fcc,
 		private \Closure $fcc2

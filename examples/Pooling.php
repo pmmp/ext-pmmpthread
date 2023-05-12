@@ -1,4 +1,10 @@
 <?php
+
+use pmmp\thread\Worker;
+use pmmp\thread\Pool;
+use pmmp\thread\Runnable;
+use pmmp\thread\ThreadSafe;
+
 class WebWorker extends Worker {
 
 	/*
@@ -31,7 +37,7 @@ class WebWorker extends Worker {
 	private static $connection;
 }
 
-class WebWork extends ThreadedRunnable {
+class WebWork extends Runnable {
 	/*
 	* An example of some work that depends upon a shared logger
 	* and a thread-local PDO connection
@@ -48,7 +54,7 @@ class WebWork extends ThreadedRunnable {
 	}
 }
 
-class SafeLog extends ThreadedBase {
+class SafeLog extends ThreadSafe {
 	
 	/*
 	* If logging were allowed to occur without synchronizing

@@ -26,7 +26,7 @@ class B extends A{
 
 $closure = B::getBoundClosure();
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public $closure;
 
 	public function run() : void{

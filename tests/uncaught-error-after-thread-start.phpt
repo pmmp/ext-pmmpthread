@@ -12,7 +12,7 @@ function a(int $a) : void{
 
 }
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public bool $ready = false;
 
 	public function run() : void{

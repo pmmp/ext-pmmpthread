@@ -5,14 +5,14 @@ We need to copy closures which are defined and bound by included classes
 --FILE--
 <?php
 
-class Foo extends \Thread {
+class Foo extends \pmmp\thread\Thread {
     /** @var bool */
     public $running;
 
-    /** @var \ThreadedArray */
+    /** @var \pmmp\thread\ThreadSafeArray */
     private $shared;
 
-    public function __construct(\ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
@@ -33,7 +33,7 @@ class Foo extends \Thread {
     }
 }
 
-$shared = new ThreadedArray();
+$shared = new \pmmp\thread\ThreadSafeArray();
 
 $foo = new Foo($shared);
 $foo->start();

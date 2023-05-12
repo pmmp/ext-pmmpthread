@@ -1,14 +1,17 @@
 <?php
 
 /**
+ * @generate-class-entries
+ */
+
+namespace pmmp\thread;
+
+/**
  * Pool class
  *
  * A Pool is a container for, and controller of, a number of Worker threads, the number of threads can be adjusted
  * during execution, additionally the Pool provides an easy mechanism to maintain and collect references in the
  * proper way.
- *
- * @link http://www.php.net/manual/en/class.pool.php
- * @generate-class-entries
  */
 class Pool{
     /**
@@ -52,8 +55,6 @@ class Pool{
      * @param integer $size The maximum number of Workers this Pool can create
      * @param string $class The class for new Workers
      * @param array $ctor An array of arguments to be passed to new Workers
-     *
-     * @link http://www.php.net/manual/en/pool.__construct.php
      */
     public function __construct(int $size, string $class = Worker::class, array $ctor = []) {}
 
@@ -64,8 +65,6 @@ class Pool{
      *
      * @param callable|null $collector
      * @return int the number of tasks collected from the pool
-	 *
-     * @link http://www.php.net/manual/en/pool.collect.php
      */
     public function collect(callable $collector = null) : int{}
 
@@ -73,34 +72,30 @@ class Pool{
      * Resize the Pool
      *
      * @param integer $size The maximum number of Workers this Pool can create
-     *
-     * @link http://www.php.net/manual/en/pool.resize.php
      */
     public function resize(int $size) : void{}
 
     /**
      * Shutdown all Workers in this Pool
-     *
-     * @link http://www.php.net/manual/en/pool.shutdown.php
      */
     public function shutdown() : void{}
 
     /**
      * Submit the task to the next Worker in the Pool
      *
-     * @param Threaded $task The task for execution
+     * @param Runnable $task The task for execution
      *
      * @return int the identifier of the Worker executing the object
      */
-    public function submit(ThreadedRunnable $task) : int{}
+    public function submit(Runnable $task) : int{}
 
     /**
      * Submit the task to the specific Worker in the Pool
      *
      * @param int $worker The worker for execution
-     * @param Threaded $task The task for execution
+     * @param Runnable $task The task for execution
      *
      * @return int the identifier of the Worker that accepted the object
      */
-    public function submitTo(int $worker, ThreadedRunnable $task) : int{}
+    public function submitTo(int $worker, Runnable $task) : int{}
 }

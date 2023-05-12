@@ -3,7 +3,7 @@ Test that user-defined Thread::join() overrides work correctly
 --FILE--
 <?php
 
-$c = new class extends \Thread{
+$c = new class extends \pmmp\thread\Thread{
 	private bool $waiting = true;
 
 	public function run() : void{

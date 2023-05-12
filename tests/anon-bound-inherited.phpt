@@ -1,12 +1,12 @@
 --TEST--
 Test anonymous classes (bound inherited class)
 --DESCRIPTION--
-This test verifies that anonymous Threaded objects work as expected
+This test verifies that anonymous ThreadSafe objects work as expected
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
-$collectable = new class extends ThreadedRunnable {
+$collectable = new class extends \pmmp\thread\Runnable {
 	/** z */
 	const Z = 1;
 	/** a */
@@ -16,7 +16,7 @@ $collectable = new class extends ThreadedRunnable {
 
 	public function run() : void{
 		var_dump(
-			$this instanceof ThreadedRunnable,
+			$this instanceof \pmmp\thread\Runnable,
 			self::Z,
 			self::$a,
 			$this->c

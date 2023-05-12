@@ -10,7 +10,7 @@ seconds.
 <?php if (defined('PHP_WINDOWS_VERSION_MAJOR')) die("skip: no support for this on windows"); ?>
 --FILE--
 <?php
-class T extends Thread {
+class T extends \pmmp\thread\Thread {
         public $data;
         public function run() : void{
 			$start = time();

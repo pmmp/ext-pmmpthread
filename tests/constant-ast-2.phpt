@@ -15,7 +15,7 @@ class C{
 	public $field2 = TEST;
 }
 
-$thread = new class extends Thread{
+$thread = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		var_dump(TEST);
 		var_dump(C::TEST4, C::$FIELD, (new C)->field2);

@@ -15,7 +15,7 @@ class Test{
 
 Test::init(3);
 
-$thread = new Worker;
+$thread = new \pmmp\thread\Worker;
 $thread->start(PTHREADS_INHERIT_CLASSES);
 
 var_dump(Test::$array);

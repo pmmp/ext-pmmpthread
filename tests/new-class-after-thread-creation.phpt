@@ -6,11 +6,11 @@ created, where the new class implements at least one interface
 --FILE--
 <?php
 
-$worker = new \Worker();
+$worker = new \pmmp\thread\Worker();
 $worker->start();
 
 interface A {}
-class task extends ThreadedRunnable implements A {
+class task extends \pmmp\thread\Runnable implements A {
 	public function run() : void{}
 }
 

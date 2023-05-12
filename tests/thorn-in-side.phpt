@@ -16,7 +16,7 @@ class childClass extends parentClass {
 
 }
 
-class clientThread extends Thread {
+class clientThread extends \pmmp\thread\Thread {
 
     public function run() : void{
         $objChild = new childClass();

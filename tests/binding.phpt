@@ -4,7 +4,7 @@ Test pthreads connections
 This test verifies that variables are bound properly by pthreads
 --FILE--
 <?php
-class ThreadTesting extends Thread {
+class ThreadTesting extends \pmmp\thread\Thread {
 	public $other;
 	public $done;
 	
@@ -19,7 +19,7 @@ class ThreadTesting extends Thread {
 	}
 }
 
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public $other;
 	public $done;
 	

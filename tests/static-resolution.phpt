@@ -4,7 +4,7 @@ Test static:: regression
 Bug #210 shows static:: requires different logic to self::
 --FILE--
 <?php
-class testbug extends Thread
+class testbug extends \pmmp\thread\Thread
 {
     public static $somevar = 123;
     

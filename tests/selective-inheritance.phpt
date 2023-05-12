@@ -12,7 +12,7 @@ define ("TEST_CONSTANT", true);
 
 class TestClass {}
 
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{ 
 		var_dump(function_exists("TestFunction"));
 		var_dump(defined("TEST_CONSTANT"));

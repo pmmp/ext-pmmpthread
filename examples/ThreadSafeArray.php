@@ -1,13 +1,17 @@
 <?php
+
+use pmmp\thread\ThreadSafeArray;
+use pmmp\thread\Thread;
+
 /**
 *	Regular PHP arrays cannot be shared between threads, as they cannot be made thread-safe.
-*	For this purpose, pthreads has a ThreadedArray class, which provides similar functionality to a regular array.
+*	For this purpose, pthreads has a ThreadSafeArray class, which provides similar functionality to a regular array.
 */
 
 /* you might want to set this to 100 before running if you're running on older ( dual core ) hardware */
 /* never, _ever_, _ever_, _ever_ create 1000 threads in a PHP application, if you think there's a need to create that many threads:
 	you are doing it wrong */
-/* the number is high to show that manipulating a stackable as an array in this way is completely safe and reliable */
+/* the number is high to show that manipulating a ThreadSafeArray as an array in this way is completely safe and reliable */
 $hammers = 500;
 /** $hammers threads are about to edit this array */
 
@@ -30,7 +34,7 @@ class T extends Thread {
 	}
 }
 /* create the array here for passing */
-$s = new ThreadedArray();
+$s = new ThreadSafeArray();
 /* set a pointless value */
 $s[]="h";
 /* show it was set */

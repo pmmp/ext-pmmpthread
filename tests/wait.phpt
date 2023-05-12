@@ -4,7 +4,7 @@ Test wait/notify
 This test will verify wait/notify functionality
 --FILE--
 <?php
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public $sent;
 	
 	public function __construct() {

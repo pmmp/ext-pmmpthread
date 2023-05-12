@@ -11,7 +11,7 @@ $func = function() use (&$a) : void{
 	var_dump($a);
 };
 
-$array = new \ThreadedArray();
+$array = new \pmmp\thread\ThreadSafeArray();
 try{
 	$array["func"] = $func;
 }catch(\Error $e){

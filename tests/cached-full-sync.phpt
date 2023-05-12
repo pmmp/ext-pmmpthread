@@ -7,15 +7,15 @@ This test verifies that the bug is fixed.
 --FILE--
 <?php
 
-$array = new \ThreadedArray();
+$array = new \pmmp\thread\ThreadSafeArray();
 
-$t1 = new class($array) extends \Thread{
+$t1 = new class($array) extends \pmmp\thread\Thread{
 	public function __construct(
-		private \ThreadedArray $array
+		private \pmmp\thread\ThreadSafeArray $array
 	){}
 
 	public function run() : void{
-		$this->array[] = new \ThreadedArray();
+		$this->array[] = new \pmmp\thread\ThreadSafeArray();
 	}
 };
 $t1->start() && $t1->join();
@@ -23,8 +23,8 @@ $t1->start() && $t1->join();
 var_dump($array);
 ?>
 --EXPECT--
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#1 (1) {
   [0]=>
-  object(ThreadedArray)#3 (0) {
+  object(pmmp\thread\ThreadSafeArray)#3 (0) {
   }
 }

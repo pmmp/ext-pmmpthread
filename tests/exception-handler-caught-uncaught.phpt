@@ -4,7 +4,7 @@ Test exception handler (caught and uncaught) bug #493
 Mishandling of exceptions caused catch() blocks to be ignored in some cases
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 
     public function run() : void{
 		set_exception_handler(function($ex) {

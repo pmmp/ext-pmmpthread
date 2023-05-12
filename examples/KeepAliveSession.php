@@ -1,5 +1,7 @@
 <?php
 
+use pmmp\thread\Thread;
+
 /**
  * This is small example that shows the implementation of a thread based HTTP server
  * supporting Connection: keep-alive and how session handling can be implemented.
@@ -67,10 +69,8 @@ class Test extends Thread
 
     /**
      * The thread's run() method that runs in parallel.
-     * 
-     * @link http://www.php.net/manual/en/thread.run.php
      */
-    public function run()
+    public function run() : void
     {
                 
         // initialize the local variables and the socket

@@ -7,7 +7,7 @@ This test verifies that require_once and include are working as expected
 define("INC", sprintf("%s/includeme.inc", dirname(__FILE__)));
 
 include(INC);
-class TestThread extends Thread {
+class TestThread extends \pmmp\thread\Thread {
 	public function run() : void{
 		require_once(INC);
 		if (!function_exists("myTestFunc")) {

@@ -10,7 +10,7 @@ trait testTrait {
     }
 }
 
-class myThread extends Thread {
+class myThread extends \pmmp\thread\Thread {
     use testTrait  {fromTrait as fromTraitAliased;}
 
     public function run() : void{
