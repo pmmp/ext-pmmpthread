@@ -7,8 +7,7 @@ use pmmp\thread\Runnable;
 /*
 * Often an application will have singleton-like objects, such as PDO connections or such.
 * 
-* You cannot pass such objects into a Thread, because they do not gracefully or properly serialize
-* themselves and are not thread-safe objects.
+* You cannot pass such objects into a Thread, because they are not thread-safe objects.
 *
 * Even if you could pass the object to a Thread, it would not be safe; They were never intended to be used that
 * way and don't have the machinery that thread-safe objects have that make them safe to share.
@@ -36,7 +35,7 @@ class PDOWorker extends Worker {
 	private $config;
 	
 	/*
-	* static variables are treated as thread-local by pthreads
+	* static properties are thread-local - changes on one thread won't be seen by other threads
 	*/
 	private static $connection;
 }

@@ -90,7 +90,7 @@ jobs:
 
       - name: Generate php.ini
         run: |
-          echo "extension=pthreads.so" > $GITHUB_WORKSPACE/php.ini
+          echo "extension=pmmpthread.so" > $GITHUB_WORKSPACE/php.ini
           if [[ "${{ matrix.opcache }}" != "off" ]]; then
             echo "Enabling OPcache"
             echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini

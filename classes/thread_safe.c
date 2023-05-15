@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 
 #define ThreadSafe_method(name) PHP_METHOD(pmmp_thread_ThreadSafe, name)
 
@@ -26,7 +26,7 @@
 		Otherwise returns a boolean indication of success */
 ThreadSafe_method(wait)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded = PMMPTHREAD_FETCH_TS;
 	zend_long timeout = 0L;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
@@ -34,7 +34,7 @@ ThreadSafe_method(wait)
 		Z_PARAM_LONG(timeout)
 	ZEND_PARSE_PARAMETERS_END();
 	
-	RETURN_BOOL(pthreads_monitor_wait(&threaded->monitor, timeout) == SUCCESS);
+	RETURN_BOOL(pmmpthread_monitor_wait(&threaded->monitor, timeout) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto boolean ThreadSafe::notify()
@@ -42,11 +42,11 @@ ThreadSafe_method(wait)
 		Will return a boolean indication of success */
 ThreadSafe_method(notify)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_notify(&threaded->monitor) == SUCCESS);
+	RETURN_BOOL(pmmpthread_monitor_notify(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto boolean ThreadSafe::notifyOne()
@@ -54,11 +54,11 @@ ThreadSafe_method(notify)
 		Will return a boolean indication of success */
 ThreadSafe_method(notifyOne)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_notify_one(&threaded->monitor) == SUCCESS);
+	RETURN_BOOL(pmmpthread_monitor_notify_one(&threaded->monitor) == SUCCESS);
 } /* }}} */
 
 /* {{{ proto void ThreadSafe::synchronized(Callable function, ...)
@@ -66,10 +66,10 @@ ThreadSafe_method(notifyOne)
 	 */
 ThreadSafe_method(synchronized)
 {
-	pthreads_call_t call = PTHREADS_CALL_EMPTY;
+	pmmpthread_call_t call = PMMPTHREAD_CALL_EMPTY;
 	int argc = 0;
 	zval *argv = NULL;
-	pthreads_object_t* threaded= PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded= PMMPTHREAD_FETCH_TS;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, -1)
 		Z_PARAM_FUNC(call.fci, call.fcc)
@@ -81,9 +81,9 @@ ThreadSafe_method(synchronized)
 
 	call.fci.retval = return_value;
 
-	if (pthreads_monitor_lock(&threaded->monitor)) {
+	if (pmmpthread_monitor_lock(&threaded->monitor)) {
 		/* synchronize property tables */
-		pthreads_store_sync_local_properties(Z_OBJ_P(getThis()));
+		pmmpthread_store_sync_local_properties(Z_OBJ_P(getThis()));
 
 		zend_try {
 			/* call the closure */
@@ -92,7 +92,7 @@ ThreadSafe_method(synchronized)
 			ZVAL_UNDEF(return_value);
 		} zend_end_try ();
 
-		pthreads_monitor_unlock(&threaded->monitor);
+		pmmpthread_monitor_unlock(&threaded->monitor);
 	}
 
 	zend_fcall_info_args_clear(&call.fci, 1);

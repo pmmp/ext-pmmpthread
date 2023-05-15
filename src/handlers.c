@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -28,46 +28,46 @@
 typedef uint32_t zend_guard;
 
 /* {{{ */
-int pthreads_count_properties(PTHREADS_COUNT_PASSTHRU_D) {
-	return pthreads_store_count(object, count);
+int pmmpthread_count_properties(PMMPTHREAD_COUNT_PASSTHRU_D) {
+	return pmmpthread_store_count(object, count);
 } /* }}} */
 
 /* {{{ */
-HashTable* pthreads_read_debug(PTHREADS_READ_DEBUG_PASSTHRU_D) {
+HashTable* pmmpthread_read_debug(PMMPTHREAD_READ_DEBUG_PASSTHRU_D) {
 	HashTable *table = emalloc(sizeof(HashTable));
 
 	zend_hash_init(table, 8, NULL, ZVAL_PTR_DTOR, 0);
 	*is_temp = 1;
 
-	pthreads_store_tohash(object, table);
+	pmmpthread_store_tohash(object, table);
 
 	return table;
 } /* }}} */
 
 /* {{{ */
-HashTable* pthreads_read_properties(PTHREADS_READ_PROPERTIES_PASSTHRU_D) {
-	pthreads_zend_object_t* threaded = PTHREADS_FETCH_FROM(object);
+HashTable* pmmpthread_read_properties(PMMPTHREAD_READ_PROPERTIES_PASSTHRU_D) {
+	pmmpthread_zend_object_t* threaded = PMMPTHREAD_FETCH_FROM(object);
 
 	rebuild_object_properties(&threaded->std);
 
-	pthreads_store_tohash(
+	pmmpthread_store_tohash(
 		&threaded->std, threaded->std.properties);
 
 	return threaded->std.properties;
 } /* }}} */
 
 /* {{{ */
-zval *pthreads_get_property_ptr_ptr_stub(zend_object *object, zend_string *member, int type, void **cache_slot) { return NULL; }
+zval *pmmpthread_get_property_ptr_ptr_stub(zend_object *object, zend_string *member, int type, void **cache_slot) { return NULL; }
 /* }}} */
 
 /* {{{ */
-zval * pthreads_read_dimension(PTHREADS_READ_DIMENSION_PASSTHRU_D) {
-	pthreads_store_read(object, member, type, rv);
+zval * pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
+	pmmpthread_store_read(object, member, type, rv);
 
 	return rv;
 }
 
-zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
+zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 	zval zmember;
 	zend_guard* guard;
 
@@ -82,7 +82,7 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 		if (info == ZEND_WRONG_PROPERTY_INFO) {
 			rv = &EG(uninitialized_zval);
 		} else if (info == NULL || (info->flags & ZEND_ACC_STATIC) != 0) { //dynamic property
-			pthreads_store_read(object, &zmember, type, rv);
+			pmmpthread_store_read(object, &zmember, type, rv);
 			if (Z_ISUNDEF_P(rv)) {
 				if (type != BP_VAR_IS) {
 					zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
@@ -92,7 +92,7 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 		} else {
 			//defined property, use mangled name
 			ZVAL_STR(&zmember, info->name);
-			pthreads_store_read(object, &zmember, type, rv);
+			pmmpthread_store_read(object, &zmember, type, rv);
 
 			if (Z_ISUNDEF_P(rv)) {
 				if (type != BP_VAR_IS && !EG(exception)) {
@@ -109,7 +109,7 @@ zval* pthreads_read_property(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-zval* pthreads_read_property_deny(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
+zval* pmmpthread_read_property_deny(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 	if (type != BP_VAR_IS) {
 		zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
 	}
@@ -118,8 +118,8 @@ zval* pthreads_read_property_deny(PTHREADS_READ_PROPERTY_PASSTHRU_D) {
 } /* }}} */
 
 /* {{{ */
-void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
-	if (pthreads_store_write(object, member, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
+void pmmpthread_write_dimension(PMMPTHREAD_WRITE_DIMENSION_PASSTHRU_D) {
+	if (pmmpthread_store_write(object, member, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
 		zend_throw_error(
 			NULL,
 			"Cannot assign non-thread-safe value of type %s to %s",
@@ -129,7 +129,7 @@ void pthreads_write_dimension(PTHREADS_WRITE_DIMENSION_PASSTHRU_D) {
 	}
 }
 
-zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
+zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 	zval zmember;
 	zend_guard* guard;
 
@@ -162,7 +162,7 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 				}
 			}
 
-			if (ok && pthreads_store_write(object, &zmember, value, PTHREADS_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
+			if (ok && pmmpthread_store_write(object, &zmember, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
 				zend_throw_error(
 					NULL,
 					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
@@ -179,18 +179,18 @@ zval* pthreads_write_property(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-zval* pthreads_write_property_deny(PTHREADS_WRITE_PROPERTY_PASSTHRU_D) {
+zval* pmmpthread_write_property_deny(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 	zend_throw_error(NULL, "Cannot create dynamic property %s::$%s",
 		ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
 	return &EG(uninitialized_zval);
 } /* }}} */
 
 /* {{{ */
-int pthreads_has_dimension(PTHREADS_HAS_DIMENSION_PASSTHRU_D) {
-	return pthreads_store_isset(object, member, has_set_exists);
+int pmmpthread_has_dimension(PMMPTHREAD_HAS_DIMENSION_PASSTHRU_D) {
+	return pmmpthread_store_isset(object, member, has_set_exists);
 }
 
-int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
+int pmmpthread_has_property(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
 	int isset;
 	zval zmember;
 	zend_guard* guard;
@@ -215,7 +215,7 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
-			isset = pthreads_store_isset(object, &zmember, has_set_exists);
+			isset = pmmpthread_store_isset(object, &zmember, has_set_exists);
 		} else isset = 0;
 	}
 	return isset;
@@ -223,16 +223,16 @@ int pthreads_has_property(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
 /* }}} */
 
 /* {{{ */
-int pthreads_has_property_deny(PTHREADS_HAS_PROPERTY_PASSTHRU_D) {
+int pmmpthread_has_property_deny(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
 	return 0;
 } /* }}} */
 
 /* {{{ */
-void pthreads_unset_dimension(PTHREADS_UNSET_DIMENSION_PASSTHRU_D) {
-	pthreads_store_delete(object, member);
+void pmmpthread_unset_dimension(PMMPTHREAD_UNSET_DIMENSION_PASSTHRU_D) {
+	pmmpthread_store_delete(object, member);
 }
 
-void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
+void pmmpthread_unset_property(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 	zval zmember;
 	zend_guard* guard;
 
@@ -255,22 +255,22 @@ void pthreads_unset_property(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
 			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
-			pthreads_store_delete(object, &zmember);
+			pmmpthread_store_delete(object, &zmember);
 		}
 	}
 }
 /* }}} */
 
 /* {{{ */
-void pthreads_unset_property_deny(PTHREADS_UNSET_PROPERTY_PASSTHRU_D) {
+void pmmpthread_unset_property_deny(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 	//NOOP
 } /* }}} */
 
 /* {{{ */
-int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
+int pmmpthread_cast_object(PMMPTHREAD_CAST_PASSTHRU_D) {
 	switch (type) {
 		case IS_ARRAY: {
-			pthreads_store_tohash(from, Z_ARRVAL_P(to));
+			pmmpthread_store_tohash(from, Z_ARRVAL_P(to));
 			return SUCCESS;
 		} break;
 	}
@@ -279,9 +279,9 @@ int pthreads_cast_object(PTHREADS_CAST_PASSTHRU_D) {
 } /* }}} */
 
 /* {{{ */
-int pthreads_compare_objects(PTHREADS_COMPARE_PASSTHRU_D) {
-	pthreads_object_t *left = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(op1));
-	pthreads_object_t *right = PTHREADS_FETCH_TS_FROM(Z_OBJ_P(op2));
+int pmmpthread_compare_objects(PMMPTHREAD_COMPARE_PASSTHRU_D) {
+	pmmpthread_object_t *left = PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(op1));
+	pmmpthread_object_t *right = PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(op2));
 
 	/* comparing property tables is not useful or efficient for threaded objects */
 	/* in addition, it might be useful to know if two variables are infact the same physical threaded object */

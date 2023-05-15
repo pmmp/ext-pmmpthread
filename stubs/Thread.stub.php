@@ -16,7 +16,7 @@ abstract class Thread extends Runnable
 {
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_NONE
+	 * @cvalue PMMPTHREAD_INHERIT_NONE
 	 *
 	 * The newly created thread will inherit nothing from its parent, as if starting a new request.
 	 */
@@ -24,7 +24,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_INI
+	 * @cvalue PMMPTHREAD_INHERIT_INI
 	 *
 	 * The newly created thread will inherit INI overrides set by ini_set() in the parent thread(s).
 	 * If not set, the settings defined in php.ini will be used.
@@ -33,7 +33,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_CONSTANTS
+	 * @cvalue PMMPTHREAD_INHERIT_CONSTANTS
 	 *
 	 * The newly created thread will copy all global constants with simple or thread-safe values from its parent.
 	 * Note: Constants containing non-thread-safe objects or resources cannot be copied.
@@ -45,7 +45,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_FUNCTIONS
+	 * @cvalue PMMPTHREAD_INHERIT_FUNCTIONS
 	 *
 	 * The newly created thread will copy all global functions from its parent.
 	 *
@@ -56,19 +56,23 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_CLASSES
+	 * @cvalue PMMPTHREAD_INHERIT_CLASSES
 	 *
 	 * The newly created thread will copy all classes from its parent.
 	 *
 	 * !!!!! WARNING !!!!! This has a significant performance cost in large applications with many
 	 * classes. Avoid relying on this. Prefer relying on autoloading instead (e.g. Composer
 	 * bootstrap files), which is more reliable (and takes less memory, when OPcache is used).
+	 *
+	 * Note: Disabling this flag only prevents class copying during thread start. Classes may still
+	 * be copied at other times, such as when a new thread is started, since no autoloader would be
+	 * present inside the new thread to load the thread's own class.
 	 */
 	public const INHERIT_CLASSES = UNKNOWN;
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_INCLUDES
+	 * @cvalue PMMPTHREAD_INHERIT_INCLUDES
 	 *
 	 * The newly created thread will copy the list of included and required files from its parent.
 	 */
@@ -76,7 +80,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_COMMENTS
+	 * @cvalue PMMPTHREAD_INHERIT_COMMENTS
 	 *
 	 * The newly created thread will copy doc comments of any classes, functions or constants that
 	 * it inherits from its parent.
@@ -85,7 +89,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_INHERIT_ALL
+	 * @cvalue PMMPTHREAD_INHERIT_ALL
 	 *
 	 * Everything (classes, functions, constants, includes, doc comments, ini settings) will be
 	 * copied from the parent thread.
@@ -98,7 +102,7 @@ abstract class Thread extends Runnable
 
 	/**
 	 * @var int
-	 * @cvalue PTHREADS_ALLOW_HEADERS
+	 * @cvalue PMMPTHREAD_ALLOW_HEADERS
 	 *
 	 * Allows the new thread to emit HTTP headers.
 	 */

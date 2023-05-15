@@ -12,8 +12,7 @@ namespace pmmp\thread;
  * ThreadSafe exposes similar synchronization functionality to the old Threaded, but
  * with a less bloated interface which reduces undefined behaviour possibilities.
  *
- * ThreadSafe objects form the basis of pthreads ability to execute user code in parallel;
- * they expose and include synchronization methods.
+ * ThreadSafe objects expose synchronization methods and wait/notify functionality.
  *
  * ThreadSafe objects, most importantly, provide implicit safety for the programmer;
  * all operations on the object scope are safe.

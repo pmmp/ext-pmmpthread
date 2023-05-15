@@ -6,8 +6,6 @@
 * Selective Inheritance serves as a way to choose which parts of the environment are available in threading contexts
 * Following is some code that demonstrates the use of this feature
 *
-* Note: if a member of a pthreads object, is an object itself of a user defined type, and the class table is not inherited
-*   you are asking for trouble !!
 * Note: the included_files table is only populated where Thread::INHERIT_INCLUDES is set
 */
 

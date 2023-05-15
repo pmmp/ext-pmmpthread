@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2015                                       |
   +----------------------------------------------------------------------+
@@ -16,10 +16,10 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 #include <src/monitor.h>
 
-zend_result pthreads_monitor_init(pthreads_monitor_t* m) {
+zend_result pmmpthread_monitor_init(pmmpthread_monitor_t* m) {
 	pthread_mutexattr_t at;
 
 	m->state = 0;
@@ -46,24 +46,24 @@ zend_result pthreads_monitor_init(pthreads_monitor_t* m) {
 	return SUCCESS;
 }
 
-void pthreads_monitor_destroy(pthreads_monitor_t* m) {
+void pmmpthread_monitor_destroy(pmmpthread_monitor_t* m) {
 	pthread_mutex_destroy(&m->mutex);
 	pthread_cond_destroy(&m->cond);
 }
 
-zend_bool pthreads_monitor_lock(pthreads_monitor_t *m) {
+zend_bool pmmpthread_monitor_lock(pmmpthread_monitor_t *m) {
 	return (pthread_mutex_lock(&m->mutex) == 0);
 }
 
-zend_bool pthreads_monitor_unlock(pthreads_monitor_t *m) {
+zend_bool pmmpthread_monitor_unlock(pmmpthread_monitor_t *m) {
 	return (pthread_mutex_unlock(&m->mutex) == 0);
 }
 
-pthreads_monitor_state_t pthreads_monitor_check(pthreads_monitor_t *m, pthreads_monitor_state_t state) {
+pmmpthread_monitor_state_t pmmpthread_monitor_check(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state) {
 	return (m->state & state);
 }
 
-int pthreads_monitor_wait(pthreads_monitor_t *m, long timeout) {
+int pmmpthread_monitor_wait(pmmpthread_monitor_t *m, long timeout) {
 	struct timeval time;
 	struct timespec spec;
 
@@ -85,37 +85,37 @@ int pthreads_monitor_wait(pthreads_monitor_t *m, long timeout) {
 	return pthread_cond_timedwait(&m->cond, &m->mutex, &spec);
 }
 
-int pthreads_monitor_notify(pthreads_monitor_t *m) {
+int pmmpthread_monitor_notify(pmmpthread_monitor_t *m) {
 	return pthread_cond_broadcast(&m->cond);
 }
 
-int pthreads_monitor_notify_one(pthreads_monitor_t *m) {
+int pmmpthread_monitor_notify_one(pmmpthread_monitor_t *m) {
 	return pthread_cond_signal(&m->cond);
 }
 
-void pthreads_monitor_wait_until(pthreads_monitor_t *m, pthreads_monitor_state_t state) {
-	if (pthreads_monitor_lock(m)) {
-		while (!pthreads_monitor_check(m, state)) {
-			if (pthreads_monitor_wait(m, 0) != 0) {
+void pmmpthread_monitor_wait_until(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state) {
+	if (pmmpthread_monitor_lock(m)) {
+		while (!pmmpthread_monitor_check(m, state)) {
+			if (pmmpthread_monitor_wait(m, 0) != 0) {
 				break;
 			}
 		}
-		pthreads_monitor_unlock(m);
+		pmmpthread_monitor_unlock(m);
 	}
 }
 
-void pthreads_monitor_add(pthreads_monitor_t *m, pthreads_monitor_state_t state) {
-	if (pthreads_monitor_lock(m)) {
+void pmmpthread_monitor_add(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state) {
+	if (pmmpthread_monitor_lock(m)) {
 		m->state |= state;
-		pthreads_monitor_notify(m);
-		pthreads_monitor_unlock(m);
+		pmmpthread_monitor_notify(m);
+		pmmpthread_monitor_unlock(m);
 	}
 }
 
-void pthreads_monitor_remove(pthreads_monitor_t *m, pthreads_monitor_state_t state) {
-	if (pthreads_monitor_lock(m)) {
+void pmmpthread_monitor_remove(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state) {
+	if (pmmpthread_monitor_lock(m)) {
 		m->state &= ~state;
-		pthreads_monitor_notify(m);
-		pthreads_monitor_unlock(m);
+		pmmpthread_monitor_notify(m);
+		pmmpthread_monitor_unlock(m);
 	}
 }

@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 
 #define Worker_method(name) PHP_METHOD(pmmp_thread_Worker, name)
 
@@ -27,20 +27,20 @@ Worker_method(run) {} /* }}} */
 	Pushes an item onto the stack, returns the size of stack */
 Worker_method(stack)
 {
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
+	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
 	zval *work;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(work, pthreads_ce_runnable)
+		Z_PARAM_OBJECT_OF_CLASS(work, pmmpthread_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call stack",
 			thread->std.ce->name->val);
 		return;
 	}
-	if (pthreads_monitor_check(&thread->ts_obj->monitor, PTHREADS_MONITOR_ERROR | PTHREADS_MONITOR_AWAIT_JOIN | PTHREADS_MONITOR_JOINED)) {
+	if (pmmpthread_monitor_check(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR | PMMPTHREAD_MONITOR_AWAIT_JOIN | PMMPTHREAD_MONITOR_JOINED)) {
 		//allow submitting tasks before the worker starts, but not after it exits
 		zend_throw_exception_ex(
 			spl_ce_RuntimeException,
@@ -51,36 +51,36 @@ Worker_method(stack)
 		return;
 	}
 
-	RETURN_LONG(pthreads_worker_add_task(thread->worker_data, work));
+	RETURN_LONG(pmmpthread_worker_add_task(thread->worker_data, work));
 } /* }}} */
 
 /* {{{ proto Runnable Worker::unstack()
 	Removes the first item from the stack */
 Worker_method(unstack)
 {
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
+	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
 
 	zend_parse_parameters_none_throw();
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call unstack",
 			thread->std.ce->name->val);
 		return;
 	}
 
-	pthreads_worker_dequeue_task(thread->worker_data, return_value);
+	pmmpthread_worker_dequeue_task(thread->worker_data, return_value);
 }
 
 /* {{{ proto int Worker::getStacked()
 	Returns the current size of the stack */
 Worker_method(getStacked)
 {
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
+	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_LONG(pthreads_worker_task_queue_size(thread->worker_data));
+	RETURN_LONG(pmmpthread_worker_task_queue_size(thread->worker_data));
 }
 
 /* {{{ proto bool Worker::collector(Runnable collectable) */
@@ -88,7 +88,7 @@ Worker_method(collector) {
 	zval *collectable;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(collectable, pthreads_ce_runnable)
+		Z_PARAM_OBJECT_OF_CLASS(collectable, pmmpthread_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	RETURN_TRUE;
@@ -97,8 +97,8 @@ Worker_method(collector) {
 /* {{{ proto int Worker::collect([callable collector]) */
 Worker_method(collect)
 {
-	pthreads_zend_object_t *thread = PTHREADS_FETCH;
-	pthreads_call_t call = PTHREADS_CALL_EMPTY;
+	pmmpthread_zend_object_t *thread = PMMPTHREAD_FETCH;
+	pmmpthread_call_t call = PMMPTHREAD_CALL_EMPTY;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
 		Z_PARAM_OPTIONAL
@@ -106,20 +106,20 @@ Worker_method(collect)
 	ZEND_PARSE_PARAMETERS_END();
 
 	if (!ZEND_NUM_ARGS()) {
-		PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(getThis()));
+		PMMPTHREAD_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(getThis()));
 	}
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"only the creator of this %s may call collect",
 			thread->std.ce->name->val);
 		return;
 	}
 
-	RETVAL_LONG(pthreads_worker_collect_tasks(thread->worker_data, &call, pthreads_worker_collect_function));
+	RETVAL_LONG(pmmpthread_worker_collect_tasks(thread->worker_data, &call, pmmpthread_worker_collect_function));
 
 	if (!ZEND_NUM_ARGS()) {
-		PTHREADS_WORKER_COLLECTOR_DTOR(call);
+		PMMPTHREAD_WORKER_COLLECTOR_DTOR(call);
 	}
 }
 

@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2015                                       |
   +----------------------------------------------------------------------+
@@ -15,15 +15,15 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_WORKER_H
-#define HAVE_PTHREADS_WORKER_H
+#ifndef HAVE_PMMPTHREAD_WORKER_H
+#define HAVE_PMMPTHREAD_WORKER_H
 
-#include "pthreads.h"
+#include "pmmpthread.h"
 
 #include "queue.h"
 
-#define PTHREADS_WORKER_COLLECTOR_INIT(call, w) do { \
-	memset(&call, 0, sizeof(pthreads_call_t)); \
+#define PMMPTHREAD_WORKER_COLLECTOR_INIT(call, w) do { \
+	memset(&call, 0, sizeof(pmmpthread_call_t)); \
 	call.fci.size = sizeof(zend_fcall_info); \
 	ZVAL_STR(&call.fci.function_name, zend_string_init(ZEND_STRL("collector"), 0)); \
 	call.fcc.function_handler = (zend_function*) zend_hash_find_ptr(&(w)->ce->function_table, Z_STR(call.fci.function_name)); \
@@ -33,24 +33,24 @@
 	call.fcc.object = (w); \
 } while(0)
 
-#define PTHREADS_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
+#define PMMPTHREAD_WORKER_COLLECTOR_DTOR(call) zval_ptr_dtor(&call.fci.function_name)
 
-typedef struct _pthreads_worker_data_t pthreads_worker_data_t;
-typedef zend_bool (*pthreads_worker_collect_function_t) (pthreads_call_t *call, zval *value);
+typedef struct _pmmpthread_worker_data_t pmmpthread_worker_data_t;
+typedef zend_bool (*pmmpthread_worker_collect_function_t) (pmmpthread_call_t *call, zval *value);
 
-pthreads_worker_data_t* pthreads_worker_data_alloc(pthreads_monitor_t *monitor);
-zend_long pthreads_worker_task_queue_size(pthreads_worker_data_t *worker_data);
-void pthreads_worker_data_free(pthreads_worker_data_t *worker_data);
-zend_long pthreads_worker_add_task(pthreads_worker_data_t *worker_data, zval *value);
-zend_long pthreads_worker_dequeue_task(pthreads_worker_data_t *worker_data, zval *value);
-zend_long pthreads_worker_collect_tasks(pthreads_worker_data_t *worker_data, pthreads_call_t *call, pthreads_worker_collect_function_t collect);
-/* {{{ Runs a pthreads_store_full_sync_local_properties() on every task in the GC queue, to ensure availability of properties */
-zend_result pthreads_worker_sync_collectable_tasks(pthreads_worker_data_t * worker_data);
-pthreads_monitor_state_t pthreads_worker_next_task(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval *value);
-zend_get_gc_buffer* pthreads_worker_get_gc_extra(pthreads_worker_data_t * worker_data);
-void pthreads_worker_add_garbage(pthreads_worker_data_t *worker_data, pthreads_queue* done_tasks_cache, zval* work_zval);
+pmmpthread_worker_data_t* pmmpthread_worker_data_alloc(pmmpthread_monitor_t *monitor);
+zend_long pmmpthread_worker_task_queue_size(pmmpthread_worker_data_t *worker_data);
+void pmmpthread_worker_data_free(pmmpthread_worker_data_t *worker_data);
+zend_long pmmpthread_worker_add_task(pmmpthread_worker_data_t *worker_data, zval *value);
+zend_long pmmpthread_worker_dequeue_task(pmmpthread_worker_data_t *worker_data, zval *value);
+zend_long pmmpthread_worker_collect_tasks(pmmpthread_worker_data_t *worker_data, pmmpthread_call_t *call, pmmpthread_worker_collect_function_t collect);
+/* {{{ Runs a pmmpthread_store_full_sync_local_properties() on every task in the GC queue, to ensure availability of properties */
+zend_result pmmpthread_worker_sync_collectable_tasks(pmmpthread_worker_data_t * worker_data);
+pmmpthread_monitor_state_t pmmpthread_worker_next_task(pmmpthread_worker_data_t *worker_data, pmmpthread_queue* done_tasks_cache, zval *value);
+zend_get_gc_buffer* pmmpthread_worker_get_gc_extra(pmmpthread_worker_data_t * worker_data);
+void pmmpthread_worker_add_garbage(pmmpthread_worker_data_t *worker_data, pmmpthread_queue* done_tasks_cache, zval* work_zval);
 
-zend_bool pthreads_worker_collect_function(pthreads_call_t* call, zval* collectable);
+zend_bool pmmpthread_worker_collect_function(pmmpthread_call_t* call, zval* collectable);
 
 #endif
 

@@ -1,6 +1,6 @@
 <?php
 /**
-* This file serves as a benchmark for pthreads initialization/destruction
+* This file serves as a benchmark for thread initialization/destruction
 * usage: php-zts examples/Benchmark.php [threads] [samples]
 *   threads - the number of threads to create, default=100
 *   samples - the number of times to run the test, default=5

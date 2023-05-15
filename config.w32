@@ -1,33 +1,33 @@
-var PTHREADS_EXT_NAME="pthreads";
-var PTHREADS_EXT_DIR=configure_module_dirname;
-var PTHREADS_EXT_API="php_pthreads.c";
-var PTHREADS_EXT_FLAGS="/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive- /I" + configure_module_dirname;
+var PMMPTHREAD_EXT_NAME="pmmpthread";
+var PMMPTHREAD_EXT_DIR=configure_module_dirname;
+var PMMPTHREAD_EXT_API="php_pmmpthread.c";
+var PMMPTHREAD_EXT_FLAGS="/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive- /I" + configure_module_dirname;
 /* --------------------------------------------------------------------- */
-ARG_WITH("pthreads", "for pthreads support", "no");
+ARG_WITH("pmmpthread", "for pmmpthread support", "no");
 
-if (PHP_PTHREADS != "no") {
-	if(CHECK_HEADER_ADD_INCLUDE("pthread.h", "CFLAGS_PTHREADS", PHP_PTHREADS + ";" + configure_module_dirname) &&    
-		CHECK_HEADER_ADD_INCLUDE("sched.h", "CFLAGS_PTHREADS", PHP_PTHREADS + ";" + configure_module_dirname) &&
+if (PHP_PMMPTHREAD != "no") {
+	if(CHECK_HEADER_ADD_INCLUDE("pthread.h", "CFLAGS_PMMPTHREAD", PHP_PMMPTHREAD + ";" + configure_module_dirname) &&    
+		CHECK_HEADER_ADD_INCLUDE("sched.h", "CFLAGS_PMMPTHREAD", PHP_PMMPTHREAD + ";" + configure_module_dirname) &&
 		(
-			CHECK_LIB("pthreadVC2.lib", PTHREADS_EXT_NAME, PHP_PTHREADS) ||
+			CHECK_LIB("pthreadVC2.lib", PMMPTHREAD_EXT_NAME, PHP_PMMPTHREAD) ||
 			(
-				CHECK_LIB("pthreadVC3.lib", PTHREADS_EXT_NAME, PHP_PTHREADS) &&
-				CHECK_HEADER_ADD_INCLUDE("_ptw32.h", "CFLAGS_PTHREADS", PHP_PTHREADS + ";" + configure_module_dirname) //extra header needed for v3
+				CHECK_LIB("pthreadVC3.lib", PMMPTHREAD_EXT_NAME, PHP_PMMPTHREAD) &&
+				CHECK_HEADER_ADD_INCLUDE("_ptw32.h", "CFLAGS_PMMPTHREAD", PHP_PMMPTHREAD + ";" + configure_module_dirname) //extra header needed for v3
 			)
 		)) {
-		EXTENSION(PTHREADS_EXT_NAME, PTHREADS_EXT_API, PHP_PTHREADS_SHARED, PTHREADS_EXT_FLAGS);
-		ADD_EXTENSION_DEP("pthreads", "sockets", true);
+		EXTENSION(PMMPTHREAD_EXT_NAME, PMMPTHREAD_EXT_API, PHP_PMMPTHREAD_SHARED, PMMPTHREAD_EXT_FLAGS);
+		ADD_EXTENSION_DEP("pmmpthread", "sockets", true);
 		ADD_SOURCES(
-			PTHREADS_EXT_DIR + "/src",
+			PMMPTHREAD_EXT_DIR + "/src",
 			"copy.c monitor.c worker.c globals.c prepare.c store.c handlers.c object.c routine.c queue.c ext_sockets_hacks.c",
-			PTHREADS_EXT_NAME
+			PMMPTHREAD_EXT_NAME
 		);
 		ADD_SOURCES(
-			PTHREADS_EXT_DIR + "/classes",
+			PMMPTHREAD_EXT_DIR + "/classes",
 			"pool.c thread.c thread_safe_array.c thread_safe.c runnable.c worker.c",
-			PTHREADS_EXT_NAME
+			PMMPTHREAD_EXT_NAME
 		);
 	} else {
-		WARNING("pthreads not enabled; libraries and headers not found");
+		WARNING("pmmpthread not enabled; libraries and headers not found");
 	}
 }

@@ -92,7 +92,7 @@ if($request->start()){
 	/* 
 		you do not need to join:
 			when a thread returns false for isRunning then your code is no longer being executed
-			pthreads will cleanup the variable when it goes out of scope like any other variable in php
+			join() will be called automatically when the object goes out of scope
 	*/
 	printf(" got %d bytes in %f seconds\n", $response->getLength(), $response->getDuration());
 }

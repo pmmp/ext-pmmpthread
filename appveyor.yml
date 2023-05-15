@@ -31,9 +31,9 @@ build_script:
 
     git clone https://github.com/php/php-src C:\projects\php-src -b PHP-%PHP_VER% --depth=1
 
-    mkdir C:\projects\php-src\ext\pthreads
+    mkdir C:\projects\php-src\ext\pmmpthread
 
-    xcopy C:\projects\pthreads C:\projects\php-src\ext\pthreads /s /e /y /q
+    xcopy C:\projects\pmmpthread C:\projects\php-src\ext\pmmpthread /s /e /y /q
 
     phpsdk_deps -u -t %VC_VER% -b %PHP_VER% -a %ARCH% -f -d C:\projects\php-src\deps
 
@@ -53,21 +53,21 @@ build_script:
 
     buildconf.bat
 
-    configure.bat --disable-all --enable-cli --enable-zts --with-pthreads=shared --enable-sockets --with-prefix=C:\projects\pthreads\bin --with-php-build=deps --enable-ipv6 --enable-debug
+    configure.bat --disable-all --enable-cli --enable-zts --with-pmmpthread=shared --enable-sockets --with-prefix=C:\projects\pmmpthread\bin --with-php-build=deps --enable-ipv6 --enable-debug
 
     nmake
 
     nmake install
 
-    cd C:\projects\pthreads\bin
+    cd C:\projects\pmmpthread\bin
 
-    copy C:\projects\pthreads-w32\Pre-built.2\dll\%ARCH%\pthreadVC2.dll C:\projects\pthreads\bin\pthreadVC2.dll
+    copy C:\projects\pthreads-w32\Pre-built.2\dll\%ARCH%\pthreadVC2.dll C:\projects\pmmpthread\bin\pthreadVC2.dll
 
     echo [PHP] > php.ini
 
     echo extension_dir = "ext" >> php.ini
 
-    echo extension=php_pthreads.dll >> php.ini
+    echo extension=php_pmmpthread.dll >> php.ini
 
     set TEST_PHP_EXECUTABLE=%cd%\php.exe
 
@@ -78,7 +78,7 @@ test_script:
 - cmd: >-
     set REPORT_EXIT_STATUS=1
 
-    php.exe /projects/php-src/run-tests.php /projects/php-src/ext/pthreads -q --show-diff --offline
+    php.exe /projects/php-src/run-tests.php /projects/php-src/ext/pmmpthread -q --show-diff --offline
 artifacts:
   - path: bin
     name: master

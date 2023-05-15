@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,34 +15,34 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_QUEUE_H
-#define HAVE_PTHREADS_QUEUE_H
+#ifndef HAVE_PMMPTHREAD_QUEUE_H
+#define HAVE_PMMPTHREAD_QUEUE_H
 
 #include <zend.h>
 
-#define PTHREADS_STACK_FREE    1
-#define PTHREADS_STACK_NOTHING 0
+#define PMMPTHREAD_STACK_FREE    1
+#define PMMPTHREAD_STACK_NOTHING 0
 
-typedef struct _pthreads_queue_item_t {
-	struct _pthreads_queue_item_t* next;
-	struct _pthreads_queue_item_t* prev;
+typedef struct _pmmpthread_queue_item_t {
+	struct _pmmpthread_queue_item_t* next;
+	struct _pmmpthread_queue_item_t* prev;
 	zval value;
-} pthreads_queue_item_t;
+} pmmpthread_queue_item_t;
 
-typedef struct _pthreads_queue {
+typedef struct _pmmpthread_queue {
 	zend_long 				size;
-	pthreads_queue_item_t* head;
-	pthreads_queue_item_t* tail;
-} pthreads_queue;
+	pmmpthread_queue_item_t* head;
+	pmmpthread_queue_item_t* tail;
+} pmmpthread_queue;
 
-void pthreads_queue_clean(pthreads_queue* queue);
-void pthreads_queue_push(pthreads_queue* queue, pthreads_queue_item_t* item);
-void pthreads_queue_push_new(pthreads_queue* queue, zval* value);
-void pthreads_queue_unshift(pthreads_queue* queue, pthreads_queue_item_t* item);
+void pmmpthread_queue_clean(pmmpthread_queue* queue);
+void pmmpthread_queue_push(pmmpthread_queue* queue, pmmpthread_queue_item_t* item);
+void pmmpthread_queue_push_new(pmmpthread_queue* queue, zval* value);
+void pmmpthread_queue_unshift(pmmpthread_queue* queue, pmmpthread_queue_item_t* item);
 
-zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* item, zval* value, int garbage);
+zend_long pmmpthread_queue_remove(pmmpthread_queue* queue, pmmpthread_queue_item_t* item, zval* value, int garbage);
 
-zend_long pthreads_queue_shift(pthreads_queue* queue, zval* value, int garbage);
-zend_long pthreads_queue_pop(pthreads_queue* queue, zval* value, int garbage);
+zend_long pmmpthread_queue_shift(pmmpthread_queue* queue, zval* value, int garbage);
+zend_long pmmpthread_queue_pop(pmmpthread_queue* queue, zval* value, int garbage);
 
 #endif

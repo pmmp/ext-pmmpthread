@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,56 +15,56 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_STORE_TYPES_H
-#define HAVE_PTHREADS_STORE_TYPES_H
+#ifndef HAVE_PMMPTHREAD_STORE_TYPES_H
+#define HAVE_PMMPTHREAD_STORE_TYPES_H
 
 #ifdef HAVE_CONFIG_H
 #	include <config.h>
 #endif
 
-typedef enum _pthreads_store_type {
+typedef enum _pmmpthread_store_type {
 	STORE_TYPE_CLOSURE,
-	STORE_TYPE_PTHREADS,
+	STORE_TYPE_THREADSAFE_OBJECT,
 	STORE_TYPE_SOCKET,
 	STORE_TYPE_ENUM,
 	STORE_TYPE_STRING_PTR,
-} pthreads_store_type;
+} pmmpthread_store_type;
 
-typedef struct _pthreads_storage {
-	pthreads_store_type type;
-} pthreads_storage;
+typedef struct _pmmpthread_storage {
+	pmmpthread_store_type type;
+} pmmpthread_storage;
 
-typedef struct _pthreads_closure_storage_t {
-	pthreads_storage common;
+typedef struct _pmmpthread_closure_storage_t {
+	pmmpthread_storage common;
 	zend_closure* closure;
-	pthreads_zend_object_t* this_obj;
-	pthreads_ident_t owner;
-} pthreads_closure_storage_t;
+	pmmpthread_zend_object_t* this_obj;
+	pmmpthread_ident_t owner;
+} pmmpthread_closure_storage_t;
 
-typedef struct _pthreads_zend_object_storage_t {
-	pthreads_storage common;
-	pthreads_zend_object_t* object;
-} pthreads_zend_object_storage_t;
+typedef struct _pmmpthread_zend_object_storage_t {
+	pmmpthread_storage common;
+	pmmpthread_zend_object_t* object;
+} pmmpthread_zend_object_storage_t;
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-typedef struct _pthreads_socket_storage {
-	pthreads_storage common;
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+typedef struct _pmmpthread_socket_storage {
+	pmmpthread_storage common;
 	PHP_SOCKET bsd_socket;
 	int        type;
 	int        error;
 	int        blocking;
-} pthreads_socket_storage_t;
+} pmmpthread_socket_storage_t;
 #endif
 
-typedef struct _pthreads_enum_storage_t {
-	pthreads_storage common;
+typedef struct _pmmpthread_enum_storage_t {
+	pmmpthread_storage common;
 	zend_string* class_name;
 	zend_string* member_name;
-} pthreads_enum_storage_t;
+} pmmpthread_enum_storage_t;
 
-typedef struct _pthreads_string_storage_t {
-	pthreads_storage common;
+typedef struct _pmmpthread_string_storage_t {
+	pmmpthread_storage common;
 	zend_string* string;
-	pthreads_ident_t owner;
-} pthreads_string_storage_t;
+	pmmpthread_ident_t owner;
+} pmmpthread_string_storage_t;
 #endif

@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 
 #define Pool_method(name) PHP_METHOD(pmmp_thread_Pool, name)
 
@@ -36,9 +36,9 @@ Pool_method(__construct)
 		Z_PARAM_ARRAY(ctor)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (clazz == NULL) clazz = pthreads_ce_worker;
+	if (clazz == NULL) clazz = pmmpthread_ce_worker;
 
-	if (!instanceof_function(clazz, pthreads_ce_worker)) {
+	if (!instanceof_function(clazz, pmmpthread_ce_worker)) {
 		zend_throw_exception_ex(NULL, 0,
 			"The class provided (%s) does not extend Worker", clazz->name->val);
 	}
@@ -102,7 +102,7 @@ Pool_method(submit) {
 	zend_class_entry *ce = NULL;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
-		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_ce_runnable)
+		Z_PARAM_OBJECT_OF_CLASS(task, pmmpthread_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	last = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("last"), 1, &tmp[0]);
@@ -198,7 +198,7 @@ Pool_method(submitTo) {
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
 		Z_PARAM_LONG(worker)
-		Z_PARAM_OBJECT_OF_CLASS(task, pthreads_ce_runnable)
+		Z_PARAM_OBJECT_OF_CLASS(task, pmmpthread_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
 	workers = zend_read_property(Z_OBJCE_P(getThis()), Z_OBJ_P(getThis()), ZEND_STRL("workers"), 1, &tmp);
@@ -223,7 +223,7 @@ Pool_method(submitTo) {
 		the collector should be a function accepting a single task */
 Pool_method(collect) {
 	zval tmp;
-	pthreads_call_t call;
+	pmmpthread_call_t call;
 	zval *workers = NULL,
 	     *worker = NULL;
 	zend_long collectable = 0;
@@ -239,23 +239,23 @@ Pool_method(collect) {
 		RETURN_LONG(0);
 
 	ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(workers), worker) {
-		pthreads_zend_object_t *thread =
-			PTHREADS_FETCH_FROM(Z_OBJ_P(worker));
+		pmmpthread_zend_object_t *thread =
+			PMMPTHREAD_FETCH_FROM(Z_OBJ_P(worker));
 		if (!ZEND_NUM_ARGS())
-			PTHREADS_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
-		collectable += pthreads_worker_collect_tasks(
+			PMMPTHREAD_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(worker));
+		collectable += pmmpthread_worker_collect_tasks(
 			thread->worker_data,
 			&call,
-			pthreads_worker_collect_function);
+			pmmpthread_worker_collect_function);
 		if (!ZEND_NUM_ARGS())
-			PTHREADS_WORKER_COLLECTOR_DTOR(call);
+			PMMPTHREAD_WORKER_COLLECTOR_DTOR(call);
 	} ZEND_HASH_FOREACH_END();
 
 	RETURN_LONG(collectable);
 } /* }}} */
 
 /* {{{ */
-static inline int pthreads_pool_shutdown_worker(zval *worker) {
+static inline int pmmpthread_pool_shutdown_worker(zval *worker) {
 	zval retval;
 	zend_execute_data *ex = EG(current_execute_data);
 	ZVAL_UNDEF(&retval);
@@ -270,14 +270,14 @@ static inline int pthreads_pool_shutdown_worker(zval *worker) {
 } /* }}} */
 
 /* {{{ */
-static inline void pthreads_pool_shutdown(zval *pool) {
+static inline void pmmpthread_pool_shutdown(zval *pool) {
 	zval tmp;
 	zval *workers = zend_read_property(
 		Z_OBJCE_P(pool), Z_OBJ_P(pool), ZEND_STRL("workers"), 1, &tmp);
 
 	if (Z_TYPE_P(workers) == IS_ARRAY) {
 		if (zend_hash_num_elements(Z_ARRVAL_P(workers))) {
-			zend_hash_apply(Z_ARRVAL_P(workers), pthreads_pool_shutdown_worker);
+			zend_hash_apply(Z_ARRVAL_P(workers), pmmpthread_pool_shutdown_worker);
 		}
 
 		zend_hash_clean(Z_ARRVAL_P(workers));
@@ -289,5 +289,5 @@ static inline void pthreads_pool_shutdown(zval *pool) {
 Pool_method(shutdown) {
 	zend_parse_parameters_none_throw();
 
-	pthreads_pool_shutdown(getThis());
+	pmmpthread_pool_shutdown(getThis());
 } /* }}} */

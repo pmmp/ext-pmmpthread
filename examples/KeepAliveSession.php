@@ -11,11 +11,11 @@ use pmmp\thread\Thread;
  *     $ php -f keep-alive-session.php 8822
  *     
  * where 8822 is an example port to let the server listen to. To run this example you
- * need a thread-safe compiled PHP > 5.3 with pthreads enabled.
+ * need a thread-safe compiled PHP > 5.3 with pmmpthread enabled.
  * 
  * @author Tim Wagner <tw@appserver.io>
  * @version 0.1.0
- * @link https://github.com/krakjoe/pthreads
+ * @link https://github.com/pmmp/ext-pmmpthread
  */
 class Test extends Thread
 {

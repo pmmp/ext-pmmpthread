@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 #include <src/store.h>
 
 #define ThreadSafeArray_method(name) PHP_METHOD(pmmp_thread_ThreadSafeArray, name)
@@ -34,7 +34,7 @@ ThreadSafeArray_method(merge)
 		Z_PARAM_BOOL(overwrite)
 	ZEND_PARSE_PARAMETERS_END();
 
-	RETURN_BOOL((pthreads_store_merge(Z_OBJ_P(getThis()), from, overwrite, PTHREADS_STORE_COERCE_ARRAY)==SUCCESS));
+	RETURN_BOOL((pmmpthread_store_merge(Z_OBJ_P(getThis()), from, overwrite, PMMPTHREAD_STORE_COERCE_ARRAY)==SUCCESS));
 } /* }}} */
 
 /* {{{ proto mixed ThreadSafeArray::shift()
@@ -43,7 +43,7 @@ ThreadSafeArray_method(shift)
 {
 	zend_parse_parameters_none_throw();
 
-	pthreads_store_shift(Z_OBJ_P(getThis()), return_value);
+	pmmpthread_store_shift(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto mixed ThreadSafeArray::chunk(integer $size [, boolean $preserve = false])
@@ -59,7 +59,7 @@ ThreadSafeArray_method(chunk)
 		Z_PARAM_BOOL(preserve)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pthreads_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
+	pmmpthread_store_chunk(Z_OBJ_P(getThis()), size, preserve, return_value);
 } /* }}} */
 
 /* {{{ proto mixed ThreadSafeArray::pop()
@@ -68,7 +68,7 @@ ThreadSafeArray_method(pop)
 {
 	zend_parse_parameters_none_throw();
 
-	pthreads_store_pop(Z_OBJ_P(getThis()), return_value);
+	pmmpthread_store_pop(Z_OBJ_P(getThis()), return_value);
 } /* }}} */
 
 /* {{{ proto boolean ThreadSafeArray::count()
@@ -79,7 +79,7 @@ ThreadSafeArray_method(count)
 
 	ZVAL_LONG(return_value, 0);
 
-	pthreads_store_count(
+	pmmpthread_store_count(
 		Z_OBJ_P(getThis()), &Z_LVAL_P(return_value));
 } /* }}} */
 
@@ -93,8 +93,8 @@ ThreadSafeArray_method(fromArray)
 		Z_PARAM_ARRAY(input)
 	ZEND_PARSE_PARAMETERS_END();
 
-	object_init_ex(return_value, pthreads_ce_array);
-	pthreads_store_merge(Z_OBJ_P(return_value), input, 1, PTHREADS_STORE_COERCE_ARRAY);
+	object_init_ex(return_value, pmmpthread_ce_array);
+	pmmpthread_store_merge(Z_OBJ_P(return_value), input, 1, PMMPTHREAD_STORE_COERCE_ARRAY);
 } /* }}} */
 
 /* {{{ proto mixed ThreadSafeArray::offsetGet(mixed $offset)
@@ -107,7 +107,7 @@ ThreadSafeArray_method(offsetGet)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pthreads_store_read(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
+	pmmpthread_store_read(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
 } /* }}} */
 
 /* {{{ proto void ThreadSafeArray::offsetSet(mixed $offset, mixed $value)
@@ -122,7 +122,7 @@ ThreadSafeArray_method(offsetSet)
 		Z_PARAM_ZVAL(value)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pthreads_store_write(Z_OBJ_P(getThis()), key, value, PTHREADS_STORE_NO_COERCE_ARRAY);
+	pmmpthread_store_write(Z_OBJ_P(getThis()), key, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY);
 } /* }}} */
 
 /* {{{ proto bool ThreadSafeArray::offsetExists(mixed $offset)
@@ -135,7 +135,7 @@ ThreadSafeArray_method(offsetExists)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	RETURN_BOOL(pthreads_store_isset(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
+	RETURN_BOOL(pmmpthread_store_isset(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
 } /* }}} */
 
 /* {{{ proto void ThreadSafeArray::offsetUnset(mixed $offset)
@@ -148,5 +148,5 @@ ThreadSafeArray_method(offsetUnset)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pthreads_store_delete(Z_OBJ_P(getThis()), key);
+	pmmpthread_store_delete(Z_OBJ_P(getThis()), key);
 } /* }}} */

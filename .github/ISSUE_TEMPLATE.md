@@ -4,7 +4,7 @@ Environment
 ==========
 
   * PHP: *can be obtained with `php -v`*
-  * pthreads: *can be obtained with `php -dextension=pthreads.so --ri pthreads | grep Version`*
+  * pthreads: *can be obtained with `php -dextension=pmmpthread.so --ri pmmpthread | grep Version`*
   * OS: *if Windows, include arch*
   * OPcache: *yes/no (check for `Zend OPcache` in the output of `php -m`)*
   * JIT: *can be obtained with `php -i | grep opcache.jit`*

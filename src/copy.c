@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -20,11 +20,11 @@
 #include <src/object.h>
 #include <src/prepare.h>
 
-static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* source);
-static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast);
-static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast, void* buf);
+static HashTable* pmmpthread_copy_hash(const pmmpthread_ident_t* owner, HashTable* source);
+static zend_ast_ref* pmmpthread_copy_ast(const pmmpthread_ident_t* owner, zend_ast* ast);
+static void* pmmpthread_copy_ast_tree(const pmmpthread_ident_t* owner, zend_ast* ast, void* buf);
 
-zend_string* pthreads_copy_string(zend_string* s) {
+zend_string* pmmpthread_copy_string(zend_string* s) {
 	zend_string* ret;
 	if (ZSTR_IS_INTERNED(s)) {
 		if (GC_FLAGS(s) & IS_STR_PERMANENT) { /* usually opcache SHM */
@@ -42,11 +42,11 @@ zend_string* pthreads_copy_string(zend_string* s) {
 	return ret;
 }
 
-int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) {
+int pmmpthread_copy_zval(const pmmpthread_ident_t* owner, zval* dest, zval* source) {
 	if (Z_TYPE_P(source) == IS_INDIRECT)
-		return pthreads_copy_zval(owner, dest, Z_INDIRECT_P(source));
+		return pmmpthread_copy_zval(owner, dest, Z_INDIRECT_P(source));
 	if (Z_TYPE_P(source) == IS_REFERENCE)
-		return pthreads_copy_zval(owner, dest, &Z_REF_P(source)->val);
+		return pmmpthread_copy_zval(owner, dest, &Z_REF_P(source)->val);
 
 	int result = FAILURE;
 	switch (Z_TYPE_P(source)) {
@@ -60,28 +60,28 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 		break;
 
 	case IS_STRING:
-		ZVAL_STR(dest, pthreads_copy_string(Z_STR_P(source)));
+		ZVAL_STR(dest, pmmpthread_copy_string(Z_STR_P(source)));
 		result = SUCCESS;
 		break;
 
 	case IS_ARRAY:
-		ZVAL_ARR(dest, pthreads_copy_hash(owner, Z_ARRVAL_P(source)));
+		ZVAL_ARR(dest, pmmpthread_copy_hash(owner, Z_ARRVAL_P(source)));
 		result = SUCCESS;
 		break;
 
 	case IS_OBJECT:
-		if (instanceof_function(Z_OBJCE_P(source), pthreads_ce_thread_safe)) {
-			pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ_P(source)), dest);
+		if (instanceof_function(Z_OBJCE_P(source), pmmpthread_ce_thread_safe)) {
+			pmmpthread_object_connect(PMMPTHREAD_FETCH_FROM(Z_OBJ_P(source)), dest);
 			result = SUCCESS;
 		}
 		else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
 			//no exceptions here - we're probably in a class copy context
-			result = pthreads_copy_closure(owner, (zend_closure*) Z_OBJ_P(source), 1, dest);
+			result = pmmpthread_copy_closure(owner, (zend_closure*) Z_OBJ_P(source), 1, dest);
 		}
 		break;
 
 	case IS_CONSTANT_AST:
-		ZVAL_AST(dest, pthreads_copy_ast(owner, GC_AST(Z_AST_P(source))));
+		ZVAL_AST(dest, pmmpthread_copy_ast(owner, GC_AST(Z_AST_P(source))));
 		result = SUCCESS;
 		break;
 	default:
@@ -90,7 +90,7 @@ int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source) 
 	return result;
 }
 
-static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* source) {
+static HashTable* pmmpthread_copy_hash(const pmmpthread_ident_t* owner, HashTable* source) {
 	zval newzval;
 
 	zend_ulong h;
@@ -102,12 +102,12 @@ static HashTable* pthreads_copy_hash(const pthreads_ident_t* owner, HashTable* s
 	zend_hash_init(ht, source->nNumUsed, NULL, source->pDestructor, GC_FLAGS(source) & IS_ARRAY_PERSISTENT);
 
 	ZEND_HASH_FOREACH_KEY_VAL(source, h, key, val) {
-		if (pthreads_copy_zval(owner, &newzval, val) == FAILURE) {
+		if (pmmpthread_copy_zval(owner, &newzval, val) == FAILURE) {
 			continue;
 		}
 
 		if (key) {
-			zend_hash_update(ht, pthreads_copy_string(key), &newzval);
+			zend_hash_update(ht, pmmpthread_copy_string(key), &newzval);
 		}
 		else {
 			zend_hash_index_update(ht, h, &newzval);
@@ -153,7 +153,7 @@ static size_t zend_ast_tree_size(zend_ast* ast) {
 	return size;
 }
 
-static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast, void* buf)
+static void* pmmpthread_copy_ast_tree(const pmmpthread_ident_t* owner, zend_ast* ast, void* buf)
 {
 	//this code is adapted from zend_ast_tree_copy() in zend_ast.c
 	//sadly we have to duplicate all of this even though we only need to change a couple of lines
@@ -162,14 +162,14 @@ static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast
 		zend_ast_zval* new = (zend_ast_zval*)buf;
 		new->kind = ZEND_AST_ZVAL;
 		new->attr = ast->attr;
-		pthreads_copy_zval(owner, &new->val, zend_ast_get_zval(ast)); //changed
+		pmmpthread_copy_zval(owner, &new->val, zend_ast_get_zval(ast)); //changed
 		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
 	}
 	else if (ast->kind == ZEND_AST_CONSTANT) {
 		zend_ast_zval* new = (zend_ast_zval*)buf;
 		new->kind = ZEND_AST_CONSTANT;
 		new->attr = ast->attr;
-		ZVAL_STR(&new->val, pthreads_copy_string(zend_ast_get_constant_name(ast))); //changed
+		ZVAL_STR(&new->val, pmmpthread_copy_string(zend_ast_get_constant_name(ast))); //changed
 		buf = (void*)((char*)buf + sizeof(zend_ast_zval));
 	}
 	else if (zend_ast_is_list(ast)) {
@@ -183,7 +183,7 @@ static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast
 		for (i = 0; i < list->children; i++) {
 			if (list->child[i]) {
 				new->child[i] = (zend_ast*)buf;
-				buf = pthreads_copy_ast_tree(owner, list->child[i], buf); //changed
+				buf = pmmpthread_copy_ast_tree(owner, list->child[i], buf); //changed
 			}
 			else {
 				new->child[i] = NULL;
@@ -199,7 +199,7 @@ static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast
 		for (i = 0; i < children; i++) {
 			if (ast->child[i]) {
 				new->child[i] = (zend_ast*)buf;
-				buf = pthreads_copy_ast_tree(owner, ast->child[i], buf); //changed
+				buf = pmmpthread_copy_ast_tree(owner, ast->child[i], buf); //changed
 			}
 			else {
 				new->child[i] = NULL;
@@ -209,7 +209,7 @@ static void* pthreads_copy_ast_tree(const pthreads_ident_t* owner, zend_ast* ast
 	return buf;
 }
 
-static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* ast) {
+static zend_ast_ref* pmmpthread_copy_ast(const pmmpthread_ident_t* owner, zend_ast* ast) {
 	//this code is adapted from zend_ast_copy() in zend_ast.c
 	//sadly we have to duplicate all of this even though we only need to change a couple of lines
 
@@ -219,34 +219,34 @@ static zend_ast_ref* pthreads_copy_ast(const pthreads_ident_t* owner, zend_ast* 
 	ZEND_ASSERT(ast != NULL);
 	tree_size = zend_ast_tree_size(ast) + sizeof(zend_ast_ref);
 	ref = emalloc(tree_size);
-	pthreads_copy_ast_tree(owner, ast, GC_AST(ref));
+	pmmpthread_copy_ast_tree(owner, ast, GC_AST(ref));
 	GC_SET_REFCOUNT(ref, 1);
 	GC_TYPE_INFO(ref) = GC_CONSTANT_AST;
 	return ref;
 }
 
-static void pthreads_copy_attribute(const pthreads_ident_t* owner, HashTable **new, const zend_attribute *attr, zend_string *filename) {
+static void pmmpthread_copy_attribute(const pmmpthread_ident_t* owner, HashTable **new, const zend_attribute *attr, zend_string *filename) {
 	uint32_t i;
-	zend_attribute *copy = zend_add_attribute(new, pthreads_copy_string(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
+	zend_attribute *copy = zend_add_attribute(new, pmmpthread_copy_string(attr->name), attr->argc, attr->flags, attr->offset, attr->lineno);
 
 	for (i = 0; i < attr->argc; i++) {
-		if (pthreads_copy_zval(owner, &copy->args[i].value, &attr->args[i].value) == FAILURE) {
+		if (pmmpthread_copy_zval(owner, &copy->args[i].value, &attr->args[i].value) == FAILURE) {
 			//TODO: show a more useful error message - if we actually see this we're going to have no idea what code caused it
 			zend_error_at_noreturn(
 				E_CORE_ERROR,
 				filename,
 				attr->lineno,
-				"pthreads encountered a non-copyable attribute argument %s of type %s",
+				"pmmpthread encountered a non-copyable attribute argument %s of type %s",
 				ZSTR_VAL(attr->name),
 				zend_zval_type_name(&attr->args[i].value)
 			);
 		}
-		copy->args[i].name = attr->args[i].name ? pthreads_copy_string(attr->args[i].name) : NULL;
+		copy->args[i].name = attr->args[i].name ? pmmpthread_copy_string(attr->args[i].name) : NULL;
 	}
 }
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *old, zend_string *filename) {
+HashTable* pmmpthread_copy_attributes(const pmmpthread_ident_t* owner, HashTable *old, zend_string *filename) {
 	if (!old) {
 		return NULL;
 	}
@@ -257,14 +257,14 @@ HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *ol
 	HashTable *new = NULL;
 
 	ZEND_HASH_FOREACH_VAL(old, v) {
-		pthreads_copy_attribute(owner, &new, Z_PTR_P(v), filename);
+		pmmpthread_copy_attribute(owner, &new, Z_PTR_P(v), filename);
 	} ZEND_HASH_FOREACH_END();
 
 	return new;
 } /* }}} */
 
 /* {{{ */
-static HashTable* pthreads_copy_statics(const pthreads_ident_t* owner, HashTable *old) {
+static HashTable* pmmpthread_copy_statics(const pmmpthread_ident_t* owner, HashTable *old) {
 	HashTable *statics = NULL;
 
 	if (old) {
@@ -277,13 +277,13 @@ static HashTable* pthreads_copy_statics(const pthreads_ident_t* owner, HashTable
 			NULL, ZVAL_PTR_DTOR, 0);
 
 		ZEND_HASH_FOREACH_STR_KEY_VAL(old, key, value) {
-			zend_string *name = pthreads_copy_string(key);
+			zend_string *name = pmmpthread_copy_string(key);
 			zval *next = value;
 			zval copy;
 			while (Z_TYPE_P(next) == IS_REFERENCE)
 				next = &Z_REF_P(next)->val;
 
-			if (pthreads_copy_zval(owner, &copy, next) == SUCCESS) {
+			if (pmmpthread_copy_zval(owner, &copy, next) == SUCCESS) {
 				zend_hash_add(statics, name, &copy);
 			} else {
 				zend_hash_add_empty_element(statics, name);
@@ -296,13 +296,13 @@ static HashTable* pthreads_copy_statics(const pthreads_ident_t* owner, HashTable
 } /* }}} */
 
 /* {{{ */
-static zend_string** pthreads_copy_variables(zend_string **old, int end) {
+static zend_string** pmmpthread_copy_variables(zend_string **old, int end) {
 	zend_string **variables = safe_emalloc(end, sizeof(zend_string*), 0);
 	int it = 0;
 
 	while (it < end) {
 		variables[it] =
-			pthreads_copy_string(old[it]);
+			pmmpthread_copy_string(old[it]);
 		it++;
 	}
 
@@ -310,7 +310,7 @@ static zend_string** pthreads_copy_variables(zend_string **old, int end) {
 } /* }}} */
 
 /* {{{ */
-static zend_try_catch_element* pthreads_copy_try(zend_try_catch_element *old, int end) {
+static zend_try_catch_element* pmmpthread_copy_try(zend_try_catch_element *old, int end) {
 	zend_try_catch_element *try_catch = safe_emalloc(end, sizeof(zend_try_catch_element), 0);
 
 	memcpy(
@@ -322,7 +322,7 @@ static zend_try_catch_element* pthreads_copy_try(zend_try_catch_element *old, in
 } /* }}} */
 
 /* {{{ */
-static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) {
+static zend_live_range* pmmpthread_copy_live(zend_live_range *old, int end) {
 	zend_live_range *range = safe_emalloc(end, sizeof(zend_live_range), 0);
 
 	memcpy(
@@ -334,7 +334,7 @@ static zend_live_range* pthreads_copy_live(zend_live_range *old, int end) {
 } /* }}} */
 
 /* {{{ */
-static zval* pthreads_copy_literals(const pthreads_ident_t* owner, zval *old, int last, void *memory) {
+static zval* pmmpthread_copy_literals(const pmmpthread_ident_t* owner, zval *old, int last, void *memory) {
 	zval *literals = (zval*) memory;
 	zval *literal = literals,
 		 *end = literals + last;
@@ -342,7 +342,7 @@ static zval* pthreads_copy_literals(const pthreads_ident_t* owner, zval *old, in
 
 	memcpy(memory, old, sizeof(zval) * last);
 	while (literal < end) {
-		if (pthreads_copy_zval(owner, literal, old_literal) == FAILURE) {
+		if (pmmpthread_copy_zval(owner, literal, old_literal) == FAILURE) {
 			ZEND_ASSERT(0); //literals should always be copyable
 			ZVAL_NULL(literal);
 		}
@@ -354,7 +354,7 @@ static zval* pthreads_copy_literals(const pthreads_ident_t* owner, zval *old, in
 } /* }}} */
 
 /* {{{ */
-static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
+static zend_op* pmmpthread_copy_opcodes(zend_op_array *op_array, zval *literals, void *memory) {
 	zend_op *copy = memory;
 	memcpy(copy, op_array->opcodes, sizeof(zend_op) * op_array->last);
 
@@ -443,7 +443,7 @@ static zend_op* pthreads_copy_opcodes(zend_op_array *op_array, zval *literals, v
 } /* }}} */
 
 /* {{{ */
-static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
+static void pmmpthread_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
 	memcpy(new_type, old_type, sizeof(zend_type));
 
 	//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
@@ -462,15 +462,15 @@ static void pthreads_copy_zend_type(const zend_type *old_type, zend_type *new_ty
 	zend_type *single_type;
 	ZEND_TYPE_FOREACH(*new_type, single_type) {
 		if (ZEND_TYPE_HAS_LIST(*single_type)) {
-			pthreads_copy_zend_type(single_type, single_type);
+			pmmpthread_copy_zend_type(single_type, single_type);
 		} else if (ZEND_TYPE_HAS_NAME(*single_type)) {
-			ZEND_TYPE_SET_PTR(*single_type, pthreads_copy_string(ZEND_TYPE_NAME(*single_type)));
+			ZEND_TYPE_SET_PTR(*single_type, pmmpthread_copy_string(ZEND_TYPE_NAME(*single_type)));
 		}
 	} ZEND_TYPE_FOREACH_END();
 } /* }}} */
 
 /* {{{ */
-static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_info *old, uint32_t end) {
+static zend_arg_info* pmmpthread_copy_arginfo(zend_op_array *op_array, zend_arg_info *old, uint32_t end) {
 	zend_arg_info *info;
 	uint32_t it = 0;
 
@@ -489,9 +489,9 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 
 	while (it < end) {
 		if (info[it].name)
-			info[it].name = pthreads_copy_string(old[it].name);
+			info[it].name = pmmpthread_copy_string(old[it].name);
 
-		pthreads_copy_zend_type(&old[it].type, &info[it].type);
+		pmmpthread_copy_zend_type(&old[it].type, &info[it].type);
 		it++;
 	}
 
@@ -503,19 +503,19 @@ static zend_arg_info* pthreads_copy_arginfo(zend_op_array *op_array, zend_arg_in
 } /* }}} */
 
 /* {{{ */
-static zend_op_array** pthreads_copy_dynamic_func_defs(const pthreads_ident_t* owner, const zend_op_array** old, uint32_t num_dynamic_func_defs) {
+static zend_op_array** pmmpthread_copy_dynamic_func_defs(const pmmpthread_ident_t* owner, const zend_op_array** old, uint32_t num_dynamic_func_defs) {
 	zend_op_array** new = (zend_op_array**) emalloc(num_dynamic_func_defs * sizeof(zend_op_array*));
 
 	for (int i = 0; i < num_dynamic_func_defs; i++) {
 		//assume this is OK?
-		new[i] = (zend_op_array*) pthreads_copy_function(owner, old[i]);
+		new[i] = (zend_op_array*) pmmpthread_copy_function(owner, old[i]);
 	}
 
 	return new;
 } /* }}} */
 
 /* {{{ */
-static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t* owner, const zend_function *function, zend_bool copy_static_variables) {
+static inline zend_function* pmmpthread_copy_user_function(const pmmpthread_ident_t* owner, const zend_function *function, zend_bool copy_static_variables) {
 	zend_function  *copy;
 	zend_op_array  *op_array;
 	zend_string   **variables, *filename_copy;
@@ -531,7 +531,7 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 	literals = op_array->literals;
 	arg_info = op_array->arg_info;
 
-	op_array->function_name = pthreads_copy_string(op_array->function_name);
+	op_array->function_name = pmmpthread_copy_string(op_array->function_name);
 	/* we don't care about prototypes */
 	op_array->prototype = NULL;
 	if (function->op_array.refcount) { //refcount will be NULL if opcodes are allocated on SHM
@@ -554,12 +554,12 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 #endif
 
 	if (op_array->doc_comment) {
-		op_array->doc_comment = pthreads_copy_string(op_array->doc_comment);
+		op_array->doc_comment = pmmpthread_copy_string(op_array->doc_comment);
 	}
 
-	if (!(filename_copy = zend_hash_find_ptr(&PTHREADS_ZG(filenames), op_array->filename))) {
-		filename_copy = pthreads_copy_string(op_array->filename);
-		zend_hash_add_ptr(&PTHREADS_ZG(filenames), filename_copy, filename_copy);
+	if (!(filename_copy = zend_hash_find_ptr(&PMMPTHREAD_ZG(filenames), op_array->filename))) {
+		filename_copy = pmmpthread_copy_string(op_array->filename);
+		zend_hash_add_ptr(&PMMPTHREAD_ZG(filenames), filename_copy, filename_copy);
 		zend_string_release(filename_copy);
 	}
 	//php/php-src@7620ea15807a84e76cb1cb2f9d5234ea787aae2e - filenames are no longer always interned
@@ -591,21 +591,21 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 		}
 #endif
 
-		if (op_array->literals) op_array->literals = pthreads_copy_literals (owner, literals, op_array->last_literal, literals_memory);
+		if (op_array->literals) op_array->literals = pmmpthread_copy_literals (owner, literals, op_array->last_literal, literals_memory);
 
-		op_array->opcodes = pthreads_copy_opcodes(op_array, literals, opcodes_memory);
+		op_array->opcodes = pmmpthread_copy_opcodes(op_array, literals, opcodes_memory);
 
-		if (op_array->arg_info) 	op_array->arg_info = pthreads_copy_arginfo(op_array, arg_info, op_array->num_args);
-		if (op_array->live_range)		op_array->live_range = pthreads_copy_live(op_array->live_range, op_array->last_live_range);
-		if (op_array->try_catch_array)  op_array->try_catch_array = pthreads_copy_try(op_array->try_catch_array, op_array->last_try_catch);
-		if (op_array->vars) 		op_array->vars = pthreads_copy_variables(variables, op_array->last_var);
-		if (op_array->attributes) op_array->attributes = pthreads_copy_attributes(owner, op_array->attributes, op_array->filename);
+		if (op_array->arg_info) 	op_array->arg_info = pmmpthread_copy_arginfo(op_array, arg_info, op_array->num_args);
+		if (op_array->live_range)		op_array->live_range = pmmpthread_copy_live(op_array->live_range, op_array->last_live_range);
+		if (op_array->try_catch_array)  op_array->try_catch_array = pmmpthread_copy_try(op_array->try_catch_array, op_array->last_try_catch);
+		if (op_array->vars) 		op_array->vars = pmmpthread_copy_variables(variables, op_array->last_var);
+		if (op_array->attributes) op_array->attributes = pmmpthread_copy_attributes(owner, op_array->attributes, op_array->filename);
 
-		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pthreads_copy_dynamic_func_defs(owner, op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
+		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pmmpthread_copy_dynamic_func_defs(owner, op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
 	}
 
 	if (copy_static_variables && op_array->static_variables) {
-		op_array->static_variables = pthreads_copy_statics(owner, op_array->static_variables);
+		op_array->static_variables = pmmpthread_copy_statics(owner, op_array->static_variables);
 	} else {
 		op_array->static_variables = NULL;
 	}
@@ -619,14 +619,14 @@ static inline zend_function* pthreads_copy_user_function(const pthreads_ident_t*
 } /* }}} */
 
 /* {{{ */
-static inline zend_function* pthreads_copy_internal_function(const zend_function *function) {
+static inline zend_function* pmmpthread_copy_internal_function(const zend_function *function) {
 	zend_function *copy = zend_arena_alloc(&CG(arena), sizeof(zend_internal_function));
 	memcpy(copy, function, sizeof(zend_internal_function));
 	copy->common.fn_flags |= ZEND_ACC_ARENA_ALLOCATED;
 	return copy;
 } /* }}} */
 
-static inline void pthreads_add_function_ref(zend_function* function) {
+static inline void pmmpthread_add_function_ref(zend_function* function) {
 	if (function) {
 		if (function->type == ZEND_USER_FUNCTION && function->op_array.refcount) {
 			(*function->op_array.refcount)++;
@@ -636,7 +636,7 @@ static inline void pthreads_add_function_ref(zend_function* function) {
 }
 
 /* {{{ */
-static zend_function* pthreads_copy_function_ex(const pthreads_ident_t* owner, const zend_function* function, zend_bool copy_static_variables) {
+static zend_function* pmmpthread_copy_function_ex(const pmmpthread_ident_t* owner, const zend_function* function, zend_bool copy_static_variables) {
 	zend_function *copy;
 
 	if (function->common.fn_flags & ZEND_ACC_IMMUTABLE) {
@@ -645,56 +645,56 @@ static zend_function* pthreads_copy_function_ex(const pthreads_ident_t* owner, c
 	}
 
 	if (!(function->op_array.fn_flags & ZEND_ACC_CLOSURE)) {
-		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function);
+		copy = zend_hash_index_find_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)function);
 	} else {
 		ZEND_ASSERT(function->type == ZEND_USER_FUNCTION);
-		copy = zend_hash_index_find_ptr(&PTHREADS_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes);
+		copy = zend_hash_index_find_ptr(&PMMPTHREAD_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes);
 	}
 
 	if (copy) {
-		pthreads_add_function_ref(copy);
+		pmmpthread_add_function_ref(copy);
 		return copy;
 	}
 
 	if (function->type == ZEND_USER_FUNCTION) {
-		copy = pthreads_copy_user_function(owner, function, copy_static_variables);
+		copy = pmmpthread_copy_user_function(owner, function, copy_static_variables);
 	} else {
-		copy = pthreads_copy_internal_function(function);
+		copy = pmmpthread_copy_internal_function(function);
 	}
 
 	if (function->op_array.fn_flags & ZEND_ACC_CLOSURE) {
 		//closure objects copy their base zend_function, but don't copy the opcodes
 		//this means we can use the opcodes to identify the base op_array a closure should use for zend_create_closure()
 		//instead of creating a bunch of useless copies
-		zend_hash_index_add_ptr(&PTHREADS_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes, copy);
+		zend_hash_index_add_ptr(&PMMPTHREAD_ZG(closure_base_op_arrays), (zend_ulong)function->op_array.opcodes, copy);
 
 		//this may be the only place the definition is referenced from - make sure it doesn't get destroyed
-		pthreads_add_function_ref(copy);
+		pmmpthread_add_function_ref(copy);
 	} else {
-		zend_hash_index_update_ptr(&PTHREADS_ZG(resolve), (zend_ulong)function, copy);
+		zend_hash_index_update_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)function, copy);
 	}
 
 	return copy;
 } /* }}} */
 
 /* {{{ */
-zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function* function) {
-	return pthreads_copy_function_ex(owner, function, 1);
+zend_function* pmmpthread_copy_function(const pmmpthread_ident_t* owner, const zend_function* function) {
+	return pmmpthread_copy_function_ex(owner, function, 1);
 } /* }}} */
 
 /* {{{ */
-zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval) {
+zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval) {
 	char* name;
 	size_t name_len;
 	zend_string* zname;
 	zend_function* func_def = NULL;
 	zval this_zv;
 
-	if (IS_PTHREADS_OBJECT(&closure_obj->this_ptr)) {
-		if (!pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), &this_zv)) {
+	if (IS_THREADSAFE_CLASS_INSTANCE(&closure_obj->this_ptr)) {
+		if (!pmmpthread_object_connect(PMMPTHREAD_FETCH_FROM(Z_OBJ(closure_obj->this_ptr)), &this_zv)) {
 			if (!silent) {
 				zend_throw_exception_ex(
-					pthreads_ce_connection_exception, 0,
+					pmmpthread_ce_connection_exception, 0,
 					"Closure $this references a thread-safe object from another thread which no longer exists");
 			}
 			return FAILURE;
@@ -715,14 +715,14 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		}
 
 		if (origin_class != NULL) {
-			zend_class_entry* local_class = pthreads_prepare_single_class(owner, origin_class);
+			zend_class_entry* local_class = pmmpthread_prepare_single_class(owner, origin_class);
 			func_def = (zend_function*)zend_hash_find_ptr(&local_class->function_table, closure_obj->func.common.function_name);
 
 			if (func_def == NULL) {
 				//this could happen if a different version of the class was autoloaded onto this thread
 				if (!silent) {
 					zend_throw_exception_ex(
-						pthreads_ce_connection_exception,
+						pmmpthread_ce_connection_exception,
 						0,
 						"First-class callable references an unknown class method %s::%s()",
 						ZSTR_VAL(local_class->name),
@@ -741,7 +741,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 				//can't tell them apart from real static variables, so we don't know which to remove
 				if (!silent) {
 					zend_throw_exception_ex(
-						pthreads_ce_connection_exception,
+						pmmpthread_ce_connection_exception,
 						0,
 						"First-class callable references an unknown function %s()",
 						ZSTR_VAL(closure_obj->func.common.function_name)
@@ -754,8 +754,8 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 		zend_create_fake_closure(
 			pzval,
 			func_def,
-			pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
-			pthreads_prepare_single_class(owner, closure_obj->called_scope),
+			pmmpthread_prepare_single_class(owner, closure_obj->func.common.scope),
+			pmmpthread_prepare_single_class(owner, closure_obj->called_scope),
 			&this_zv
 		);
 	} else {
@@ -765,19 +765,19 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			//so that the copied closure has the correct use()d variables
 			//this should not modify the original closure
 			//these have to be copied before the closure is created, to maintain the original behaviour
-			static_variables = pthreads_copy_statics(owner, closure_obj->func.op_array.static_variables);
+			static_variables = pmmpthread_copy_statics(owner, closure_obj->func.op_array.static_variables);
 		}
 
 		//we don't know where the definition for this closure is, so create a definition from this copy of it
 		//assume there are no real static variables and don't copy them from this definition (thread-safe
 		//closures are not allowed to have static variables anyway)
-		func_def = pthreads_copy_function_ex(owner, &closure_obj->func, 0);
+		func_def = pmmpthread_copy_function_ex(owner, &closure_obj->func, 0);
 
 		zend_create_closure(
 			pzval,
 			func_def,
-			pthreads_prepare_single_class(owner, closure_obj->func.common.scope),
-			pthreads_prepare_single_class(owner, closure_obj->called_scope),
+			pmmpthread_prepare_single_class(owner, closure_obj->func.common.scope),
+			pmmpthread_prepare_single_class(owner, closure_obj->called_scope),
 			&this_zv
 		);
 		if (static_variables != NULL) {
@@ -790,7 +790,7 @@ zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* c
 			new_closure->func.op_array.static_variables = static_variables;
 		}
 
-		//pthreads_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
+		//pmmpthread_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
 		destroy_zend_function(func_def);
 	}
 

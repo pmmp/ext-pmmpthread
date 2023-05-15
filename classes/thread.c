@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 #include <src/object.h>
 #include <src/routine.h>
 
@@ -27,48 +27,48 @@
 		$options should be a mask of inheritance constants */
 Thread_method(start)
 {
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
-	zend_long options = PTHREADS_INHERIT_ALL;
+	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
+	zend_long options = PMMPTHREAD_INHERIT_ALL;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
 		Z_PARAM_OPTIONAL
 		Z_PARAM_LONG(options)
 	ZEND_PARSE_PARAMETERS_END();
 
-	RETURN_BOOL(pthreads_start(thread, options));
+	RETURN_BOOL(pmmpthread_start(thread, options));
 } /* }}} */
 
 /* {{{ proto Thread::isStarted()
 	Will return true if a Thread has been started */
 Thread_method(isStarted)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* thread = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(&thread->monitor, PTHREADS_MONITOR_STARTED));
+	RETURN_BOOL(pmmpthread_monitor_check(&thread->monitor, PMMPTHREAD_MONITOR_STARTED));
 } /* }}} */
 
 /* {{{ proto Thread::isJoined()
 	Will return true if a Thread has been joined already */
 Thread_method(isJoined)
 {
-	pthreads_object_t* thread = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* thread = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(&thread->monitor, PTHREADS_MONITOR_JOINED));
+	RETURN_BOOL(pmmpthread_monitor_check(&thread->monitor, PMMPTHREAD_MONITOR_JOINED));
 } /* }}} */
 
 /* {{{ proto boolean Thread::join()
 		Will return a boolean indication of success */
 Thread_method(join)
 {
-	pthreads_zend_object_t* thread = PTHREADS_FETCH;
+	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_join(thread));
+	RETURN_BOOL(pmmpthread_join(thread));
 } /* }}} */
 
 /* {{{ proto long Thread::getThreadId()
@@ -77,7 +77,7 @@ Thread_method(getThreadId)
 {
 	zend_parse_parameters_none_throw();
 
-	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->local.id);
+	ZVAL_LONG(return_value, (PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(getThis())))->local.id);
 } /* }}} */
 
 /* {{{ proto long Thread::getCurrentThreadId()
@@ -86,7 +86,7 @@ Thread_method(getCurrentThreadId)
 {
 	zend_parse_parameters_none_throw();
 
-	ZVAL_LONG(return_value, pthreads_self());
+	ZVAL_LONG(return_value, pmmpthread_self());
 } /* }}} */
 
 /* {{{ proto Thread Thread::getCurrentThread()
@@ -95,7 +95,7 @@ Thread_method(getCurrentThread)
 {
 	zend_parse_parameters_none_throw();
 
-	pthreads_current_thread(return_value);
+	pmmpthread_current_thread(return_value);
 } /* }}} */
 
 /* {{{ proto long Thread::getCreatorId()
@@ -104,5 +104,5 @@ Thread_method(getCreatorId)
 {
 	zend_parse_parameters_none_throw();
 
-	ZVAL_LONG(return_value, (PTHREADS_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
+	ZVAL_LONG(return_value, (PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */

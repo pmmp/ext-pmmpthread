@@ -2,58 +2,58 @@
 #include <src/monitor.h>
 #include <src/prepare.h>
 #include <src/object.h>
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 #include <src/store.h>
 #include <src/thread.h>
 #include <src/worker.h>
 
 /* {{{ */
-typedef struct _pthreads_routine_arg_t {
-	pthreads_zend_object_t* thread;
-	pthreads_monitor_t ready;
+typedef struct _pmmpthread_routine_arg_t {
+	pmmpthread_zend_object_t* thread;
+	pmmpthread_monitor_t ready;
 	zend_ulong options;
-} pthreads_routine_arg_t; /* }}} */
+} pmmpthread_routine_arg_t; /* }}} */
 
 /* {{{ */
-static void pthreads_routine_init(pthreads_routine_arg_t* r, pthreads_zend_object_t* thread, zend_ulong thread_options) {
+static void pmmpthread_routine_init(pmmpthread_routine_arg_t* r, pmmpthread_zend_object_t* thread, zend_ulong thread_options) {
 	r->thread = thread;
 	r->options = thread_options;
-	pthreads_monitor_init(&r->ready);
-	pthreads_monitor_add(
-		&r->thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED);
+	pmmpthread_monitor_init(&r->ready);
+	pmmpthread_monitor_add(
+		&r->thread->ts_obj->monitor, PMMPTHREAD_MONITOR_STARTED);
 }
 
-static void pthreads_routine_wait(pthreads_routine_arg_t* r) {
-	pthreads_monitor_wait_until(
-		&r->ready, PTHREADS_MONITOR_READY);
-	pthreads_monitor_destroy(&r->ready);
+static void pmmpthread_routine_wait(pmmpthread_routine_arg_t* r) {
+	pmmpthread_monitor_wait_until(
+		&r->ready, PMMPTHREAD_MONITOR_READY);
+	pmmpthread_monitor_destroy(&r->ready);
 }
 
-static void pthreads_routine_free(pthreads_routine_arg_t* r) {
-	pthreads_monitor_remove(
-		&r->thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED);
-	pthreads_monitor_destroy(&r->ready);
+static void pmmpthread_routine_free(pmmpthread_routine_arg_t* r) {
+	pmmpthread_monitor_remove(
+		&r->thread->ts_obj->monitor, PMMPTHREAD_MONITOR_STARTED);
+	pmmpthread_monitor_destroy(&r->ready);
 } /* }}} */
 
 /* {{{ */
-static inline zend_result pthreads_routine_run_function(pthreads_zend_object_t* connection) {
+static inline zend_result pmmpthread_routine_run_function(pmmpthread_zend_object_t* connection) {
 	zend_function* run;
-	pthreads_call_t call = PTHREADS_CALL_EMPTY;
+	pmmpthread_call_t call = PMMPTHREAD_CALL_EMPTY;
 	zval zresult;
 	zend_execute_data execute_data;
 	memset(&execute_data, 0, sizeof(execute_data));
 	zend_result result = FAILURE;
 
-	if (pthreads_monitor_check(&connection->ts_obj->monitor, PTHREADS_MONITOR_ERROR)) {
+	if (pmmpthread_monitor_check(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR)) {
 		return result;
 	}
 
 	ZVAL_UNDEF(&zresult);
 
-	pthreads_monitor_add(&connection->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
+	pmmpthread_monitor_add(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_RUNNING);
 
 	zend_try{
-		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PTHREADS_G(strings).run))) {
+		if ((run = zend_hash_find_ptr(&connection->std.ce->function_table, PMMPTHREAD_G(strings).run))) {
 			if (run->type == ZEND_USER_FUNCTION) {
 				EG(current_execute_data) = &execute_data;
 
@@ -73,82 +73,82 @@ static inline zend_result pthreads_routine_run_function(pthreads_zend_object_t* 
 					zend_try_exception_handler();
 					if (EG(exception)) {
 						zend_exception_error(EG(exception), E_ERROR);
-						pthreads_monitor_add(&connection->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
+						pmmpthread_monitor_add(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 					}
 				} else {
 					result = SUCCESS;
 				}
 			} else {
-				//pthreads internal run() stub for worker?
+				//pmmpthread internal run() stub for worker?
 				result = SUCCESS;
 			}
 		}
 	} zend_catch{
-		pthreads_monitor_add(&connection->ts_obj->monitor, PTHREADS_MONITOR_ERROR);
+		pmmpthread_monitor_add(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 	} zend_end_try();
 
 	if (Z_TYPE(zresult) != IS_UNDEF) {
 		zval_ptr_dtor(&zresult);
 	}
 
-	pthreads_monitor_remove(&connection->ts_obj->monitor, PTHREADS_MONITOR_RUNNING);
+	pmmpthread_monitor_remove(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_RUNNING);
 
 	return result;
 } /* }}} */
 
 /* {{{ */
-static void* pthreads_routine(pthreads_routine_arg_t* routine) {
-	pthreads_zend_object_t* thread = routine->thread;
+static void* pmmpthread_routine(pmmpthread_routine_arg_t* routine) {
+	pmmpthread_zend_object_t* thread = routine->thread;
 	zend_ulong thread_options = routine->options;
-	pthreads_object_t* ts_obj = thread->ts_obj;
-	pthreads_monitor_t* ready = &routine->ready;
+	pmmpthread_object_t* ts_obj = thread->ts_obj;
+	pmmpthread_monitor_t* ready = &routine->ready;
 
-	if (pthreads_prepared_startup(ts_obj, ready, thread->std.ce, thread_options) == SUCCESS) {
-		pthreads_queue done_tasks_cache;
-		memset(&done_tasks_cache, 0, sizeof(pthreads_queue));
+	if (pmmpthread_prepared_startup(ts_obj, ready, thread->std.ce, thread_options) == SUCCESS) {
+		pmmpthread_queue done_tasks_cache;
+		memset(&done_tasks_cache, 0, sizeof(pmmpthread_queue));
 
 		zend_first_try{
-			ZVAL_UNDEF(&PTHREADS_ZG(this));
-			pthreads_object_connect(thread, &PTHREADS_ZG(this));
-			if (pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ_P(&PTHREADS_ZG(this)))) == FAILURE) {
+			ZVAL_UNDEF(&PMMPTHREAD_ZG(this));
+			pmmpthread_object_connect(thread, &PMMPTHREAD_ZG(this));
+			if (pmmpthread_routine_run_function(PMMPTHREAD_FETCH_FROM(Z_OBJ_P(&PMMPTHREAD_ZG(this)))) == FAILURE) {
 				zend_bailout();
 			}
 
-			if (PTHREADS_IS_WORKER(thread)) {
+			if (PMMPTHREAD_IS_WORKER(thread)) {
 				zval original;
 
-				while (pthreads_worker_next_task(thread->worker_data, &done_tasks_cache, &original) != PTHREADS_MONITOR_JOINED) {
+				while (pmmpthread_worker_next_task(thread->worker_data, &done_tasks_cache, &original) != PMMPTHREAD_MONITOR_JOINED) {
 					zval connection;
-					pthreads_object_connect(PTHREADS_FETCH_FROM(Z_OBJ(original)), &connection);
-					zend_result task_result = pthreads_routine_run_function(PTHREADS_FETCH_FROM(Z_OBJ(connection)));
-					pthreads_worker_add_garbage(thread->worker_data, &done_tasks_cache, &connection);
+					pmmpthread_object_connect(PMMPTHREAD_FETCH_FROM(Z_OBJ(original)), &connection);
+					zend_result task_result = pmmpthread_routine_run_function(PMMPTHREAD_FETCH_FROM(Z_OBJ(connection)));
+					pmmpthread_worker_add_garbage(thread->worker_data, &done_tasks_cache, &connection);
 					zval_ptr_dtor(&connection);
 
 					if (task_result == FAILURE) {
 						//we may have run out of memory or some error that left the interpreter in an unusable state
-						pthreads_monitor_add(&ts_obj->monitor, PTHREADS_MONITOR_ERROR);
+						pmmpthread_monitor_add(&ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 						break;
 					}
 				}
 			}
 		} zend_end_try();
 
-		pthreads_monitor_add(&ts_obj->monitor, PTHREADS_MONITOR_AWAIT_JOIN);
+		pmmpthread_monitor_add(&ts_obj->monitor, PMMPTHREAD_MONITOR_AWAIT_JOIN);
 		//wait for the parent to tell us it is done
-		pthreads_monitor_wait_until(&ts_obj->monitor, PTHREADS_MONITOR_EXIT);
+		pmmpthread_monitor_wait_until(&ts_obj->monitor, PMMPTHREAD_MONITOR_EXIT);
 
 		zend_first_try{
 			//now we can safely get rid of our local objects
-			zval_ptr_dtor(&PTHREADS_ZG(this));
-			ZVAL_UNDEF(&PTHREADS_ZG(this));
+			zval_ptr_dtor(&PMMPTHREAD_ZG(this));
+			ZVAL_UNDEF(&PMMPTHREAD_ZG(this));
 
-			if (PTHREADS_IS_WORKER(thread)) {
-				pthreads_queue_clean(&done_tasks_cache);
+			if (PMMPTHREAD_IS_WORKER(thread)) {
+				pmmpthread_queue_clean(&done_tasks_cache);
 			}
 		} zend_end_try();
 	}
 
-	pthreads_prepared_shutdown();
+	pmmpthread_prepared_shutdown();
 
 	pthread_exit(NULL);
 
@@ -158,28 +158,28 @@ static void* pthreads_routine(pthreads_routine_arg_t* routine) {
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_start(pthreads_zend_object_t* thread, zend_ulong thread_options) {
-	pthreads_routine_arg_t routine;
-	pthreads_object_t* ts_obj = thread->ts_obj;
+zend_bool pmmpthread_start(pmmpthread_zend_object_t* thread, zend_ulong thread_options) {
+	pmmpthread_routine_arg_t routine;
+	pmmpthread_object_t* ts_obj = thread->ts_obj;
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may start it",
 			thread->std.ce->name->val);
 		return 0;
 	}
 
-	if (pthreads_monitor_check(&ts_obj->monitor, PTHREADS_MONITOR_STARTED)) {
+	if (pmmpthread_monitor_check(&ts_obj->monitor, PMMPTHREAD_MONITOR_STARTED)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"the creator of %s already started it", thread->std.ce->name->val);
 		return 0;
 	}
 
-	pthreads_routine_init(&routine, thread, thread_options);
+	pmmpthread_routine_init(&routine, thread, thread_options);
 
-	switch (pthread_create(&ts_obj->thread, NULL, (void* (*) (void*)) pthreads_routine, (void*)&routine)) {
+	switch (pthread_create(&ts_obj->thread, NULL, (void* (*) (void*)) pmmpthread_routine, (void*)&routine)) {
 	case SUCCESS:
-		pthreads_routine_wait(&routine);
+		pmmpthread_routine_wait(&routine);
 		return 1;
 
 	case EAGAIN:
@@ -192,50 +192,50 @@ zend_bool pthreads_start(pthreads_zend_object_t* thread, zend_ulong thread_optio
 			0, "cannot start %s, unknown error", thread->std.ce->name->val);
 	}
 
-	pthreads_routine_free(&routine);
+	pmmpthread_routine_free(&routine);
 
 	return 0;
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_join(pthreads_zend_object_t* thread) {
+zend_bool pmmpthread_join(pmmpthread_zend_object_t* thread) {
 
-	if (!PTHREADS_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may join with it",
 			thread->std.ce->name->val);
 		return 0;
 	}
 
-	if (pthreads_monitor_check(&thread->ts_obj->monitor, PTHREADS_MONITOR_JOINED)) {
+	if (pmmpthread_monitor_check(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_JOINED)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"the creator of %s already joined with it",
 			thread->std.ce->name->val);
 		return 0;
 	}
 
-	if (!pthreads_monitor_check(&thread->ts_obj->monitor, PTHREADS_MONITOR_STARTED)) {
+	if (!pmmpthread_monitor_check(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_STARTED)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"%s has not been started",
 			thread->std.ce->name->val);
 		return 0;
 	}
 
-	pthreads_monitor_add(&thread->ts_obj->monitor, PTHREADS_MONITOR_JOINED);
+	pmmpthread_monitor_add(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_JOINED);
 
 	//wait for the thread to signal that it's no longer running PHP code
-	pthreads_monitor_wait_until(&thread->ts_obj->monitor, PTHREADS_MONITOR_AWAIT_JOIN);
+	pmmpthread_monitor_wait_until(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_AWAIT_JOIN);
 
 	//now, synchronize all object properties that may have been assigned by the thread
-	if (pthreads_monitor_lock(&thread->ts_obj->monitor)) {
-		pthreads_store_full_sync_local_properties(&thread->std);
-		pthreads_monitor_unlock(&thread->ts_obj->monitor);
+	if (pmmpthread_monitor_lock(&thread->ts_obj->monitor)) {
+		pmmpthread_store_full_sync_local_properties(&thread->std);
+		pmmpthread_monitor_unlock(&thread->ts_obj->monitor);
 	}
 	if (thread->worker_data != NULL) {
-		pthreads_worker_sync_collectable_tasks(thread->worker_data);
+		pmmpthread_worker_sync_collectable_tasks(thread->worker_data);
 	}
 
-	pthreads_monitor_add(&thread->ts_obj->monitor, PTHREADS_MONITOR_EXIT);
+	pmmpthread_monitor_add(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_EXIT);
 
 	return (pthread_join(thread->ts_obj->thread, NULL) == SUCCESS);
 } /* }}} */

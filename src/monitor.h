@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2015                                       |
   +----------------------------------------------------------------------+
@@ -15,36 +15,36 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_MONITOR_H
-#define HAVE_PTHREADS_MONITOR_H
+#ifndef HAVE_PMMPTHREAD_MONITOR_H
+#define HAVE_PMMPTHREAD_MONITOR_H
 
-typedef unsigned long pthreads_monitor_state_t;
+typedef unsigned long pmmpthread_monitor_state_t;
 
-typedef struct _pthreads_monitor_t {
-	volatile pthreads_monitor_state_t state;
+typedef struct _pmmpthread_monitor_t {
+	volatile pmmpthread_monitor_state_t state;
 	pthread_mutex_t          mutex;
 	pthread_cond_t           cond;
-} pthreads_monitor_t;
+} pmmpthread_monitor_t;
 
-#define PTHREADS_MONITOR_NOTHING         (0)
-#define PTHREADS_MONITOR_STARTED         (1<<0)
-#define PTHREADS_MONITOR_RUNNING         (1<<1)
-#define PTHREADS_MONITOR_JOINED          (1<<2)
-#define PTHREADS_MONITOR_ERROR           (1<<3)
-#define PTHREADS_MONITOR_READY           (1<<4)
-#define PTHREADS_MONITOR_COLLECT_GARBAGE (1<<5)
-#define PTHREADS_MONITOR_EXIT            (1<<6)
-#define PTHREADS_MONITOR_AWAIT_JOIN      (1<<7)
+#define PMMPTHREAD_MONITOR_NOTHING         (0)
+#define PMMPTHREAD_MONITOR_STARTED         (1<<0)
+#define PMMPTHREAD_MONITOR_RUNNING         (1<<1)
+#define PMMPTHREAD_MONITOR_JOINED          (1<<2)
+#define PMMPTHREAD_MONITOR_ERROR           (1<<3)
+#define PMMPTHREAD_MONITOR_READY           (1<<4)
+#define PMMPTHREAD_MONITOR_COLLECT_GARBAGE (1<<5)
+#define PMMPTHREAD_MONITOR_EXIT            (1<<6)
+#define PMMPTHREAD_MONITOR_AWAIT_JOIN      (1<<7)
 
-zend_result pthreads_monitor_init(pthreads_monitor_t* m);
-void pthreads_monitor_destroy(pthreads_monitor_t* m);
-zend_bool pthreads_monitor_lock(pthreads_monitor_t *m);
-zend_bool pthreads_monitor_unlock(pthreads_monitor_t *m);
-pthreads_monitor_state_t pthreads_monitor_check(pthreads_monitor_t *m, pthreads_monitor_state_t state);
-int pthreads_monitor_wait(pthreads_monitor_t *m, long timeout);
-int pthreads_monitor_notify(pthreads_monitor_t *m);
-int pthreads_monitor_notify_one(pthreads_monitor_t *m);
-void pthreads_monitor_wait_until(pthreads_monitor_t *m, pthreads_monitor_state_t state);
-void pthreads_monitor_add(pthreads_monitor_t *m, pthreads_monitor_state_t state);
-void pthreads_monitor_remove(pthreads_monitor_t *m, pthreads_monitor_state_t state);
+zend_result pmmpthread_monitor_init(pmmpthread_monitor_t* m);
+void pmmpthread_monitor_destroy(pmmpthread_monitor_t* m);
+zend_bool pmmpthread_monitor_lock(pmmpthread_monitor_t *m);
+zend_bool pmmpthread_monitor_unlock(pmmpthread_monitor_t *m);
+pmmpthread_monitor_state_t pmmpthread_monitor_check(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state);
+int pmmpthread_monitor_wait(pmmpthread_monitor_t *m, long timeout);
+int pmmpthread_monitor_notify(pmmpthread_monitor_t *m);
+int pmmpthread_monitor_notify_one(pmmpthread_monitor_t *m);
+void pmmpthread_monitor_wait_until(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state);
+void pmmpthread_monitor_add(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state);
+void pmmpthread_monitor_remove(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state);
 #endif

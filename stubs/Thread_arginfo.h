@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: a139cbddabbb2be1badbba15710c00c0c64a736b */
+ * Stub hash: d085d48e578355ff4b1de837439458f6ea88f5fb */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -54,55 +54,55 @@ static zend_class_entry *register_class_pmmp_thread_Thread(zend_class_entry *cla
 	class_entry->ce_flags |= ZEND_ACC_ABSTRACT;
 
 	zval const_INHERIT_NONE_value;
-	ZVAL_LONG(&const_INHERIT_NONE_value, PTHREADS_INHERIT_NONE);
+	ZVAL_LONG(&const_INHERIT_NONE_value, PMMPTHREAD_INHERIT_NONE);
 	zend_string *const_INHERIT_NONE_name = zend_string_init_interned("INHERIT_NONE", sizeof("INHERIT_NONE") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_NONE_name, &const_INHERIT_NONE_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_NONE_name);
 
 	zval const_INHERIT_INI_value;
-	ZVAL_LONG(&const_INHERIT_INI_value, PTHREADS_INHERIT_INI);
+	ZVAL_LONG(&const_INHERIT_INI_value, PMMPTHREAD_INHERIT_INI);
 	zend_string *const_INHERIT_INI_name = zend_string_init_interned("INHERIT_INI", sizeof("INHERIT_INI") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_INI_name, &const_INHERIT_INI_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_INI_name);
 
 	zval const_INHERIT_CONSTANTS_value;
-	ZVAL_LONG(&const_INHERIT_CONSTANTS_value, PTHREADS_INHERIT_CONSTANTS);
+	ZVAL_LONG(&const_INHERIT_CONSTANTS_value, PMMPTHREAD_INHERIT_CONSTANTS);
 	zend_string *const_INHERIT_CONSTANTS_name = zend_string_init_interned("INHERIT_CONSTANTS", sizeof("INHERIT_CONSTANTS") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_CONSTANTS_name, &const_INHERIT_CONSTANTS_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_CONSTANTS_name);
 
 	zval const_INHERIT_FUNCTIONS_value;
-	ZVAL_LONG(&const_INHERIT_FUNCTIONS_value, PTHREADS_INHERIT_FUNCTIONS);
+	ZVAL_LONG(&const_INHERIT_FUNCTIONS_value, PMMPTHREAD_INHERIT_FUNCTIONS);
 	zend_string *const_INHERIT_FUNCTIONS_name = zend_string_init_interned("INHERIT_FUNCTIONS", sizeof("INHERIT_FUNCTIONS") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_FUNCTIONS_name, &const_INHERIT_FUNCTIONS_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_FUNCTIONS_name);
 
 	zval const_INHERIT_CLASSES_value;
-	ZVAL_LONG(&const_INHERIT_CLASSES_value, PTHREADS_INHERIT_CLASSES);
+	ZVAL_LONG(&const_INHERIT_CLASSES_value, PMMPTHREAD_INHERIT_CLASSES);
 	zend_string *const_INHERIT_CLASSES_name = zend_string_init_interned("INHERIT_CLASSES", sizeof("INHERIT_CLASSES") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_CLASSES_name, &const_INHERIT_CLASSES_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_CLASSES_name);
 
 	zval const_INHERIT_INCLUDES_value;
-	ZVAL_LONG(&const_INHERIT_INCLUDES_value, PTHREADS_INHERIT_INCLUDES);
+	ZVAL_LONG(&const_INHERIT_INCLUDES_value, PMMPTHREAD_INHERIT_INCLUDES);
 	zend_string *const_INHERIT_INCLUDES_name = zend_string_init_interned("INHERIT_INCLUDES", sizeof("INHERIT_INCLUDES") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_INCLUDES_name, &const_INHERIT_INCLUDES_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_INCLUDES_name);
 
 	zval const_INHERIT_COMMENTS_value;
-	ZVAL_LONG(&const_INHERIT_COMMENTS_value, PTHREADS_INHERIT_COMMENTS);
+	ZVAL_LONG(&const_INHERIT_COMMENTS_value, PMMPTHREAD_INHERIT_COMMENTS);
 	zend_string *const_INHERIT_COMMENTS_name = zend_string_init_interned("INHERIT_COMMENTS", sizeof("INHERIT_COMMENTS") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_COMMENTS_name, &const_INHERIT_COMMENTS_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_COMMENTS_name);
 
 	zval const_INHERIT_ALL_value;
-	ZVAL_LONG(&const_INHERIT_ALL_value, PTHREADS_INHERIT_ALL);
+	ZVAL_LONG(&const_INHERIT_ALL_value, PMMPTHREAD_INHERIT_ALL);
 	zend_string *const_INHERIT_ALL_name = zend_string_init_interned("INHERIT_ALL", sizeof("INHERIT_ALL") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_INHERIT_ALL_name, &const_INHERIT_ALL_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_INHERIT_ALL_name);
 
 	zval const_ALLOW_HEADERS_value;
-	ZVAL_LONG(&const_ALLOW_HEADERS_value, PTHREADS_ALLOW_HEADERS);
+	ZVAL_LONG(&const_ALLOW_HEADERS_value, PMMPTHREAD_ALLOW_HEADERS);
 	zend_string *const_ALLOW_HEADERS_name = zend_string_init_interned("ALLOW_HEADERS", sizeof("ALLOW_HEADERS") - 1, 1);
 	zend_declare_class_constant_ex(class_entry, const_ALLOW_HEADERS_name, &const_ALLOW_HEADERS_value, ZEND_ACC_PUBLIC, NULL);
 	zend_string_release(const_ALLOW_HEADERS_name);

@@ -43,7 +43,7 @@ class Connect extends Worker {
     protected $port;
     
     /**
-    * Note that the link is stored statically, which for pthreads, means thread local
+    * Note that the link is stored statically, which for pmmpthread, means thread local
     **/
     protected static $link;
 }

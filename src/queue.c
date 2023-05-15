@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2015                                       |
   +----------------------------------------------------------------------+
@@ -17,28 +17,28 @@
  */
 #include "queue.h"
 
-void pthreads_queue_clean(pthreads_queue* queue) {
-	pthreads_queue_item_t* item = queue->head;
+void pmmpthread_queue_clean(pmmpthread_queue* queue) {
+	pmmpthread_queue_item_t* item = queue->head;
 	while (item) {
-		pthreads_queue_item_t* r = item;
+		pmmpthread_queue_item_t* r = item;
 		zval_ptr_dtor(&item->value);
 		item = r->next;
 		efree(r);
 	}
 }
 
-static inline pthreads_queue_item_t* pthreads_queue_item_new(zval* value) {
-	pthreads_queue_item_t* item = emalloc(sizeof(pthreads_queue_item_t));
+static inline pmmpthread_queue_item_t* pmmpthread_queue_item_new(zval* value) {
+	pmmpthread_queue_item_t* item = emalloc(sizeof(pmmpthread_queue_item_t));
 	ZVAL_COPY(&item->value, value);
 	return item;
 }
 
-static inline void set_prev_and_next(pthreads_queue_item_t* item, pthreads_queue_item_t* prev, pthreads_queue_item_t* next) {
+static inline void set_prev_and_next(pmmpthread_queue_item_t* item, pmmpthread_queue_item_t* prev, pmmpthread_queue_item_t* next) {
 	item->prev = prev;
 	item->next = next;
 }
 
-void pthreads_queue_push(pthreads_queue* queue, pthreads_queue_item_t* item) {
+void pmmpthread_queue_push(pmmpthread_queue* queue, pmmpthread_queue_item_t* item) {
 	if (!queue->tail) {
 		queue->tail = item;
 		queue->head = item;
@@ -51,11 +51,11 @@ void pthreads_queue_push(pthreads_queue* queue, pthreads_queue_item_t* item) {
 	queue->size++;
 }
 
-void pthreads_queue_push_new(pthreads_queue* queue, zval* value) {
-	pthreads_queue_push(queue, pthreads_queue_item_new(value));
+void pmmpthread_queue_push_new(pmmpthread_queue* queue, zval* value) {
+	pmmpthread_queue_push(queue, pmmpthread_queue_item_new(value));
 }
 
-void pthreads_queue_unshift(pthreads_queue* queue, pthreads_queue_item_t* item) {
+void pmmpthread_queue_unshift(pmmpthread_queue* queue, pmmpthread_queue_item_t* item) {
 	if (!queue->head) {
 		queue->tail = item;
 		queue->head = item;
@@ -67,11 +67,11 @@ void pthreads_queue_unshift(pthreads_queue* queue, pthreads_queue_item_t* item) 
 	}
 }
 
-void pthreads_queue_unshift_new(pthreads_queue* queue, zval* value) {
-	pthreads_queue_unshift(queue, pthreads_queue_item_new(value));
+void pmmpthread_queue_unshift_new(pmmpthread_queue* queue, zval* value) {
+	pmmpthread_queue_unshift(queue, pmmpthread_queue_item_new(value));
 }
 
-zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* item, zval* value, int garbage) {
+zend_long pmmpthread_queue_remove(pmmpthread_queue* queue, pmmpthread_queue_item_t* item, zval* value, int garbage) {
 	if (!item) {
 		value = NULL;
 		return 0;
@@ -87,7 +87,7 @@ zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* it
 		queue->tail = item->prev;
 		queue->tail->next = NULL;
 	} else {
-		pthreads_queue_item_t* items[2] =
+		pmmpthread_queue_item_t* items[2] =
 		{ item->next, item->prev };
 
 		items[0]->prev = items[1];
@@ -103,7 +103,7 @@ zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* it
 	}
 
 	switch (garbage) {
-	case PTHREADS_STACK_FREE:
+	case PMMPTHREAD_STACK_FREE:
 		efree(item);
 		break;
 	}
@@ -111,10 +111,10 @@ zend_long pthreads_queue_remove(pthreads_queue* queue, pthreads_queue_item_t* it
 	return queue->size;
 }
 
-zend_long pthreads_queue_shift(pthreads_queue* queue, zval* value, int garbage) {
-	return pthreads_queue_remove(queue, queue->head, value, garbage);
+zend_long pmmpthread_queue_shift(pmmpthread_queue* queue, zval* value, int garbage) {
+	return pmmpthread_queue_remove(queue, queue->head, value, garbage);
 }
 
-zend_long pthreads_queue_pop(pthreads_queue* queue, zval* value, int garbage) {
-	return pthreads_queue_remove(queue, queue->tail, value, garbage);
+zend_long pmmpthread_queue_pop(pmmpthread_queue* queue, zval* value, int garbage) {
+	return pmmpthread_queue_remove(queue, queue->tail, value, garbage);
 }

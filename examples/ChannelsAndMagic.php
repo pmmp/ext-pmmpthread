@@ -6,7 +6,7 @@ use pmmp\thread\Pool;
 
 /*
  * This example demonstrates the use of magic methods, and is a possible answer to the question:
- *   "Can we have something like go channels with pthreads?"
+ *   "Can we have something like go channels with pmmpthread?"
  * Channels in go abstract away the complexity of parallel programming, but are dependant on goroutines
  *   and language level support.
  *  We can't have language level support easily, but we can implement channels using magic PHP.

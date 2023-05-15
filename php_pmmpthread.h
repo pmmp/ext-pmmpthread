@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2014                                |
   +----------------------------------------------------------------------+
@@ -15,19 +15,19 @@
   | Author: Joe Watkins <joe.watkins@live.co.uk>                         |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PHP_PTHREADS_H
-#define HAVE_PHP_PTHREADS_H
-#define PHP_PTHREADS_EXTNAME "pthreads"
-#define PHP_PTHREADS_VERSION "5.3.2dev"
+#ifndef HAVE_PHP_PMMPTHREAD_H
+#define HAVE_PHP_PMMPTHREAD_H
+#define PHP_PMMPTHREAD_EXTNAME "pmmpthread"
+#define PHP_PMMPTHREAD_VERSION "5.3.2dev"
 
-PHP_MINIT_FUNCTION(pthreads);
-PHP_MSHUTDOWN_FUNCTION(pthreads);
-PHP_RINIT_FUNCTION(pthreads);
-PHP_RSHUTDOWN_FUNCTION(pthreads);
-PHP_MINFO_FUNCTION(pthreads);
-ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pthreads);
+PHP_MINIT_FUNCTION(pmmpthread);
+PHP_MSHUTDOWN_FUNCTION(pmmpthread);
+PHP_RINIT_FUNCTION(pmmpthread);
+PHP_RSHUTDOWN_FUNCTION(pmmpthread);
+PHP_MINFO_FUNCTION(pmmpthread);
+ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pmmpthread);
 
-extern zend_module_entry pthreads_module_entry;
-#define phpext_pthreads_ptr &pthreads_module_entry
+extern zend_module_entry pmmpthread_module_entry;
+#define phpext_pmmpthread_ptr &pmmpthread_module_entry
 
 #endif

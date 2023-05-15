@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,27 +15,27 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_COPY_H
-#define HAVE_PTHREADS_COPY_H
+#ifndef HAVE_PMMPTHREAD_COPY_H
+#define HAVE_PMMPTHREAD_COPY_H
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 #include <src/thread.h>
 #include <Zend/zend_attributes.h>
 #include <src/prepare.h>
 
 /* {{{ */
-zend_string* pthreads_copy_string(zend_string* s); /* }}} */
+zend_string* pmmpthread_copy_string(zend_string* s); /* }}} */
 
 /* {{{ */
-int pthreads_copy_zval(const pthreads_ident_t* owner, zval* dest, zval* source); /* }}} */
+int pmmpthread_copy_zval(const pmmpthread_ident_t* owner, zval* dest, zval* source); /* }}} */
 
 /* {{{ */
-HashTable* pthreads_copy_attributes(const pthreads_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
+HashTable* pmmpthread_copy_attributes(const pmmpthread_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
 
 /* {{{ */
-zend_function* pthreads_copy_function(const pthreads_ident_t* owner, const zend_function *function); /* }}} */
+zend_function* pmmpthread_copy_function(const pmmpthread_ident_t* owner, const zend_function *function); /* }}} */
 
 /* {{{ */
-zend_result pthreads_copy_closure(const pthreads_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval); /* }}} */
+zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval); /* }}} */
 #endif
 

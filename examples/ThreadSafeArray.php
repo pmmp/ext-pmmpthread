@@ -5,7 +5,7 @@ use pmmp\thread\Thread;
 
 /**
 *	Regular PHP arrays cannot be shared between threads, as they cannot be made thread-safe.
-*	For this purpose, pthreads has a ThreadSafeArray class, which provides similar functionality to a regular array.
+*	For this purpose, pmmpthread offers a ThreadSafeArray class, which provides similar functionality to a regular array.
 */
 
 /* you might want to set this to 100 before running if you're running on older ( dual core ) hardware */

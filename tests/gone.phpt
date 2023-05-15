@@ -53,7 +53,7 @@ $t->join();
 
 ?>
 --EXPECTF--
-Fatal error: Uncaught %s: pthreads detected an attempt to connect to an object which has already been destroyed in %s:%d
+Fatal error: Uncaught %s: pmmpthread detected an attempt to connect to an object which has already been destroyed in %s:%d
 Stack trace:
 #0 [internal function]: T->run()
 #1 {main}

@@ -1,7 +1,7 @@
 --TEST--
 Test inherit none closures
 --DESCRIPTION--
-This test verifies that closures work when using PTHREADS_INHERIT_NONE
+This test verifies that closures work when using INHERIT_NONE
 --FILE--
 <?php
 class Test extends \pmmp\thread\Thread {

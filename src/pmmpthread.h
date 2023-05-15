@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,14 +15,14 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_H
-#define HAVE_PTHREADS_H
+#ifndef HAVE_PMMPTHREAD_H
+#define HAVE_PMMPTHREAD_H
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
 
-#define HAVE_PTHREADS_EXT_SOCKETS_SUPPORT HAVE_SOCKETS
+#define HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT HAVE_SOCKETS
 
 #include <stdio.h>
 #ifndef _WIN32
@@ -56,7 +56,7 @@
 #include <ext/standard/php_var.h>
 #include <ext/spl/spl_exceptions.h>
 #include <ext/spl/spl_iterators.h>
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
 #include <ext/sockets/php_sockets.h>
 #endif
 #include <Zend/zend.h>
@@ -80,91 +80,88 @@
 #include <dmalloc.h>
 #endif
 
-extern zend_class_entry *pthreads_ce_thread_safe;
-extern zend_class_entry *pthreads_ce_array;
-extern zend_class_entry *pthreads_ce_runnable;
-extern zend_class_entry *pthreads_ce_thread;
-extern zend_class_entry *pthreads_ce_worker;
-extern zend_class_entry *pthreads_ce_connection_exception;
+extern zend_class_entry *pmmpthread_ce_thread_safe;
+extern zend_class_entry *pmmpthread_ce_array;
+extern zend_class_entry *pmmpthread_ce_runnable;
+extern zend_class_entry *pmmpthread_ce_thread;
+extern zend_class_entry *pmmpthread_ce_worker;
+extern zend_class_entry *pmmpthread_ce_connection_exception;
 
-#define IS_PTHREADS_CLASS(c) \
-	(instanceof_function(c, pthreads_ce_thread_safe))
+#define IS_THREADSAFE_CLASS(c) \
+	(instanceof_function(c, pmmpthread_ce_thread_safe))
 
-#define IS_PTHREADS_OBJECT(o)   \
-        (Z_TYPE_P(o) == IS_OBJECT && IS_PTHREADS_CLASS(Z_OBJCE_P(o)))
+#define IS_THREADSAFE_CLASS_INSTANCE(o)   \
+        (Z_TYPE_P(o) == IS_OBJECT && IS_THREADSAFE_CLASS(Z_OBJCE_P(o)))
 
-#define IS_PTHREADS_THREADED_ARRAY(o) \
-	instanceof_function(o, pthreads_ce_array)
-
-#define IS_PTHREADS_CLOSURE_OBJECT(z) \
+#define IS_CLOSURE_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), zend_ce_closure))
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
 #define IS_EXT_SOCKETS_OBJECT(z) \
 	(Z_TYPE_P(z) == IS_OBJECT && instanceof_function(Z_OBJCE_P(z), socket_ce))
 #else
 #define IS_EXT_SOCKETS_OBJECT(z) 0
 #endif
 
-extern zend_object_handlers pthreads_ts_ce_handlers;
-extern zend_object_handlers pthreads_array_ce_handlers;
-extern zend_object_handlers pthreads_socket_handlers;
+extern zend_object_handlers pmmpthread_ts_ce_handlers;
+extern zend_object_handlers pmmpthread_array_ce_handlers;
+extern zend_object_handlers pmmpthread_socket_handlers;
 extern zend_object_handlers *zend_handlers;
 
-extern struct _pthreads_globals pthreads_globals;
+extern struct _pmmpthread_globals pmmpthread_globals;
 
-typedef struct _pthreads_zend_object_t pthreads_zend_object_t;
+typedef struct _pmmpthread_zend_object_t pmmpthread_zend_object_t;
 
-ZEND_EXTERN_MODULE_GLOBALS(pthreads)
+ZEND_EXTERN_MODULE_GLOBALS(pmmpthread)
 
-ZEND_BEGIN_MODULE_GLOBALS(pthreads)
+ZEND_BEGIN_MODULE_GLOBALS(pmmpthread)
 	zval  this;
 	zend_ulong options;
 	HashTable resolve;
 	HashTable filenames;
 	HashTable closure_base_op_arrays;
-	pthreads_zend_object_t* connecting_object;
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+	pmmpthread_zend_object_t* connecting_object;
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
 	zend_object_handlers *original_socket_object_handlers;
 	zend_object_handlers custom_socket_object_handlers;
 #endif
-ZEND_END_MODULE_GLOBALS(pthreads)
+ZEND_END_MODULE_GLOBALS(pmmpthread)
 
-#define PTHREADS_ZG(v) TSRMG(pthreads_globals_id, zend_pthreads_globals *, v)
+#define PMMPTHREAD_ZG(v) TSRMG(pmmpthread_globals_id, zend_pmmpthread_globals *, v)
 
-#define PTHREADS_FETCH_ALL(ls, id, type) ((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])
-#define PTHREADS_FETCH_CTX(ls, id, type, element) (((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])->element)
-#define PTHREADS_CG(ls, v) PTHREADS_FETCH_CTX(ls, compiler_globals_id, zend_compiler_globals*, v)
-#define PTHREADS_CG_ALL(ls) PTHREADS_FETCH_ALL(ls, compiler_globals_id, zend_compiler_globals*)
-#define PTHREADS_EG(ls, v) PTHREADS_FETCH_CTX(ls, executor_globals_id, zend_executor_globals*, v)
-#define PTHREADS_SG(ls, v) PTHREADS_FETCH_CTX(ls, sapi_globals_id, sapi_globals_struct*, v)
-#define PTHREADS_PG(ls, v) PTHREADS_FETCH_CTX(ls, core_globals_id, php_core_globals*, v)
-#define PTHREADS_EG_ALL(ls) PTHREADS_FETCH_ALL(ls, executor_globals_id, zend_executor_globals*)
+#define PMMPTHREAD_FETCH_ALL(ls, id, type) ((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])
+#define PMMPTHREAD_FETCH_CTX(ls, id, type, element) (((type) (*((void ***) ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])->element)
+#define PMMPTHREAD_CG(ls, v) PMMPTHREAD_FETCH_CTX(ls, compiler_globals_id, zend_compiler_globals*, v)
+#define PMMPTHREAD_CG_ALL(ls) PMMPTHREAD_FETCH_ALL(ls, compiler_globals_id, zend_compiler_globals*)
+#define PMMPTHREAD_EG(ls, v) PMMPTHREAD_FETCH_CTX(ls, executor_globals_id, zend_executor_globals*, v)
+#define PMMPTHREAD_SG(ls, v) PMMPTHREAD_FETCH_CTX(ls, sapi_globals_id, sapi_globals_struct*, v)
+#define PMMPTHREAD_PG(ls, v) PMMPTHREAD_FETCH_CTX(ls, core_globals_id, php_core_globals*, v)
+#define PMMPTHREAD_EG_ALL(ls) PMMPTHREAD_FETCH_ALL(ls, executor_globals_id, zend_executor_globals*)
 
-#define PTHREADS_MAP_PTR_OFFSET2PTR(ls, offset) \
-	((void**)((char*)PTHREADS_CG(ls, map_ptr_base) + offset))
-#define PTHREADS_MAP_PTR_PTR2OFFSET(ls, ptr) \
-	((void*)(((char*)(ptr)) - ((char*)PTHREADS_CG(ls, map_ptr_base))))
+#define PMMPTHREAD_MAP_PTR_OFFSET2PTR(ls, offset) \
+	((void**)((char*)PMMPTHREAD_CG(ls, map_ptr_base) + offset))
+#define PMMPTHREAD_MAP_PTR_PTR2OFFSET(ls, ptr) \
+	((void*)(((char*)(ptr)) - ((char*)PMMPTHREAD_CG(ls, map_ptr_base))))
 
 #if PHP_VERSION_ID >= 80200
-#define PTHREADS_MAP_PTR_GET(ls, ptr) \
+#define PMMPTHREAD_MAP_PTR_GET(ls, ptr) \
 	(ZEND_MAP_PTR_IS_OFFSET(ptr) ? \
-		*PTHREADS_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
+		*PMMPTHREAD_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
 		((void*)(ZEND_MAP_PTR(ptr))))
 #else
-#define PTHREADS_MAP_PTR_GET(ls, ptr) \
+#define PMMPTHREAD_MAP_PTR_GET(ls, ptr) \
 	(*(ZEND_MAP_PTR_IS_OFFSET(ptr) ? \
-		PTHREADS_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
+		PMMPTHREAD_MAP_PTR_OFFSET2PTR(ls, (uintptr_t)ZEND_MAP_PTR(ptr)) : \
 		((void**)(ZEND_MAP_PTR(ptr)))))
 #endif
 
 /* {{{ */
-typedef struct _pthreads_call_t {
+typedef struct _pmmpthread_call_t {
 	zend_fcall_info fci;
 	zend_fcall_info_cache fcc;
-} pthreads_call_t; /* }}} */
+} pmmpthread_call_t; /* }}} */
 
-#define PTHREADS_CALL_EMPTY {empty_fcall_info, empty_fcall_info_cache}
+#define PMMPTHREAD_CALL_EMPTY {empty_fcall_info, empty_fcall_info_cache}
 
 /* this is a copy of the same struct in zend_closures.c, which unfortunately isn't exported */
 typedef struct _zend_closure {

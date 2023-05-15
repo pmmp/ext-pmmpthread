@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -16,7 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 
 #define Runnable_method(name) PHP_METHOD(pmmp_thread_Runnable, name)
 
@@ -24,20 +24,20 @@
 	Will return true while the referenced Runnable is executing */
 Runnable_method(isRunning)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(&threaded->monitor, PTHREADS_MONITOR_RUNNING));
+	RETURN_BOOL(pmmpthread_monitor_check(&threaded->monitor, PMMPTHREAD_MONITOR_RUNNING));
 } /* }}} */
 
 /* {{{ proto boolean Runnable::isTerminated()
 	Will return true if the referenced Runnable suffered fatal errors or uncaught exceptions */
 Runnable_method(isTerminated)
 {
-	pthreads_object_t* threaded = PTHREADS_FETCH_TS;
+	pmmpthread_object_t* threaded = PMMPTHREAD_FETCH_TS;
 
 	zend_parse_parameters_none_throw();
 
-	RETURN_BOOL(pthreads_monitor_check(&threaded->monitor, PTHREADS_MONITOR_ERROR));
+	RETURN_BOOL(pmmpthread_monitor_check(&threaded->monitor, PMMPTHREAD_MONITOR_ERROR));
 } /* }}} */

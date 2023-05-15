@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,13 +15,13 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#define HAVE_PTHREADS_GLOBALS_H
+#ifndef HAVE_PMMPTHREAD_GLOBALS_H
+#define HAVE_PMMPTHREAD_GLOBALS_H
 
-#include <src/pthreads.h>
+#include <src/pmmpthread.h>
 
-/* {{{ pthreads_globals */
-struct _pthreads_globals {
+/* {{{ pmmpthread_globals */
+struct _pmmpthread_globals {
 	/*
 	* Initialized flag
 	*/
@@ -35,14 +35,14 @@ struct _pthreads_globals {
 	/*
 	* Global Monitor
 	*/
-	pthreads_monitor_t monitor;
+	pmmpthread_monitor_t monitor;
 
 	/*
 	* Objects Cache
 	*/
 	HashTable objects;
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
 	/*
 	* Sockets which have been shared between threads, and so musn't be closed by the destructor
 	*/
@@ -68,45 +68,45 @@ struct _pthreads_globals {
 	} strings;
 }; /* }}} */
 
-extern struct _pthreads_globals pthreads_globals;
+extern struct _pmmpthread_globals pmmpthread_globals;
 
-ZEND_EXTERN_MODULE_GLOBALS(pthreads)
+ZEND_EXTERN_MODULE_GLOBALS(pmmpthread)
 
-/* {{{ PTHREADS_G */
-#define PTHREADS_G(v) pthreads_globals.v
+/* {{{ PMMPTHREAD_G */
+#define PMMPTHREAD_G(v) pmmpthread_globals.v
 /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_object_valid(pthreads_zend_object_t *address); /* }}} */
+zend_bool pmmpthread_globals_object_valid(pmmpthread_zend_object_t *address); /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address); /* }}} */
+zend_bool pmmpthread_globals_object_delete(pmmpthread_zend_object_t *address); /* }}} */
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-void pthreads_globals_shared_socket_track(PHP_SOCKET socket);
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+void pmmpthread_globals_shared_socket_track(PHP_SOCKET socket);
 
-zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket);
+zend_bool pmmpthread_globals_socket_shared(PHP_SOCKET socket);
 #endif
 
-/* {{{ Locate a permanent interned string, either in the Zend global table or pthreads' global table */
-zend_string* pthreads_globals_find_interned_string(zend_string* string); /* }}} */
+/* {{{ Locate a permanent interned string, either in the Zend global table or pmmpthread global table */
+zend_string* pmmpthread_globals_find_interned_string(zend_string* string); /* }}} */
 
-/* {{{ Add a new permanent interned string to pthreads' table, or returns an existing interned string if one already exists */
-zend_string* pthreads_globals_add_interned_string(zend_string* string); /* }}} */
+/* {{{ Add a new permanent interned string to pmmpthread' table, or returns an existing interned string if one already exists */
+zend_string* pmmpthread_globals_add_interned_string(zend_string* string); /* }}} */
 
 /* {{{ */
-pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length); /* }}} */
+pmmpthread_zend_object_t* pmmpthread_globals_object_alloc(size_t length); /* }}} */
 
 /* {{{ initialize (true) globals */
-zend_bool pthreads_globals_init(); /* }}} */
+zend_bool pmmpthread_globals_init(); /* }}} */
 
 /* {{{ acquire global lock */
-zend_bool pthreads_globals_lock(); /* }}} */
+zend_bool pmmpthread_globals_lock(); /* }}} */
 
 /* {{{ release global lock */
-void pthreads_globals_unlock(); /* }}} */
+void pmmpthread_globals_unlock(); /* }}} */
 
 /* {{{ shutdown global structures */
-void pthreads_globals_shutdown(); /* }}} */
+void pmmpthread_globals_shutdown(); /* }}} */
 
-#endif /* HAVE_PTHREADS_GLOBALS_H */
+#endif /* HAVE_PMMPTHREAD_GLOBALS_H */
