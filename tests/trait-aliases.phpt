@@ -19,7 +19,7 @@ class myThread extends \pmmp\thread\Thread {
 }
 
 $t = new myThread();
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 --EXPECT--
 string(9) "fromTrait"

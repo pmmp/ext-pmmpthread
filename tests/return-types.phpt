@@ -14,7 +14,7 @@ $thread = new class extends \pmmp\thread\Thread {
 	}
 };
 
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 --EXPECT--
 string(4) "some"

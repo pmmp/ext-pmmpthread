@@ -24,7 +24,7 @@ var_dump(StaticClass::$list, StaticClass::$test, StaticClass::$testObject);
 echo "\n";
 
 $thread = new ThreadClass;
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 echo "AFTER\n";
 var_dump(StaticClass::$list, StaticClass::$test, StaticClass::$testObject);

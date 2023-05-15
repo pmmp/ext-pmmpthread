@@ -10,7 +10,7 @@ $w = new class extends \pmmp\thread\Worker{
 		throw new \Exception();
 	}
 };
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->synchronized(function() use ($w) : void{
 	while(!$w->isTerminated()){
 		$w->wait();

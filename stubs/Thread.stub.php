@@ -164,5 +164,5 @@ abstract class Thread extends Runnable
      *
      * @return bool A boolean indication of success
      */
-    public function start(int $options = Thread::INHERIT_ALL) : bool{}
+    public function start(int $options) : bool{}
 }

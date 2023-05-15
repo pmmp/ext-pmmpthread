@@ -42,7 +42,7 @@ class Test extends \pmmp\thread\Thread {
     }
 }
 $thread = new Test();
-$thread->start() && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 --EXPECT--
 string(16) "Foo::__construct"
 string(16) "Bar::__construct"

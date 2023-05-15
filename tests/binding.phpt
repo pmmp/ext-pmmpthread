@@ -39,7 +39,7 @@ $threads[1]=new ThreadTest();
 $threads[0]->setOther($threads[1]);
 $threads[1]->setOther($threads[0]);
 foreach($threads as $thread)
-	$thread->start();
+	$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 foreach($threads as $thread) {
 	$thread->synchronized(function() use($thread){
 		if (!$thread->done)

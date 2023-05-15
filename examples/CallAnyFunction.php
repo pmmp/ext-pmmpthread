@@ -29,6 +29,8 @@ class Caller extends Thread {
 	* The smallest thread in the world
 	**/
 	public function run() : void{
+		/* You should include vendor/autoload.php or other autoloader before doing anything here */
+
 		$this->result = 
 			($this->method)(...unserialize($this->params)); /* gotta love php7 :) */
 	}
@@ -38,7 +40,13 @@ class Caller extends Thread {
 	**/
 	public static function call($method, ...$params){
 		$thread = new Caller($method, ...$params);
-		if($thread->start()){
+
+		/*
+		 * You really, really don't want to use INHERIT_ALL in a production application - it's really slow and wastes lots of memory
+		 * Prefer INHERIT_NONE if you can autoload your code and don't set any INI entries
+		 * In this example code, it's used because we're in a single-file script and don't have an autoloader
+		 */
+		if($thread->start(Thread::INHERIT_ALL)){
 			return $thread;
 		}
 	}

@@ -84,10 +84,10 @@ class Test extends \pmmp\thread\Thread {
         $shared['queue'] = $queue;
 
         $thread = new TestNestedWrite($shared);
-        $thread->start();
+        $thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
         $thread2 = new TestNestedRead($shared);
-        $thread2->start();
+        $thread2->start(\pmmp\thread\Thread::INHERIT_ALL);
 
         $shared->synchronized(function() use ($shared) : void{
             while(!isset($shared['lock3'])){
@@ -105,7 +105,7 @@ class Test extends \pmmp\thread\Thread {
     }
 }
 $thread = new Test();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 ?>
 --EXPECT--

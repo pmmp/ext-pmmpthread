@@ -51,7 +51,7 @@ $t = new class($fcc, $fcc2) extends \pmmp\thread\Thread{
 		test2($this->fcc2);
 	}
 };
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 
 ?>

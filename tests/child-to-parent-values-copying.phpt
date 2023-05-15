@@ -20,7 +20,7 @@ class Test extends \pmmp\thread\Thread{
 	}
 }
 $t = new Test();
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 
 var_dump($t);
 ?>

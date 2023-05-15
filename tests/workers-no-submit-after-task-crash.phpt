@@ -9,7 +9,7 @@ $w->stack(new class extends \pmmp\thread\Runnable{
 		throw new \Exception();
 	}
 });
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 while($w->collect() > 0){
 	usleep(1);
 }

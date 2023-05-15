@@ -18,7 +18,7 @@ $t1 = new class($array) extends \pmmp\thread\Thread{
 		$this->array[] = new \pmmp\thread\ThreadSafeArray();
 	}
 };
-$t1->start() && $t1->join();
+$t1->start(\pmmp\thread\Thread::INHERIT_ALL) && $t1->join();
 
 var_dump($array);
 ?>

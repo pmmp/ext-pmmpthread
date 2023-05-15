@@ -37,7 +37,13 @@ class Future extends Thread {
     public static function of(Closure $closure, array $args = []) {
         $future = 
             new self($closure, $args);
-        $future->start();
+
+        /*
+         * You really, really don't want to use INHERIT_ALL in a production application - it's really slow and wastes lots of memory
+         * Prefer INHERIT_NONE if you can autoload your code and don't set any INI entries
+         * In this example code, it's used because we're in a single-file script and don't have an autoloader
+         */
+        $future->start(Thread::INHERIT_ALL);
         return $future;
     }
     

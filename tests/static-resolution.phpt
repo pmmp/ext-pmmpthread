@@ -21,7 +21,7 @@ class testbug extends \pmmp\thread\Thread
 }
 
 $testbug = new testbug;
-$testbug->start();
+$testbug->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 int(123)

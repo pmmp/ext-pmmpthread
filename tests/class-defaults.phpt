@@ -20,7 +20,7 @@ class Test extends \pmmp\thread\Thread {
 }
 
 $test =new Test();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECT--

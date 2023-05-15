@@ -24,7 +24,8 @@ $sock = socket_create_listen($argv[1]);
 if ($sock) {	
 	while(++$worker<5){
 		$workers[$worker] = new Test($sock);
-		$workers[$worker]->start();
+		/* we can use INHERIT_NONE here since the thread isn't using any other code */
+		$workers[$worker]->start(Thread::INHERIT_NONE);
 	}
 	printf("%d threads waiting on port %d\n", count($workers), $argv[1]);
 }

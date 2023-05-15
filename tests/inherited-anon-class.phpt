@@ -10,7 +10,7 @@ $task = new class extends \pmmp\thread\Thread {
 		var_dump($this->prop);
     }
 };
-$task->start() && $task->join();
+$task->start(\pmmp\thread\Thread::INHERIT_ALL) && $task->join();
 --EXPECTF--
 object(%s@anonymous)#2 (0) {
 }

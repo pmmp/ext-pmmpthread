@@ -7,7 +7,7 @@ created, where the new class implements at least one interface
 <?php
 
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 interface A {}
 class task extends \pmmp\thread\Runnable implements A {

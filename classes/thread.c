@@ -22,16 +22,15 @@
 
 #define Thread_method(name) PHP_METHOD(pmmp_thread_Thread, name)
 
-/* {{{ proto boolean Thread::start([long $options = Thread::INHERIT_ALL])
+/* {{{ proto boolean Thread::start([long $options])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
 		$options should be a mask of inheritance constants */
 Thread_method(start)
 {
 	pmmpthread_zend_object_t* thread = PMMPTHREAD_FETCH;
-	zend_long options = PMMPTHREAD_INHERIT_ALL;
+	zend_long options;
 
-	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 0, 1)
-		Z_PARAM_OPTIONAL
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
 		Z_PARAM_LONG(options)
 	ZEND_PARSE_PARAMETERS_END();
 

@@ -48,7 +48,7 @@ class T extends \pmmp\thread\Thread {
 
 /* start thread to call closure */
 $t = new T($test);
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 /* wait for new closure */
 $t->synchronized(function() use($t) {

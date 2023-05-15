@@ -29,7 +29,7 @@ do {
     $ts = [];
     while (count($ts)<$max) {
         $t = new MyThread();
-        $t->start();
+        $t->start(Thread::INHERIT_ALL); //TODO: customizable option args?
         $ts[]=$t;
     }
     $ts = [];

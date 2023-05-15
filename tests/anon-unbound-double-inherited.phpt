@@ -36,7 +36,7 @@ trait T1 {function t(){}}
 trait T2 {function t(){}}
 
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(/** b */new class extends C {});
 $w->shutdown();
 --EXPECT--

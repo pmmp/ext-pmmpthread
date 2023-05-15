@@ -24,7 +24,7 @@ $collectable = new class extends \pmmp\thread\Runnable {
 	}
 };
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 $worker->stack($collectable);
 $worker->shutdown();
 --EXPECT--

@@ -22,7 +22,7 @@ class thr extends \pmmp\thread\Thread{
 }
 
 $thr = new thr();
-$thr->start();
+$thr->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thr->join();
 --EXPECT--
 string(1) "A"

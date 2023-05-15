@@ -35,7 +35,7 @@ $t = new class extends \pmmp\thread\Thread{
 	}
 };
 $t->closure = $closure;
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 ?>
 --EXPECT--
 string(1) "B"

@@ -48,7 +48,7 @@ class MyThread extends \pmmp\thread\Thread {
 $items = new \MyIterator();
 foreach ($items as $item) {}
 $thread = new \MyThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 --EXPECT--
 SUCCESS

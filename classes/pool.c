@@ -174,7 +174,10 @@ Pool_method(submit) {
 					zval_dtor(&retval);
 			}
 
-			zend_call_method(Z_OBJ_P(&worker), Z_OBJCE(worker), NULL, ZEND_STRL("start"), NULL, 0, NULL, NULL);
+			zval options;
+			ZVAL_LONG(&options, PMMPTHREAD_INHERIT_ALL); //TODO: allow this to be provided by the constructor
+
+			zend_call_method_with_1_params(Z_OBJ_P(&worker), Z_OBJCE(worker), NULL, "start", NULL, &options);
 		}
 
 		selected = zend_hash_index_update(

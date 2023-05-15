@@ -10,19 +10,19 @@ class Test extends \pmmp\thread\Thread {
 	}
 	
 	public function run() : void{
-		$this->worker->start();
+		$this->worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 	}
 }
 
 $worker = new \pmmp\thread\Worker();
 $test = new Test($worker);
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECTF--
 Fatal error: Uncaught RuntimeException: only the creator of this pmmp\thread\Worker may start it in %s:8
 Stack trace:
-#0 %s(8): pmmp\thread\Thread->start()
+#0 %s(8): pmmp\thread\Thread->start(%d)
 #1 [internal function]: Test->run()
 #2 {main}
   thrown in %s on line 8

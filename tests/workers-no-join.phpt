@@ -15,9 +15,9 @@ class Test extends \pmmp\thread\Thread {
 }
 
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test = new Test($worker);
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECTF--

@@ -16,7 +16,7 @@ class TestThread extends \pmmp\thread\Thread {
 	}
 }
 $test = new TestThread();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 OK

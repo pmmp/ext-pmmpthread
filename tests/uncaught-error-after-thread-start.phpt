@@ -22,7 +22,7 @@ $t = new class extends \pmmp\thread\Thread{
 		});
 	}
 };
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function() use ($t) : void{
 	while(!$t->ready){
 		$t->wait();

@@ -39,7 +39,7 @@ class Dummy extends \pmmp\thread\Runnable{
 		});
 	}
 }
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 echo "first task\n";
 $w->stack($t = new Dummy);

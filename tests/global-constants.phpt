@@ -26,7 +26,7 @@ class TestThread extends \pmmp\thread\Thread {
 }
 
 $thread = new TestThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 string:string(8) "mystring"

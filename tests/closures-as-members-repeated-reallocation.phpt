@@ -15,7 +15,7 @@ class TestClosure extends \pmmp\thread\Runnable {
 }
 $count = 0;
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 while ($count++ < 1000) {
     $function = new TestClosure(function() {});
     $worker->stack($function);

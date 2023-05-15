@@ -24,7 +24,7 @@ class TEST extends \pmmp\thread\Thread {
 
 $my = new MY();
 $test = new TEST($my);
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 --EXPECT--
 TEST: Hello World
 

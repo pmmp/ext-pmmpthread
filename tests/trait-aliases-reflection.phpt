@@ -19,7 +19,7 @@ $t = new class extends \pmmp\thread\Thread {
         var_dump($class->getTraitAliases());
     }
 };
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 --EXPECT--
 array(1) {
   ["sun"]=>

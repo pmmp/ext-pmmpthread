@@ -81,7 +81,11 @@ $request = new Request($response);
 * Tell you all about it ...
 */
 printf("Fetching: %s ", $response->getUrl());
-if($request->start()){
+/*
+ * This is using INHERIT_ALL because we are in a single-file script, but you should
+ * prefer INHERIT_NONE (or perhaps INHERIT_INI) if you can autoload your code.
+ */
+if($request->start(Thread::INHERIT_ALL)){
 	/* do something during runtime */
 	while($request->isRunning()) {
 		echo ".";

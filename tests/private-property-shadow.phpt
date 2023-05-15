@@ -27,7 +27,7 @@ class B extends A{
 
 $t = new \pmmp\thread\Worker();
 
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		$b = new B;

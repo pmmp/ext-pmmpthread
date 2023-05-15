@@ -5,7 +5,7 @@ Unstacking a task would cause it to be freed from the worker stack, but a curren
 --FILE--
 <?php
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 class Task extends \pmmp\thread\Runnable{
     public function run() : void{

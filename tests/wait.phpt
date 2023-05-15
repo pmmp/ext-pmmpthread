@@ -19,7 +19,7 @@ class ThreadTest extends \pmmp\thread\Thread {
 	}
 }
 $thread = new ThreadTest();
-if($thread->start()) {
+if($thread->start(\pmmp\thread\Thread::INHERIT_ALL)) {
 	$thread->synchronized(function($me){
 	    if (!$me->sent) {
 		    var_dump($me->wait());

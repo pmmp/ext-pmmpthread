@@ -44,7 +44,7 @@ $std = new stdClass; # won't work
 $thread = new TestThread(function () use ($scalar, $string, $res, $threaded, $closure, $array, $std) {
     var_dump($scalar, $string, $res, $threaded, $closure, $array, $std);
 });
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 --EXPECTF--
 int(1)
 string(5) "thing"

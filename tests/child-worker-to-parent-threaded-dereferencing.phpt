@@ -11,7 +11,7 @@ This test verifies that this behaviour works as intended.
 <?php
 
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $worker->stack(new class extends \pmmp\thread\Runnable{
 	public \pmmp\thread\ThreadSafeArray $array;

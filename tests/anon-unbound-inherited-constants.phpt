@@ -7,7 +7,7 @@ from copied versions of the anonymous class.
 <?php
 $worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 interface Dummy {
 	public const A_CONSTANT = 1;

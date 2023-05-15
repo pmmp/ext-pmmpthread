@@ -23,7 +23,7 @@ $w = new class extends \pmmp\thread\Thread{
 		test();
 	}
 };
-$w->start() && $w->join();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL) && $w->join();
 
 test();
 

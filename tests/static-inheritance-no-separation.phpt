@@ -27,7 +27,7 @@ function doTest() : void{
 }
 
 $t = new \pmmp\thread\Worker();
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $t->stack(new B);
 $t->shutdown();

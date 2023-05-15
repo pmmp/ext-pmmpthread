@@ -36,7 +36,7 @@ class Foo extends \pmmp\thread\Thread {
 $shared = new \pmmp\thread\ThreadSafeArray();
 
 $foo = new Foo($shared);
-$foo->start();
+$foo->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $foo->synchronized(function() use ($foo, $shared) : void{
     while(!isset($shared['loader'])) {

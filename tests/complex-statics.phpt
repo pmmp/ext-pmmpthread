@@ -36,7 +36,7 @@ sql::query("SELECT * FROM mysql.user");
 sql::query("SELECT * FROM mysql.user");
 
 $thread = new UserThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 sql::_query: SELECT * FROM mysql.user

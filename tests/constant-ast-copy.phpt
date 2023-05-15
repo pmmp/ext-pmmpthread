@@ -18,7 +18,7 @@ $t = new class extends \pmmp\thread\Thread {
     }
 };
 
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 ?>
 --EXPECTF--
 Fatal error: Uncaught Exception in %s:12

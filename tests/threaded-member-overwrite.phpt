@@ -20,7 +20,7 @@ $thread = new class($v, $v2) extends \pmmp\thread\Thread{
 		$this->v->a = $this->v2;
 	}
 };
-$thread->start() && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 var_dump($v->a);
 
 ?>

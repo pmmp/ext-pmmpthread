@@ -93,7 +93,7 @@ $thread = new class extends \pmmp\thread\Thread{
 		echo "--- child thread end ---\n";
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 echo "OK\n";
 ?>

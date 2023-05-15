@@ -21,7 +21,7 @@ class T extends \pmmp\thread\Thread {
 
 $t = new T();
 var_dump($t);
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 ?>
 --EXPECTF--

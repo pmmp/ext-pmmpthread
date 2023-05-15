@@ -22,7 +22,7 @@ $c = new class extends \pmmp\thread\Thread{
 		return false; //not calling the parent will cause the thread to only be joined by the dtor
 	}
 };
-$c->start();
+$c->start(\pmmp\thread\Thread::INHERIT_ALL);
 unset($c); //trigger destructor
 echo "OK\n"; //this will never be reached if the dtor doesn't do its job
 --EXPECT--

@@ -19,7 +19,7 @@ $worker = new class extends \pmmp\thread\Thread{
 		$this->array["recursive"] = $this->array;
 	}
 };
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 $worker->join();
 var_dump($worker);
 ?>
