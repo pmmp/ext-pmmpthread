@@ -25,7 +25,7 @@ $t = new class extends \pmmp\thread\Thread{
 	}
 };
 
-$t->start(PTHREADS_INHERIT_CONSTANTS);
+$t->start(\pmmp\thread\Thread::INHERIT_CONSTANTS);
 $t->join();
 ?>
 --EXPECT--

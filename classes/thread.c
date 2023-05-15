@@ -22,7 +22,7 @@
 
 #define Thread_method(name) PHP_METHOD(pmmp_thread_Thread, name)
 
-/* {{{ proto boolean Thread::start([long $options = PTHREADS_INHERIT_ALL])
+/* {{{ proto boolean Thread::start([long $options = Thread::INHERIT_ALL])
 		Starts executing the implementations run method in a thread, will return a boolean indication of success
 		$options should be a mask of inheritance constants */
 Thread_method(start)

@@ -25,7 +25,7 @@ $thread = new class extends \pmmp\thread\Thread{
 		var_dump(MyClass::BUZZ);
 	}
 };
-$thread->start(PTHREADS_INHERIT_ALL) && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 --EXPECT--
 int(1)
 int(1)

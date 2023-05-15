@@ -21,7 +21,7 @@ $thread = new class extends \pmmp\thread\Thread{
 		var_dump(C::TEST4, C::$FIELD, (new C)->field2);
 	}
 };
-$thread->start(PTHREADS_INHERIT_ALL);
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 
 //it seems like these are copied correctly if they are accessed before the thread is started, so we avoid that

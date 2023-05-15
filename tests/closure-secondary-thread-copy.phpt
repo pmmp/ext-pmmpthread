@@ -21,7 +21,7 @@ class SubThread extends \pmmp\thread\Thread
 $thread = new class extends \pmmp\thread\Thread {
     public function run() : void{
         $thread = new SubThread();
-        $thread->start(PTHREADS_INHERIT_NONE) && $thread->join();
+        $thread->start(\pmmp\thread\Thread::INHERIT_NONE) && $thread->join();
     }
 };
 

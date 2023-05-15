@@ -8,7 +8,7 @@
 *
 * Note: if a member of a pthreads object, is an object itself of a user defined type, and the class table is not inherited
 *   you are asking for trouble !!
-* Note: the included_files table is only populated where PTHREADS_INHERIT_INCLUDES is set
+* Note: the included_files table is only populated where Thread::INHERIT_INCLUDES is set
 */
 
 use pmmp\thread\Thread;
@@ -23,11 +23,11 @@ define ("my_constant", 1);
 
 class Selective extends Thread {
     public function run() : void {
-        /* functions exist where PTHREADS_INHERIT_FUNCTIONS is set */
+        /* functions exist where Thread::INHERIT_FUNCTIONS is set */
         var_dump(function_exists("my_function"));
-        /* classes exist where PTHREADS_INHERIT_CLASSES is set **BE CAREFUL** */
+        /* classes exist where Thread::INHERIT_CLASSES is set **BE CAREFUL** */
         var_dump(class_exists("my_class"));
-        /* constants exist where PTHREADS_INHERIT_CONSTANTS is set */
+        /* constants exist where Thread::INHERIT_CONSTANTS is set */
         var_dump(defined("my_constant"));
     }
 }
@@ -39,7 +39,7 @@ expect:
     bool(false)
 <?php
 $test = new Selective();
-$test->start(PTHREADS_INHERIT_NONE);
+$test->start(Thread::INHERIT_NONE);
 $test->join();
 ?>
 =======================================
@@ -49,7 +49,7 @@ expect:
     bool(true)
 <?php
 $test = new Selective();
-$test->start(PTHREADS_INHERIT_ALL & ~PTHREADS_INHERIT_FUNCTIONS);
+$test->start(Thread::INHERIT_ALL & ~Thread::INHERIT_FUNCTIONS);
 $test->join();
 ?>
 =======================================
@@ -59,7 +59,7 @@ expect:
     bool(true)
 <?php
 $test = new Selective();
-$test->start(PTHREADS_INHERIT_INI | PTHREADS_INHERIT_CONSTANTS);
+$test->start(Thread::INHERIT_INI | Thread::INHERIT_CONSTANTS);
 $test->join();
 ?>
 =======================================

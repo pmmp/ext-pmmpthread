@@ -20,7 +20,7 @@ class ChildClass extends SomeClass{
 }
 
 $w = new \pmmp\thread\Worker();
-$w->start(PTHREADS_INHERIT_ALL);
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		(new ChildClass())->inheritedFunc();

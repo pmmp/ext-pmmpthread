@@ -16,7 +16,7 @@ class Test{
 Test::init(3);
 
 $thread = new \pmmp\thread\Worker;
-$thread->start(PTHREADS_INHERIT_CLASSES);
+$thread->start(\pmmp\thread\Thread::INHERIT_CLASSES);
 
 var_dump(Test::$array);
 Test::$array = [];

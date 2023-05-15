@@ -6,7 +6,7 @@ Constants copying in worker results in endless loop and crashes
 <?php
 
 $worker = new \pmmp\thread\Worker();
-$worker->start(PTHREADS_INHERIT_NONE);
+$worker->start(\pmmp\thread\Thread::INHERIT_NONE);
 $worker->stack(new Testing());
 $worker->shutdown();
 

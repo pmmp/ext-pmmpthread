@@ -26,12 +26,12 @@ $thread->join();
 unset($thread);
 
 $thread = new TestThread();
-$thread->start(PTHREADS_INHERIT_NONE);
+$thread->start(\pmmp\thread\Thread::INHERIT_NONE);
 $thread->join();
 unset($thread);
 
 $thread = new TestThread();
-$thread->start(PTHREADS_INHERIT_FUNCTIONS | PTHREADS_INHERIT_CLASSES);
+$thread->start(\pmmp\thread\Thread::INHERIT_FUNCTIONS | \pmmp\thread\Thread::INHERIT_CLASSES);
 $thread->join();
 unset($thread);
 ?>

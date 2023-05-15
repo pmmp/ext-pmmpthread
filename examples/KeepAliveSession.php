@@ -185,7 +185,7 @@ if ($socket) {
     
     while (++ $worker < 5) {
         $workers[$worker] = new Test($socket);
-        $workers[$worker]->start(PTHREADS_INHERIT_ALL|PTHREADS_ALLOW_HEADERS);
+        $workers[$worker]->start(Thread::INHERIT_ALL|Thread::ALLOW_HEADERS);
     }
     
     foreach ($workers as $worker) {

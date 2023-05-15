@@ -14,7 +14,7 @@ abstract class ThreadedLogger implements Logger{}
 abstract class AttachableThreadedLogger extends \ThreadedLogger{}
 
 $w = new \pmmp\thread\Worker();
-$w->start(PTHREADS_INHERIT_ALL);
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->shutdown();
 echo "ok\n";
 ?>

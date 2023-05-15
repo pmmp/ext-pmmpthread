@@ -25,7 +25,7 @@ class testClass extends baseTest {
 }
 
 $x = new testClass();
-$x->start(PTHREADS_INHERIT_NONE);
+$x->start(\pmmp\thread\Thread::INHERIT_NONE);
 $x->join();
 --EXPECT--
 string(11) "Constant: 0"

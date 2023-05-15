@@ -14,7 +14,7 @@ class testClass extends \pmmp\thread\Thread {
 }
 
 $x = new testClass();
-$x->start(PTHREADS_INHERIT_NONE);
+$x->start(\pmmp\thread\Thread::INHERIT_NONE);
 $x->join();
 --EXPECT--
 string(5) "works"

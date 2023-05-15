@@ -13,7 +13,7 @@ class Test extends \pmmp\thread\Thread {
 }
 
 $test = new Test();
-$test->start(PTHREADS_INHERIT_NONE);
+$test->start(\pmmp\thread\Thread::INHERIT_NONE);
 $test->join();
 --EXPECT--
 OK

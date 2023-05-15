@@ -34,13 +34,13 @@ $test = new class extends \pmmp\thread\Thread {
 	}
 };
 
-$test->start(PTHREADS_INHERIT_NONE | 
-			 PTHREADS_INHERIT_INI | 
-			 PTHREADS_ALLOW_HEADERS | 
-			 PTHREADS_INHERIT_COMMENTS | 
-			 PTHREADS_INHERIT_INCLUDES | 
-			 PTHREADS_INHERIT_FUNCTIONS | 
-			 PTHREADS_INHERIT_CLASSES) && $test->join();
+$test->start(\pmmp\thread\Thread::INHERIT_NONE | 
+			 \pmmp\thread\Thread::INHERIT_INI | 
+			 \pmmp\thread\Thread::ALLOW_HEADERS | 
+			 \pmmp\thread\Thread::INHERIT_COMMENTS | 
+			 \pmmp\thread\Thread::INHERIT_INCLUDES | 
+			 \pmmp\thread\Thread::INHERIT_FUNCTIONS | 
+			 \pmmp\thread\Thread::INHERIT_CLASSES) && $test->join();
 ?>
 --EXPECT--
 array(1) {
