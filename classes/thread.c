@@ -112,5 +112,5 @@ Thread_method(getSharedGlobals)
 {
 	zend_parse_parameters_none_throw();
 
-	RETURN_OBJ_COPY(PMMPTHREAD_ZG(thread_shared_globals));
+	RETURN_OBJ_COPY(&PMMPTHREAD_ZG(thread_shared_globals)->std);
 } /* }}} */
