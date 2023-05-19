@@ -42,6 +42,11 @@ struct _pmmpthread_globals {
 	*/
 	HashTable objects;
 
+	/*
+	* ThreadSafeArray instance for true global variables
+	*/
+	pmmpthread_zend_object_t* thread_shared_globals;
+
 #if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
 	/*
 	* Sockets which have been shared between threads, and so musn't be closed by the destructor
@@ -61,6 +66,7 @@ struct _pmmpthread_globals {
 	*/
 	struct _strings {
 		zend_string *run;
+		zend_string *thread_shared_globals;
 		struct _session {
 			zend_string *cache_limiter;
 			zend_string *use_cookies;

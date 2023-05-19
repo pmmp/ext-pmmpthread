@@ -234,6 +234,11 @@ zend_bool pmmpthread_join(pmmpthread_zend_object_t* thread) {
 	if (thread->worker_data != NULL) {
 		pmmpthread_worker_sync_collectable_tasks(thread->worker_data);
 	}
+	pmmpthread_zend_object_t* user_globals = PMMPTHREAD_ZG(thread_shared_globals);
+	if (pmmpthread_monitor_lock(&user_globals->ts_obj->monitor)) {
+		pmmpthread_store_full_sync_local_properties(&user_globals->std);
+		pmmpthread_monitor_unlock(&user_globals->ts_obj->monitor);
+	}
 
 	pmmpthread_monitor_add(&thread->ts_obj->monitor, PMMPTHREAD_MONITOR_EXIT);
 

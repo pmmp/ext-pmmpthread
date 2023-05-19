@@ -18,6 +18,7 @@
 
 #include <src/pmmpthread.h>
 #include <src/object.h>
+#include <src/globals.h>
 
 #include <stubs/Pool_arginfo.h>
 #include <stubs/Thread_arginfo.h>
@@ -201,6 +202,8 @@ PHP_MINIT_FUNCTION(pmmpthread)
 		* Global Init
 		*/
 		pmmpthread_instance = TSRMLS_CACHE;
+
+		zend_register_auto_global(PMMPTHREAD_G(strings).thread_shared_globals, 0, NULL);
 	}
 
 	return SUCCESS;
@@ -236,6 +239,33 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pmmpthread)
 	return SUCCESS;
 }
 
+
+static zend_result pmmpthread_create_thread_shared_globals_auto_global() {
+	zend_result result = FAILURE;
+
+	if (pmmpthread_globals_lock()) {
+		zval globals_array;
+
+		if (PMMPTHREAD_G(thread_shared_globals)) {
+			pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array);
+		} else {
+			object_init_ex(&globals_array, pmmpthread_ce_array);
+			PMMPTHREAD_G(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+		}
+
+		zend_hash_update(&EG(symbol_table), PMMPTHREAD_G(strings).thread_shared_globals, &globals_array);
+
+		pmmpthread_globals_unlock();
+
+		PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+		Z_ADDREF(globals_array);
+
+		result = SUCCESS;
+	}
+
+	return result;
+}
+
 PHP_RINIT_FUNCTION(pmmpthread) {
 	ZEND_TSRMLS_CACHE_UPDATE();
 
@@ -256,12 +286,18 @@ PHP_RINIT_FUNCTION(pmmpthread) {
 		}
 	}
 
+	if (pmmpthread_create_thread_shared_globals_auto_global() == FAILURE) {
+		return FAILURE;
+	}
+
 	return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(pmmpthread) {
 	zend_hash_destroy(&PMMPTHREAD_ZG(filenames));
 	zend_hash_destroy(&PMMPTHREAD_ZG(closure_base_op_arrays));
+
+	zend_object_release(&PMMPTHREAD_ZG(thread_shared_globals)->std);
 
 	return SUCCESS;
 }

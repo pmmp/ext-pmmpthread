@@ -100,6 +100,7 @@ zend_bool pmmpthread_globals_init(){
 		if (PMMPTHREAD_G(failed)) {
 			PMMPTHREAD_G(init)=0;
 		} else {
+			PMMPTHREAD_G(thread_shared_globals) = NULL; //this will be inited on main thread request start
 			zend_hash_init(
 				&PMMPTHREAD_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
 #if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
@@ -122,6 +123,7 @@ zend_bool pmmpthread_globals_init(){
 } while(0)
 
 		INIT_STRING(run, ZEND_STRL("run"));
+		INIT_STRING(thread_shared_globals, ZEND_STRL("PMMPTHREAD_SHARED_GLOBALS"));
 		INIT_STRING(session.cache_limiter, ZEND_STRL("cache_limiter"));
 		INIT_STRING(session.use_cookies, ZEND_STRL("use_cookies"));
 #undef INIT_STRING
