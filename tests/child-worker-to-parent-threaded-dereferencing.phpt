@@ -32,11 +32,11 @@ while(!$done){
 }
 ?>
 --EXPECT--
-object(pmmp\thread\Runnable@anonymous)#2 (1) {
+object(pmmp\thread\Runnable@anonymous)#3 (1) {
   ["array"]=>
-  object(pmmp\thread\ThreadSafeArray)#4 (2) {
+  object(pmmp\thread\ThreadSafeArray)#5 (2) {
     ["sub"]=>
-    object(pmmp\thread\ThreadSafeArray)#5 (0) {
+    object(pmmp\thread\ThreadSafeArray)#6 (0) {
     }
     ["recursive"]=>
     *RECURSION*

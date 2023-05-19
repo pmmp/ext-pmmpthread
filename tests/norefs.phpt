@@ -32,7 +32,7 @@ object(T)#%d (%d) {
     bool(true)
   }
 }
-object(pmmp\thread\ThreadSafe)#2 (%d) {
+object(pmmp\thread\ThreadSafe)#%d (%d) {
   ["set"]=>
   bool(true)
 }

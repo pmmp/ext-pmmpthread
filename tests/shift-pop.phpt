@@ -31,35 +31,35 @@ while (($next = $s->pop())) {
 }
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["string"]=>
   string(6) "string"
 }
 string(6) "string"
-object(pmmp\thread\ThreadSafeArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["string"]=>
   string(6) "string"
 }
 string(6) "string"
-object(pmmp\thread\ThreadSafeArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   [0]=>
   string(4) "help"
 }
 string(4) "help"
-object(pmmp\thread\ThreadSafeArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   [1]=>
   string(4) "next"
 }
 string(4) "next"
-object(pmmp\thread\ThreadSafeArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (100) {
+object(pmmp\thread\ThreadSafeArray)#2 (100) {
   [1]=>
   int(1)
   [2]=>

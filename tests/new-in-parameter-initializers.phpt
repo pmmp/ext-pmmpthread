@@ -20,7 +20,7 @@ test();
 
 ?>
 --EXPECT--
-object(stdClass)#2 (0) {
+object(stdClass)#3 (0) {
 }
-object(stdClass)#2 (0) {
+object(stdClass)#3 (0) {
 }

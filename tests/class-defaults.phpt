@@ -24,7 +24,7 @@ $test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECT--
-object(Test)#1 (2) {
+object(Test)#2 (2) {
   ["string":protected]=>
   string(11) "dlrow olleh"
   ["pstring":"Test":private]=>

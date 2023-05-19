@@ -64,7 +64,7 @@ $test->synchronized(function() use ($test) : void{
 });
 $test->join();
 --EXPECT--
-object(pmmp\thread\Thread@anonymous)#2 (3) {
+object(pmmp\thread\Thread@anonymous)#3 (3) {
   ["pubProp"]=>
   NULL
   ["protProp":protected]=>
@@ -73,7 +73,7 @@ object(pmmp\thread\Thread@anonymous)#2 (3) {
   NULL
 }
 string(13) "anonymous run"
-object(pmmp\thread\Thread@anonymous)#3 (4) {
+object(pmmp\thread\Thread@anonymous)#4 (4) {
   ["pubProp"]=>
   NULL
   ["protProp":protected]=>

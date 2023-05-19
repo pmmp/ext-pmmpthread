@@ -18,11 +18,11 @@ $t1->merge($t2);
 var_dump($t1["a"], $t2["a"]); //should be the same object
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#4 (1) {
+object(pmmp\thread\ThreadSafeArray)#5 (1) {
   ["f"]=>
   int(2)
 }
-object(pmmp\thread\ThreadSafeArray)#4 (1) {
+object(pmmp\thread\ThreadSafeArray)#5 (1) {
   ["f"]=>
   int(2)
 }

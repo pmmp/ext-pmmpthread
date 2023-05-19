@@ -49,7 +49,7 @@ string(16) "Bar::__construct"
 string(4) "buzz"
 string(11) "hello world"
 string(11) "hello world"
-object(pmmp\thread\ThreadSafe@anonymous)#3 (1) {
+object(pmmp\thread\ThreadSafe@anonymous)#4 (1) {
   ["buzz":"pmmp\thread\ThreadSafe@anonymous":private]=>
   string(11) "hello world"
 }

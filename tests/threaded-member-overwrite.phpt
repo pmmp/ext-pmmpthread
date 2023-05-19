@@ -25,5 +25,5 @@ var_dump($v->a);
 
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafe)#2 (0) {
+object(pmmp\thread\ThreadSafe)#3 (0) {
 }

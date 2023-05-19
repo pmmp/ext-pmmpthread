@@ -31,17 +31,17 @@ test();
 --EXPECT--
 array(1) {
   [0]=>
-  object(Attr)#3 (1) {
+  object(Attr)#4 (1) {
     ["object"]=>
-    object(stdClass)#5 (0) {
+    object(stdClass)#6 (0) {
     }
   }
 }
 array(1) {
   [0]=>
-  object(Attr)#3 (1) {
+  object(Attr)#4 (1) {
     ["object"]=>
-    object(stdClass)#5 (0) {
+    object(stdClass)#6 (0) {
     }
   }
 }

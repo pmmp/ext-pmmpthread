@@ -23,8 +23,8 @@ $t1->start(\pmmp\thread\Thread::INHERIT_ALL) && $t1->join();
 var_dump($array);
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   [0]=>
-  object(pmmp\thread\ThreadSafeArray)#3 (0) {
+  object(pmmp\thread\ThreadSafeArray)#4 (0) {
   }
 }

@@ -14,17 +14,17 @@ var_dump($t);
 
 ?>
 --EXPECT--
-object(stdClass)#3 (0) {
+object(stdClass)#4 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["sock"]=>
-  object(Closure)#2 (0) {
+  object(Closure)#3 (0) {
   }
 }
-object(Closure)#2 (0) {
+object(Closure)#3 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["sock"]=>
-  object(Closure)#2 (0) {
+  object(Closure)#3 (0) {
   }
 }

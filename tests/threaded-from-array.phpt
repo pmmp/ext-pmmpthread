@@ -32,15 +32,15 @@ array(2) {
     }
   }
 }
-object(pmmp\thread\ThreadSafeArray)#1 (2) {
+object(pmmp\thread\ThreadSafeArray)#2 (2) {
   ["greeting"]=>
   string(11) "Hello World"
   ["child"]=>
-  object(pmmp\thread\ThreadSafeArray)#2 (2) {
+  object(pmmp\thread\ThreadSafeArray)#3 (2) {
     ["of"]=>
     string(4) "mine"
     ["grandchild"]=>
-    object(pmmp\thread\ThreadSafeArray)#3 (1) {
+    object(pmmp\thread\ThreadSafeArray)#4 (1) {
       ["of"]=>
       string(7) "parents"
     }

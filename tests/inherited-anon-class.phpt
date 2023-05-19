@@ -12,5 +12,5 @@ $task = new class extends \pmmp\thread\Thread {
 };
 $task->start(\pmmp\thread\Thread::INHERIT_ALL) && $task->join();
 --EXPECTF--
-object(%s@anonymous)#2 (0) {
+object(%s@anonymous)#3 (0) {
 }

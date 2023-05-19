@@ -64,20 +64,20 @@ echo "OK\n";
 ?>
 --EXPECTF--
 --- main thread start ---
-object(AAndB)#1 (0) {
-}
-acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustA given, called in %s on line %d
-acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustB given, called in %s on line %d
-object(C)#2 (0) {
-}
-acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, D given, called in %s on line %d
---- main thread end ---
---- child thread start ---
 object(AAndB)#2 (0) {
 }
 acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustA given, called in %s on line %d
 acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustB given, called in %s on line %d
 object(C)#3 (0) {
+}
+acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, D given, called in %s on line %d
+--- main thread end ---
+--- child thread start ---
+object(AAndB)#3 (0) {
+}
+acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustA given, called in %s on line %d
+acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, JustB given, called in %s on line %d
+object(C)#4 (0) {
 }
 acceptIntersection(): Argument #1 ($aAndBOrC) must be of type (A&B)|C, D given, called in %s on line %d
 --- child thread end ---

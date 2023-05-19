@@ -46,7 +46,7 @@ Warning: Undefined property: pmmp\thread\ThreadSafeArray::$thing in %s on line %
 Attempt to assign property "otherThing" on null
 
 Warning: Undefined property: pmmp\thread\ThreadSafeArray::$thing in %s on line %d
-object(pmmp\thread\ThreadSafeArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["thing"]=>
   int(2)
 }

@@ -24,11 +24,11 @@ $worker->join();
 var_dump($worker);
 ?>
 --EXPECT--
-object(pmmp\thread\Thread@anonymous)#1 (1) {
+object(pmmp\thread\Thread@anonymous)#2 (1) {
   ["array"]=>
-  object(pmmp\thread\ThreadSafeArray)#2 (2) {
+  object(pmmp\thread\ThreadSafeArray)#3 (2) {
     ["sub"]=>
-    object(pmmp\thread\ThreadSafeArray)#3 (0) {
+    object(pmmp\thread\ThreadSafeArray)#4 (0) {
     }
     ["recursive"]=>
     *RECURSION*

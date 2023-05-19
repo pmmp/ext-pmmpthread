@@ -26,7 +26,7 @@ $stores[0]->merge($stores[1], false);
 var_dump($stores[0]);
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#1 (3) {
+object(pmmp\thread\ThreadSafeArray)#2 (3) {
   ["test"]=>
   string(3) "two"
   ["other"]=>
@@ -34,7 +34,7 @@ object(pmmp\thread\ThreadSafeArray)#1 (3) {
   ["next"]=>
   float(0.01)
 }
-object(pmmp\thread\ThreadSafeArray)#1 (3) {
+object(pmmp\thread\ThreadSafeArray)#2 (3) {
   ["test"]=>
   string(3) "one"
   ["other"]=>

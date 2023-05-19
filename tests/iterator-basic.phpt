@@ -45,5 +45,5 @@ string(6) "value4"
 string(4) "key4"
 string(7) "string4"
 string(8) "threaded"
-object(pmmp\thread\ThreadSafeArray)#2 (0) {
+object(pmmp\thread\ThreadSafeArray)#3 (0) {
 }

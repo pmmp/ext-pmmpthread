@@ -31,11 +31,11 @@ $thread->join();
 
 ?>
 --EXPECTF--
-object(pmmp\thread\ThreadSafeArray)#3 (0) {
+object(pmmp\thread\ThreadSafeArray)#4 (0) {
+}
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }
 object(pmmp\thread\ThreadSafeArray)#4 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#3 (0) {
-}
-object(pmmp\thread\ThreadSafeArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }

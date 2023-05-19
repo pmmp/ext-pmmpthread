@@ -109,10 +109,10 @@ $thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }
-object(pmmp\thread\ThreadSafeArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }
-object(Node)#4 (0) {
+object(Node)#5 (0) {
 }
 
