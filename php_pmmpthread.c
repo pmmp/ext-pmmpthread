@@ -265,7 +265,6 @@ static zend_result pmmpthread_init_thread_shared_globals() {
 
 		if (result == SUCCESS) {
 			PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
-			Z_ADDREF(globals_array);
 		}
 	}
 
