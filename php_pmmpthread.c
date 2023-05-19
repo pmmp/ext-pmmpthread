@@ -302,6 +302,12 @@ PHP_RSHUTDOWN_FUNCTION(pmmpthread) {
 	zend_hash_destroy(&PMMPTHREAD_ZG(filenames));
 	zend_hash_destroy(&PMMPTHREAD_ZG(closure_base_op_arrays));
 
+	pmmpthread_zend_object_t* shared_globals = PMMPTHREAD_ZG(thread_shared_globals);
+	if (shared_globals != NULL) {
+		//pmmpthread_base_free will clean up global refs
+		zend_object_release(&shared_globals->std);
+	}
+
 	return SUCCESS;
 }
 
