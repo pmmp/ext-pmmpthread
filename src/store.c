@@ -1158,7 +1158,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 
 	switch (Z_TYPE_P(from)) {
 		case IS_OBJECT: {
-			if (instanceof_function(Z_OBJ_P(from), pmmpthread_ce_array)) {
+			if (instanceof_function(Z_OBJCE_P(from), pmmpthread_ce_array)) {
 				pmmpthread_object_t* threaded[2] = {PMMPTHREAD_FETCH_TS_FROM(destination), PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(from))};
 
 				if (pmmpthread_monitor_lock(&threaded[0]->monitor)) {
