@@ -245,7 +245,7 @@ static zend_result pmmpthread_init_thread_shared_globals() {
 		zval globals_array;
 
 		if (PMMPTHREAD_G(thread_shared_globals)) { //this is not the main thread - connect to existing globals
-			if (pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array) == FAILURE) {
+			if (pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array) == 0) {
 				ZEND_ASSERT(0);
 				result = FAILURE;
 			} else {
