@@ -364,7 +364,7 @@ void pmmpthread_base_free(zend_object *object) {
 		zend_hash_index_del(&PMMPTHREAD_ZG(resolve), (zend_ulong)base->ts_obj);
 	}
 
-	if (PMMPTHREAD_ZG(thread_shared_globals) == object) {
+	if (PMMPTHREAD_ZG(thread_shared_globals) == base) {
 		//clean up our local connection to the shared globals
 		//opcache preload creates a fake request, so we need to ensure that
 		//globals are cleaned up properly for the real main thread
