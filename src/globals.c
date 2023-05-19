@@ -100,6 +100,7 @@ zend_bool pmmpthread_globals_init(){
 		if (PMMPTHREAD_G(failed)) {
 			PMMPTHREAD_G(init)=0;
 		} else {
+			PMMPTHREAD_G(thread_shared_globals) = NULL; //this will be inited on main thread request start
 			zend_hash_init(
 				&PMMPTHREAD_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
 #if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT

@@ -30,8 +30,8 @@ $thread->join();
 
 ?>
 --EXPECT--
-object(Closure)#3 (1) {
+object(Closure)#4 (1) {
   ["this"]=>
-  object(A)#2 (0) {
+  object(A)#3 (0) {
   }
 }

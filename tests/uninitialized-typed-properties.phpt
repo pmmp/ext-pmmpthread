@@ -43,7 +43,7 @@ echo "--- Done ---\n";
 ?>
 --EXPECT--
 --- Normal object ---
-object(NTS)#1 (3) {
+object(NTS)#2 (3) {
   ["a"]=>
   int(1)
   ["b"]=>
@@ -51,7 +51,7 @@ object(NTS)#1 (3) {
   ["c"]=>
   NULL
 }
-object(NTS)#1 (2) {
+object(NTS)#2 (2) {
   ["a"]=>
   uninitialized(int)
   ["b"]=>
@@ -71,7 +71,7 @@ bool(false)
 bool(true)
 --- pthreads object ---
 --- properties are currently expected to be in an unstable order ---
-object(TS)#2 (3) {
+object(TS)#3 (3) {
   ["a"]=>
   int(1)
   ["b"]=>
@@ -79,7 +79,7 @@ object(TS)#2 (3) {
   ["c"]=>
   NULL
 }
-object(TS)#2 (2) {
+object(TS)#3 (2) {
   ["b"]=>
   string(5) "hello"
   ["c"]=>

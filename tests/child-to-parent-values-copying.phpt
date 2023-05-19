@@ -25,7 +25,7 @@ $t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 var_dump($t);
 ?>
 --EXPECT--
-object(Test)#1 (3) {
+object(Test)#2 (3) {
   ["permanentInternedString"]=>
   string(18) "pmmp\thread\Thread"
   ["requestInternedString"]=>

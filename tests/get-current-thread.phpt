@@ -18,8 +18,8 @@ var_dump(\pmmp\thread\Thread::getCurrentThread());
 ?>
 --EXPECT--
 NULL
-object(pmmp\thread\Thread@anonymous)#1 (0) {
+object(pmmp\thread\Thread@anonymous)#2 (0) {
 }
-object(pmmp\thread\Thread@anonymous)#1 (0) {
+object(pmmp\thread\Thread@anonymous)#2 (0) {
 }
 NULL

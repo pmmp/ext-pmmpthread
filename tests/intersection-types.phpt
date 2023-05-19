@@ -54,13 +54,13 @@ echo "OK\n";
 ?>
 --EXPECTF--
 --- main thread start ---
-object(AAndB)#1 (0) {
+object(AAndB)#2 (0) {
 }
 acceptIntersection(): Argument #1 ($aAndB) must be of type A&B, JustA given, called in %s on line %d
 acceptIntersection(): Argument #1 ($aAndB) must be of type A&B, JustB given, called in %s on line %d
 --- main thread end ---
 --- child thread start ---
-object(AAndB)#2 (0) {
+object(AAndB)#3 (0) {
 }
 acceptIntersection(): Argument #1 ($aAndB) must be of type A&B, JustA given, called in %s on line %d
 acceptIntersection(): Argument #1 ($aAndB) must be of type A&B, JustB given, called in %s on line %d

@@ -20,11 +20,11 @@ $test2 = new Test2();
 var_dump($test2);
 ?>
 --EXPECTF--
-object(Test)#1 (1) {
+object(Test)#2 (1) {
   [""]=>
   string(4) "what"
 }
-object(Test2)#2 (1) {
+object(Test2)#3 (1) {
   [""]=>
   string(4) "what"
 }

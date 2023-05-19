@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 0a3b5a02d5c1fb06895fc206d5193f3a223343ce */
+ * Stub hash: cfdc1d2f0d91e022f0b7547da5581516d9b5221c */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -8,6 +8,9 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_pmmp_thread_Thread_getCurre
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_pmmp_thread_Thread_getCurrentThreadId arginfo_class_pmmp_thread_Thread_getCreatorId
+
+ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_pmmp_thread_Thread_getSharedGlobals, 0, 0, pmmp\\thread\\ThreadSafeArray, 0)
+ZEND_END_ARG_INFO()
 
 #define arginfo_class_pmmp_thread_Thread_getThreadId arginfo_class_pmmp_thread_Thread_getCreatorId
 
@@ -26,6 +29,7 @@ ZEND_END_ARG_INFO()
 ZEND_METHOD(pmmp_thread_Thread, getCreatorId);
 ZEND_METHOD(pmmp_thread_Thread, getCurrentThread);
 ZEND_METHOD(pmmp_thread_Thread, getCurrentThreadId);
+ZEND_METHOD(pmmp_thread_Thread, getSharedGlobals);
 ZEND_METHOD(pmmp_thread_Thread, getThreadId);
 ZEND_METHOD(pmmp_thread_Thread, isJoined);
 ZEND_METHOD(pmmp_thread_Thread, isStarted);
@@ -37,6 +41,7 @@ static const zend_function_entry class_pmmp_thread_Thread_methods[] = {
 	ZEND_ME(pmmp_thread_Thread, getCreatorId, arginfo_class_pmmp_thread_Thread_getCreatorId, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, getCurrentThread, arginfo_class_pmmp_thread_Thread_getCurrentThread, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getCurrentThreadId, arginfo_class_pmmp_thread_Thread_getCurrentThreadId, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(pmmp_thread_Thread, getSharedGlobals, arginfo_class_pmmp_thread_Thread_getSharedGlobals, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getThreadId, arginfo_class_pmmp_thread_Thread_getThreadId, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isJoined, arginfo_class_pmmp_thread_Thread_isJoined, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isStarted, arginfo_class_pmmp_thread_Thread_isStarted, ZEND_ACC_PUBLIC)

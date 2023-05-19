@@ -26,7 +26,7 @@ $test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 --EXPECTF--
 string(6) "Caught"
-object(Exception)#3 (7) {
+object(Exception)#4 (7) {
   ["message":protected]=>
   string(0) ""
   ["string":"Exception":private]=>

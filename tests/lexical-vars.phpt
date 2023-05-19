@@ -49,9 +49,9 @@ $thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 int(1)
 string(5) "thing"
 NULL
-object(pmmp\thread\ThreadSafeArray)#2 (0) {
+object(pmmp\thread\ThreadSafeArray)#3 (0) {
 }
-object(Closure)#3 (0) {
+object(Closure)#4 (0) {
 }
 array(5) {
   [0]=>

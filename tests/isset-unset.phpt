@@ -18,7 +18,7 @@ for($i = 0; $i < 10; $i ++) {
 }
 ?>
 --EXPECT--
-object(pmmp\thread\ThreadSafeArray)#1 (10) {
+object(pmmp\thread\ThreadSafeArray)#2 (10) {
   [0]=>
   int(1)
   [1]=>

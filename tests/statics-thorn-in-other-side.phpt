@@ -33,26 +33,26 @@ echo "\n";
 BEFORE:
 array(2) {
   [0]=>
-  object(StaticClass)#1 (0) {
+  object(StaticClass)#2 (0) {
   }
   [1]=>
-  object(StaticClass)#2 (0) {
+  object(StaticClass)#3 (0) {
   }
 }
 string(11) "randomvalue"
-object(StaticClass)#2 (0) {
+object(StaticClass)#3 (0) {
 }
 
 AFTER
 array(2) {
   [0]=>
-  object(StaticClass)#1 (0) {
+  object(StaticClass)#2 (0) {
   }
   [1]=>
-  object(StaticClass)#2 (0) {
+  object(StaticClass)#3 (0) {
   }
 }
 string(11) "randomvalue"
-object(StaticClass)#2 (0) {
+object(StaticClass)#3 (0) {
 }
 

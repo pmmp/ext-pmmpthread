@@ -105,3 +105,12 @@ Thread_method(getCreatorId)
 
 	ZVAL_LONG(return_value, (PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(getThis())))->creator.id);
 } /* }}} */
+
+/* {{{ proto ThreadSafeArray Thread::getSharedGlobals()
+	Returns a ThreadSafeArray of globals accessible to all threads */
+Thread_method(getSharedGlobals)
+{
+	zend_parse_parameters_none_throw();
+
+	RETURN_OBJ_COPY(&PMMPTHREAD_ZG(thread_shared_globals)->std);
+} /* }}} */

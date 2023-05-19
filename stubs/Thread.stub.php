@@ -129,6 +129,14 @@ abstract class Thread extends Runnable
      */
     public static function getCurrentThreadId() : int{}
 
+	/**
+	 * Returns a ThreadSafeArray of globals accessible to all threads
+	 * Any modification made will be seen by all threads
+	 *
+	 * @return ThreadSafeArray
+	 */
+	public static function getSharedGlobals() : ThreadSafeArray{}
+
     /**
      * Will return the identity of the referenced Thread
      *

@@ -18,6 +18,7 @@
 
 #include <src/pmmpthread.h>
 #include <src/object.h>
+#include <src/globals.h>
 
 #include <stubs/Pool_arginfo.h>
 #include <stubs/Thread_arginfo.h>
@@ -236,6 +237,40 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pmmpthread)
 	return SUCCESS;
 }
 
+
+static zend_result pmmpthread_init_thread_shared_globals() {
+	zend_result result = FAILURE;
+
+	if (pmmpthread_globals_lock()) {
+		zval globals_array;
+
+		if (PMMPTHREAD_G(thread_shared_globals)) { //this is not the main thread - connect to existing globals
+			if (pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array) == 0) {
+				ZEND_ASSERT(0);
+				result = FAILURE;
+			} else {
+				result = SUCCESS;
+			}
+		} else { //this is the main thread - create new globals
+			if (object_init_ex(&globals_array, pmmpthread_ce_array) == FAILURE) {
+				ZEND_ASSERT(0);
+				result = FAILURE;
+			} else {
+				PMMPTHREAD_G(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+				result = SUCCESS;
+			}
+		}
+
+		pmmpthread_globals_unlock();
+
+		if (result == SUCCESS) {
+			PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+		}
+	}
+
+	return result;
+}
+
 PHP_RINIT_FUNCTION(pmmpthread) {
 	ZEND_TSRMLS_CACHE_UPDATE();
 
@@ -256,12 +291,22 @@ PHP_RINIT_FUNCTION(pmmpthread) {
 		}
 	}
 
+	if (pmmpthread_init_thread_shared_globals() == FAILURE) {
+		return FAILURE;
+	}
+
 	return SUCCESS;
 }
 
 PHP_RSHUTDOWN_FUNCTION(pmmpthread) {
 	zend_hash_destroy(&PMMPTHREAD_ZG(filenames));
 	zend_hash_destroy(&PMMPTHREAD_ZG(closure_base_op_arrays));
+
+	pmmpthread_zend_object_t* shared_globals = PMMPTHREAD_ZG(thread_shared_globals);
+	if (shared_globals != NULL) {
+		//pmmpthread_base_free will clean up global refs
+		zend_object_release(&shared_globals->std);
+	}
 
 	return SUCCESS;
 }
