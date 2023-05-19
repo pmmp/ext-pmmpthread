@@ -874,11 +874,13 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 
 		zend_auto_global *auto_global;
 		ZEND_HASH_FOREACH_PTR(CG(auto_globals), auto_global) {
-			if (auto_global->auto_global_callback) {
-				//compiler would normally JIT these globals, but that won't happen for copied code
-				//ideally we would do manual JIT on function copy, but this will work as a stopgap for now
-				auto_global->armed = auto_global->auto_global_callback(auto_global->name);
-			} else auto_global->armed = 0;
+			if (auto_global->jit) {
+				if (auto_global->auto_global_callback) {
+					//compiler would normally JIT these globals, but that won't happen for copied code
+					//ideally we would do manual JIT on function copy, but this will work as a stopgap for now
+					auto_global->armed = auto_global->auto_global_callback(auto_global->name);
+				} else auto_global->armed = 0;
+			}
 		} ZEND_HASH_FOREACH_END();
 
 		PMMPTHREAD_ZG(options) = thread_options;
