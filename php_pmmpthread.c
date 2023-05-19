@@ -202,8 +202,6 @@ PHP_MINIT_FUNCTION(pmmpthread)
 		* Global Init
 		*/
 		pmmpthread_instance = TSRMLS_CACHE;
-
-		zend_register_auto_global(PMMPTHREAD_G(strings).thread_shared_globals, 0, NULL);
 	}
 
 	return SUCCESS;
@@ -240,30 +238,32 @@ ZEND_MODULE_POST_ZEND_DEACTIVATE_D(pmmpthread)
 }
 
 
-static zend_result pmmpthread_create_thread_shared_globals_auto_global() {
+static zend_result pmmpthread_init_thread_shared_globals() {
 	zend_result result = FAILURE;
 
 	if (pmmpthread_globals_lock()) {
 		zval globals_array;
 
-		if (PMMPTHREAD_G(thread_shared_globals)) {
+		if (PMMPTHREAD_G(thread_shared_globals)) { //this is not the main thread - connect to existing globals
 			if (pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array) == FAILURE) {
 				ZEND_ASSERT(0);
 				result = FAILURE;
 			} else {
 				result = SUCCESS;
 			}
-		} else {
-			object_init_ex(&globals_array, pmmpthread_ce_array);
-			PMMPTHREAD_G(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
-			result = SUCCESS;
+		} else { //this is the main thread - create new globals
+			if (object_init_ex(&globals_array, pmmpthread_ce_array) == FAILURE) {
+				ZEND_ASSERT(0);
+				result = FAILURE;
+			} else {
+				PMMPTHREAD_G(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+				result = SUCCESS;
+			}
 		}
 
 		pmmpthread_globals_unlock();
 
 		if (result == SUCCESS) {
-			zend_hash_update(&EG(symbol_table), PMMPTHREAD_G(strings).thread_shared_globals, &globals_array);
-
 			PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
 			Z_ADDREF(globals_array);
 		}
@@ -292,7 +292,7 @@ PHP_RINIT_FUNCTION(pmmpthread) {
 		}
 	}
 
-	if (pmmpthread_create_thread_shared_globals_auto_global() == FAILURE) {
+	if (pmmpthread_init_thread_shared_globals() == FAILURE) {
 		return FAILURE;
 	}
 

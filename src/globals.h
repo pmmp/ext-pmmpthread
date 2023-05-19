@@ -66,7 +66,6 @@ struct _pmmpthread_globals {
 	*/
 	struct _strings {
 		zend_string *run;
-		zend_string *thread_shared_globals;
 		struct _session {
 			zend_string *cache_limiter;
 			zend_string *use_cookies;

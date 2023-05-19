@@ -123,7 +123,6 @@ zend_bool pmmpthread_globals_init(){
 } while(0)
 
 		INIT_STRING(run, ZEND_STRL("run"));
-		INIT_STRING(thread_shared_globals, ZEND_STRL("PMMPTHREAD_SHARED_GLOBALS"));
 		INIT_STRING(session.cache_limiter, ZEND_STRL("cache_limiter"));
 		INIT_STRING(session.use_cookies, ZEND_STRL("use_cookies"));
 #undef INIT_STRING
