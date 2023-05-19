@@ -302,17 +302,6 @@ PHP_RSHUTDOWN_FUNCTION(pmmpthread) {
 	zend_hash_destroy(&PMMPTHREAD_ZG(filenames));
 	zend_hash_destroy(&PMMPTHREAD_ZG(closure_base_op_arrays));
 
-	pmmpthread_zend_object_t* ts_globals = PMMPTHREAD_ZG(thread_shared_globals);
-	if (PMMPTHREAD_IN_CREATOR(ts_globals)) {
-		//this is the main thread (we created these globals), but we may be in a special opcache preload "request"
-		//clean up globals so they don't break the context that follows
-		if (pmmpthread_globals_lock()) {
-			PMMPTHREAD_G(thread_shared_globals) = NULL;
-			pmmpthread_globals_unlock();
-		}
-	}
-	zend_object_release(&ts_globals->std);
-
 	return SUCCESS;
 }
 

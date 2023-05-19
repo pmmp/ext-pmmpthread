@@ -364,6 +364,12 @@ void pmmpthread_base_free(zend_object *object) {
 		zend_hash_index_del(&PMMPTHREAD_ZG(resolve), (zend_ulong)base->ts_obj);
 	}
 
+	if (PMMPTHREAD_ZG(thread_shared_globals) == object) {
+		//clean up our local connection to the shared globals
+		//opcache preload creates a fake request, so we need to ensure that
+		//globals are cleaned up properly for the real main thread
+		PMMPTHREAD_ZG(thread_shared_globals) = NULL;
+	}
 	if (pmmpthread_globals_lock()) {
 		if (--base->ts_obj->refcount == 0) {
 			pmmpthread_ts_object_free(base);
@@ -371,6 +377,12 @@ void pmmpthread_base_free(zend_object *object) {
 			pmmpthread_store_persist_local_properties(object);
 		}
 		pmmpthread_globals_object_delete(base);
+		if (PMMPTHREAD_G(thread_shared_globals) == base) {
+			//if this is the original shared globals object, clean up the ref
+			//opcache preload creates a fake request, so we need to ensure that
+			//globals are cleaned up properly for the real main thread
+			PMMPTHREAD_G(thread_shared_globals) = NULL;
+		}
 		pmmpthread_globals_unlock();
 	}
 
