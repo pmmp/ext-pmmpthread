@@ -6,7 +6,7 @@ This is yet another variation of static properties that has highlighted regressi
 <?php
 
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 class TestAsyncTask extends ManInTheMiddle {
 	public static $destroyed = false;

@@ -5,7 +5,7 @@ This test verifies that the default collector works as expected
 --FILE--
 <?php
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $i = 0;
 while ($i<10) {

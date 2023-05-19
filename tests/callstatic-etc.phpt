@@ -17,7 +17,7 @@ class UserThread extends \pmmp\thread\Thread {
 }
 
 $thread = new UserThread;
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 string(11) "called_func"

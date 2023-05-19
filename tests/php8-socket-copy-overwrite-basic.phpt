@@ -30,7 +30,7 @@ $thread = new class($threaded) extends \pmmp\thread\Thread{
 		echo "child thread: $addr:$port\n";
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $thread->synchronized(function() use ($thread) : void{
 	while(!$thread->started) $thread->wait();

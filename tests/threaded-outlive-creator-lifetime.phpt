@@ -32,7 +32,7 @@ $t = new class extends \pmmp\thread\Thread{
 	}
 };
 
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $chan = $t->synchronized(function() use($t) : \pmmp\thread\ThreadSafeArray{
 	while($t->chan === null){
 		$t->wait();

@@ -48,7 +48,9 @@ class GoodCode extends Thread{
 }
 $thread = new GoodCode();
 
-$thread->start();
+/* this thread isn't using any other code - we can use INHERIT_NONE */
+$thread->start(Thread::INHERIT_NONE);
+
 /*
  * wait() can ONLY be reliably used inside a synchronized block on the SAME ThreadSafe object that you're synchronizing with.
  * The behaviour of wait() is undefined if used outside a synchronized() block on the same object that you're wait()ing on.

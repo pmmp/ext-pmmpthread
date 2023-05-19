@@ -14,7 +14,7 @@ class T extends \pmmp\thread\Thread {
         }
 }
 $t = new T;
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function($thread){
 	if (!$thread->data) {
 		var_dump($thread->wait());

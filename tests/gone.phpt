@@ -35,7 +35,7 @@ $array = new \pmmp\thread\ThreadSafeArray();
 $array["sub"] = new \pmmp\thread\ThreadSafeArray();
 
 $t = new T($array);
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function() use ($t) : void{
 	while(!$t->dereferenced1){
 		$t->wait();

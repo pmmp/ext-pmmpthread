@@ -14,7 +14,7 @@ $t = new class extends \pmmp\thread\Thread{
 		var_dump($argc, $argv);
 	}
 };
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECTF--
 int(2)

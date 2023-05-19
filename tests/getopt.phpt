@@ -14,7 +14,7 @@ $t = new class extends \pmmp\thread\Thread{
 		var_dump(getopt("a:", array("arg:")));
 	}
 };
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 ?>
 --EXPECT--
 array(2) {

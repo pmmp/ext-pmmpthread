@@ -11,7 +11,7 @@ $c = new class extends \pmmp\thread\Thread{
 		var_dump(\pmmp\thread\Thread::getCurrentThread());
 	}
 };
-$c->start();
+$c->start(\pmmp\thread\Thread::INHERIT_ALL);
 $c->join();
 
 var_dump(\pmmp\thread\Thread::getCurrentThread());

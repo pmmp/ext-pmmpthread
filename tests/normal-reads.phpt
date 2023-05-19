@@ -11,7 +11,7 @@ class Test extends \pmmp\thread\Thread {
 }
 
 $thread = new Test();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 foreach($thread as $key => $value)
 	var_dump($value);

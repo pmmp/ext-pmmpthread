@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: d085d48e578355ff4b1de837439458f6ea88f5fb */
+ * Stub hash: 0a3b5a02d5c1fb06895fc206d5193f3a223343ce */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -18,8 +18,8 @@ ZEND_END_ARG_INFO()
 
 #define arginfo_class_pmmp_thread_Thread_join arginfo_class_pmmp_thread_Thread_isJoined
 
-ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_start, 0, 0, _IS_BOOL, 0)
-	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, options, IS_LONG, 0, "pmmp\\thread\\Thread::INHERIT_ALL")
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_start, 0, 1, _IS_BOOL, 0)
+	ZEND_ARG_TYPE_INFO(0, options, IS_LONG, 0)
 ZEND_END_ARG_INFO()
 
 

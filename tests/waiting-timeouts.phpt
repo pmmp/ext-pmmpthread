@@ -23,7 +23,7 @@ class T extends \pmmp\thread\Thread {
 }
 
 $t = new T;
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function($thread){
 	var_dump($thread->wait(100)); # should return false because no notification sent
 								  # but may wake up (and return true) because notification might come from

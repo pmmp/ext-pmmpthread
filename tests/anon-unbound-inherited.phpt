@@ -6,7 +6,7 @@ This test verifies that anonymous ThreadSafe objects work as expected
 <?php
 $worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $collectable = new class extends \pmmp\thread\Runnable {
 	/** z */

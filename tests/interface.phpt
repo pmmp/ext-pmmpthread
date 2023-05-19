@@ -22,7 +22,7 @@ class TestThread extends \pmmp\thread\Thread implements INamedThread {
 
 $thread = new TestThread();
 $thread->setName("InterfaceTest");
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 InterfaceTest

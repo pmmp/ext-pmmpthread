@@ -27,7 +27,7 @@ class clientThread extends \pmmp\thread\Thread {
 
 
 $objClientThread = new clientThread();
-$objClientThread->start();
+$objClientThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objClientThread->join();
 echo "OK\n";
 --EXPECTF--

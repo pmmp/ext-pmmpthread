@@ -25,7 +25,7 @@ class Test extends \pmmp\thread\Thread {
 }
 
 $objTestThread = new Test();
-$objTestThread->start();
+$objTestThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objTestThread->join();
 --EXPECT--
 SystemLoaderConfig

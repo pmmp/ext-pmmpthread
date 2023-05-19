@@ -33,7 +33,7 @@ class T extends \pmmp\thread\Thread {
 }
 
 $t = new T();
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 
 $reflect = new ReflectionMethod("T", "run");

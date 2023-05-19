@@ -31,7 +31,7 @@ $thread = new class extends \pmmp\thread\Thread{
 		});
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $thread->synchronized(function() use ($thread) : void{
 	while($thread->buffer->count() === 0){

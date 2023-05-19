@@ -96,7 +96,7 @@ function test(){
 	var_dump($anon::$myOwnStaticProp);
 }
 $worker = new \pmmp\thread\Worker();
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 $worker->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";

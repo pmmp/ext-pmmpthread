@@ -29,7 +29,7 @@ class Foo extends \pmmp\thread\Thread
 
 $foo = new Foo();
 $foo->shared = new \pmmp\thread\ThreadSafeArray();
-$foo->start();
+$foo->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $foo->synchronized(function() use ($foo) : void{
 	while(!isset($foo->shared['baseClass'])){

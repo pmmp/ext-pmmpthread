@@ -29,11 +29,11 @@ $a = new \pmmp\thread\ThreadSafeArray();
 $b = new \pmmp\thread\ThreadSafeArray();
 
 $test = new Test($a, $b);	# bool(false)
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 
 $test = new Test($a, $a);	# bool(true)
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECT--

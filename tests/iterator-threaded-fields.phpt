@@ -26,7 +26,7 @@ $thread = new class($threaded) extends \pmmp\thread\Thread{
 		}
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 
 ?>

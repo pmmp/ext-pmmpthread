@@ -24,7 +24,7 @@ class My extends \pmmp\thread\Thread{
 }
 
 $a = new My();
-$a->start();
+$a->start(\pmmp\thread\Thread::INHERIT_ALL);
 $a->join();
 --EXPECTF--
 %i

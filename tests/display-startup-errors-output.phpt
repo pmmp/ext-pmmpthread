@@ -17,7 +17,7 @@ function undefined(){
 }
 
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		throwException();
@@ -26,7 +26,7 @@ $w->stack(new class extends \pmmp\thread\Runnable{
 $w->shutdown();
 
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		undefined();

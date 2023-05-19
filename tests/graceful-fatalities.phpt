@@ -11,7 +11,7 @@ class TestThread extends \pmmp\thread\Thread {
 	}
 }
 $test = new TestThread();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 var_dump($test->isTerminated());
 ?>

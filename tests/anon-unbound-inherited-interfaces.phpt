@@ -8,7 +8,7 @@ cause the anonymous class to have more interfaces after linking.
 <?php
 $worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 interface Dummy {
 }

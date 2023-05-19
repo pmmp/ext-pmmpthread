@@ -4,7 +4,7 @@ Test that workers don't accept tasks after shutdown
 <?php
 
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->join();
 
 try{

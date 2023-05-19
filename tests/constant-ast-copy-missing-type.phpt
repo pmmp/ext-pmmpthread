@@ -20,7 +20,7 @@ namespace {
 	use any\name\space\Test;
 
 	$objTest = new Test();
-	$objTest->start();
+	$objTest->start(\pmmp\thread\Thread::INHERIT_ALL);
 	$objTest->join();
 }
 ?>

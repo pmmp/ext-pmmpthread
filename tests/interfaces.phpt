@@ -29,7 +29,7 @@ class TEST extends \pmmp\thread\Thread {
 }
 
 $test = new TEST();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 bool(true)

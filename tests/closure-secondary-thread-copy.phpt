@@ -25,7 +25,7 @@ $thread = new class extends \pmmp\thread\Thread {
     }
 };
 
-$thread->start() && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 echo "OK\n";
 --EXPECT--
 OK

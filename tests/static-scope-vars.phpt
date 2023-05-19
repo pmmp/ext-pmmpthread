@@ -26,7 +26,7 @@ $objThread = new class extends \pmmp\thread\Thread
     }
 };
 
-$objThread->start();
+$objThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objThread->join();
 --EXPECT--
 string(5) "value"

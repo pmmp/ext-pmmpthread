@@ -19,7 +19,8 @@ $hammers = 500;
 class T extends Thread {
 	public function __construct($test){
 		$this->test = $test;
-		$this->start();
+		/* this thread isn't using any other code - we can use INHERIT_NONE */
+		$this->start(Thread::INHERIT_NONE);
 	}
 	public function run() : void{
 		/*

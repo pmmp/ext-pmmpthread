@@ -7,7 +7,7 @@ be available on the copied versions of anonymous classes.
 <?php
 $worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 class Base extends \pmmp\thread\Runnable {
 	public static $staticProp = "staticProp";

@@ -16,7 +16,7 @@ class TestThread extends \pmmp\thread\Thread{
 
 	public function run() : void{
 		$this->worker = new \pmmp\thread\Worker();
-		$this->worker->start();
+		$this->worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 		$this->synchronized(fn() => $this->notify());
 		$this->synchronized(function() : void{
 			while(!$this->shutdown){
@@ -28,7 +28,7 @@ class TestThread extends \pmmp\thread\Thread{
 };
 
 $thread = new TestThread;
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->synchronized(function() use ($thread) : void{
 	while($thread->worker === null){
 		$thread->wait();

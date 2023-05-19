@@ -24,7 +24,7 @@ $t = new class extends \pmmp\thread\Thread{
 		test();
 	}
 };
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 
 ?>
 --EXPECT--

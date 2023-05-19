@@ -16,7 +16,7 @@ class T2 extends \pmmp\thread\Runnable
 }
 
 $w = new \pmmp\thread\Worker();
-$w->start();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(new class extends T2 {});
 $w->shutdown();
 --EXPECT--

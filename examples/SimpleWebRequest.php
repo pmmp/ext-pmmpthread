@@ -25,8 +25,11 @@ class WebRequest extends Thread {
 
 $t = microtime(true);
 $g = new WebRequest(sprintf("http://www.google.com/?q=%s", rand()*10));
-/* starting synchronized */
-if($g->start()){
+/*
+ * starting synchronized
+ * we can use INHERIT_NONE here for faster thread start, since the thread doesn't use any code apart from itself and PHP built-in functions
+ */
+if($g->start(Thread::INHERIT_NONE)){
 	printf("Request took %f seconds to start ", microtime(true)-$t);
 	while($g->isRunning()){
 		echo ".";

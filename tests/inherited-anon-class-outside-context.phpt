@@ -35,7 +35,7 @@ class Test extends \pmmp\thread\Thread {
 			public static function staticMethod() {}
 		};
 		var_dump($this->anonymous);
-		$this->anonymous->start();
+		$this->anonymous->start(\pmmp\thread\Thread::INHERIT_ALL);
 		$this->anonymous->join();
 		$this->synchronized(function() : void{
 			$this->notify();
@@ -48,7 +48,7 @@ class Test extends \pmmp\thread\Thread {
 	}
 }
 $test = new Test();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->synchronized(function() use ($test) : void{
 	while(!isset($test->anonymous, $test->anonymous->ready)) {
 		$test->wait();

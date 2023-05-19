@@ -38,7 +38,7 @@ file::get("something".(++$i));
 file::get("something".(++$i));
 
 $thread = new UserThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 ?>
 --EXPECTF--

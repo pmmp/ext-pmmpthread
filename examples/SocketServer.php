@@ -5,7 +5,9 @@ use pmmp\thread\Thread;
 class Client extends Thread {
 	public function __construct($socket){
 		$this->socket = $socket;
-		$this->start();
+
+		/* INHERIT_NONE can be used if the thread doesn't need any code that can't be autoloaded */
+		$this->start(Thread::INHERIT_NONE);
 	}
 	public function run() : void {
 		$client = $this->socket;
