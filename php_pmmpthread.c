@@ -247,20 +247,26 @@ static zend_result pmmpthread_create_thread_shared_globals_auto_global() {
 		zval globals_array;
 
 		if (PMMPTHREAD_G(thread_shared_globals)) {
-			pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array);
+			if (pmmpthread_object_connect(PMMPTHREAD_G(thread_shared_globals), &globals_array) == FAILURE) {
+				ZEND_ASSERT(0);
+				result = FAILURE;
+			} else {
+				result = SUCCESS;
+			}
 		} else {
 			object_init_ex(&globals_array, pmmpthread_ce_array);
 			PMMPTHREAD_G(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+			result = SUCCESS;
 		}
-
-		zend_hash_update(&EG(symbol_table), PMMPTHREAD_G(strings).thread_shared_globals, &globals_array);
 
 		pmmpthread_globals_unlock();
 
-		PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
-		Z_ADDREF(globals_array);
+		if (result == SUCCESS) {
+			zend_hash_update(&EG(symbol_table), PMMPTHREAD_G(strings).thread_shared_globals, &globals_array);
 
-		result = SUCCESS;
+			PMMPTHREAD_ZG(thread_shared_globals) = PMMPTHREAD_FETCH_FROM(Z_OBJ(globals_array));
+			Z_ADDREF(globals_array);
+		}
 	}
 
 	return result;
