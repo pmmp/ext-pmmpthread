@@ -41,7 +41,7 @@ final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAcce
     public static function fromArray(array $array) : ThreadSafeArray{}
 
     /**
-     * Merges data into the current ThreadSafeArray
+     * Merges data into the current ThreadSafeArray, similar to array_merge()
      *
      * @param array|object $from The data to merge
      * @param bool $overwrite Overwrite existing keys flag
@@ -52,14 +52,14 @@ final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAcce
     public function merge(array|object $from, bool $overwrite = true) : bool{}
 
     /**
-     * Pops an item from the array
+     * Pops an item from the end of the array, similar to array_pop()
      *
      * @return mixed The last item in the array
      */
     public function pop() : mixed{}
 
     /**
-     * Shifts an item from the array
+     * Shifts an item from the start of the array, similar to array_shift()
      *
      * @return mixed The first item in the array
      */
