@@ -46,7 +46,7 @@ For an overview of what classes, functions and constants are available, you can 
 - `Thread::start()` now requires the `$options` to be specified. This is because there's no default that works for all use cases - `INHERIT_NONE` is preferable for large applications, but `INHERIT_ALL` is easier for single-file scripts.
 
 ## Behaviour changes
-- Assigning a non-thread-safe (NTS) variables to a thread-safe object will now throw an error, instead of attempting to magically make it thread-safe.
+- Assigning a non-thread-safe (NTS) variables to a thread-safe object will now throw `pmmp\thread\NonThreadSafeValueError`, instead of attempting to magically make it thread-safe.
   - Array implicit coercion to `Volatile` is removed. Arrays may be converted to `ThreadSafeArray` using `ThreadSafeArray::fromArray()`.
   - Serialization of non-thread-safe variables is removed.
   - The following types are now considered thread-safe, and may be assigned to `ThreadSafe` objects:
