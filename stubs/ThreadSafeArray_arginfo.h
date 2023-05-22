@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: 8012c115c16e6db6d9cb9988c5195e5e2c4deb04 */
+ * Stub hash: fadc80e4427e97f6278039f9728198d251677b1e */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_ThreadSafeArray_chunk, 0, 1, IS_ARRAY, 0)
 	ZEND_ARG_TYPE_INFO(0, size, IS_LONG, 0)
@@ -14,7 +14,7 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_pmmp_thread_ThreadSafeArray
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_ThreadSafeArray_merge, 0, 1, _IS_BOOL, 0)
-	ZEND_ARG_TYPE_INFO(0, from, IS_MIXED, 0)
+	ZEND_ARG_TYPE_MASK(0, from, MAY_BE_ARRAY|MAY_BE_OBJECT, NULL)
 	ZEND_ARG_TYPE_INFO_WITH_DEFAULT_VALUE(0, overwrite, _IS_BOOL, 0, "true")
 ZEND_END_ARG_INFO()
 

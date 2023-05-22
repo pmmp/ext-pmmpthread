@@ -21,7 +21,7 @@
 
 #define ThreadSafeArray_method(name) PHP_METHOD(pmmp_thread_ThreadSafeArray, name)
 
-/* {{{ proto boolean ThreadSafeArray::merge(mixed $data, [boolean $overwrite = true])
+/* {{{ proto boolean ThreadSafeArray::merge(array|object $data, [boolean $overwrite = true])
 	Will merge data with the referenced ThreadSafeArray */
 ThreadSafeArray_method(merge)
 {
@@ -29,7 +29,7 @@ ThreadSafeArray_method(merge)
 	zend_bool overwrite = 1;
 
 	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 2)
-		Z_PARAM_ZVAL(from)
+		Z_PARAM_ARRAY_OR_OBJECT(from)
 		Z_PARAM_OPTIONAL
 		Z_PARAM_BOOL(overwrite)
 	ZEND_PARSE_PARAMETERS_END();

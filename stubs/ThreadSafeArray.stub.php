@@ -42,13 +42,13 @@ final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAcce
     /**
      * Merges data into the current ThreadSafeArray
      *
-     * @param mixed $from The data to merge
+     * @param array|object $from The data to merge
      * @param bool $overwrite Overwrite existing keys flag
      *
      * @return bool A boolean indication of success
      * @throws NonThreadSafeValueError if $from contains any non-thread-safe values
      */
-    public function merge(mixed $from, bool $overwrite = true) : bool{}
+    public function merge(array|object $from, bool $overwrite = true) : bool{}
 
     /**
      * Pops an item from the array
