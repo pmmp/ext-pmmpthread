@@ -831,7 +831,7 @@ static zend_bool pmmpthread_closure_thread_safe(zend_closure* closure) {
 		//closures must be unbound or static when assigned, because they won't be bound when restored onto another thread
 		//however, this is OK for thread-safe objects which we can copy
 		zend_throw_error(
-			zend_ce_error,
+			pmmpthread_ce_nts_value_error,
 			"Closures with non-thread-safe $this cannot be made thread-safe"
 		);
 		return 0;
@@ -856,7 +856,7 @@ static zend_bool pmmpthread_closure_thread_safe(zend_closure* closure) {
 			for (; opline < last; opline++) {
 				if (opline->opcode == ZEND_BIND_STATIC && opline->extended_value & ZEND_BIND_REF) {
 					zend_throw_error(
-						zend_ce_error,
+						pmmpthread_ce_nts_value_error,
 						"Closures with local static variables or use-by-reference cannot be made thread-safe"
 					);
 					return 0;
@@ -1247,7 +1247,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 							}
 							if (pmmpthread_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
 								zend_throw_error(
-									zend_ce_error,
+									pmmpthread_ce_nts_value_error,
 									"Cannot merge non-thread-safe value of type %s (input key %zd) into %s",
 									zend_zval_type_name(pzval),
 									Z_LVAL(key),
@@ -1262,7 +1262,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 							}
 							if (pmmpthread_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
 								zend_throw_error(
-									zend_ce_error,
+									pmmpthread_ce_nts_value_error,
 									"Cannot merge non-thread-safe value of type %s (input key \"%s\") into %s",
 									zend_zval_type_name(pzval),
 									Z_STRVAL(key),

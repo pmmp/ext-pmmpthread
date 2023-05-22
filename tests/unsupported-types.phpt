@@ -13,7 +13,7 @@ foreach([
 ] as $bannedType){
 	try{
 		$threaded[] = $bannedType;
-	}catch(\Error $e){
+	}catch(\pmmp\thread\NonThreadSafeValueError $e){
 		echo $e->getMessage() . PHP_EOL;
 	}
 }

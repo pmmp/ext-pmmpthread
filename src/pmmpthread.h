@@ -86,6 +86,7 @@ extern zend_class_entry *pmmpthread_ce_runnable;
 extern zend_class_entry *pmmpthread_ce_thread;
 extern zend_class_entry *pmmpthread_ce_worker;
 extern zend_class_entry *pmmpthread_ce_connection_exception;
+extern zend_class_entry *pmmpthread_ce_nts_value_error;
 
 #define IS_THREADSAFE_CLASS(c) \
 	(instanceof_function(c, pmmpthread_ce_thread_safe))

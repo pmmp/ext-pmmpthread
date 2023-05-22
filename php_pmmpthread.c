@@ -27,6 +27,7 @@
 #include <stubs/Runnable_arginfo.h>
 #include <stubs/ConnectionException_arginfo.h>
 #include <stubs/Worker_arginfo.h>
+#include <stubs/NonThreadSafeValueError_arginfo.h>
 
 #include <php_pmmpthread.h>
 
@@ -83,6 +84,7 @@ zend_class_entry *pmmpthread_ce_thread;
 zend_class_entry *pmmpthread_ce_worker;
 zend_class_entry *pmmpthread_ce_pool;
 zend_class_entry *pmmpthread_ce_connection_exception;
+zend_class_entry *pmmpthread_ce_nts_value_error;
 
 zend_object_handlers pmmpthread_ts_ce_handlers;
 zend_object_handlers pmmpthread_array_ce_handlers;
@@ -139,6 +141,7 @@ PHP_MINIT_FUNCTION(pmmpthread)
 	pmmpthread_ce_array->create_object = pmmpthread_threaded_array_ctor;
 
 	pmmpthread_ce_connection_exception = register_class_pmmp_thread_ConnectionException(spl_ce_RuntimeException);
+	pmmpthread_ce_nts_value_error = register_class_pmmp_thread_NonThreadSafeValueError(zend_ce_value_error);
 
 	pmmpthread_ce_runnable = register_class_pmmp_thread_Runnable(pmmpthread_ce_thread_safe);
 

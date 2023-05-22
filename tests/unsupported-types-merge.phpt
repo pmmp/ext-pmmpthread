@@ -9,7 +9,7 @@ function test(\pmmp\thread\ThreadSafeArray $t1, array|object $input) : void{
 	try{
 		$t1->merge($input);
 		echo "success" . PHP_EOL;
-	}catch(\Throwable $e){
+	}catch(\pmmp\thread\NonThreadSafeValueError $e){
 		echo $e->getMessage() . PHP_EOL;
 	}
 }

@@ -121,7 +121,7 @@ zval* pmmpthread_read_property_deny(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 void pmmpthread_write_dimension(PMMPTHREAD_WRITE_DIMENSION_PASSTHRU_D) {
 	if (pmmpthread_store_write(object, member, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
 		zend_throw_error(
-			NULL,
+			pmmpthread_ce_nts_value_error,
 			"Cannot assign non-thread-safe value of type %s to %s",
 			zend_zval_type_name(value),
 			ZSTR_VAL(object->ce->name)
@@ -164,7 +164,7 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 
 			if (ok && pmmpthread_store_write(object, &zmember, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
 				zend_throw_error(
-					NULL,
+					pmmpthread_ce_nts_value_error,
 					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
 					zend_zval_type_name(value),
 					ZSTR_VAL(object->ce->name),

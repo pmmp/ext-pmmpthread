@@ -21,7 +21,7 @@ $closure = $a->getClosure();
 $t = new \pmmp\thread\ThreadSafeArray();
 try{
 	$t["closure"] = $closure;
-}catch(\Error $e){
+}catch(\pmmp\thread\NonThreadSafeValueError $e){
 	echo $e->getMessage() . PHP_EOL;
 }
 

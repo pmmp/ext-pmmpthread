@@ -35,8 +35,9 @@ final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAcce
      * @param array $array
      *
      * @return ThreadSafeArray A ThreadSafeArray object created from the provided array
+     * @throws NonThreadSafeValueError if the array contains any non-thread-safe values
      */
-    public static function fromArray(array $array) : ThreadSafeArray {}
+    public static function fromArray(array $array) : ThreadSafeArray{}
 
     /**
      * Merges data into the current ThreadSafeArray
@@ -45,6 +46,7 @@ final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAcce
      * @param bool $overwrite Overwrite existing keys flag
      *
      * @return bool A boolean indication of success
+     * @throws NonThreadSafeValueError if $from contains any non-thread-safe values
      */
     public function merge(mixed $from, bool $overwrite = true) : bool{}
 

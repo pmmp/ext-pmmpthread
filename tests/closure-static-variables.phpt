@@ -14,7 +14,7 @@ $func = function() : void{
 $array = new \pmmp\thread\ThreadSafeArray();
 try{
 	$array["func"] = $func;
-}catch(\Error $e){
+}catch(\pmmp\thread\NonThreadSafeValueError $e){
 	echo $e->getMessage() . PHP_EOL;
 }
 ?>
