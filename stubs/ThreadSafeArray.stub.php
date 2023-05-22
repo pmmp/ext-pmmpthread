@@ -16,12 +16,13 @@ namespace pmmp\thread;
 final class ThreadSafeArray extends ThreadSafe implements \Countable, \ArrayAccess
 {
     /**
-     * Fetches a chunk of the objects properties table of the given size
+     * Removes and returns $size items from the array. Equivalent to calling shift() $size times.
+     * Similar to array_slice() with offset 0, but also removes the items returned.
      *
      * @param int $size The number of items to fetch
      * @param bool $preserve Preserve the keys of members
      *
-     * @return array An array of items from the objects member table
+     * @return array An array of items removed from the array
      */
     public function chunk(int $size, bool $preserve = false) : array{}
 
