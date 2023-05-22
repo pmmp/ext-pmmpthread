@@ -26,6 +26,7 @@ For an overview of what classes, functions and constants are available, you can 
   - `pmmp\thread\ThreadSafeArray` (`final`) extends `ThreadSafe` - offers `array`-like behaviour. Implements `shift()`, `pop()`, `merge()`, `chunk()`, `count()`, `fromArray()`, `ArrayAccess` API, `Countable` API, `IteratorAggregate` API.
   - `pmmp\thread\Runnable` (`abstract`) extends `ThreadSafe` - base class for `Worker` tasks and `Thread`. Implements `run()`, `isRunning()` and `isTerminated()`.
 - The following classes have been renamed:
+  - `Pool` -> `pmmp\thread\Pool`
   - `Thread` -> `pmmp\thread\Thread`
   - `ThreadedConnectionException` -> `pmmp\thread\ConnectionException`
   - `Worker` -> `pmmp\thread\Worker`
