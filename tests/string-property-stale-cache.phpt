@@ -8,7 +8,7 @@ use pmmp\thread\Thread;
 $thread = new class extends Thread {
     public int $integer = 0;
     public bool $boolean = false;
-    public string $string = "Initial";
+    public string $string = PHP_VERSION; //permanent string, will be referenced directly
     public function run() : void {
         $this->integer = 1;
         $this->boolean = true;

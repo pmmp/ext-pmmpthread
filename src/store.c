@@ -31,7 +31,7 @@
 
 /* {{{ */
 static zend_result pmmpthread_store_save_zval(pmmpthread_ident_t* source, zval* zstorage, zval* write);
-static void pmmpthread_store_restore_zval_ex(zval* unstore, zval* zstorage, zend_bool* was_pmmpthread_storage);
+static void pmmpthread_store_restore_zval_ex(zval* unstore, zval* zstorage, zend_bool* may_be_locally_cached);
 static void pmmpthread_store_restore_zval(zval* unstore, zval* zstorage); /* }}} */
 static void pmmpthread_store_storage_dtor(zval* element);
 
@@ -143,6 +143,13 @@ static inline zend_bool pmmpthread_store_valid_local_cache_item(zval* val) {
 
 /* {{{ */
 static inline zend_bool pmmpthread_store_storage_is_cacheable(zval* zstorage) {
+	if (zstorage == NULL) {
+		return 0;
+	}
+	if (Z_TYPE_P(zstorage) == IS_STRING) {
+		//permanent interned strings may be stored directly
+		return 1;
+	}
 	pmmpthread_storage* storage = TRY_PMMPTHREAD_STORAGE_PTR_P(zstorage);
 	return storage && (storage->type == STORE_TYPE_THREADSAFE_OBJECT || storage->type == STORE_TYPE_CLOSURE || storage->type == STORE_TYPE_SOCKET || storage->type == STORE_TYPE_STRING_PTR);
 } /* }}} */
@@ -577,9 +584,9 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 		zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
 			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
-			zend_bool was_pmmpthread_object;
+			zend_bool may_be_locally_cached;
 
-			pmmpthread_store_restore_zval_ex(member, zstorage, &was_pmmpthread_object);
+			pmmpthread_store_restore_zval_ex(member, zstorage, &may_be_locally_cached);
 			if (Z_TYPE(key) == IS_LONG) {
 				zend_hash_index_del(&ts_obj->props.hash, Z_LVAL(key));
 				if (threaded->std.properties) {
@@ -593,7 +600,7 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 				zend_string_release(Z_STR(key));
 			}
 
-			if (was_pmmpthread_object) {
+			if (may_be_locally_cached) {
 				_pmmpthread_store_bump_modcount_nolock(threaded);
 			}
 			//TODO: maybe we should be syncing local properties here?
@@ -617,17 +624,17 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 
 		array_init(chunk);
 		zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
-		zend_bool removed_pmmpthread_object = 0;
+		zend_bool stale_local_cache = 0;
 		while((zend_hash_num_elements(Z_ARRVAL_P(chunk)) < size) &&
 			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
 			zval key, zv;
 
 			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
 
-			zend_bool was_pmmpthread_object;
-			pmmpthread_store_restore_zval_ex(&zv, zstorage, &was_pmmpthread_object);
-			if (!removed_pmmpthread_object) {
-				removed_pmmpthread_object = was_pmmpthread_object;
+			zend_bool may_be_locally_cached;
+			pmmpthread_store_restore_zval_ex(&zv, zstorage, &may_be_locally_cached);
+			if (!stale_local_cache) {
+				stale_local_cache = may_be_locally_cached;
 			}
 			if (Z_TYPE(key) == IS_LONG) {
 				zend_hash_index_update(
@@ -649,7 +656,7 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 
 			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		}
-		if (removed_pmmpthread_object) {
+		if (stale_local_cache) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
 		//TODO: sync local properties?
@@ -675,8 +682,8 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
 			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
 
-			zend_bool was_pmmpthread_object;
-			pmmpthread_store_restore_zval_ex(member, zstorage, &was_pmmpthread_object);
+			zend_bool may_be_locally_cached;
+			pmmpthread_store_restore_zval_ex(member, zstorage, &may_be_locally_cached);
 
 			if (Z_TYPE(key) == IS_LONG) {
 				zend_hash_index_del(
@@ -692,7 +699,7 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 				}
 				zend_string_release(Z_STR(key));
 			}
-			if (was_pmmpthread_object) {
+			if (may_be_locally_cached) {
 				_pmmpthread_store_bump_modcount_nolock(threaded);
 			}
 			//TODO: sync local properties?
@@ -1074,8 +1081,8 @@ static int pmmpthread_store_convert(pmmpthread_storage *storage, zval *pzval){
 /* }}} */
 
 /* {{{ */
-static void pmmpthread_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *was_pmmpthread_storage) {
-	*was_pmmpthread_storage = 0;
+static void pmmpthread_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *may_be_locally_cached) {
+	*may_be_locally_cached = pmmpthread_store_storage_is_cacheable(zstorage);
 	switch (Z_TYPE_P(zstorage)) {
 		case IS_NULL:
 		case IS_FALSE:
@@ -1093,7 +1100,6 @@ static void pmmpthread_store_restore_zval_ex(zval *unstore, zval *zstorage, zend
 			{
 				/* thread-safe object */
 				pmmpthread_storage *storage = (pmmpthread_storage *) Z_PTR_P(zstorage);
-				*was_pmmpthread_storage = pmmpthread_store_storage_is_cacheable(zstorage);
 				pmmpthread_store_convert(storage, unstore);
 			}
 			break;
