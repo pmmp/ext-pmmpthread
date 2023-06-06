@@ -268,17 +268,17 @@ static HashTable* pmmpthread_copy_statics(const pmmpthread_ident_t* owner, HashT
 	HashTable *statics = NULL;
 
 	if (old) {
-		zend_string *key;
-		zval *value;
+		Bucket* b = old->arData;
+		Bucket* end = old->arData + old->nNumUsed;
 
 		ALLOC_HASHTABLE(statics);
 		zend_hash_init(statics,
 			zend_hash_num_elements(old),
 			NULL, ZVAL_PTR_DTOR, 0);
 
-		ZEND_HASH_FOREACH_STR_KEY_VAL(old, key, value) {
-			zend_string *name = pmmpthread_copy_string(key);
-			zval *next = value;
+		while (b != end) {
+			zend_string* name = pmmpthread_copy_string(b->key);
+			zval* next = &b->val;
 			zval copy;
 			while (Z_TYPE_P(next) == IS_REFERENCE)
 				next = &Z_REF_P(next)->val;
@@ -289,7 +289,8 @@ static HashTable* pmmpthread_copy_statics(const pmmpthread_ident_t* owner, HashT
 				zend_hash_add_empty_element(statics, name);
 			}
 			zend_string_release(name);
-		} ZEND_HASH_FOREACH_END();
+			b++;
+		}
 	}
 
 	return statics;
