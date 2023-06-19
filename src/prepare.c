@@ -770,7 +770,9 @@ static inline void pmmpthread_prepare_constants(const pmmpthread_ident_t* source
 	zend_string *name;
 
 	ZEND_HASH_FOREACH_STR_KEY_PTR(PMMPTHREAD_EG(source->ls, zend_constants), name, zconstant) {
+#if PHP_VERSION_ID < 80300
 		if (zconstant->name) {
+#endif
 			if (Z_TYPE(zconstant->value) == IS_RESOURCE){
 				//we can't copy these
 				continue;
@@ -778,21 +780,31 @@ static inline void pmmpthread_prepare_constants(const pmmpthread_ident_t* source
 				zend_constant constant;
 
 				if (!pmmpthread_constant_exists(name)) {
-					constant.name = pmmpthread_copy_string(name);
+					zend_string *name_copy = pmmpthread_copy_string(name);
+#if PHP_VERSION_ID < 80300
+					constant.name = name_copy;
+#endif
 
 					if (pmmpthread_copy_zval(source, &constant.value, &zconstant->value) != SUCCESS) {
 						zend_error_noreturn(
 							E_CORE_ERROR,
 							"pmmpthread encountered an unknown non-copyable constant %s of type %s",
-							ZSTR_VAL(zconstant->name),
+							ZSTR_VAL(name_copy),
 							zend_zval_type_name(&zconstant->value)
 						);
 					}
 					ZEND_CONSTANT_SET_FLAGS(&constant, ZEND_CONSTANT_FLAGS(zconstant), ZEND_CONSTANT_MODULE_NUMBER(zconstant));
-					zend_register_constant(&constant);
+					zend_register_constant(
+#if PHP_VERSION_ID >= 80300
+						name_copy,
+#endif
+						&constant
+					);
 				}
 			}
+#if PHP_VERSION_ID < 80300
 		}
+#endif
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
