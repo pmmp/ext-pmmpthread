@@ -191,7 +191,7 @@ int pmmpthread_has_dimension(PMMPTHREAD_HAS_DIMENSION_PASSTHRU_D) {
 }
 
 int pmmpthread_has_property(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
-	int isset;
+	int isset = 0;
 	zval zmember;
 	zend_guard* guard;
 
