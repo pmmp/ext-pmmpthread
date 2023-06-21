@@ -73,8 +73,8 @@ static inline zend_result pmmpthread_routine_run_function(pmmpthread_zend_object
 					zend_try_exception_handler();
 					if (EG(exception)) {
 						zend_exception_error(EG(exception), E_ERROR);
-						pmmpthread_monitor_add(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 					}
+					pmmpthread_monitor_add(&connection->ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 				} else {
 					result = SUCCESS;
 				}
