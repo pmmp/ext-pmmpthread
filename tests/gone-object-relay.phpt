@@ -33,7 +33,6 @@ $thread = new class($inChannel, $outChannel) extends \pmmp\thread\Thread{
 			$this->notify();
 			return $object;
 		});
-		$object = new ThreadSafeArray();
 		$this->synchronized(function() : void{
 			while(!$this->mainThreadReady){
 				$this->wait();
