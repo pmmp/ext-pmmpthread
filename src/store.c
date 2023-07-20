@@ -453,16 +453,14 @@ int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) 
 			zstorage = zend_hash_index_find(&ts_obj->props.hash, Z_LVAL(member));
 		} else zstorage = zend_hash_find(&ts_obj->props.hash, Z_STR(member));
 
-		if (zstorage) {
-			pmmpthread_storage *serialized = TRY_PMMPTHREAD_STORAGE_PTR_P(zstorage);
-			/* strictly only reads are supported */
-			if ((serialized == NULL || serialized->type != STORE_TYPE_THREADSAFE_OBJECT) && type != BP_VAR_R && type != BP_VAR_IS){
-				zend_throw_error(zend_ce_error, "Indirect modification of non-ThreadSafe members of %s is not supported", ZSTR_VAL(object->ce->name));
-				result = FAILURE;
-			} else {
-				pmmpthread_store_restore_zval(read, zstorage);
-				result = SUCCESS;
-			}
+		pmmpthread_storage *serialized = TRY_PMMPTHREAD_STORAGE_PTR_P(zstorage);
+		/* strictly only reads are supported */
+		if ((serialized == NULL || serialized->type != STORE_TYPE_THREADSAFE_OBJECT) && type != BP_VAR_R && type != BP_VAR_IS){
+			zend_throw_error(zend_ce_error, "Indirect modification of non-ThreadSafe members of %s is not supported", ZSTR_VAL(object->ce->name));
+			result = FAILURE;
+		} else {
+			pmmpthread_store_restore_zval(read, zstorage);
+			result = SUCCESS;
 		}
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	}
