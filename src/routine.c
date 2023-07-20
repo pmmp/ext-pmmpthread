@@ -162,7 +162,7 @@ zend_bool pmmpthread_start(pmmpthread_zend_object_t* thread, zend_ulong thread_o
 	pmmpthread_routine_arg_t routine;
 	pmmpthread_object_t* ts_obj = thread->ts_obj;
 
-	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may start it",
 			thread->std.ce->name->val);
@@ -200,7 +200,7 @@ zend_bool pmmpthread_start(pmmpthread_zend_object_t* thread, zend_ulong thread_o
 /* {{{ */
 zend_bool pmmpthread_join(pmmpthread_zend_object_t* thread) {
 
-	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may join with it",
 			thread->std.ce->name->val);

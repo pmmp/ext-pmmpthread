@@ -34,7 +34,7 @@ Worker_method(stack)
 		Z_PARAM_OBJECT_OF_CLASS(work, pmmpthread_ce_runnable)
 	ZEND_PARSE_PARAMETERS_END();
 
-	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call stack",
 			thread->std.ce->name->val);
@@ -62,7 +62,7 @@ Worker_method(unstack)
 
 	zend_parse_parameters_none_throw();
 
-	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException,
 			0, "only the creator of this %s may call unstack",
 			thread->std.ce->name->val);
@@ -109,7 +109,7 @@ Worker_method(collect)
 		PMMPTHREAD_WORKER_COLLECTOR_INIT(call, Z_OBJ_P(getThis()));
 	}
 
-	if (!PMMPTHREAD_IN_CREATOR(thread) || thread->original_zobj != NULL) {
+	if (!PMMPTHREAD_IN_CREATOR(thread)) {
 		zend_throw_exception_ex(spl_ce_RuntimeException, 0,
 			"only the creator of this %s may call collect",
 			thread->std.ce->name->val);
