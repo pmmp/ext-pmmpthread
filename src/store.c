@@ -929,9 +929,6 @@ static pmmpthread_storage* pmmpthread_store_create(pmmpthread_ident_t* source, z
 
 			if (instanceof_function(Z_OBJCE_P(unstore), pmmpthread_ce_thread_safe)) {
 				pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(Z_OBJ_P(unstore));
-				if (threaded->original_zobj != NULL) {
-					threaded = threaded->original_zobj;
-				}
 				MAKE_STORAGE(STORE_TYPE_THREADSAFE_OBJECT, pmmpthread_zend_object_storage_t);
 				storage->object = threaded;
 				break;

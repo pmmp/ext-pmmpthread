@@ -46,7 +46,6 @@ typedef struct _pmmpthread_zend_object_t pmmpthread_zend_object_t;
 struct _pmmpthread_zend_object_t {
 	pmmpthread_object_t *ts_obj;
 	pmmpthread_ident_t owner;
-	pmmpthread_zend_object_t *original_zobj; //NULL if this is the original object
 	zend_long local_props_modcount;
 	pmmpthread_worker_data_t *worker_data;
 	zend_object std;

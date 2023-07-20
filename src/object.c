@@ -139,7 +139,7 @@ zend_object* pmmpthread_worker_ctor(zend_class_entry *entry) {
 		sizeof(pmmpthread_zend_object_t) + zend_object_properties_size(entry));
 
 	pmmpthread_base_ctor(worker, entry, PMMPTHREAD_SCOPE_WORKER);
-	if (worker->original_zobj == NULL) {
+	if (PMMPTHREAD_IN_CREATOR(worker)) {
 		//this may be a connection and not the original object
 		worker->worker_data = pmmpthread_worker_data_alloc(&worker->ts_obj->monitor);
 	}
@@ -183,11 +183,6 @@ static inline int _pmmpthread_connect_nolock(pmmpthread_zend_object_t* source, p
 	if (source && destination) {
 		destination->ts_obj = source->ts_obj;
 		++destination->ts_obj->refcount;
-		if (source->original_zobj != NULL) {
-			destination->original_zobj = source->original_zobj;
-		} else {
-			destination->original_zobj = source;
-		}
 
 		if (destination->std.properties)
 			zend_hash_clean(destination->std.properties);
@@ -233,8 +228,6 @@ zend_bool pmmpthread_object_connect(pmmpthread_zend_object_t* address, zval *obj
 				PMMPTHREAD_ZG(connecting_object) = original;
 				object_init_ex(object, ce);
 				PMMPTHREAD_ZG(connecting_object) = NULL;
-				connection = PMMPTHREAD_FETCH_FROM(Z_OBJ_P(object));
-				zend_hash_index_update_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)connection->ts_obj, connection);
 			}
 		}
 	}
@@ -303,7 +296,6 @@ static pmmpthread_object_t* pmmpthread_ts_object_ctor(unsigned int scope) {
 static void pmmpthread_base_ctor(pmmpthread_zend_object_t* base, zend_class_entry *entry, unsigned int scope) {
 	base->owner.ls = TSRMLS_CACHE;
 	base->owner.id = pmmpthread_self();
-	base->original_zobj = NULL;
 	base->worker_data = NULL;
 
 	zend_object_std_init(&base->std, entry);
@@ -315,6 +307,7 @@ static void pmmpthread_base_ctor(pmmpthread_zend_object_t* base, zend_class_entr
 		base->ts_obj = pmmpthread_ts_object_ctor(scope);
 		pmmpthread_base_write_property_defaults(base);
 	}
+	zend_hash_index_add_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)base->ts_obj, base);
 
 	base->local_props_modcount = base->ts_obj->props.modcount - 1;
 } /* }}} */
@@ -324,7 +317,7 @@ void pmmpthread_base_dtor(zend_object *object) {
 	//TODO: how does this play with __destruct() calls (e.g. adding a ref to self)?
 	pmmpthread_zend_object_t* base = PMMPTHREAD_FETCH_FROM(object);
 
-	if (base->original_zobj == NULL && PMMPTHREAD_IN_CREATOR(base) && (PMMPTHREAD_IS_THREAD(base)||PMMPTHREAD_IS_WORKER(base)) &&
+	if (PMMPTHREAD_IN_CREATOR(base) && (PMMPTHREAD_IS_THREAD(base)||PMMPTHREAD_IS_WORKER(base)) &&
 		pmmpthread_monitor_check(&base->ts_obj->monitor, PMMPTHREAD_MONITOR_STARTED) &&
 		!pmmpthread_monitor_check(&base->ts_obj->monitor, PMMPTHREAD_MONITOR_JOINED)) {
 		zend_call_method_with_0_params(object, object->ce, NULL, "join", NULL);
