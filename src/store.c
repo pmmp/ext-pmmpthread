@@ -458,7 +458,7 @@ int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) 
 		if ((serialized == NULL || serialized->type != STORE_TYPE_THREADSAFE_OBJECT) && type != BP_VAR_R && type != BP_VAR_IS){
 			zend_throw_error(zend_ce_error, "Indirect modification of non-ThreadSafe members of %s is not supported", ZSTR_VAL(object->ce->name));
 			result = FAILURE;
-		} else {
+		} else if (zstorage != NULL) {
 			pmmpthread_store_restore_zval(read, zstorage);
 			result = SUCCESS;
 		}
