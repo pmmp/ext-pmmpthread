@@ -177,19 +177,22 @@ zend_bool pmmpthread_start(pmmpthread_zend_object_t* thread, zend_ulong thread_o
 
 	pmmpthread_routine_init(&routine, thread, thread_options);
 
-	switch (pthread_create(&ts_obj->thread, NULL, (void* (*) (void*)) pmmpthread_routine, (void*)&routine)) {
+	int create_result = pthread_create(&ts_obj->thread, NULL, (void* (*) (void*)) pmmpthread_routine, (void*)&routine);
+	switch (create_result) {
 	case SUCCESS:
 		pmmpthread_routine_wait(&routine);
 		return 1;
 
 	case EAGAIN:
 		zend_throw_exception_ex(spl_ce_RuntimeException,
-			0, "cannot start %s, out of resources", thread->std.ce->name->val);
+			0, "Cannot start thread: Out of resources or system thread limit reached");
 		break;
 
 	default:
+		//this should never normally happen
 		zend_throw_exception_ex(spl_ce_RuntimeException,
-			0, "cannot start %s, unknown error", thread->std.ce->name->val);
+			0, "Cannot start thread: %s", strerror(create_result));
+		break;
 	}
 
 	pmmpthread_routine_free(&routine);
