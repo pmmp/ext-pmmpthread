@@ -929,8 +929,6 @@ void pmmpthread_call_shutdown_functions(void) {
 	 */
 	EG(current_execute_data) = NULL;
 
-	php_deactivate_ticks();
-
 	/* 0. Call any open observer end handlers that are still open after a zend_bailout */
 	if (ZEND_OBSERVER_ENABLED) {
 		zend_observer_fcall_end_all();
