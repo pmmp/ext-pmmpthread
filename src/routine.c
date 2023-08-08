@@ -133,6 +133,8 @@ static void* pmmpthread_routine(pmmpthread_routine_arg_t* routine) {
 			}
 		} zend_end_try();
 
+		pmmpthread_call_shutdown_functions();
+
 		pmmpthread_monitor_add(&ts_obj->monitor, PMMPTHREAD_MONITOR_AWAIT_JOIN);
 		//wait for the parent to tell us it is done
 		pmmpthread_monitor_wait_until(&ts_obj->monitor, PMMPTHREAD_MONITOR_EXIT);

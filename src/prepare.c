@@ -21,6 +21,7 @@
 #include <src/globals.h>
 #include <src/copy.h>
 #include <Zend/zend_enum.h>
+#include <Zend/zend_observer.h>
 
 #define PMMPTHREAD_PREPARATION_BEGIN_CRITICAL() pmmpthread_globals_lock();
 #define PMMPTHREAD_PREPARATION_END_CRITICAL()   pmmpthread_globals_unlock()
@@ -912,6 +913,39 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 	} PMMPTHREAD_PREPARATION_END_CRITICAL();
 
 	return SUCCESS;
+} /* }}} */
+
+/* {{{ Calls user shutdown functions before entering into the AWAIT_JOIN state.
+* This is necessary to ensure that any object created by a shutdown handler can be recovered by the parent thread.
+*
+* This function replicates some logic from php_request_shutdown() as seen here: https://github.com/php/php-src/blob/PHP-8.0/main/main.c#L1781-L1842
+* We call all the shutdown logic up to (but not including) zend_call_destructors.
+*/
+void pmmpthread_call_shutdown_functions(void) {
+	EG(flags) |= EG_FLAGS_IN_SHUTDOWN;
+
+	/* EG(current_execute_data) points into nirvana and therefore cannot be safely accessed
+	 * inside zend_executor callback functions.
+	 */
+	EG(current_execute_data) = NULL;
+
+	php_deactivate_ticks();
+
+	/* 0. Call any open observer end handlers that are still open after a zend_bailout */
+	if (ZEND_OBSERVER_ENABLED) {
+		zend_observer_fcall_end_all();
+	}
+
+	/* 1. Call all possible shutdown functions registered with register_shutdown_function() */
+	if (PG(modules_activated)) {
+		php_call_shutdown_functions();
+	}
+
+	/* 7. Free shutdown functions */
+	//we don't want these to be called by php_request_shutdown() as we've already called them, so get rid of them here
+	if (PG(modules_activated)) {
+		php_free_shutdown_functions();
+	}
 } /* }}} */
 
 /* {{{ */

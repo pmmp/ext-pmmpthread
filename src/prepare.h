@@ -33,5 +33,8 @@ void pmmpthread_context_late_bindings(const pmmpthread_ident_t* source); /* }}} 
 int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options); /* }}} */
 
 /* {{{ */
+void pmmpthread_call_shutdown_functions(void); /* }}} */
+
+/* {{{ */
 int pmmpthread_prepared_shutdown(void); /* }}} */
 #endif
