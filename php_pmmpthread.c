@@ -164,7 +164,6 @@ PHP_MINIT_FUNCTION(pmmpthread)
 
 	pmmpthread_ts_ce_handlers.free_obj = pmmpthread_base_free;
 	pmmpthread_ts_ce_handlers.dtor_obj = pmmpthread_base_dtor;
-	pmmpthread_ts_ce_handlers.cast_object = pmmpthread_cast_object;
 
 	pmmpthread_ts_ce_handlers.get_debug_info = pmmpthread_read_debug;
 	pmmpthread_ts_ce_handlers.get_properties = pmmpthread_read_properties;

@@ -267,18 +267,6 @@ void pmmpthread_unset_property_deny(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 } /* }}} */
 
 /* {{{ */
-int pmmpthread_cast_object(PMMPTHREAD_CAST_PASSTHRU_D) {
-	switch (type) {
-		case IS_ARRAY: {
-			pmmpthread_store_tohash(from, Z_ARRVAL_P(to));
-			return SUCCESS;
-		} break;
-	}
-
-	return zend_handlers->cast_object(from, to, type);
-} /* }}} */
-
-/* {{{ */
 int pmmpthread_compare_objects(PMMPTHREAD_COMPARE_PASSTHRU_D) {
 	pmmpthread_object_t *left = PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(op1));
 	pmmpthread_object_t *right = PMMPTHREAD_FETCH_TS_FROM(Z_OBJ_P(op2));

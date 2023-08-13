@@ -24,7 +24,6 @@
 
 #include <src/pmmpthread.h>
 
-#define PMMPTHREAD_CAST_PASSTHRU_D zend_object *from, zval *to, int type
 #define PMMPTHREAD_COUNT_PASSTHRU_D zend_object *object, zend_long *count
 #define PMMPTHREAD_COMPARE_PASSTHRU_D zval *op1, zval *op2
 
@@ -75,9 +74,6 @@ void pmmpthread_unset_dimension(PMMPTHREAD_UNSET_DIMENSION_PASSTHRU_D); /* }}} *
 
 /* {{{ count properties in storage */
 int pmmpthread_count_properties(PMMPTHREAD_COUNT_PASSTHRU_D); /* }}} */
-
-/* {{{ cast an object to a normal array helper */
-int pmmpthread_cast_object(PMMPTHREAD_CAST_PASSTHRU_D); /* }}} */
 
 /* {{{ */
 int pmmpthread_compare_objects(PMMPTHREAD_COMPARE_PASSTHRU_D); /* }}} */
