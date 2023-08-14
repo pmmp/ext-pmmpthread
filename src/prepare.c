@@ -39,9 +39,12 @@ zend_object* prepare_enum_constant(const pmmpthread_ident_t* source, zend_class_
 	zend_object* new_obj = zend_objects_new(prepared);
 
 	pmmpthread_copy_zval(source, OBJ_PROP_NUM(new_obj, 0), zend_enum_fetch_case_name(enum_obj));
-	zval* backing_value_zv = zend_enum_fetch_case_value(enum_obj);
-	if (backing_value_zv != NULL) {
-		pmmpthread_copy_zval(source, OBJ_PROP_NUM(new_obj, 1), backing_value_zv);
+	if (prepared->enum_backing_type != IS_UNDEF) {
+		zval* backing_value_zv = zend_enum_fetch_case_value(enum_obj);
+		ZEND_ASSERT(backing_value_zv != NULL);
+		if (backing_value_zv != NULL) {
+			pmmpthread_copy_zval(source, OBJ_PROP_NUM(new_obj, 1), backing_value_zv);
+		}
 	}
 
 	new_obj->handlers = enum_obj->handlers;
