@@ -33,6 +33,22 @@ static zend_trait_alias * pmmpthread_preparation_copy_trait_alias(zend_trait_ali
 static zend_trait_precedence * pmmpthread_preparation_copy_trait_precedence(zend_trait_precedence *precedence);
 static void pmmpthread_preparation_copy_trait_method_reference(zend_trait_method_reference *reference, zend_trait_method_reference *copy);
 
+/* {{{ Initializes an enum case object.
+ * Adapted from zend_enum_new(), which is sadly not exported. */
+zend_object* prepare_enum_constant(const pmmpthread_ident_t* source, zend_class_entry* prepared, zend_object* enum_obj) {
+	zend_object* new_obj = zend_objects_new(prepared);
+
+	pmmpthread_copy_zval(source, OBJ_PROP_NUM(new_obj, 0), zend_enum_fetch_case_name(enum_obj));
+	zval* backing_value_zv = zend_enum_fetch_case_value(enum_obj);
+	if (backing_value_zv != NULL) {
+		pmmpthread_copy_zval(source, OBJ_PROP_NUM(new_obj, 1), backing_value_zv);
+	}
+
+	new_obj->handlers = enum_obj->handlers;
+
+	return new_obj;
+} /* }}} */
+
 /* {{{ */
 static void prepare_class_constants(const pmmpthread_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 
@@ -51,64 +67,32 @@ static void prepare_class_constants(const pmmpthread_ident_t* source, zend_class
 
 		name = pmmpthread_copy_string(key);
 
+		if (zc->ce->type == ZEND_INTERNAL_CLASS) {
+			rc = pemalloc(sizeof(zend_class_constant), 1);
+		} else {
+			rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
+		}
+
+		memcpy(rc, zc, sizeof(zend_class_constant));
 		if (ZEND_CLASS_CONST_FLAGS(zc) & ZEND_CLASS_CONST_IS_CASE && Z_TYPE(zc->value) == IS_OBJECT) {
 			//resolved enum members require special treatment, because serializing and unserializing them just gives
 			//back the original enum member.
-			zval* enum_value = candidate->enum_backing_type == IS_UNDEF ?
-				NULL :
-				zend_enum_fetch_case_value(Z_OBJ(zc->value));
-
-			if (enum_value) {
-				zval copied_enum_value;
-				if (pmmpthread_copy_zval(source, &copied_enum_value, enum_value) == FAILURE) {
-					zend_error_at_noreturn(
-						E_CORE_ERROR,
-						prepared->info.user.filename,
-						0,
-						"pmmpthread encountered a non-copyable enum case %s::%s with backing value of type %s",
-						ZSTR_VAL(prepared->name),
-						ZSTR_VAL(name),
-						zend_zval_type_name(enum_value)
-					);
-				}
-				ZEND_ASSERT(prepared->backed_enum_table);
-				//zend_enum_add_case() won't expect this to be populated, so we have to remove it (we populated it in prepare_backed_enum_table())
-				if (Z_TYPE(copied_enum_value) == IS_STRING) {
-					zend_hash_del(prepared->backed_enum_table, Z_STR(copied_enum_value));
-				} else {
-					zend_hash_index_del(prepared->backed_enum_table, Z_LVAL(copied_enum_value));
-				}
-				zend_enum_add_case(prepared, name, &copied_enum_value);
-			} else {
-				zend_enum_add_case(prepared, name, NULL);
-			}
-
-
-			rc = zend_hash_find_ptr(&prepared->constants_table, name);
-			ZEND_ASSERT(ZEND_CLASS_CONST_FLAGS(rc) & ZEND_CLASS_CONST_IS_CASE);
-		} else {
-			if (zc->ce->type == ZEND_INTERNAL_CLASS) {
-				rc = pemalloc(sizeof(zend_class_constant), 1);
-			} else {
-				rc = zend_arena_alloc(&CG(arena), sizeof(zend_class_constant));
-			}
-
-			memcpy(rc, zc, sizeof(zend_class_constant));
-			if (pmmpthread_copy_zval(source, &rc->value, &zc->value) != SUCCESS) {
-				zend_error_at_noreturn(
-					E_CORE_ERROR,
-					prepared->info.user.filename,
-					0,
-					"pmmpthread encountered a non-copyable class constant %s::%s with value of type %s",
-					ZSTR_VAL(prepared->name),
-					ZSTR_VAL(name),
-					zend_zval_type_name(&zc->value)
-				);
-			}
-			rc->ce = pmmpthread_prepared_entry(source, zc->ce);
-
-			zend_hash_add_ptr(&prepared->constants_table, name, rc);
+			ZVAL_OBJ(&rc->value, prepare_enum_constant(source, prepared, Z_OBJ(zc->value)));
+		} else if (pmmpthread_copy_zval(source, &rc->value, &zc->value) != SUCCESS) {
+			zend_error_at_noreturn(
+				E_CORE_ERROR,
+				prepared->info.user.filename,
+				0,
+				"pmmpthread encountered a non-copyable class constant %s::%s with value of type %s",
+				ZSTR_VAL(prepared->name),
+				ZSTR_VAL(name),
+				zend_zval_type_name(&zc->value)
+			);
 		}
+		rc->ce = pmmpthread_prepared_entry(source, zc->ce);
+
+		zend_hash_add_ptr(&prepared->constants_table, name, rc);
+
 		zend_string_release(name);
 
 		if (zc->doc_comment != NULL) {

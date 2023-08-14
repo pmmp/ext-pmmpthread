@@ -37,5 +37,8 @@ zend_function* pmmpthread_copy_function(const pmmpthread_ident_t* owner, const z
 
 /* {{{ */
 zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval); /* }}} */
+
+/* {{{ */
+zend_result pmmpthread_resolve_enum_reference(zend_class_entry* enum_ce, zend_string* case_name, zval* pzval); /* }}} */
 #endif
 

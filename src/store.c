@@ -1046,22 +1046,12 @@ static int pmmpthread_store_convert(pmmpthread_storage *storage, zval *pzval){
 
 			zend_class_entry* enum_ce = zend_lookup_class(enum_data->class_name);
 
-			if (enum_ce && enum_ce->ce_flags & ZEND_ACC_ENUM && zend_hash_exists(CE_CONSTANTS_TABLE(enum_ce), enum_data->member_name)) {
-				zend_object* enum_member = zend_enum_get_case(enum_ce, enum_data->member_name);
-				ZEND_ASSERT(enum_member);
+			result = pmmpthread_resolve_enum_reference(
+				enum_ce,
+				enum_data->member_name,
+				pzval
+			);
 
-				ZVAL_OBJ_COPY(pzval, enum_member);
-				result = SUCCESS;
-			} else {
-				//this might happen if the class failed to load on this thread, or if a different version of the class
-				//was loaded than on the origin thread
-				zend_throw_error(
-					NULL,
-					"pmmpthread failed to restore enum case %s::%s because either it or the class does not exist",
-					ZSTR_VAL(enum_data->class_name),
-					ZSTR_VAL(enum_data->member_name)
-				);
-			}
 			break;
 		}
 		default: ZEND_ASSERT(0);

@@ -19,6 +19,7 @@
 #include <src/copy.h>
 #include <src/object.h>
 #include <src/prepare.h>
+#include <Zend/zend_enum.h>
 
 static HashTable* pmmpthread_copy_hash(const pmmpthread_ident_t* owner, HashTable* source);
 static zend_ast_ref* pmmpthread_copy_ast(const pmmpthread_ident_t* owner, zend_ast* ast);
@@ -77,6 +78,13 @@ int pmmpthread_copy_zval(const pmmpthread_ident_t* owner, zval* dest, zval* sour
 		else if (instanceof_function(Z_OBJCE_P(source), zend_ce_closure)) {
 			//no exceptions here - we're probably in a class copy context
 			result = pmmpthread_copy_closure(owner, (zend_closure*) Z_OBJ_P(source), 1, dest);
+		}
+		else if ((Z_OBJCE_P(source)->ce_flags & ZEND_ACC_ENUM) != 0) {
+			result = pmmpthread_resolve_enum_reference(
+				pmmpthread_prepare_single_class(owner, Z_OBJCE_P(source)),
+				Z_STR_P(zend_enum_fetch_case_name(Z_OBJ_P(source))),
+				dest
+			);
 		}
 		break;
 
@@ -798,4 +806,28 @@ zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closur
 	zval_ptr_dtor(&this_zv);
 
 	return SUCCESS;
+} /* }}} */
+
+/* {{{ TODO: not sure this really belongs in this unit */
+zend_result pmmpthread_resolve_enum_reference(zend_class_entry* enum_ce, zend_string* case_name, zval* pzval) {
+	zend_result result = FAILURE;
+
+	if (enum_ce && enum_ce->ce_flags & ZEND_ACC_ENUM && zend_hash_exists(CE_CONSTANTS_TABLE(enum_ce), case_name)) {
+		zend_object* enum_member = zend_enum_get_case(enum_ce, case_name);
+		ZEND_ASSERT(enum_member);
+
+		ZVAL_OBJ_COPY(pzval, enum_member);
+		result = SUCCESS;
+	} else {
+		//this might happen if the class failed to load on this thread, or if a different version of the class
+		//was loaded than on the origin thread
+		zend_throw_error(
+			NULL,
+			"pmmpthread failed to restore enum case %s::%s because either it or the class does not exist",
+			ZSTR_VAL(enum_ce->name),
+			ZSTR_VAL(case_name)
+		);
+	}
+
+	return result;
 } /* }}} */
