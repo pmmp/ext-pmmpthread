@@ -272,6 +272,7 @@ static inline void pmmpthread_base_write_property_defaults(pmmpthread_zend_objec
 					);
 					break;
 				}
+				zval_ptr_dtor(value);
 				ZVAL_UNDEF(value);
 			}
 		} ZEND_HASH_FOREACH_END();
