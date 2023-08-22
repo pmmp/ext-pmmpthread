@@ -18,6 +18,7 @@
 
 #include <src/pmmpthread.h>
 #include <src/store.h>
+#include <src/handlers.h>
 
 #define ThreadSafeArray_method(name) PHP_METHOD(pmmp_thread_ThreadSafeArray, name)
 
@@ -107,7 +108,7 @@ ThreadSafeArray_method(offsetGet)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pmmpthread_store_read(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
+	pmmpthread_read_dimension(Z_OBJ_P(getThis()), key, BP_VAR_R, return_value);
 } /* }}} */
 
 /* {{{ proto void ThreadSafeArray::offsetSet(mixed $offset, mixed $value)
@@ -122,7 +123,7 @@ ThreadSafeArray_method(offsetSet)
 		Z_PARAM_ZVAL(value)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pmmpthread_store_write(Z_OBJ_P(getThis()), key, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY);
+	pmmpthread_write_dimension(Z_OBJ_P(getThis()), key, value);
 } /* }}} */
 
 /* {{{ proto bool ThreadSafeArray::offsetExists(mixed $offset)
@@ -135,7 +136,7 @@ ThreadSafeArray_method(offsetExists)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	RETURN_BOOL(pmmpthread_store_isset(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
+	RETURN_BOOL(pmmpthread_has_dimension(Z_OBJ_P(getThis()), key, ZEND_PROPERTY_ISSET));
 } /* }}} */
 
 /* {{{ proto void ThreadSafeArray::offsetUnset(mixed $offset)
@@ -148,5 +149,5 @@ ThreadSafeArray_method(offsetUnset)
 		Z_PARAM_ZVAL(key)
 	ZEND_PARSE_PARAMETERS_END();
 
-	pmmpthread_store_delete(Z_OBJ_P(getThis()), key);
+	pmmpthread_unset_dimension(Z_OBJ_P(getThis()), key);
 } /* }}} */
