@@ -61,8 +61,16 @@ zval *pmmpthread_get_property_ptr_ptr_stub(zend_object *object, zend_string *mem
 /* }}} */
 
 /* {{{ */
-zval * pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
-	pmmpthread_store_read(object, member, type, rv);
+zval* pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
+	if (pmmpthread_store_read(object, member, type, rv) == FAILURE) {
+		//TODO: this ought to generate warnings, but this is a pain right now due to key type juggling
+		//for now this maintains the v4 behaviour of silently generating NULL, which is better than segfaulting
+		if (!EG(exception)) {
+			//returning uninitialized_zval may cause indirect modification errors to be generated
+			//we don't want this if an exception was thrown
+			rv = &EG(uninitialized_zval);
+		}
+	}
 
 	return rv;
 }
