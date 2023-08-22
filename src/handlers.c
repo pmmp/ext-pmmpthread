@@ -90,8 +90,7 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		if (info == ZEND_WRONG_PROPERTY_INFO) {
 			rv = &EG(uninitialized_zval);
 		} else if (info == NULL || (info->flags & ZEND_ACC_STATIC) != 0) { //dynamic property
-			pmmpthread_store_read(object, &zmember, type, rv);
-			if (Z_ISUNDEF_P(rv)) {
+			if (pmmpthread_store_read(object, &zmember, type, rv) == FAILURE) {
 				if (type != BP_VAR_IS) {
 					zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
 				}
@@ -100,9 +99,8 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		} else {
 			//defined property, use mangled name
 			ZVAL_STR(&zmember, info->name);
-			pmmpthread_store_read(object, &zmember, type, rv);
 
-			if (Z_ISUNDEF_P(rv)) {
+			if (pmmpthread_store_read(object, &zmember, type, rv) == FAILURE) {
 				if (type != BP_VAR_IS && !EG(exception)) {
 					zend_throw_error(NULL, "Typed property %s::$%s must not be accessed before initialization",
 						ZSTR_VAL(info->ce->name),
