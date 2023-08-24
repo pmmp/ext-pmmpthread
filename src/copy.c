@@ -797,6 +797,18 @@ zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closur
 				zend_array_release(new_closure->func.op_array.static_variables);
 			}
 			new_closure->func.op_array.static_variables = static_variables;
+#if PHP_VERSION_ID >= 80200
+			ZEND_MAP_PTR_INIT(
+				new_closure->func.op_array.static_variables_ptr,
+				new_closure->func.op_array.static_variables
+			);
+#else
+			//this is not strictly necessary for 8.1, but is here for the sake of completeness
+			ZEND_MAP_PTR_INIT(
+				new_closure->func.op_array.static_variables_ptr,
+				&new_closure->func.op_array.static_variables
+			);
+#endif
 		}
 
 		//pmmpthread_copy_function() adds a ref to any cached function returned - make sure we don't leak the original definition
