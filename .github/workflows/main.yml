@@ -43,11 +43,13 @@ jobs:
         uses: SimenB/github-actions-cpu-cores@v1
         id: cpu-cores
 
+      - name: Download PHP
+        run: curl -L https://github.com/php/php-src/archive/refs/tags/php-${{ matrix.php }}.tar.gz | tar -xz
+
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
+        working-directory: php-src-php-${{ matrix.php }}
         run: |
-          curl -L https://github.com/php/php-src/archive/refs/tags/php-${{ matrix.php }}.tar.gz | tar -xz
-          cd php-src-php-${{ matrix.php }}
           ./buildconf --force
           ./configure "$PHP_BUILD_CONFIGURE_OPTS" --disable-all --enable-cli --enable-zts --enable-debug --enable-sockets --prefix="${{ github.workspace }}/php"
           make -j ${{ steps.cpu-cores.outputs.count }} install
