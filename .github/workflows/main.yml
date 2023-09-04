@@ -41,16 +41,21 @@ jobs:
         if: matrix.valgrind == '1' && steps.php-build-cache.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update && sudo apt-get install valgrind
-          echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
           echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
           echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
+
+      - name: Get number of CPU cores
+        uses: SimenB/github-actions-cpu-cores@v1
+        id: cpu-cores
 
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
         run: |
-          cd $GITHUB_WORKSPACE/php-build
-          ./install-dependencies.sh
-          PHP_BUILD_ZTS_ENABLE=on PHP_BUILD_CONFIGURE_OPTS="$PHP_BUILD_CONFIGURE_OPTS --enable-debug" ./bin/php-build ${{ matrix.php }} $GITHUB_WORKSPACE/php
+          curl -L https://github.com/php/php-src/archive/refs/tags/php-${{ matrix.php }}.tar.gz | tar -xz
+          cd php-src-php-${{ matrix.php }}
+          ./buildconf --force
+          ./configure "$PHP_BUILD_CONFIGURE_OPTS" --disable-all --enable-cli --enable-zts --enable-debug --enable-sockets --prefix="${{ github.workspace }}/php"
+          make -j ${{ steps.cpu-cores.outputs.count }} install
 
   test-extension:
     name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
