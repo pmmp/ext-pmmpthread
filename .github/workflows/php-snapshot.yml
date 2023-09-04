@@ -48,7 +48,7 @@ jobs:
 
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
-        working-directory: php-src-php-${{ matrix.php }}
+        working-directory: php-src-${{ matrix.php }}
         run: |
           ./buildconf --force
           ./configure \
