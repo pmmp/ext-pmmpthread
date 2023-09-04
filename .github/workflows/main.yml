@@ -40,10 +40,12 @@ jobs:
           echo "PHP_BUILD_CONFIGURE_OPTS=--with-valgrind" >> $GITHUB_ENV
 
       - name: Get number of CPU cores
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
         uses: SimenB/github-actions-cpu-cores@v1
         id: cpu-cores
 
       - name: Download PHP
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
         run: curl -L https://github.com/php/php-src/archive/refs/tags/php-${{ matrix.php }}.tar.gz | tar -xz
 
       - name: Compile PHP
