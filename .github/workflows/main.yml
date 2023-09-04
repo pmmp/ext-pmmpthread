@@ -51,7 +51,16 @@ jobs:
         working-directory: php-src-php-${{ matrix.php }}
         run: |
           ./buildconf --force
-          ./configure "$PHP_BUILD_CONFIGURE_OPTS" --disable-all --enable-cli --enable-zts --enable-debug --enable-sockets --prefix="${{ github.workspace }}/php"
+          ./configure \
+            --disable-all \
+            --enable-cli \
+            --enable-zts \
+            --enable-debug \
+            --enable-sockets \
+            --enable-opcache \
+            --enable-opcache-jit \
+            "$PHP_BUILD_CONFIGURE_OPTS" \
+            --prefix="${{ github.workspace }}/php"
           make -j ${{ steps.cpu-cores.outputs.count }} install
 
   test-extension:
