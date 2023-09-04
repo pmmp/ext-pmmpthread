@@ -29,13 +29,6 @@ jobs:
         with:
           path: ${{ github.workspace }}/php 
           key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
-          
-      - name: Clone php-build repository
-        if: steps.php-build-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
-        with:
-          repository: php-build/php-build
-          path: php-build
 
       - name: Install Valgrind
         if: matrix.valgrind == '1' && steps.php-build-cache.outputs.cache-hit != 'true'
