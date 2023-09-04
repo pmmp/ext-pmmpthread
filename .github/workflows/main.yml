@@ -21,7 +21,8 @@ jobs:
 
     steps:
       - name: Install PHP build dependencies
-        run: sudo apt-get update && sudo apt-get install libzip5
+        run: sudo apt-get update && sudo apt-get install \
+          re2c
 
       - name: Restore PHP build cache
         uses: actions/cache@v3
