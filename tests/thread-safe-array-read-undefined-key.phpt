@@ -13,5 +13,5 @@ var_dump($array['protocol2'][0]); //segfault
 --EXPECTF--
 NULL
 
-Warning: Trying to access array offset on%s null in %s on line %d
+Warning: Trying to access array offset on%S null in %s on line %d
 NULL
