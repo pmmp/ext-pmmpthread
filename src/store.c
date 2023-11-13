@@ -36,16 +36,46 @@ static void pmmpthread_store_restore_zval(zval* unstore, zval* zstorage); /* }}}
 static void pmmpthread_store_storage_dtor(zval* element);
 
 /* {{{ */
+static inline void pmmpthread_store_alloc_shared_properties(HashTable* hash, uint32_t size) {
+	zend_hash_init(
+		hash, 8, NULL,
+		(dtor_func_t)pmmpthread_store_storage_dtor, 1);
+} /* }}} */
+
+/* {{{ */
 void pmmpthread_store_init(pmmpthread_store_t* store) {
 	store->modcount = 0;
-	zend_hash_init(
-		&store->hash, 8, NULL,
-		(dtor_func_t)pmmpthread_store_storage_dtor, 1);
+	pmmpthread_store_alloc_shared_properties(&store->hash, 8);
 } /* }}} */
 
 /* {{{ */
 void pmmpthread_store_destroy(pmmpthread_store_t* store) {
 	zend_hash_destroy(&store->hash);
+} /* }}} */
+
+static bool pmmpthread_store_may_compact_hash(HashTable* hash) {
+	if (hash == NULL) {
+		return false;
+	}
+	uint32_t elements = zend_hash_num_elements(hash);
+	return elements >= 8 && hash->nTableSize >> 1 > elements;
+}
+
+static void pmmpthread_store_compact_hash(HashTable* destination, HashTable* source) {
+	zend_hash_copy(destination, source, NULL);
+	source->pDestructor = NULL;
+	zend_hash_destroy(source);
+}
+
+/* {{{ */
+static void pmmpthread_store_compact_shared_properties(pmmpthread_object_t* ts_obj) {
+	if (pmmpthread_store_may_compact_hash(&ts_obj->props.hash)) {
+		HashTable new_hash;
+		pmmpthread_store_alloc_shared_properties(&new_hash, zend_hash_num_elements(&ts_obj->props.hash));
+
+		pmmpthread_store_compact_hash(&new_hash, &ts_obj->props.hash);
+		ts_obj->props.hash = new_hash;
+	}
 } /* }}} */
 
 /* {{{ Prepares local property table to cache items.
@@ -56,6 +86,16 @@ static void pmmpthread_store_init_local_properties(zend_object* object) {
 		zend_hash_real_init_mixed(object->properties);
 	}
 } /* }}} */
+
+static void pmmpthread_store_compact_local_properties(zend_object* object) {
+	if (pmmpthread_store_may_compact_hash(object->properties)) {
+		HashTable* old_hash = object->properties;
+		object->properties = NULL;
+		pmmpthread_store_init_local_properties(object);
+
+		pmmpthread_store_compact_hash(object->properties, old_hash);
+	}
+}
 
 void pmmpthread_store_sync_local_properties(zend_object* object) { /* {{{ */
 	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
@@ -129,6 +169,7 @@ void pmmpthread_store_sync_local_properties(zend_object* object) { /* {{{ */
 		HT_FLAGS(threaded->std.properties) &= ~HASH_FLAG_HAS_EMPTY_IND;
 	}
 	threaded->local_props_modcount = ts_obj->props.modcount;
+	pmmpthread_store_compact_local_properties(object);
 } /* }}} */
 
 static inline zend_bool pmmpthread_store_retain_in_local_cache(zval* val) {
@@ -282,6 +323,7 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 		if (Z_TYPE(member) == IS_LONG) {
 			result = zend_hash_index_del(&ts_obj->props.hash, Z_LVAL(member));
 		} else result = zend_hash_del(&ts_obj->props.hash, Z_STR(member));
+		pmmpthread_store_compact_shared_properties(ts_obj);
 
 		if (result == SUCCESS && was_pmmpthread_object) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
@@ -294,6 +336,7 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 		if (Z_TYPE(member) == IS_LONG) {
 			zend_hash_index_del(threaded->std.properties, Z_LVAL(member));
 		} else zend_hash_del(threaded->std.properties, Z_STR(member));
+		pmmpthread_store_compact_local_properties(object);
 	}
 
 	if (coerced)
@@ -596,6 +639,7 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
 				zend_string_release(Z_STR(key));
+				pmmpthread_store_compact_shared_properties(ts_obj);
 			}
 
 			if (may_be_locally_cached) {
@@ -604,6 +648,7 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 			//TODO: maybe we should be syncing local properties here?
 		} else ZVAL_NULL(member);
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
+		pmmpthread_store_compact_local_properties(object);
 
 		return SUCCESS;
 	}
@@ -654,11 +699,13 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 
 			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		}
+		pmmpthread_store_compact_shared_properties(ts_obj);
 		if (stale_local_cache) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
 		//TODO: sync local properties?
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
+		pmmpthread_store_compact_local_properties(object);
 
 		return SUCCESS;
 	}
@@ -697,6 +744,7 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 				}
 				zend_string_release(Z_STR(key));
 			}
+			pmmpthread_store_compact_shared_properties(ts_obj);
 			if (may_be_locally_cached) {
 				_pmmpthread_store_bump_modcount_nolock(threaded);
 			}
@@ -704,6 +752,7 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 		} else ZVAL_NULL(member);
 
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
+		pmmpthread_store_compact_local_properties(object);
 
 		return SUCCESS;
 	}
