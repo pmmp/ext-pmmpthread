@@ -32,6 +32,8 @@
 typedef struct _pmmpthread_store_t {
 	HashTable hash;
 	zend_long modcount;
+	HashPosition first;
+	HashPosition last;
 } pmmpthread_store_t;
 
 void pmmpthread_store_init(pmmpthread_store_t* store);

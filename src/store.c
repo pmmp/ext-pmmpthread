@@ -41,6 +41,8 @@ void pmmpthread_store_init(pmmpthread_store_t* store) {
 	zend_hash_init(
 		&store->hash, 8, NULL,
 		(dtor_func_t)pmmpthread_store_storage_dtor, 1);
+	store->first = HT_INVALID_IDX;
+	store->last = HT_INVALID_IDX;
 } /* }}} */
 
 /* {{{ */
@@ -286,6 +288,10 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 		if (result == SUCCESS && was_pmmpthread_object) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
+		//TODO: it would be better if we can update this, if we deleted the first element
+		ts_obj->props.first = HT_INVALID_IDX;
+		ts_obj->props.last = HT_INVALID_IDX;
+
 		//TODO: sync local properties?
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	} else result = FAILURE;
@@ -414,6 +420,8 @@ static inline zend_bool pmmpthread_store_update_shared_property(pmmpthread_objec
 			}
 		}
 	}
+	ts_obj->props.first = HT_INVALID_IDX;
+	ts_obj->props.last = HT_INVALID_IDX;
 
 	return result;
 }
@@ -538,6 +546,12 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 		if (result == SUCCESS && was_pmmpthread_object) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
+		if (key) {
+			//only invalidate position if an arbitrary key was used
+			//if the item was appended, the first element was either unchanged or the position was invalid anyway
+			ts_obj->props.first = HT_INVALID_IDX;
+			ts_obj->props.last = HT_INVALID_IDX;
+		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached ThreadSafe references that are dead, we have to take the opportunity
 		pmmpthread_store_sync_local_properties(object);
@@ -576,12 +590,20 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
-		HashPosition position;
 		zval *zstorage;
 
-		zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
+		if (ts_obj->props.first == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &ts_obj->props.first);
+		}
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.first))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.first);
+
+			//the new first element will now be the next item, if there is one
+			if (zend_hash_move_forward_ex(&ts_obj->props.hash, &ts_obj->props.first) == FAILURE) {
+				ts_obj->props.first = HT_INVALID_IDX;
+				ts_obj->props.last = HT_INVALID_IDX;
+			}
+
 			zend_bool may_be_locally_cached;
 
 			pmmpthread_store_restore_zval_ex(member, zstorage, &may_be_locally_cached);
@@ -617,17 +639,22 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 	pmmpthread_object_t *ts_obj = threaded->ts_obj;
 
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
-		HashPosition position;
 		zval *zstorage;
 
 		array_init(chunk);
-		zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
+		if (ts_obj->props.first == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &ts_obj->props.first);
+		}
 		zend_bool stale_local_cache = 0;
 		while((zend_hash_num_elements(Z_ARRVAL_P(chunk)) < size) &&
-			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
+			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.first))) {
 			zval key, zv;
 
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.first);
+			if (zend_hash_move_forward_ex(&ts_obj->props.hash, &ts_obj->props.first) == FAILURE) {
+				ts_obj->props.first = HT_INVALID_IDX;
+				ts_obj->props.last = HT_INVALID_IDX;
+			}
 
 			zend_bool may_be_locally_cached;
 			pmmpthread_store_restore_zval_ex(&zv, zstorage, &may_be_locally_cached);
@@ -651,8 +678,6 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 				}
 				zend_string_release(Z_STR(key));
 			}
-
-			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		}
 		if (stale_local_cache) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
@@ -673,12 +698,18 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
-		HashPosition position;
 		zval *zstorage;
 
-		zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &position);
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
+		if (ts_obj->props.last == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &ts_obj->props.last);
+		}
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.last))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.last);
+
+			if (zend_hash_move_backwards_ex(&ts_obj->props.hash, &ts_obj->props.last) == FAILURE) {
+				ts_obj->props.first = HT_INVALID_IDX;
+				ts_obj->props.last = HT_INVALID_IDX;
+			}
 
 			zend_bool may_be_locally_cached;
 			pmmpthread_store_restore_zval_ex(member, zstorage, &may_be_locally_cached);
@@ -1313,9 +1344,15 @@ void pmmpthread_store_reset(zend_object *object, HashPosition *position) {
 	pmmpthread_object_t *ts_obj = PMMPTHREAD_FETCH_TS_FROM(object);
 
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
-		zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, position);
-		if (zend_hash_has_more_elements_ex(&ts_obj->props.hash, position) == FAILURE) { //empty
-			*position = HT_INVALID_IDX;
+		if (ts_obj->props.first == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, position);
+			if (zend_hash_has_more_elements_ex(&ts_obj->props.hash, position) == FAILURE) { //empty
+				*position = HT_INVALID_IDX;
+			} else {
+				ts_obj->props.first = *position;
+			}
+		} else {
+			*position = ts_obj->props.first;
 		}
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	}
