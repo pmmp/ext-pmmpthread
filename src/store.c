@@ -36,13 +36,18 @@ static void pmmpthread_store_restore_zval(zval* unstore, zval* zstorage); /* }}}
 static void pmmpthread_store_storage_dtor(zval* element);
 
 /* {{{ */
+static inline void pmmpthread_store_invalidate_first_last(pmmpthread_store_t* store) {
+	store->first = HT_INVALID_IDX;
+	store->last = HT_INVALID_IDX;
+} /* }}} */
+
+/* {{{ */
 void pmmpthread_store_init(pmmpthread_store_t* store) {
 	store->modcount = 0;
 	zend_hash_init(
 		&store->hash, 8, NULL,
 		(dtor_func_t)pmmpthread_store_storage_dtor, 1);
-	store->first = HT_INVALID_IDX;
-	store->last = HT_INVALID_IDX;
+	pmmpthread_store_invalidate_first_last(store);
 } /* }}} */
 
 /* {{{ */
@@ -289,8 +294,7 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
 		//TODO: it would be better if we can update this, if we deleted the first element
-		ts_obj->props.first = HT_INVALID_IDX;
-		ts_obj->props.last = HT_INVALID_IDX;
+		pmmpthread_store_invalidate_first_last(&ts_obj->props);
 
 		//TODO: sync local properties?
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
@@ -420,8 +424,6 @@ static inline zend_bool pmmpthread_store_update_shared_property(pmmpthread_objec
 			}
 		}
 	}
-	ts_obj->props.first = HT_INVALID_IDX;
-	ts_obj->props.last = HT_INVALID_IDX;
 
 	return result;
 }
@@ -549,8 +551,7 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 		if (key) {
 			//only invalidate position if an arbitrary key was used
 			//if the item was appended, the first element was either unchanged or the position was invalid anyway
-			ts_obj->props.first = HT_INVALID_IDX;
-			ts_obj->props.last = HT_INVALID_IDX;
+			pmmpthread_store_invalidate_first_last(&ts_obj->props);
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached ThreadSafe references that are dead, we have to take the opportunity
@@ -1226,6 +1227,8 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 						if (overwrote_pmmpthread_object) {
 							_pmmpthread_store_bump_modcount_nolock(PMMPTHREAD_FETCH_FROM(destination));
 						}
+						pmmpthread_store_invalidate_first_last(&threaded[0]->props);
+
 						//TODO: sync local properties?
 
 						pmmpthread_monitor_unlock(&threaded[1]->monitor);
