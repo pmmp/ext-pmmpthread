@@ -605,19 +605,19 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
 		zval *zstorage;
-		HashPosition pos = ts_obj->props.first;
+		HashPosition position = ts_obj->props.first;
 
-		if (pos == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &pos);
+		if (position == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		}
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
-			zend_hash_move_forward_ex(&ts_obj->props.hash, &pos);
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
 
 			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
 				pmmpthread_store_invalidate_bounds(&ts_obj->props);
 			} else {
-				ts_obj->props.first = pos;
+				zend_hash_move_forward_ex(&ts_obj->props.hash, &position);
+				ts_obj->props.first = position;
 			}
 
 			zend_bool may_be_locally_cached;
@@ -657,23 +657,26 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval *zstorage;
 
-		HashPosition pos = ts_obj->props.first;
-		array_init(chunk);
-		if (pos == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &pos);
+		HashPosition position = ts_obj->props.first;
+		if (position == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &position);
 		}
+		array_init(chunk);
 		zend_bool stale_local_cache = 0;
 		while((zend_hash_num_elements(Z_ARRVAL_P(chunk)) < size) &&
-			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
+			zend_hash_num_elements(&ts_obj->props.hash) > 0) {
+			zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position);
+			ZEND_ASSERT(zstorage != NULL);
+
 			zval key, zv;
 
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
-			zend_hash_move_forward_ex(&ts_obj->props.hash, &pos);
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
 
 			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
 				pmmpthread_store_invalidate_bounds(&ts_obj->props);
 			} else {
-				ts_obj->props.first = pos;
+				zend_hash_move_forward_ex(&ts_obj->props.hash, &position);
+				ts_obj->props.first = position;
 			}
 
 			zend_bool may_be_locally_cached;
@@ -719,19 +722,19 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
 		zval *zstorage;
-		HashPosition pos = ts_obj->props.last;
+		HashPosition position = ts_obj->props.last;
 
-		if (pos == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &pos);
+		if (position == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &position);
 		}
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
-			zend_hash_move_backwards_ex(&ts_obj->props.hash, &pos);
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &position);
 
 			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
 				pmmpthread_store_invalidate_bounds(&ts_obj->props);
 			} else {
-				ts_obj->props.last = pos;
+				zend_hash_move_backwards_ex(&ts_obj->props.hash, &position);
+				ts_obj->props.last = position;
 			}
 
 			zend_bool may_be_locally_cached;
