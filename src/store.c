@@ -664,9 +664,7 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 		array_init(chunk);
 		zend_bool stale_local_cache = 0;
 		while((zend_hash_num_elements(Z_ARRVAL_P(chunk)) < size) &&
-			zend_hash_num_elements(&ts_obj->props.hash) > 0) {
-			zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position);
-			ZEND_ASSERT(zstorage != NULL);
+			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &position))) {
 
 			zval key, zv;
 
