@@ -548,6 +548,14 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 		if (result == SUCCESS && was_pmmpthread_object) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
+		if (ts_obj->props.first != HT_INVALID_IDX && ts_obj->props.first != 0) {
+			HashPosition start = 0;
+			if (zend_hash_get_current_data_ex(&ts_obj->props.hash, &start) != NULL) {
+				//a table rehash may have occurred, moving all elements to the start of the table
+				//this is usually because the table size was increased to accommodate the new element
+				pmmpthread_store_invalidate_bounds(&ts_obj->props);
+			}
+		}
 		if (key) {
 			//only invalidate position if an arbitrary key was used
 			//if the item was appended, the first element was either unchanged or the position was invalid anyway
