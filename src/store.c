@@ -36,7 +36,7 @@ static void pmmpthread_store_restore_zval(zval* unstore, zval* zstorage); /* }}}
 static void pmmpthread_store_storage_dtor(zval* element);
 
 /* {{{ */
-static inline void pmmpthread_store_invalidate_first_last(pmmpthread_store_t* store) {
+static inline void pmmpthread_store_invalidate_bounds(pmmpthread_store_t* store) {
 	store->first = HT_INVALID_IDX;
 	store->last = HT_INVALID_IDX;
 } /* }}} */
@@ -47,7 +47,7 @@ void pmmpthread_store_init(pmmpthread_store_t* store) {
 	zend_hash_init(
 		&store->hash, 8, NULL,
 		(dtor_func_t)pmmpthread_store_storage_dtor, 1);
-	pmmpthread_store_invalidate_first_last(store);
+	pmmpthread_store_invalidate_bounds(store);
 } /* }}} */
 
 /* {{{ */
@@ -294,7 +294,7 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 			_pmmpthread_store_bump_modcount_nolock(threaded);
 		}
 		//TODO: it would be better if we can update this, if we deleted the first element
-		pmmpthread_store_invalidate_first_last(&ts_obj->props);
+		pmmpthread_store_invalidate_bounds(&ts_obj->props);
 
 		//TODO: sync local properties?
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
@@ -551,7 +551,12 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 		if (key) {
 			//only invalidate position if an arbitrary key was used
 			//if the item was appended, the first element was either unchanged or the position was invalid anyway
-			pmmpthread_store_invalidate_first_last(&ts_obj->props);
+			pmmpthread_store_invalidate_bounds(&ts_obj->props);
+		} else if (ts_obj->props.last != HT_INVALID_IDX) {
+			//if we appended, the last element is now the new item
+			if (zend_hash_move_forward_ex(&ts_obj->props.hash, &ts_obj->props.last) == FAILURE) {
+				ZEND_ASSERT(0);
+			}
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached ThreadSafe references that are dead, we have to take the opportunity
@@ -592,17 +597,19 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
 		zval *zstorage;
+		HashPosition pos = ts_obj->props.first;
 
-		if (ts_obj->props.first == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &ts_obj->props.first);
+		if (pos == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &pos);
 		}
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.first))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.first);
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
+			zend_hash_move_forward_ex(&ts_obj->props.hash, &pos);
 
-			//the new first element will now be the next item, if there is one
-			if (zend_hash_move_forward_ex(&ts_obj->props.hash, &ts_obj->props.first) == FAILURE) {
-				ts_obj->props.first = HT_INVALID_IDX;
-				ts_obj->props.last = HT_INVALID_IDX;
+			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
+				pmmpthread_store_invalidate_bounds(&ts_obj->props);
+			} else {
+				ts_obj->props.first = pos;
 			}
 
 			zend_bool may_be_locally_cached;
@@ -642,19 +649,23 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval *zstorage;
 
+		HashPosition pos = ts_obj->props.first;
 		array_init(chunk);
-		if (ts_obj->props.first == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &ts_obj->props.first);
+		if (pos == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, &pos);
 		}
 		zend_bool stale_local_cache = 0;
 		while((zend_hash_num_elements(Z_ARRVAL_P(chunk)) < size) &&
-			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.first))) {
+			(zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
 			zval key, zv;
 
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.first);
-			if (zend_hash_move_forward_ex(&ts_obj->props.hash, &ts_obj->props.first) == FAILURE) {
-				ts_obj->props.first = HT_INVALID_IDX;
-				ts_obj->props.last = HT_INVALID_IDX;
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
+			zend_hash_move_forward_ex(&ts_obj->props.hash, &pos);
+
+			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
+				pmmpthread_store_invalidate_bounds(&ts_obj->props);
+			} else {
+				ts_obj->props.first = pos;
 			}
 
 			zend_bool may_be_locally_cached;
@@ -700,16 +711,19 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zval key;
 		zval *zstorage;
+		HashPosition pos = ts_obj->props.last;
 
-		if (ts_obj->props.last == HT_INVALID_IDX) {
-			zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &ts_obj->props.last);
+		if (pos == HT_INVALID_IDX) {
+			zend_hash_internal_pointer_end_ex(&ts_obj->props.hash, &pos);
 		}
-		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &ts_obj->props.last))) {
-			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &ts_obj->props.last);
+		if ((zstorage = zend_hash_get_current_data_ex(&ts_obj->props.hash, &pos))) {
+			zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, &pos);
+			zend_hash_move_backwards_ex(&ts_obj->props.hash, &pos);
 
-			if (zend_hash_move_backwards_ex(&ts_obj->props.hash, &ts_obj->props.last) == FAILURE) {
-				ts_obj->props.first = HT_INVALID_IDX;
-				ts_obj->props.last = HT_INVALID_IDX;
+			if (zend_hash_num_elements(&ts_obj->props.hash) == 1) { //we're about to delete the last element
+				pmmpthread_store_invalidate_bounds(&ts_obj->props);
+			} else {
+				ts_obj->props.last = pos;
 			}
 
 			zend_bool may_be_locally_cached;
@@ -1227,7 +1241,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 						if (overwrote_pmmpthread_object) {
 							_pmmpthread_store_bump_modcount_nolock(PMMPTHREAD_FETCH_FROM(destination));
 						}
-						pmmpthread_store_invalidate_first_last(&threaded[0]->props);
+						pmmpthread_store_invalidate_bounds(&threaded[0]->props);
 
 						//TODO: sync local properties?
 
