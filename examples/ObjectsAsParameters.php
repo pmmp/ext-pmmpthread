@@ -44,23 +44,17 @@ class Request extends Thread {
 	* Populate the response object for creating context
 	*/
 	public function run() : void {
-		
 		/*
-		* NOTE:
-		* Referencing thread-safe objects inside a thread:
-		*	If you plan to heavily manipulate any property of a thread-safe object, retain it in a local variable, and set it back to the property when you're done (best performance)
-		*	Anytime you read and write the object context of a thread-safe object locking occurs
-		*	You can avoid unnecessary locking by avoiding repeated property reads when the property isn't being modified, and don't write data until you're done with it
-		*	$response retains the connection to the reference in the thread that created the request
-		* If you have a property of a thread-safe object that you only plan to dereference ONE time:
-		*	(isWaiting/isRunning for example) then it is acceptable to reference the member via the object context
-		* Referencing the object context on every call will have no adverse affects ( no leaks/errors )
-		* The hints above are best practices but not required.
+  	    * Every time a ThreadSafe object's properties are read or written, locking of the object context will occur (in this case the Request object).
+		* It's recommended (but not required) to fetch frequently-used ThreadSafe properties into local variables while you're using them.
+  		* This avoids unnecessary locking and unlocking and improves performance.
 		*/
-		if($this->response->getUrl()){
-			$this->response->setStart(microtime(true));
-			$this->response->setData(file_get_contents($this->response->getUrl()));
-			$this->response->setFinish(microtime(true));
+		$response = $this->response;
+
+		if($response->getUrl()){
+			$response->setStart(microtime(true));
+			$response->setData(file_get_contents($response->getUrl()));
+			$response->setFinish(microtime(true));
 		}
 	}
 }
