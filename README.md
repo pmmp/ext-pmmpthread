@@ -26,6 +26,9 @@ This fork is used in production on thousands of [PocketMine-MP](https://github.c
 
 ## Changes compared to the original
 - PHP 8.1 and 8.2 support
+- Revamped API - significantly easier to work with and make sense of
+- No magic behaviour - no more object serialization, `array` -> `Volatile` magic behaviour removed
+- Clearer limits - no more hiding behind weird magic hacks to make things sort-of work
 - Many bug fixes which were never merged upstream
 - Performance improvements
 - Memory usage improvements
