@@ -44,7 +44,7 @@ class NonThreadSafeClass{
 
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure is explicitly static, so it does not bind $this.
 	 */
 	public function getStaticClosure() : Closure{
@@ -55,7 +55,7 @@ class NonThreadSafeClass{
 
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure is declared inside a static method, so it's implicitly static and also does not bind $this.
 	 */
 	public static function getImplicitStaticClosure() : Closure{
@@ -81,7 +81,7 @@ class NonThreadSafeClass{
 class ThreadSafeClass extends ThreadSafe{
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure binds $this, but it's OK in this context because $this would be an instanceof ThreadSafe.
 	 */
 	public function getDynamicClosure() : Closure{
@@ -92,7 +92,7 @@ class ThreadSafeClass extends ThreadSafe{
 
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure is explicitly static, so it does not bind $this.
 	 */
 	public function getStaticClosure() : Closure{
@@ -103,7 +103,7 @@ class ThreadSafeClass extends ThreadSafe{
 
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure is declared inside a static method, so it's implicitly static and also does not bind $this.
 	 */
 	public static function getImplicitStaticClosure() : Closure{
@@ -114,7 +114,7 @@ class ThreadSafeClass extends ThreadSafe{
 
 	/**
 	 * THREAD SAFE
-	 * 
+	 *
 	 * This closure use()s variables by-value, but they are copyable, so it's OK.
 	 */
 	public static function getClosureWithUseVars() : Closure{
@@ -146,7 +146,7 @@ class NeverThreadSafe{
 
 	/**
 	 * NEVER THREAD SAFE
-	 * 
+	 *
 	 * This closure use()s variables by-reference, which is not allowed.
 	 * It also use()s an \stdClass, which is not thread-safe and cannot be copied.
 	 */

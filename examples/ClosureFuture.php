@@ -5,7 +5,7 @@ use pmmp\thread\Thread;
 use pmmp\thread\ThreadSafeArray;
 use pmmp\thread\Worker;
 
-/**
+/*
  * This example takes a Closure and executes it on another thread. Calling result() will block until the task has
  * finished, and then return the result.
  *
