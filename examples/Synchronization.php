@@ -19,6 +19,8 @@ use pmmp\thread\Thread;
 */
 
 class BadCode extends Thread{
+	public bool $awake = false;
+
 	public function run() : void{
 		/* The following is BAD CODE
 		 * The main thread might check `awake` here, and see that it's false: */
@@ -31,6 +33,8 @@ class BadCode extends Thread{
 	}
 }
 class GoodCode extends Thread{
+	public bool $awake = false;
+
 	public function run() : void{
 		/* The following is GOOD CODE
 		 * One of two things might happen:
