@@ -37,12 +37,32 @@ class PDOWorker extends Worker{
 	public function run() : void{
 		//set up the connection for tasks to use
 		self::$connection = new PDO(...unserialize($this->config));
+		self::$connection->exec("CREATE TABLE IF NOT EXISTS test (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT)");
+		self::$connection->exec("INSERT INTO test (value) VALUES ('Hello world!')");
 	}
 
 	/**
 	 * Returns the PDO connection for the current Worker thread
 	 */
 	public static function getConnection() : \PDO{ return self::$connection; }
+}
+
+class DBFetchTask extends Runnable{
+	private string $result;
+
+	public function run() : void{
+		$pdo = PDOWorker::getConnection();
+		$statement = $pdo->prepare("SELECT * FROM test");
+		$statement->execute();
+
+		//we're serializing here because fetchAll returns an array, which is not thread-safe
+		//you might not need to do this if your results are simple enough to be thread-safe
+		$this->result = serialize($statement->fetchAll());
+	}
+
+	public function getResult() : array{
+		return unserialize($this->result);
+	}
 }
 
 /*
@@ -56,11 +76,23 @@ $pool = new Pool(4, PDOWorker::class, [["sqlite:example.db"]]);
  */
 
 for($i = 0; $i < 10; $i++){
-	$pool->submit(new class extends Runnable{
-		public function run() : void{
-			var_dump(\PDOWorker::getConnection());
-		}
-	});
+	$pool->submit(new DBFetchTask());
+}
+
+/*
+ * Make sure to regularly call collect() on the pool, otherwise memory will be leaked.
+ * You can use collect() to fetch the results of tasks.
+ * If you don't care about the results, call collect() without a callback.
+ */
+while($pool->collect(function(Runnable $runnable) : bool{
+	if($runnable instanceof DBFetchTask){
+		var_dump($runnable->getResult());
+	}
+	return true; //returning false will stop the collection
+}) > 0){
+	echo "Still waiting\n";
+	usleep(1_000_000);
+	//you probably don't want to do this in a loop in real code, as it will block until all tasks are finished
 }
 
 $pool->shutdown();
