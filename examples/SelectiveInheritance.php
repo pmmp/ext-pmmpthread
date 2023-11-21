@@ -1,16 +1,4 @@
 <?php
-/*
-* In a large application, the overhead of each thread having to copy the entire context may become undesireable.
-* Selective Inheritance serves as a way to choose which parts of the environment are available in threading contexts
-* Following is some code that demonstrates the use of this feature
-*
-* Note: the included_files table is only populated where Thread::INHERIT_INCLUDES is set
-*
-* Ideally you want to inherit as little stuff as possible. Inheriting INI is fine, but generally speaking,
-* you should avoid inheriting classes/functions/constants if they can be autoloaded, as inheriting code will use a lot
-* of memory, as well as making thread startup slower.
-* Code inheritance is supported for the cases where this isn't possible, such as single-file scripts like the one below.
-*/
 
 use pmmp\thread\Thread;
 
