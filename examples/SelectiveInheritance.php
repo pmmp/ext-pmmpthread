@@ -14,70 +14,53 @@
 
 use pmmp\thread\Thread;
 
-class my_class {}
+/*
+ * When starting a Thread, many things must be copied from the parent thread's context. This includes:
+ * - INI settings
+ * - Code (classes, functions, constants, list of included files)
+ *
+ * This process is extremely costly and bug-prone, and should be avoided wherever possible.
+ *
+ * When to use inheritance options:
+ *
+ * - Thread::INHERIT_NONE: Copies nothing. Use when you can autoload all the code you need (best for performance and memory usage)
+ * - Thread::INHERIT_INI: Copies INI settings but no code. Use this if you've used ini_set() and want to make sure the settings are copied, and your code can't re-apply them inside the thread.
+ * - Thread::INHERIT_ALL: Copies everything. Use in single-file scripts, or when you can't autoload parts of your code (slow, wastes memory)
+ * - Everything else: Never, they are legacy leftovers and have no good use case
+ */
+
+class my_class{
+}
 
 function my_function(){
-    return __FUNCTION__;
+	return __FUNCTION__;
 }
 
-define ("my_constant", 1);
+define("my_constant", 1);
 
-class Selective extends Thread {
-    public function run() : void {
-        /* functions exist where Thread::INHERIT_FUNCTIONS is set */
-        var_dump(function_exists("my_function"));
-        /* classes exist where Thread::INHERIT_CLASSES is set **BE CAREFUL** */
-        var_dump(class_exists("my_class"));
-        /* constants exist where Thread::INHERIT_CONSTANTS is set */
-        var_dump(defined("my_constant"));
-    }
+ini_set('memory_limit', '123456789');
+
+class Selective extends Thread{
+	public function run() : void{
+		/* functions exist where Thread::INHERIT_FUNCTIONS is set */
+		echo "Function inherited: " . (function_exists("my_function") ? "yes" : "no") . "\n";
+		/* classes exist where Thread::INHERIT_CLASSES is set **BE CAREFUL** */
+		echo "Class inherited: " . (class_exists("my_class") ? "yes" : "no") . "\n";
+		/* constants exist where Thread::INHERIT_CONSTANTS is set */
+		echo "Constant inherited: " . (defined("my_constant") ? "yes" : "no") . "\n";
+
+		/* INI entries exist where Thread::INHERIT_INI is set */
+		echo "INI entries inherited: " . (ini_get('memory_limit') === '123456789' ? "yes" : "no") . "\n";
+	}
 }
 
-?>
-expect:
-    bool(false)
-    bool(false)
-    bool(false)
-<?php
-$test = new Selective();
-/*
- * this is the most performant option and should be used wherever possible
- * if all your code can be autoloaded you should be able to use this
- */
-$test->start(Thread::INHERIT_NONE);
-$test->join();
-?>
-=======================================
-expect:
-    bool(false)
-    bool(true)
-    bool(true)
-<?php
-$test = new Selective();
-$test->start(Thread::INHERIT_ALL & ~Thread::INHERIT_FUNCTIONS);
-$test->join();
-?>
-=======================================
-expect:
-    bool(false)
-    bool(false)
-    bool(true)
-<?php
-$test = new Selective();
-$test->start(Thread::INHERIT_INI | Thread::INHERIT_CONSTANTS);
-$test->join();
-?>
-=======================================
-expect:
-    bool(true)
-    bool(true)
-    bool(true)
-<?php
-$test = new Selective();
-/*
- * You really, really don't want to use INHERIT_ALL in a production application - it's really slow and wastes lots of memory
- * Prefer INHERIT_NONE if you can autoload your code and don't set any INI entries
- */
-$test->start(Thread::INHERIT_ALL);
-$test->join();
-?>
+foreach([
+	"INHERIT_NONE" => Thread::INHERIT_NONE,
+	"INHERIT_INI" => Thread::INHERIT_INI,
+	"INHERIT_ALL" => Thread::INHERIT_ALL
+] as $name => $value){
+	echo "--- $name ---\n";
+	$test = new Selective();
+	$test->start($value);
+	$test->join();
+}
