@@ -429,6 +429,9 @@ static zend_op* pmmpthread_copy_opcodes(zend_op_array *op_array, zval *literals,
 				case ZEND_FE_RESET_RW:
 				case ZEND_ASSERT_CHECK:
 				case ZEND_JMP_NULL:
+#if PHP_VERSION_ID >= 80300
+				case ZEND_BIND_INIT_STATIC_OR_JMP:
+#endif
 					opline->op2.jmp_addr = &copy[opline->op2.jmp_addr - op_array->opcodes];
 					break;
 				case ZEND_CATCH:
