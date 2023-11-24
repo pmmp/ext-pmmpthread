@@ -8,17 +8,41 @@ $w = new \pmmp\thread\Worker();
 $w->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 class Task extends \pmmp\thread\Runnable{
+    public bool $running = false;
+    public bool $continue = false;
+
     public function run() : void{
-        sleep(1);
+        $this->synchronized(function() : void{
+            $this->running = true;
+            $this->notify();
+        });
+        $this->synchronized(function() : void{
+            while(!$this->continue){
+                $this->wait();
+            }
+        });
     }
 }
 
-for($i = 0; $i < 2; ++$i){
-    $w->stack(new Task);
-}
+$task = new Task;
+$w->stack($task);
+$w->stack(new class extends Task{
+    public function run() : void{
+        //NOOP
+    }
+});
 
-usleep(500000);
+$task->synchronized(function() use ($task) : void{
+    while(!$task->running){
+        $task->wait();
+    }
+});
 $w->unstack();
+$task->synchronized(function() use ($task) : void{
+    $task->continue = true;
+    $task->notify();
+});
+
 $w->shutdown();
 
 var_dump("ok");
