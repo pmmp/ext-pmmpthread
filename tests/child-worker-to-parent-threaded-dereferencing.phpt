@@ -22,21 +22,22 @@ $worker->stack(new class extends \pmmp\thread\Runnable{
 		$this->array["recursive"] = $this->array;
 	}
 });
-$done = false;
-while(!$done){
-	$worker->collect(function(\pmmp\thread\Runnable $work) use (&$done) : void{
+
+$worker->synchronized(function() use ($worker) : void{
+	while($worker->collect(function(\pmmp\thread\Runnable $work) : bool{
 		var_dump($work);
-		$done = true;
-	});
-	usleep(100_000);
-}
+		return true;
+	})){
+		$worker->wait();
+	}
+});
 ?>
 --EXPECT--
 object(pmmp\thread\Runnable@anonymous)#3 (1) {
   ["array"]=>
-  object(pmmp\thread\ThreadSafeArray)#5 (2) {
+  object(pmmp\thread\ThreadSafeArray)#6 (2) {
     ["sub"]=>
-    object(pmmp\thread\ThreadSafeArray)#6 (0) {
+    object(pmmp\thread\ThreadSafeArray)#7 (0) {
     }
     ["recursive"]=>
     *RECURSION*

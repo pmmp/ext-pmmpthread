@@ -10,9 +10,11 @@ $w->stack(new class extends \pmmp\thread\Runnable{
 	}
 });
 $w->start(\pmmp\thread\Thread::INHERIT_ALL);
-while($w->collect() > 0){
-	usleep(1);
-}
+$w->synchronized(function() use ($w) : void{
+	while($w->collect() > 0){
+		$w->wait();
+	}
+});
 
 try{
 	$w->stack(new class extends \pmmp\thread\Runnable{

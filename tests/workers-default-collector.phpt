@@ -16,9 +16,11 @@ while ($i<10) {
 }
 
 var_dump($i);
-while ($worker->collect()){
-	usleep(20_000);
-}
+$worker->synchronized(function() use ($worker) : void{
+	while($worker->collect() > 0){
+		$worker->wait();
+	}
+});
 var_dump($worker->getStacked());
 $worker->shutdown();
 ?>

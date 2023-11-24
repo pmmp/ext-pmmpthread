@@ -19,9 +19,11 @@ $worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 while ($count++ < 1000) {
     $function = new TestClosure(function() {});
     $worker->stack($function);
-    while($worker->collect()){
-        usleep(1);
-    }
+	$worker->synchronized(function() use ($worker) : void{
+		while($worker->collect() > 0){
+			$worker->wait();
+		}
+	});
 }
 var_dump('ok');
 --EXPECTF--
