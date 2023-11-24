@@ -452,7 +452,7 @@ static zend_op* pmmpthread_copy_opcodes(zend_op_array *op_array, zval *literals,
 } /* }}} */
 
 /* {{{ */
-static void pmmpthread_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
+void pmmpthread_copy_zend_type(const zend_type *old_type, zend_type *new_type) {
 	memcpy(new_type, old_type, sizeof(zend_type));
 
 	//This code is based on zend_persist_type() in ext/opcache/zend_persist.c

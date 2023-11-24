@@ -104,6 +104,11 @@ static void prepare_class_constants(const pmmpthread_ident_t* source, zend_class
 		if (zc->attributes) {
 			rc->attributes = pmmpthread_copy_attributes(source, zc->attributes, zc->ce->type == ZEND_INTERNAL_CLASS ? NULL : zc->ce->info.user.filename);
 		}
+
+#if PHP_VERSION_ID >= 80300
+		pmmpthread_copy_zend_type(&zc->type, &rc->type);
+#endif
+
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
@@ -205,27 +210,7 @@ static void prepare_class_property_table(const pmmpthread_ident_t* source, zend_
 			} else dup->ce = pmmpthread_prepared_entry(source, info->ce);
 		}
 
-		memcpy(&dup->type, &info->type, sizeof(zend_type));
-
-		//This code is based on zend_persist_type() in ext/opcache/zend_persist.c
-		if (ZEND_TYPE_HAS_LIST(info->type)) {
-			const zend_type_list *old_list = ZEND_TYPE_LIST(info->type);
-			zend_type_list *new_list;
-			if (ZEND_TYPE_USES_ARENA(info->type)) {
-				new_list = zend_arena_alloc(&CG(arena), ZEND_TYPE_LIST_SIZE(old_list->num_types));
-			} else {
-				new_list = emalloc(ZEND_TYPE_LIST_SIZE(old_list->num_types));
-			}
-			memcpy(new_list, old_list, ZEND_TYPE_LIST_SIZE(old_list->num_types));
-			ZEND_TYPE_SET_PTR(dup->type, new_list);
-		}
-
-		zend_type *single_type;
-		ZEND_TYPE_FOREACH(dup->type, single_type) {
-			if (ZEND_TYPE_HAS_NAME(*single_type)) {
-				ZEND_TYPE_SET_PTR(*single_type, pmmpthread_copy_string(ZEND_TYPE_NAME(*single_type)));
-			}
-		} ZEND_TYPE_FOREACH_END();
+		pmmpthread_copy_zend_type(&info->type, &dup->type);
 
 		if (info->attributes) {
 			dup->attributes = pmmpthread_copy_attributes(source, info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);

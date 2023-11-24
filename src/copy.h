@@ -21,6 +21,7 @@
 #include <src/pmmpthread.h>
 #include <src/thread.h>
 #include <Zend/zend_attributes.h>
+#include <Zend/zend_types.h>
 #include <src/prepare.h>
 
 /* {{{ */
@@ -31,6 +32,9 @@ int pmmpthread_copy_zval(const pmmpthread_ident_t* owner, zval* dest, zval* sour
 
 /* {{{ */
 HashTable* pmmpthread_copy_attributes(const pmmpthread_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
+
+/* {{{ */
+void pmmpthread_copy_zend_type(const zend_type* old_type, zend_type* new_type); /* }}} */
 
 /* {{{ */
 zend_function* pmmpthread_copy_function(const pmmpthread_ident_t* owner, const zend_function *function); /* }}} */
