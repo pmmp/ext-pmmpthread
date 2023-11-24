@@ -89,6 +89,7 @@ void pmmpthread_worker_add_garbage(pmmpthread_worker_data_t *worker_data, pmmpth
 	if (pmmpthread_monitor_lock(worker_data->monitor)) {
 		pmmpthread_queue_push(&worker_data->gc, worker_data->running);
 		worker_data->running = NULL;
+		pmmpthread_monitor_notify(worker_data->monitor); //in case the main thread is waiting for a task
 		pmmpthread_monitor_unlock(worker_data->monitor);
 		pmmpthread_queue_push_new(done_tasks_cache, work_zval);
 	} else {
