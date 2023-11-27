@@ -22,8 +22,6 @@
 # include "config.h"
 #endif
 
-#define HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT HAVE_SOCKETS
-
 #include <stdio.h>
 #ifndef _WIN32
 #include <pthread.h>

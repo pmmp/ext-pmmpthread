@@ -4,6 +4,7 @@ var PMMPTHREAD_EXT_API="php_pmmpthread.c";
 var PMMPTHREAD_EXT_FLAGS="/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1 /permissive- /I" + configure_module_dirname;
 /* --------------------------------------------------------------------- */
 ARG_WITH("pmmpthread", "for pmmpthread support", "no");
+ARG_WITH("pmmpthread-sockets", "Whether to enable support for passing Socket objects between threads", "yes");
 
 if (PHP_PMMPTHREAD != "no") {
 	if(CHECK_HEADER_ADD_INCLUDE("pthread.h", "CFLAGS_PMMPTHREAD", PHP_PMMPTHREAD + ";" + configure_module_dirname) &&    
@@ -16,7 +17,15 @@ if (PHP_PMMPTHREAD != "no") {
 			)
 		)) {
 		EXTENSION(PMMPTHREAD_EXT_NAME, PMMPTHREAD_EXT_API, PHP_PMMPTHREAD_SHARED, PMMPTHREAD_EXT_FLAGS);
-		ADD_EXTENSION_DEP("pmmpthread", "sockets", true);
+
+		if (PHP_PMMPTHREAD_SOCKETS != "no") {
+			MESSAGE("Support for passing Socket objects between threads enabled. The sockets extension must be loaded at runtime. You can disable support using --without-pmmpthread-sockets.");
+			ADD_EXTENSION_DEP("pmmpthread", "sockets");
+			AC_DEFINE("HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT", 1, "Whether pmmpthread supports passing Socket objects between threads");
+		} else {
+			MESSAGE("Support for passing Socket objects between threads disabled. You can enable support using --with-pmmpthread-sockets.");
+		}
+
 		ADD_SOURCES(
 			PMMPTHREAD_EXT_DIR + "/src",
 			"copy.c monitor.c worker.c globals.c prepare.c store.c handlers.c object.c routine.c queue.c ext_sockets_hacks.c",

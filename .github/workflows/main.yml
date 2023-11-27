@@ -105,7 +105,7 @@ jobs:
       - name: Compile extension
         run: |
           $GITHUB_WORKSPACE/php/bin/phpize
-          ./configure --with-php-config=$GITHUB_WORKSPACE/php/bin/php-config
+          ./configure --with-php-config=$GITHUB_WORKSPACE/php/bin/php-config --with-pmmpthread-sockets
           make install
 
       - name: Generate php.ini

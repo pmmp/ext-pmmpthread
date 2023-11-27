@@ -53,7 +53,7 @@ build_script:
 
     buildconf.bat
 
-    configure.bat --disable-all --enable-cli --enable-zts --with-pmmpthread=shared --enable-sockets --with-prefix=C:\projects\pmmpthread\bin --with-php-build=deps --enable-ipv6 --enable-debug
+    configure.bat --disable-all --enable-cli --enable-zts --with-pmmpthread=shared --with-pmmpthread-sockets --enable-sockets --with-prefix=C:\projects\pmmpthread\bin --with-php-build=deps --enable-ipv6 --enable-debug
 
     nmake
 
