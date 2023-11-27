@@ -71,9 +71,9 @@ jobs:
       fail-fast: false
       matrix:
         php: 
-         - 8.1.23
-         - 8.2.10
-         - 8.3.0RC1
+         - 8.1.26
+         - 8.2.13
+         - 8.3.0
         valgrind: [0, 1]
         opcache:
           - "off"
