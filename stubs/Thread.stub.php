@@ -137,6 +137,20 @@ abstract class Thread extends Runnable
 	 */
 	public static function getSharedGlobals() : ThreadSafeArray{}
 
+	/**
+	 * Returns the total number of Threads and Workers which have been
+	 * started but not yet successfully joined/shutdown.
+	 *
+	 * The following are **not** included:
+	 * - Threads which have been created but not started
+	 * - Threads which have already been joined/shutdown
+	 * - Threads which are not managed by pmmpthread (e.g. created by other extensions)
+	 * - The main process thread
+	 *
+	 * @return int
+	 */
+	public static function getRunningCount() : int{}
+
     /**
      * Will return the identity of the referenced Thread
      *

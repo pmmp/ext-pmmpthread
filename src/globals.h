@@ -71,6 +71,8 @@ struct _pmmpthread_globals {
 			zend_string *use_cookies;
 		} session;
 	} strings;
+
+	unsigned int thread_count;
 }; /* }}} */
 
 extern struct _pmmpthread_globals pmmpthread_globals;

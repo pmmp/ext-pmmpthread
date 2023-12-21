@@ -882,6 +882,8 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 			pmmpthread_prepare_includes(&thread->creator);
 
 		pmmpthread_monitor_add(ready, PMMPTHREAD_MONITOR_READY);
+
+		PMMPTHREAD_G(thread_count)++;
 	} PMMPTHREAD_PREPARATION_END_CRITICAL();
 
 	return SUCCESS;
@@ -926,6 +928,7 @@ int pmmpthread_prepared_shutdown(void) {
 		php_request_shutdown((void*)NULL);
 
 		ts_free_thread();
+		PMMPTHREAD_G(thread_count)--;
 	} PMMPTHREAD_PREPARATION_END_CRITICAL();
 
 	return SUCCESS;

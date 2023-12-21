@@ -115,7 +115,7 @@ zend_bool pmmpthread_globals_init(){
 				1
 			);
 			ZVAL_UNDEF(&PMMPTHREAD_G(undef_zval));
-
+			PMMPTHREAD_G(thread_count) = 0; //only counting threads explicitly created by pmmpthread
 		}
 
 #define INIT_STRING(n, v) do { \
