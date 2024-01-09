@@ -16,6 +16,7 @@
   +----------------------------------------------------------------------+
  */
 
+#include <src/globals.h>
 #include <src/pmmpthread.h>
 #include <src/object.h>
 #include <src/routine.h>
@@ -114,3 +115,17 @@ Thread_method(getSharedGlobals)
 
 	RETURN_OBJ_COPY(&PMMPTHREAD_ZG(thread_shared_globals)->std);
 } /* }}} */
+
+Thread_method(getRunningCount)
+{
+	zend_parse_parameters_none_throw();
+
+	zend_long count = 0;
+
+	if (pmmpthread_globals_lock()) {
+		count = PMMPTHREAD_G(thread_count);
+		pmmpthread_globals_unlock();
+	}
+
+	RETURN_LONG(count);
+}

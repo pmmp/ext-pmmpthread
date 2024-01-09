@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: f735544e524e90f767f64f9e31cc5a09a82c2641 */
+ * Stub hash: 4831db4df8ea0b0c2d809411ab80674cddcc0c68 */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -11,6 +11,8 @@ ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_pmmp_thread_Thread_getSharedGlobals, 0, 0, pmmp\\thread\\ThreadSafeArray, 0)
 ZEND_END_ARG_INFO()
+
+#define arginfo_class_pmmp_thread_Thread_getRunningCount arginfo_class_pmmp_thread_Thread_getCreatorId
 
 #define arginfo_class_pmmp_thread_Thread_getThreadId arginfo_class_pmmp_thread_Thread_getCreatorId
 
@@ -30,6 +32,7 @@ ZEND_METHOD(pmmp_thread_Thread, getCreatorId);
 ZEND_METHOD(pmmp_thread_Thread, getCurrentThread);
 ZEND_METHOD(pmmp_thread_Thread, getCurrentThreadId);
 ZEND_METHOD(pmmp_thread_Thread, getSharedGlobals);
+ZEND_METHOD(pmmp_thread_Thread, getRunningCount);
 ZEND_METHOD(pmmp_thread_Thread, getThreadId);
 ZEND_METHOD(pmmp_thread_Thread, isJoined);
 ZEND_METHOD(pmmp_thread_Thread, isStarted);
@@ -42,6 +45,7 @@ static const zend_function_entry class_pmmp_thread_Thread_methods[] = {
 	ZEND_ME(pmmp_thread_Thread, getCurrentThread, arginfo_class_pmmp_thread_Thread_getCurrentThread, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getCurrentThreadId, arginfo_class_pmmp_thread_Thread_getCurrentThreadId, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getSharedGlobals, arginfo_class_pmmp_thread_Thread_getSharedGlobals, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(pmmp_thread_Thread, getRunningCount, arginfo_class_pmmp_thread_Thread_getRunningCount, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getThreadId, arginfo_class_pmmp_thread_Thread_getThreadId, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isJoined, arginfo_class_pmmp_thread_Thread_isJoined, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isStarted, arginfo_class_pmmp_thread_Thread_isStarted, ZEND_ACC_PUBLIC)
