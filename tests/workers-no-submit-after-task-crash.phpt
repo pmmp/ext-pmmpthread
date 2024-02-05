@@ -15,6 +15,7 @@ $w->synchronized(function() use ($w) : void{
 		$w->wait();
 	}
 });
+echo "stacking next task" . PHP_EOL;
 
 try{
 	$w->stack(new class extends \pmmp\thread\Runnable{
@@ -27,6 +28,7 @@ try{
 }
 ?>
 --EXPECTF--
+stacking next task
 Fatal error: Uncaught Exception in %s:%d
 Stack trace:
 #0 [internal function]: pmmp\thread\Runnable@anonymous->run()
