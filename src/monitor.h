@@ -21,7 +21,7 @@
 typedef unsigned long pmmpthread_monitor_state_t;
 
 typedef struct _pmmpthread_monitor_t {
-	volatile pmmpthread_monitor_state_t state;
+	pmmpthread_monitor_state_t state;
 	pthread_mutex_t          mutex;
 	pthread_cond_t           cond;
 } pmmpthread_monitor_t;

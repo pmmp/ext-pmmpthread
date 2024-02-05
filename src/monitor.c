@@ -60,7 +60,13 @@ zend_bool pmmpthread_monitor_unlock(pmmpthread_monitor_t *m) {
 }
 
 pmmpthread_monitor_state_t pmmpthread_monitor_check(pmmpthread_monitor_t *m, pmmpthread_monitor_state_t state) {
-	return (m->state & state);
+	//TODO: this would be more efficient if we used atomics, but C11 atomics aren't available in all compilers
+	pmmpthread_monitor_state_t result = PMMPTHREAD_MONITOR_NOTHING;
+	if (pmmpthread_monitor_lock(m)) {
+		result = m->state & state;
+		pmmpthread_monitor_unlock(m);
+	}
+	return result;
 }
 
 int pmmpthread_monitor_wait(pmmpthread_monitor_t *m, long timeout) {
