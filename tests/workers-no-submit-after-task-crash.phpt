@@ -28,10 +28,10 @@ try{
 }
 ?>
 --EXPECTF--
-stacking next task
 Fatal error: Uncaught Exception in %s:%d
 Stack trace:
 #0 [internal function]: pmmp\thread\Runnable@anonymous->run()
 #1 {main}
   thrown in %s on line %d
+stacking next task
 this pmmp\thread\Worker is no longer running and cannot accept tasks
