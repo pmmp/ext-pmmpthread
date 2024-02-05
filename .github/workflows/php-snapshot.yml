@@ -24,7 +24,7 @@ jobs:
             re2c
 
       - name: Restore PHP build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Restore PHP build cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
@@ -129,7 +129,7 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}
           path: |
