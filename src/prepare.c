@@ -532,8 +532,6 @@ static inline int pmmpthread_prepared_entry_function_prepare(zval *bucket, int a
 
 /* {{{ */
 zend_class_entry* pmmpthread_prepare_single_class(const pmmpthread_ident_t* source, zend_class_entry *candidate) {
-	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
-	zend_map_ptr_extend(PMMPTHREAD_CG(source->ls, map_ptr_last));
 	return pmmpthread_prepared_entry(source, candidate);
 } /* }}} */
 
@@ -616,6 +614,9 @@ static zend_class_entry* pmmpthread_create_entry(const pmmpthread_ident_t* sourc
 		zend_string_release(lookup);
 		return prepared;
 	}
+
+	//this has to be synchronized every time we copy a new class after initial thread bootup, in case new immutable classes want to refer to new offsets in it
+	zend_map_ptr_extend(PMMPTHREAD_CG(source->ls, map_ptr_last));
 
 	if (candidate->ce_flags & ZEND_ACC_IMMUTABLE) {
 		//IMMUTABLE classes don't need to be copied and should not be modified
