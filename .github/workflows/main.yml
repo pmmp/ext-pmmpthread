@@ -66,7 +66,7 @@ jobs:
           make -j ${{ steps.cpu-cores.outputs.count }} install
 
   test-extension:
-    name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }}, Valgrind tool ${{ matrix.valgrind-tool }})
+    name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind tool ${{ matrix.valgrind-tool }})
     strategy:
       fail-fast: false
       matrix:
@@ -79,13 +79,10 @@ jobs:
           - "on"
           - "jit"
           #- "jit-tracing" #borked until 8.3 due to php-src bugs
-        include:
-          - valgrind: 0
-            valgrind-tool: none
-          - valgrind: 1
-            valgrind-tool: memcheck
-          - valgrind: 1
-            valgrind-tool: drd
+        valgrind-tool:
+          - none
+          - memcheck
+          - drd
 
     needs: build-php
     runs-on: ubuntu-20.04
@@ -99,10 +96,10 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004
+          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind-tool != 'none' && 1 || 0 }}-ubuntu2004
 
       - name: Install Valgrind
-        if: matrix.valgrind == '1'
+        if: matrix.valgrind-tool != 'none'
         run: |
           sudo apt-get update && sudo apt-get install valgrind
           echo "TEST_PHP_ARGS=-M ${{ matrix.valgrind-tool }}" >> $GITHUB_ENV
@@ -141,7 +138,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}
+          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind-tool }}-opcache-${{ matrix.opcache }}
           path: |
             ${{ github.workspace }}/tests/*.log
             ${{ github.workspace }}/tests/*.diff
