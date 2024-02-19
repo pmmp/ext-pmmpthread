@@ -137,9 +137,11 @@ void pmmpthread_write_dimension(PMMPTHREAD_WRITE_DIMENSION_PASSTHRU_D) {
 
 zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 	zval zmember;
+	zval tmp;
 	zend_guard* guard;
 
 	ZVAL_STR(&zmember, member);
+	ZVAL_UNDEF(&tmp);
 
 	if (object->ce->__set && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_SET)) {
 		zval rv;
@@ -166,13 +168,11 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 				//zend_verify_property_type() might modify the value
 				//value is not copied before we receive it, so it might be
 				//from opcache protected memory which we can't modify
-				zval tmp;
 				ZVAL_COPY(&tmp, value);
 				value = &tmp;
 
 				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
 					ok = false;
-					zval_ptr_dtor(&tmp);
 				}
 			}
 
@@ -187,6 +187,8 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 			}
 		}
 	}
+
+	zval_ptr_dtor(&tmp);
 
 	return EG(exception) ? &EG(error_zval) : value;
 }
