@@ -7,12 +7,10 @@ on:
 
 jobs:
   build-php:
-    name: Build PHP ${{ matrix.php }}, Valgrind ${{ matrix.valgrind }}
-    concurrency: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.ref }}
+    name: Build PHP (Valgrind ${{ matrix.valgrind }})
+    concurrency: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.ref }}
     strategy:
       matrix:
-        php:
-         - master
         valgrind: [0, 1]
 
     runs-on: ubuntu-20.04
@@ -27,8 +25,8 @@ jobs:
         uses: actions/cache@v4
         id: php-build-cache
         with:
-          path: ${{ github.workspace }}/php 
-          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.run_id }}
+          path: ${{ github.workspace }}/php
+          key: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.run_id }}
 
       - name: Install Valgrind
         if: matrix.valgrind == '1' && steps.php-build-cache.outputs.cache-hit != 'true'
@@ -44,11 +42,11 @@ jobs:
 
       - name: Download PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
-        run: curl -L https://github.com/php/php-src/archive/${{ matrix.php }}.tar.gz | tar -xz
+        run: curl -L https://github.com/php/php-src/archive/master.tar.gz | tar -xz
 
       - name: Compile PHP
         if: steps.php-build-cache.outputs.cache-hit != 'true'
-        working-directory: php-src-${{ matrix.php }}
+        working-directory: php-src-master
         run: |
           ./buildconf --force
           ./configure \
@@ -64,18 +62,19 @@ jobs:
           make -j ${{ steps.cpu-cores.outputs.count }} install
 
   test-extension:
-    name: Test (PHP ${{ matrix.php }}, OPcache ${{ matrix.opcache }}, Valgrind ${{ matrix.valgrind }})
+    name: Test (OPcache ${{ matrix.opcache }}, Valgrind tool ${{ matrix.valgrind-tool }})
     strategy:
       fail-fast: false
       matrix:
-        php: 
-         - master
-        valgrind: [0, 1]
         opcache:
           - "off"
           - "on"
           - "jit"
           #- "jit-tracing" #borked until 8.3 due to php-src bugs
+        valgrind-tool:
+          - none
+          - memcheck
+          - drd
 
     needs: build-php
     runs-on: ubuntu-20.04
@@ -89,19 +88,19 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-debug-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.run_id }}
+          key: php-debug-master-valgrind-${{ matrix.valgrind-tool != 'none' && 1 || 0 }}-ubuntu2004
 
       - name: Install Valgrind
-        if: matrix.valgrind == '1'
+        if: matrix.valgrind-tool != 'none'
         run: |
           sudo apt-get update && sudo apt-get install valgrind
-          echo "TEST_PHP_ARGS=-m" >> $GITHUB_ENV
+          echo "TEST_PHP_ARGS=-M ${{ matrix.valgrind-tool }}" >> $GITHUB_ENV
           echo "CFLAGS=-DZEND_TRACK_ARENA_ALLOC=1" >> $GITHUB_ENV
 
       - name: Compile extension
         run: |
           $GITHUB_WORKSPACE/php/bin/phpize
-          ./configure --with-php-config=$GITHUB_WORKSPACE/php/bin/php-config
+          ./configure --with-php-config=$GITHUB_WORKSPACE/php/bin/php-config --with-pmmpthread-sockets
           make install
 
       - name: Generate php.ini
@@ -112,6 +111,7 @@ jobs:
             echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.protect_memory=1" >> $GITHUB_WORKSPACE/php.ini
             if [[ "${{ matrix.opcache }}" == "jit" ]]; then
               echo "opcache.jit=1205" >> $GITHUB_WORKSPACE/php.ini
               echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
@@ -131,7 +131,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results-${{ matrix.php }}-valgrind-${{ matrix.valgrind }}-opcache-${{ matrix.opcache }}
+          name: test-results-master-valgrind-${{ matrix.valgrind-tool }}-opcache-${{ matrix.opcache }}
           path: |
             ${{ github.workspace }}/tests/*.log
             ${{ github.workspace }}/tests/*.diff
