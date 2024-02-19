@@ -37,7 +37,7 @@ jobs:
 
       - name: Get number of CPU cores
         if: steps.php-build-cache.outputs.cache-hit != 'true'
-        uses: SimenB/github-actions-cpu-cores@v1
+        uses: SimenB/github-actions-cpu-cores@v2
         id: cpu-cores
 
       - name: Download PHP
