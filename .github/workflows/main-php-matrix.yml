@@ -114,6 +114,7 @@ jobs:
             echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
+            echo "opcache.protect_memory=1" >> $GITHUB_WORKSPACE/php.ini
             if [[ "${{ matrix.opcache }}" == "jit" ]]; then
               echo "opcache.jit=1205" >> $GITHUB_WORKSPACE/php.ini
               echo "opcache.jit_buffer_size=128M" >> $GITHUB_WORKSPACE/php.ini
