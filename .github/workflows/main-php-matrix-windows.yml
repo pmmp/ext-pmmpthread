@@ -55,7 +55,8 @@ jobs:
         working-directory: php-sdk
         #TODO: cache deps - this takes ages to download
         run: |
-          call ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
+          .\bin\phpsdk_setvars.bat
+
           phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps"
           (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
 
@@ -72,7 +73,9 @@ jobs:
         #TODO: don't need to rebuild this if cache was hit
         shell: cmd
         working-directory: pthreads4w-code
-        run: nmake VC
+        run: |
+          (echo nmake VC)>task.bat
+          "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Copy pthreads4w files to deps dir
         shell: cmd
@@ -91,9 +94,8 @@ jobs:
         shell: cmd
         working-directory: php-src
         run: |
-          ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
-          buildconf.bat
-          configure.bat^
+          (echo buildconf.bat)>task.bat
+          (echo configure.bat^
             --disable-all^
             --enable-cli^
             --enable-zts^
@@ -103,9 +105,14 @@ jobs:
             --enable-ipv6^
             --enable-debug
             --with-prefix=${{ github.workspace }}\bin^
-            --with-php-build=${{ github.workspace }}\deps^
-          nmake
-          nmake install
+            --with-php-build=${{ github.workspace }}\deps^)>>task.bat
+          (echo nmake)>>task.bat
+          (echo nmake install)>>task.bat
+
+          type task.bat
+
+          REM php sdk jank! woohoo
+          "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Generate php.ini
         shell: cmd
