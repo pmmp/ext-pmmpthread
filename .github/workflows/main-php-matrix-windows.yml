@@ -140,7 +140,7 @@ jobs:
         id: download
         uses: actions/download-artifact@v4
         with:
-          name: ${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
+          name: php-build-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
           path: ${{ github.workspace }}/bin
 
       - name: Generate php.ini
