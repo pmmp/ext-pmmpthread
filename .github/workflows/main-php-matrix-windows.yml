@@ -40,7 +40,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: php/php-src
-          ref: "php-${{ inputs.php }}"
+          ref: "PHP-${{ inputs.php }}"
           path: php-src
 
       - name: Checkout ext-pmmpthread
