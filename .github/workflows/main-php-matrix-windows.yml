@@ -47,7 +47,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: php-src/ext/ext-pmmpthread
-          ref: "PHP-${{ inputs.php }}"
 
       - name: Download PHP build dependencies
         id: deps
