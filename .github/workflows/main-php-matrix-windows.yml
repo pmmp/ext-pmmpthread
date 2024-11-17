@@ -55,9 +55,8 @@ jobs:
         working-directory: php-sdk
         #TODO: cache deps - this takes ages to download
         run: |
-          .\bin\phpsdk_setvars.bat || exit 1
-
-          phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps" || exit 1
+          (echo phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps")>task.bat
+          .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
           (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
 
       - name: Download pthreads4w dependency
