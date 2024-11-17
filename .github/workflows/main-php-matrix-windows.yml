@@ -1,0 +1,126 @@
+name: Windows CI (reusable workflow)
+
+on:
+  workflow_call:
+    inputs:
+      php:
+        description: 'PHP version'
+        type: string
+        required: true
+      vs-arch:
+        description: 'CPU arch to build for (x86 or x64)'
+        type: string
+        default: 'x64'
+      vs-crt:
+        description: 'Visual Studio CRT for build (vc15=2017, vs16=2019, vs17=2022)'
+        type: string
+        required: true
+      build-type:
+        description: 'Build type to select deps for (stable or staging)'
+        type: string
+        default: stable
+
+env:
+  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.2.0
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: windows-2019
+
+    steps:
+      - name: Checkout PHP build SDK
+        uses: actions/checkout@v4
+        with:
+          repository: php/php-sdk-binary-tools
+          ref: php-sdk-2.2.0 #TODO: probably should update this, but haven't tested newer versions
+          path: php-sdk
+
+      - name: Checkout PHP
+        uses: actions/checkout@v4
+        with:
+          repository: php/php-src
+          ref: "php-${{ inputs.php }}"
+          path: php-src
+
+      - name: Checkout ext-pmmpthread
+        uses: actions/checkout@v4
+        with:
+          path: php-src/ext/ext-pmmpthread
+          ref: "PHP-${{ inputs.php }}"
+
+      - name: Download PHP build dependencies
+        id: deps
+        shell: cmd
+        working-directory: php-sdk
+        #TODO: cache deps - this takes ages to download
+        run: |
+          ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
+          phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps"
+          (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
+
+      - name: Download pthreads4w dependency
+        #TODO: cache this too
+        shell: cmd
+        run: |
+          wget -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip
+          7z x -y temp.zip
+          del /s /q temp.zip
+          move pthreads4w-code-* pthreads4w-code
+
+      - name: Compile pthreads4w
+        #TODO: don't need to rebuild this if cache was hit
+        shell: cmd
+        working-directory: pthreads4w-code
+        run: nmake VC
+
+      - name: Copy pthreads4w files to deps dir
+        shell: cmd
+        working-directory: pthreads4w-code
+        run: |
+          set DEPS_DIR=${{ steps.deps.outputs.deps_dir }}
+          copy pthread.h "%DEPS_DIR%\include\pthread.h"
+          copy sched.h "%DEPS_DIR%\include\sched.h"
+          copy semaphore.h "%DEPS_DIR%\include\semaphore.h"
+          copy _ptw32.h "%DEPS_DIR%\include\_ptw32.h"
+          copy pthreadVC3.lib "%DEPS_DIR%\lib\pthreadVC3.lib"
+          copy pthreadVC3.dll "%DEPS_DIR%\bin\pthreadVC3.dll"
+          copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb"
+
+      - name: Compile PHP
+        shell: cmd
+        working-directory: php-src
+        run: |
+          ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
+          buildconf.bat
+          configure.bat^
+            --disable-all^
+            --enable-cli^
+            --enable-zts^
+            --with-pmmpthread=shared^
+            --with-pmmpthread-sockets^
+            --enable-sockets^
+            --enable-ipv6^
+            --enable-debug
+            --with-prefix=${{ github.workspace }}\bin^
+            --with-php-build=${{ github.workspace }}\deps^
+          nmake
+          nmake install
+
+      - name: Generate php.ini
+        shell: cmd
+        working-directory: bin
+        run: |
+          (echo [PHP])>php.ini
+          (echo extension_dir=.\ext)>>php.ini
+          (echo extension=php_pmmpthread.dll)>>php.ini
+
+      - name: Run test suite
+        shell: cmd
+        working-directory: php-src
+        run: |
+          set TEST_PHP_EXECUTABLE=${{ github.workspace }}\bin\php.exe
+          set REPORT_EXIT_STATUS=1
+
+          ${{ github.workspace }}\bin\php.exe /projects/php-src/run-tests.php /projects/php-src/ext/pmmpthread -q --show-diff --offline
+          
