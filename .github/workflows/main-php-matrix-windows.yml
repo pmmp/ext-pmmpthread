@@ -95,6 +95,7 @@ jobs:
         shell: cmd
         working-directory: php-src
         run: |
+          @echo on
           (echo buildconf.bat)>task.bat
           (echo configure.bat^
             --disable-all^
