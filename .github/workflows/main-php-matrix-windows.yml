@@ -123,7 +123,6 @@ jobs:
           REM php sdk jank! woohoo
           call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
-      - name: Add
       - name: Upload build result
         uses: actions/upload-artifact@v4
         with:
