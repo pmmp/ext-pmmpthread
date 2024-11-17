@@ -55,7 +55,7 @@ jobs:
         working-directory: php-sdk
         #TODO: cache deps - this takes ages to download
         run: |
-          ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
+          call ".\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat"
           phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps"
           (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
 
@@ -63,7 +63,7 @@ jobs:
         #TODO: cache this too
         shell: cmd
         run: |
-          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip || exit 1
+          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v${{ env.PTHREAD_W32_VER }}.zip -o temp.zip || exit 1
           "C:\Program Files\7-Zip\7z.exe" x -y temp.zip || exit 1
           del /s /q temp.zip || exit 1
           move pthreads4w-code-* pthreads4w-code || exit 1
