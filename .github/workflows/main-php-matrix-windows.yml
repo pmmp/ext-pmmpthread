@@ -167,6 +167,7 @@ jobs:
         working-directory: ${{ steps.download.outputs.download-path }}
         run: |
           set TEST_PHP_EXECUTABLE=%~dp0php.exe
+          echo %TEST_PHP_EXECUTABLE%
           set REPORT_EXIT_STATUS=1
 
           .\php.exe .\SDK\script\run-tests.php ${{ github.workspace }}\pmmpthread -q --show-diff --offline || exit 1
