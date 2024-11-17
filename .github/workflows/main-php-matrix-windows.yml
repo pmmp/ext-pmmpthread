@@ -62,6 +62,7 @@ jobs:
           key: php-deps-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
 
       - name: Download PHP build dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
         shell: cmd
         working-directory: php-sdk
         run: |
