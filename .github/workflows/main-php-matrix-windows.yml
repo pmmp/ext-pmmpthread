@@ -62,7 +62,6 @@ jobs:
           key: php-deps-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
 
       - name: Download PHP build dependencies
-        if: steps.deps-cache.outputs.cache-hit != 'true'
         shell: cmd
         working-directory: php-sdk
         run: |
@@ -127,7 +126,7 @@ jobs:
       - name: Upload build result
         uses: actions/upload-artifact@v4
         with:
-          name: binary
+          name: php-build-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
           path: ${{ steps.compile.outputs.install_dir }}
           if-no-files-found: error
 
@@ -141,7 +140,7 @@ jobs:
         id: download
         uses: actions/download-artifact@v4
         with:
-          name: binary
+          name: ${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
           path: ${{ github.workspace }}/bin
 
       - name: Generate php.ini
