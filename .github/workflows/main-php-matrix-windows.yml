@@ -104,7 +104,7 @@ jobs:
             --with-pmmpthread-sockets^
             --enable-sockets^
             --enable-ipv6^
-            --enable-debug
+            --enable-debug^
             --with-prefix=${{ github.workspace }}\bin^
             --with-php-build=${{ github.workspace }}\deps^)>>task.bat
           (echo nmake)>>task.bat
