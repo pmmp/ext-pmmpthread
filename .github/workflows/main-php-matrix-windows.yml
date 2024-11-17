@@ -62,8 +62,8 @@ jobs:
         #TODO: cache this too
         shell: cmd
         run: |
-          wget -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip
-          7z x -y temp.zip
+          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip
+          "C:\Program Files\7-Zip\7z.exe" x -y temp.zip
           del /s /q temp.zip
           move pthreads4w-code-* pthreads4w-code
 
