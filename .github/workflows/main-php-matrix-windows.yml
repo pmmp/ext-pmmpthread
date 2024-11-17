@@ -95,8 +95,8 @@ jobs:
         shell: cmd
         working-directory: php-src
         run: |
-          (echo buildconf.bat)>task.bat
-          (echo configure.bat^
+          (echo call buildconf.bat)>task.bat
+          (echo call configure.bat^
             --disable-all^
             --enable-cli^
             --enable-zts^
