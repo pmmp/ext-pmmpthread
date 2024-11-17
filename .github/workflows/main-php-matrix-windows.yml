@@ -55,9 +55,9 @@ jobs:
         working-directory: php-sdk
         #TODO: cache deps - this takes ages to download
         run: |
-          .\bin\phpsdk_setvars.bat
+          .\bin\phpsdk_setvars.bat || exit 1
 
-          phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps"
+          phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps" || exit 1
           (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
 
       - name: Download pthreads4w dependency
@@ -82,13 +82,13 @@ jobs:
         working-directory: pthreads4w-code
         run: |
           set DEPS_DIR=${{ steps.deps.outputs.deps_dir }}
-          copy pthread.h "%DEPS_DIR%\include\pthread.h"
-          copy sched.h "%DEPS_DIR%\include\sched.h"
-          copy semaphore.h "%DEPS_DIR%\include\semaphore.h"
-          copy _ptw32.h "%DEPS_DIR%\include\_ptw32.h"
-          copy pthreadVC3.lib "%DEPS_DIR%\lib\pthreadVC3.lib"
-          copy pthreadVC3.dll "%DEPS_DIR%\bin\pthreadVC3.dll"
-          copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb"
+          copy pthread.h "%DEPS_DIR%\include\pthread.h" || exit 1
+          copy sched.h "%DEPS_DIR%\include\sched.h" || exit 1
+          copy semaphore.h "%DEPS_DIR%\include\semaphore.h" || exit 1
+          copy _ptw32.h "%DEPS_DIR%\include\_ptw32.h" || exit 1
+          copy pthreadVC3.lib "%DEPS_DIR%\lib\pthreadVC3.lib" || exit 1
+          copy pthreadVC3.dll "%DEPS_DIR%\bin\pthreadVC3.dll" || exit 1
+          copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb" || exit 1
 
       - name: Compile PHP
         shell: cmd
