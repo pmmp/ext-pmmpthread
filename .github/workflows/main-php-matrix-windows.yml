@@ -51,6 +51,7 @@ jobs:
 
       - name: Set PHP build dependencies directory
         id: deps
+        shell: cmd
         run: (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
 
       - name: Cache PHP build dependencies
