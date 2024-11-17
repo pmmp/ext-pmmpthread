@@ -49,17 +49,24 @@ jobs:
         with:
           path: php-src/ext/ext-pmmpthread
 
-      - name: Download PHP build dependencies
+      - name: Set PHP build dependencies directory
         id: deps
+        run: (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
+
+      - name: Cache PHP build dependencies
+        id: deps-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.deps.outputs.deps_dir }}
+          key: php-deps-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
+
+      - name: Download PHP build dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
         shell: cmd
         working-directory: php-sdk
-        #TODO: cache deps - this takes ages to download
         run: |
-          (echo phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps")>task.bat
+          (echo phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -d "${{ steps.deps.outputs.deps_dir }}")>task.bat
           call .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
-          (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
-          type %GITHUB_OUTPUT%
-          echo "HELLO????"
 
       - name: Download pthreads4w dependency
         #TODO: cache this too
@@ -92,9 +99,12 @@ jobs:
           copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb" || exit 1
 
       - name: Compile PHP
+        id: compile
         shell: cmd
         working-directory: php-src
         run: |
+          set INSTALL_DIR=${{ github.workspace }}\bin
+          (echo install_dir=%INSTALL_DIR%)>>%GITHUB_OUTPUT%
           (echo call buildconf.bat)>task.bat
           (echo call configure.bat^
             --disable-all^
@@ -105,7 +115,7 @@ jobs:
             --enable-sockets^
             --enable-ipv6^
             --enable-debug^
-            --with-prefix=${{ github.workspace }}\bin^
+            --with-prefix=%INSTALL_DIR%^
             --with-php-build=${{ github.workspace }}\deps)>>task.bat
           (echo nmake)>>task.bat
           (echo nmake install)>>task.bat
@@ -115,10 +125,10 @@ jobs:
 
       - name: Generate php.ini
         shell: cmd
-        working-directory: bin
+        working-directory: ${{ steps.compile.outputs.install_dir }}
         run: |
           (echo [PHP])>php.ini
-          (echo extension_dir=.\ext)>>php.ini
+          (echo extension_dir=${{ steps.compile.outputs.install_dir }}\ext)>>php.ini
           (echo extension=php_pmmpthread.dll)>>php.ini
 
       - name: Run test suite
@@ -128,5 +138,5 @@ jobs:
           set TEST_PHP_EXECUTABLE=${{ github.workspace }}\bin\php.exe
           set REPORT_EXIT_STATUS=1
 
-          ${{ github.workspace }}\bin\php.exe /projects/php-src/run-tests.php /projects/php-src/ext/pmmpthread -q --show-diff --offline
+          ${{ steps.compile.outputs.install_dir }}\php.exe run-tests.php ext/pmmpthread -q --show-diff --offline
           
