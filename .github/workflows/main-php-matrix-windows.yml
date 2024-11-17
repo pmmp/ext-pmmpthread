@@ -143,6 +143,10 @@ jobs:
     needs: [build-php]
 
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ${{ github.workspace }}\pmmpthread
+
       - name: Download PHP binary
         id: download
         uses: actions/download-artifact@v4
@@ -165,5 +169,5 @@ jobs:
           set TEST_PHP_EXECUTABLE=%~dp0php.exe
           set REPORT_EXIT_STATUS=1
 
-          .\php.exe .\SDK\script\run-tests.php ext\ext-pmmpthread -q --show-diff --offline || exit 1
+          .\php.exe .\SDK\script\run-tests.php ${{ github.workspace }}\pmmpthread -q --show-diff --offline || exit 1
           
