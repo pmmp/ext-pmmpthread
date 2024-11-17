@@ -56,7 +56,7 @@ jobs:
         #TODO: cache deps - this takes ages to download
         run: |
           (echo phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -f -d "${{ github.workspace }}\deps")>task.bat
-          .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
+          call .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
           (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
           type %GITHUB_OUTPUT%
           echo "HELLO????"
@@ -76,7 +76,7 @@ jobs:
         working-directory: pthreads4w-code
         run: |
           (echo nmake VC)>task.bat
-          "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Copy pthreads4w files to deps dir
         shell: cmd
@@ -113,7 +113,7 @@ jobs:
           type task.bat
 
           REM php sdk jank! woohoo
-          "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Generate php.ini
         shell: cmd
