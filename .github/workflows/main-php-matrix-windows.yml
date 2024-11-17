@@ -22,7 +22,7 @@ on:
 
 env:
   PHP_SDK_BINARY_TOOLS_VER: 2.2.0
-  PTHREADS_W32_VER: 3.0.0
+  PTHREAD_W32_VER: 3.0.0
 
 jobs:
   build-and-test:
