@@ -21,7 +21,8 @@ on:
         default: stable
 
 env:
-  PHP_SDK_BINARY_TOOLS_VER: php-sdk-2.2.0
+  PHP_SDK_BINARY_TOOLS_VER: 2.2.0
+  PTHREADS_W32_VER: 3.0.0
 
 jobs:
   build-and-test:
@@ -33,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: php/php-sdk-binary-tools
-          ref: php-sdk-2.2.0 #TODO: probably should update this, but haven't tested newer versions
+          ref: php-sdk-${{ env.PHP_SDK_BINARY_TOOLS_VER }} #TODO: probably should update this, but haven't tested newer versions
           path: php-sdk
 
       - name: Checkout PHP
@@ -62,10 +63,10 @@ jobs:
         #TODO: cache this too
         shell: cmd
         run: |
-          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip
-          "C:\Program Files\7-Zip\7z.exe" x -y temp.zip
-          del /s /q temp.zip
-          move pthreads4w-code-* pthreads4w-code
+          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v%PTHREAD_W32_VER%.zip -o temp.zip || exit 1
+          "C:\Program Files\7-Zip\7z.exe" x -y temp.zip || exit 1
+          del /s /q temp.zip || exit 1
+          move pthreads4w-code-* pthreads4w-code || exit 1
 
       - name: Compile pthreads4w
         #TODO: don't need to rebuild this if cache was hit
