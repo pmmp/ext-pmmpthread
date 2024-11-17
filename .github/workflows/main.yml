@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  all:
-    name: PHP ${{ matrix.php }}
+  all-linux:
+    name: Linux - PHP ${{ matrix.php }}
     strategy:
       fail-fast: false
       matrix:
@@ -19,4 +19,23 @@ jobs:
     uses: ./.github/workflows/main-php-matrix.yml
     with:
       php: ${{ matrix.php }}
+    secrets: inherit
+
+  all-windows:
+    name: Windows - PHP ${{ matrix.php }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - php: 8.1
+            vs-crt: vs16
+          - php: 8.2
+            vs-crt: vs16
+          - php: 8.3
+            vs-crt: vs16
+
+    uses: ./.github/workflows/main-php-matrix-windows.yml
+    with:
+      php: ${{ matrix.php }}
+      vs-crt: ${{ matrix.vs-crt }}
     secrets: inherit
