@@ -156,19 +156,17 @@ jobs:
 
       - name: Generate php.ini
         shell: cmd
-        working-directory: ${{ steps.download.outputs.download-path }}
+        working-directory: ${{ github.workspace }}/bin
         run: |
           (echo [PHP])>php.ini
-          (echo extension_dir=${{ steps.download.outputs.download-path }}\ext)>>php.ini
+          (echo extension_dir=%~dp0ext)>>php.ini
           (echo extension=php_pmmpthread.dll)>>php.ini
 
       - name: Run test suite
         shell: cmd
-        working-directory: ${{ steps.download.outputs.download-path }}
+        working-directory: ${{ github.workspace }}/bin
         run: |
-          set TEST_PHP_EXECUTABLE=%~dp0php.exe
-          echo %TEST_PHP_EXECUTABLE%
           set REPORT_EXIT_STATUS=1
 
-          .\php.exe .\SDK\script\run-tests.php ${{ github.workspace }}\pmmpthread -q --show-diff --offline || exit 1
+          .\php.exe .\SDK\script\run-tests.php -P ${{ github.workspace }}\pmmpthread -q --show-diff --offline || exit 1
           
