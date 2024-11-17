@@ -25,8 +25,8 @@ env:
   PTHREAD_W32_VER: 3.0.0
 
 jobs:
-  build-and-test:
-    name: Build & test
+  build-php:
+    name: Build PHP & extension
     runs-on: windows-2019
 
     steps:
@@ -124,20 +124,38 @@ jobs:
           REM php sdk jank! woohoo
           call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
+      - name: Upload build result
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary
+          path: ${{ steps.compile.outputs.install_dir }}
+          if-no-files-found: error
+
+  test-extension:
+    name: Test extension
+    runs-on: windows-2019
+    steps:
+      - name: Download PHP binary
+        id: download
+        uses: actions-download-artifact@v4
+        with:
+          name: binary
+          path: ${{ github.workspace }}/bin
+
       - name: Generate php.ini
         shell: cmd
-        working-directory: ${{ steps.compile.outputs.install_dir }}
+        working-directory: ${{ steps.download.outputs.download-path }}
         run: |
           (echo [PHP])>php.ini
-          (echo extension_dir=${{ steps.compile.outputs.install_dir }}\ext)>>php.ini
+          (echo extension_dir=${{ steps.download.outputs.download-path }}\ext)>>php.ini
           (echo extension=php_pmmpthread.dll)>>php.ini
 
       - name: Run test suite
         shell: cmd
         working-directory: php-src
         run: |
-          set TEST_PHP_EXECUTABLE=${{ github.workspace }}\bin\php.exe
+          set TEST_PHP_EXECUTABLE=${{ steps.download.outputs.download-path }}\php.exe
           set REPORT_EXIT_STATUS=1
 
-          ${{ steps.compile.outputs.install_dir }}\php.exe run-tests.php ext/pmmpthread -q --show-diff --offline
+          ${{ steps.download.outputs.download-path }}\php.exe run-tests.php ext\pmmpthread -q --show-diff --offline || exit 1
           
