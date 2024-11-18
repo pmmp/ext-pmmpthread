@@ -228,4 +228,22 @@ jobs:
           $env:REPORT_EXIT_STATUS=1
 
           .\php.exe .\SDK\script\run-tests.php -P -q --show-diff --show-slow 30000 -n -c .\php.ini ${{ github.workspace }}\tests || exit 1
-          
+
+      - name: Upload workspace
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-${{ inputs.php }}-opcache-${{ matrix.opcache }}-${{ inputs.runs-on }}
+          path: |
+            ${{ github.workspace }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ inputs.php }}-opcache-${{ matrix.opcache }}-${{ inputs.runs-on }}
+          path: |
+            ${{ github.workspace }}/tests/*.log
+            ${{ github.workspace }}/tests/*.diff
+            ${{ github.workspace }}/tests/*.mem
+          if-no-files-found: ignore
