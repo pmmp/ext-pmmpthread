@@ -118,7 +118,7 @@ jobs:
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
 
-          REM php sdk jank! woohoo
+          # php sdk jank! woohoo
           & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Add pthreads4w DLL to build result
