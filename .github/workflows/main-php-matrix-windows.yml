@@ -85,7 +85,7 @@ jobs:
       - name: Copy pthreads4w files to deps dir
         working-directory: pthreads4w-code
         run: |
-          $DEPS_DIR=${{ steps.deps.outputs.deps_dir }}
+          $DEPS_DIR="${{ steps.deps.outputs.deps_dir }}"
           cp pthread.h "$DEPS_DIR\include\pthread.h" || exit 1
           cp sched.h "$DEPS_DIR\include\sched.h" || exit 1
           cp semaphore.h "$DEPS_DIR\include\semaphore.h" || exit 1
@@ -98,7 +98,7 @@ jobs:
         id: compile
         working-directory: php-src
         run: |
-          $INSTALL_DIR=${{ github.workspace }}\bin
+          $INSTALL_DIR="${{ github.workspace }}\bin"
           echo "install_dir=$INSTALL_DIR" >> $env:GITHUB_OUTPUT
 
           echo "call buildconf.bat" > task.bat
