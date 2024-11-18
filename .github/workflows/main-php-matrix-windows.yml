@@ -52,7 +52,7 @@ jobs:
       - name: Set PHP build dependencies directory
         id: deps
         shell: cmd
-        run: (echo deps_dir=${{ github.workspace }}\deps)>>%GITHUB_OUTPUT%
+        run: echo "deps_dir=${{ github.workspace }}\deps" >> $env:GITHUB_OUTPUT
 
       - name: Cache PHP build dependencies
         id: deps-cache
@@ -63,66 +63,62 @@ jobs:
 
       - name: Download PHP build dependencies
         if: steps.deps-cache.outputs.cache-hit != 'true'
-        shell: cmd
         working-directory: php-sdk
         run: |
-          (echo phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -d "${{ steps.deps.outputs.deps_dir }}")>task.bat
-          call .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
+          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -d "${{ steps.deps.outputs.deps_dir }}" > task.bat
+          & .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
 
       - name: Download pthreads4w dependency
         #TODO: cache this too
-        shell: cmd
         run: |
           C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v${{ env.PTHREAD_W32_VER }}.zip -O temp.zip || exit 1
           "C:\Program Files\7-Zip\7z.exe" x -y temp.zip || exit 1
-          del /s /q temp.zip || exit 1
-          move pthreads4w-code-* pthreads4w-code || exit 1
+          rm temp.zip || exit 1
+          mv pthreads4w-code-* pthreads4w-code || exit 1
 
       - name: Compile pthreads4w
         #TODO: don't need to rebuild this if cache was hit
-        shell: cmd
         working-directory: pthreads4w-code
         run: |
-          (echo nmake VC)>task.bat
-          call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          echo "nmake VC" > task.bat
+          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Copy pthreads4w files to deps dir
-        shell: cmd
         working-directory: pthreads4w-code
         run: |
-          set DEPS_DIR=${{ steps.deps.outputs.deps_dir }}
-          copy pthread.h "%DEPS_DIR%\include\pthread.h" || exit 1
-          copy sched.h "%DEPS_DIR%\include\sched.h" || exit 1
-          copy semaphore.h "%DEPS_DIR%\include\semaphore.h" || exit 1
-          copy _ptw32.h "%DEPS_DIR%\include\_ptw32.h" || exit 1
-          copy pthreadVC3.lib "%DEPS_DIR%\lib\pthreadVC3.lib" || exit 1
-          copy pthreadVC3.dll "%DEPS_DIR%\bin\pthreadVC3.dll" || exit 1
-          copy pthreadVC3.pdb "%DEPS_DIR%\bin\pthreadVC3.pdb" || exit 1
+          $DEPS_DIR=${{ steps.deps.outputs.deps_dir }}
+          cp pthread.h "$DEPS_DIR\include\pthread.h" || exit 1
+          cp sched.h "$DEPS_DIR\include\sched.h" || exit 1
+          cp semaphore.h "$DEPS_DIR\include\semaphore.h" || exit 1
+          cp _ptw32.h "$DEPS_DIR\include\_ptw32.h" || exit 1
+          cp pthreadVC3.lib "$DEPS_DIR\lib\pthreadVC3.lib" || exit 1
+          cp pthreadVC3.dll "$DEPS_DIR\bin\pthreadVC3.dll" || exit 1
+          cp pthreadVC3.pdb "$DEPS_DIR\bin\pthreadVC3.pdb" || exit 1
 
       - name: Compile PHP
         id: compile
-        shell: cmd
         working-directory: php-src
         run: |
-          set INSTALL_DIR=${{ github.workspace }}\bin
-          (echo install_dir=%INSTALL_DIR%)>>%GITHUB_OUTPUT%
-          (echo call buildconf.bat)>task.bat
-          (echo call configure.bat^
-            --disable-all^
-            --enable-cli^
-            --enable-zts^
-            --with-pmmpthread=shared^
-            --with-pmmpthread-sockets^
-            --enable-sockets^
-            --enable-ipv6^
-            --enable-debug^
-            --with-prefix=%INSTALL_DIR%^
-            --with-php-build=${{ steps.deps.outputs.deps_dir }})>>task.bat
-          (echo nmake)>>task.bat
-          (echo nmake install)>>task.bat
+          $INSTALL_DIR=${{ github.workspace }}\bin
+          echo "install_dir=$INSTALL_DIR" >> $env:GITHUB_OUTPUT
+
+          echo "call buildconf.bat" > task.bat
+          echo "call configure.bat `
+            --disable-all `
+            --enable-cli `
+            --enable-zts `
+            --with-pmmpthread=shared `
+            --with-pmmpthread-sockets `
+            --enable-sockets `
+            --enable-ipv6 `
+            --enable-debug `
+            --with-prefix=$INSTALL_DIR `
+            --with-php-build=${{ steps.deps.outputs.deps_dir }}" >> task.bat
+          echo "nmake" >> task.bat
+          echo "nmake install" >> task.bat
 
           REM php sdk jank! woohoo
-          call "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Add pthreads4w DLL to build result
         shell: cmd
