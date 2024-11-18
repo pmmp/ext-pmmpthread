@@ -125,19 +125,19 @@ jobs:
             --enable-debug^`
             --enable-opcache^`
             --enable-opcache-jit^`
-            --with-prefix=`"$INSTALL_DIR`"^`
-            --with-php-build=`"${{ github.workspace }}\bin`"" >> task.bat
+            --with-prefix=`"${{ github.workspace }}\bin`"^`
+            --with-php-build=`"${{ github.workspace }}\deps`"" >> task.bat
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
           cat task.bat
 
           # php sdk jank! woohoo
-          & ".\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Add pthreads4w DLL to build result
         working-directory: bin
         run: |
-          cp ".\deps\bin\pthreadVC*.*" .\ || exit 1
+          cp "${{ github.workspace }}\deps\bin\pthreadVC*.*" .\ || exit 1
 
       - name: Store PHP build cache
         uses: actions/cache/save@v4
@@ -183,7 +183,7 @@ jobs:
 
       - name: Compile extension
         run: |
-          echo ".\bin\SDK\phpize.bat" > task.bat
+          echo "${{ github.workspace }}\bin\SDK\phpize.bat" > task.bat
           echo "configure ^`
             --with-pmmpthread^`
             --with-pmmpthread-sockets^`
@@ -194,7 +194,7 @@ jobs:
           cat task.bat
 
           # php sdk jank! woohoo
-          & ".\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Generate php.ini
         working-directory: bin
