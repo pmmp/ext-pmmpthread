@@ -54,7 +54,7 @@ jobs:
     name: Build PHP
     runs-on: ${{ inputs.runs-on }}
     needs: [check-php-cache]
-    if: ${{ needs.check-php-cache.outputs.cache-hit != 'true' }}
+    if: needs.check-php-cache.outputs.cache-hit != 'true'
 
     steps:
       - name: Checkout PHP build SDK
