@@ -15,19 +15,46 @@ on:
         description: 'Visual Studio CRT for build (vc15=2017, vs16=2019, vs17=2022)'
         type: string
         required: true
-      build-type:
-        description: 'Build type to select deps for (stable or staging)'
+      runs-on:
+        description: 'GitHub runner'
         type: string
-        default: stable
+        default: 'windows-2019'
 
 env:
   PHP_SDK_BINARY_TOOLS_VER: 2.2.0
   PTHREAD_W32_VER: 3.0.0
 
 jobs:
+  check-php-cache:
+    name: Check PHP build cache
+    runs-on: ${{ inputs.runs-on }}
+
+    #allow other builds to populate this cache before checking it
+    concurrency: php-debug-${{ inputs.php }}-${{ inputs.runs-on }}-${{ github.ref }}
+
+    outputs:
+      cache-hit: ${{ steps.php-build-cache.outputs.cache-hit != 'false' }}
+      cache-key: ${{ steps.cache-key.outputs.key }}
+
+    steps:
+      - name: Set PHP build cache key
+        id: cache-key
+        run: |
+          echo "key=php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}" >> $env:GITHUB_OUTPUT
+
+      - name: Restore PHP build cache
+        uses: actions/cache@v4
+        id: php-build-cache
+        with:
+          path: ${{ github.workspace }}/php
+          key: ${{ steps.cache-key.outputs.key }}
+          lookup-only: true
+
   build-php:
-    name: Build PHP & extension
-    runs-on: windows-2019
+    name: Build PHP
+    runs-on: ${{ inputs.runs-on }}
+    needs: [check-php-cache]
+    if: ${{ needs.check-php-cache.outputs.cache-hit != 'true' }}
 
     steps:
       - name: Checkout PHP build SDK
@@ -38,10 +65,11 @@ jobs:
           path: php-sdk
 
       - name: Checkout PHP
+        if: steps.php-build-cache.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           repository: php/php-src
-          ref: "PHP-${{ inputs.php }}"
+          ref: "php-${{ inputs.php }}"
           path: php-src
 
       - name: Checkout ext-pmmpthread
@@ -49,26 +77,21 @@ jobs:
         with:
           path: php-src/ext/ext-pmmpthread
 
-      - name: Set PHP build dependencies directory
-        id: deps
-        run: echo "deps_dir=${{ github.workspace }}\deps" >> $env:GITHUB_OUTPUT
-
-      - name: Cache PHP build dependencies
-        id: deps-cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.deps.outputs.deps_dir }}
-          key: php-deps-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
-
       - name: Download PHP build dependencies
-        if: steps.deps-cache.outputs.cache-hit != 'true'
         working-directory: php-sdk
         run: |
-          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b ${{ inputs.php }} -a ${{ inputs.vs-arch }} -s ${{ inputs.build-type }} -d `"${{ steps.deps.outputs.deps_dir }}`"" > task.bat
+          $php_base = "${{ inputs.php }}" -replace '^(\d+)\.(\d+).*','$1.$2'
+          $deps_type = ""
+          if ("${{ inputs.php }}" -match '^(\d+)\.(\d+)\.(\d+)(.+)') {
+              $deps_type = "staging"
+          } else {
+              $deps_type = "stable"
+          }
+
+          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ steps.deps.outputs.deps_dir }}`"" > task.bat
           & .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
 
       - name: Download pthreads4w dependency
-        #TODO: cache this too
         run: |
           C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v${{ env.PTHREAD_W32_VER }}.zip -O temp.zip || exit 1
           & "C:\Program Files\7-Zip\7z.exe" x -y temp.zip || exit 1
@@ -76,7 +99,6 @@ jobs:
           mv pthreads4w-code-* pthreads4w-code || exit 1
 
       - name: Compile pthreads4w
-        #TODO: don't need to rebuild this if cache was hit
         working-directory: pthreads4w-code
         run: |
           echo "nmake VC" > task.bat
@@ -85,7 +107,7 @@ jobs:
       - name: Copy pthreads4w files to deps dir
         working-directory: pthreads4w-code
         run: |
-          $DEPS_DIR="${{ steps.deps.outputs.deps_dir }}"
+          $DEPS_DIR="${{ github.workspace }}\deps"
           cp pthread.h "$DEPS_DIR\include\pthread.h" || exit 1
           cp sched.h "$DEPS_DIR\include\sched.h" || exit 1
           cp semaphore.h "$DEPS_DIR\include\semaphore.h" || exit 1
@@ -98,46 +120,45 @@ jobs:
         id: compile
         working-directory: php-src
         run: |
-          $INSTALL_DIR="${{ github.workspace }}\bin"
-          echo "install_dir=$INSTALL_DIR" >> $env:GITHUB_OUTPUT
-
           echo "call buildconf.bat" > task.bat
           echo "call configure.bat^`
             --disable-all^`
             --enable-cli^`
             --enable-zts^`
-            --with-pmmpthread=shared^`
-            --with-pmmpthread-sockets^`
             --enable-sockets^`
             --enable-ipv6^`
             --enable-debug^`
             --enable-opcache^`
             --enable-opcache-jit^`
             --with-prefix=`"$INSTALL_DIR`"^`
-            --with-php-build=`"${{ steps.deps.outputs.deps_dir }}`"" >> task.bat
+            --with-php-build=`"${{ github.workspace }}\bin`"" >> task.bat
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
           cat task.bat
 
           # php sdk jank! woohoo
-          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & ".\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Add pthreads4w DLL to build result
-        working-directory: ${{ steps.compile.outputs.install_dir }}
+        working-directory: bin
         run: |
-          cp "${{ steps.deps.outputs.deps_dir }}\bin\pthreadVC*.*" .\ || exit 1
+          cp ".\deps\bin\pthreadVC*.*" .\ || exit 1
 
-      - name: Upload build result
-        uses: actions/upload-artifact@v4
+      - name: Store PHP build cache
+        uses: actions/cache/save@v4
+        id: php-build-cache
         with:
-          name: php-build-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
-          path: ${{ steps.compile.outputs.install_dir }}
-          if-no-files-found: error
+          path: |
+            bin
+            php-sdk
+            deps
+          key: ${{ needs.check-php-cache.outputs.key }}
 
   test-extension:
     name: Test (OPcache ${{ matrix.opcache }})
-    runs-on: windows-2019
-    needs: [build-php]
+    runs-on: ${{ inputs.runs-on }}
+    needs: [check-php-cache, build-php]
+    if: ${{ always() && !failure() && !cancelled() }} #allow build-php to be skipped
 
     strategy:
       fail-fast: false
@@ -150,18 +171,38 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: ${{ github.workspace }}/pmmpthread
 
-      - name: Download PHP binary
-        id: download
-        uses: actions/download-artifact@v4
+      - name: Set PHP install dir
+        id: install-dir
+        run: |
+          echo "dir=${{ github.workspace }}/bin" >> $env:GITHUB_OUTPUT
+
+      - name: Fetch PHP build cache
+        uses: actions/cache/restore@v4 #fails if cache is missing
         with:
-          name: php-build-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.build-type }}-windows
-          path: ${{ github.workspace }}/bin
+          path: |
+            bin
+            php-sdk
+            deps
+          key: ${{ needs.check-php-cache.outputs.key }}
+
+      - name: Compile extension
+        run: |
+          echo ".\bin\SDK\phpize.bat" > task.bat
+          echo "configure ^`
+            --with-pmmpthread^`
+            --with-pmmpthread-sockets^`
+            --with-php-prefix=`"${{ github.workspace }}\bin`"" >> task.bat
+          echo "nmake
+          echo "nmake" >> task.bat
+          echo "nmake install" >> task.bat
+          cat task.bat
+
+          # php sdk jank! woohoo
+          & ".\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Generate php.ini
-        working-directory: ${{ github.workspace }}/bin
+        working-directory: bin
         run: |
           echo "[PHP]" > php.ini
           echo "extension_dir=$pwd\ext" >> php.ini
@@ -188,10 +229,10 @@ jobs:
           } 
 
       - name: Run test suite
-        working-directory: ${{ github.workspace }}/bin
+        working-directory: bin
         timeout-minutes: 30
         run: |
           $env:REPORT_EXIT_STATUS=1
 
-          .\php.exe .\SDK\script\run-tests.php -P -q --show-diff --show-slow 30000 -n -c .\php.ini ${{ github.workspace }}\pmmpthread || exit 1
+          .\php.exe .\SDK\script\run-tests.php -P -q --show-diff --show-slow 30000 -n -c .\php.ini ${{ github.workspace }}\tests || exit 1
           
