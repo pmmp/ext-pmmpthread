@@ -170,7 +170,7 @@ jobs:
           $opcache = "${{ matrix.opcache }}"
           if ($opcache -ne "off") {
             echo "Enabling OPcache"
-            echo "zend_extension=opcache.so" >> php.ini
+            echo "zend_extension=php_opcache.dll" >> php.ini
             echo "opcache.enable=1" >> php.ini
             echo "opcache.enable_cli=1" >> php.ini
             echo "opcache.protect_memory=1" >> php.ini
