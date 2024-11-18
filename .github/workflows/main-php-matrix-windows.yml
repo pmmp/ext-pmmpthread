@@ -117,6 +117,7 @@ jobs:
             --with-php-build=${{ steps.deps.outputs.deps_dir }}" >> task.bat
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
+          cat task.bat
 
           # php sdk jank! woohoo
           & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
