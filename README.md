@@ -1,7 +1,6 @@
 # Threading for PHP - Share Nothing, Do Everything :)
 
 [![CI](https://github.com/pmmp/ext-pmmpthread/actions/workflows/main.yml/badge.svg)](https://github.com/pmmp/ext-pmmpthread/actions/workflows/main.yml)
-[![Build status](https://ci.appveyor.com/api/projects/status/929kgwur23p40n1y/branch/fork?svg=true)](https://ci.appveyor.com/project/pmmp/pthreads/branch/fork)
 
 This project provides limited support for threading in PHP CLI.
 
