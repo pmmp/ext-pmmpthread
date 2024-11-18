@@ -167,11 +167,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set PHP install dir
-        id: install-dir
-        run: |
-          echo "dir=${{ github.workspace }}/bin" >> $env:GITHUB_OUTPUT
-
       - name: Fetch PHP build cache
         uses: actions/cache/restore@v4 #fails if cache is missing
         with:
@@ -188,7 +183,6 @@ jobs:
             --with-pmmpthread^`
             --with-pmmpthread-sockets^`
             --with-php-prefix=`"${{ github.workspace }}\bin`"" >> task.bat
-          echo "nmake
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
           cat task.bat
