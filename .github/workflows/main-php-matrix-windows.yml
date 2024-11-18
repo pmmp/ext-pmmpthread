@@ -111,6 +111,8 @@ jobs:
             --enable-sockets `
             --enable-ipv6 `
             --enable-debug `
+            --enable-opcache `
+            --enable-opcache-jit `
             --with-prefix=$INSTALL_DIR `
             --with-php-build=${{ steps.deps.outputs.deps_dir }}" >> task.bat
           echo "nmake" >> task.bat
