@@ -86,39 +86,39 @@ jobs:
               $deps_type = "stable"
           }
 
-          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ github.workspace }}\deps`"" > task.bat
+          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ github.workspace }}\deps`" || exit 1" > task.bat
           & .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
 
       - name: Download pthreads4w dependency
         run: |
-          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v${{ env.PTHREAD_W32_VER }}.zip -O temp.zip || exit 1
-          & "C:\Program Files\7-Zip\7z.exe" x -y temp.zip || exit 1
-          rm temp.zip || exit 1
-          mv pthreads4w-code-* pthreads4w-code || exit 1
+          C:\msys64\usr\bin\wget.exe -nv https://github.com/pmmp/DependencyMirror/releases/download/mirror/pthreads4w-code-v${{ env.PTHREAD_W32_VER }}.zip -O temp.zip
+          & "C:\Program Files\7-Zip\7z.exe" x -y temp.zip
+          rm temp.zip
+          mv pthreads4w-code-* pthreads4w-code
 
       - name: Compile pthreads4w
         working-directory: pthreads4w-code
         run: |
-          echo "nmake VC" > task.bat
+          echo "nmake VC || exit 1" > task.bat
           & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
 
       - name: Copy pthreads4w files to deps dir
         working-directory: pthreads4w-code
         run: |
           $DEPS_DIR="${{ github.workspace }}\deps"
-          cp pthread.h "$DEPS_DIR\include\pthread.h" || exit 1
-          cp sched.h "$DEPS_DIR\include\sched.h" || exit 1
-          cp semaphore.h "$DEPS_DIR\include\semaphore.h" || exit 1
-          cp _ptw32.h "$DEPS_DIR\include\_ptw32.h" || exit 1
-          cp pthreadVC3.lib "$DEPS_DIR\lib\pthreadVC3.lib" || exit 1
-          cp pthreadVC3.dll "$DEPS_DIR\bin\pthreadVC3.dll" || exit 1
-          cp pthreadVC3.pdb "$DEPS_DIR\bin\pthreadVC3.pdb" || exit 1
+          cp pthread.h "$DEPS_DIR\include\pthread.h"
+          cp sched.h "$DEPS_DIR\include\sched.h"
+          cp semaphore.h "$DEPS_DIR\include\semaphore.h"
+          cp _ptw32.h "$DEPS_DIR\include\_ptw32.h"
+          cp pthreadVC3.lib "$DEPS_DIR\lib\pthreadVC3.lib"
+          cp pthreadVC3.dll "$DEPS_DIR\bin\pthreadVC3.dll"
+          cp pthreadVC3.pdb "$DEPS_DIR\bin\pthreadVC3.pdb"
 
       - name: Compile PHP
         id: compile
         working-directory: php-src
         run: |
-          echo "call buildconf.bat" > task.bat
+          echo "call buildconf.bat || exit 1" > task.bat
           echo "call configure.bat^`
             --disable-all^`
             --enable-cli^`
@@ -129,9 +129,9 @@ jobs:
             --enable-opcache^`
             --enable-opcache-jit^`
             --with-prefix=`"${{ github.workspace }}\bin`"^`
-            --with-php-build=`"${{ github.workspace }}\deps`"" >> task.bat
-          echo "nmake" >> task.bat
-          echo "nmake install" >> task.bat
+            --with-php-build=`"${{ github.workspace }}\deps`" || exit 1" >> task.bat
+          echo "nmake || exit 1" >> task.bat
+          echo "nmake install || exit 1" >> task.bat
           cat task.bat
 
           # php sdk jank! woohoo
@@ -140,7 +140,7 @@ jobs:
       - name: Add pthreads4w DLL to build result
         working-directory: bin
         run: |
-          cp "${{ github.workspace }}\deps\bin\pthreadVC*.*" .\ || exit 1
+          cp "${{ github.workspace }}\deps\bin\pthreadVC*.*" .\
 
       - name: Store PHP build cache
         uses: actions/cache/save@v4
@@ -181,14 +181,14 @@ jobs:
 
       - name: Compile extension
         run: |
-          echo "call ${{ github.workspace }}\bin\SDK\phpize.bat" > task.bat
+          echo "call ${{ github.workspace }}\bin\SDK\phpize.bat || exit 1" > task.bat
           echo "call configure ^`
             --with-pmmpthread^`
             --with-pmmpthread-sockets^`
             --with-prefix=`"${{ github.workspace }}\bin`"^`
-            --with-php-build=`"${{ github.workspace }}\deps`"" >> task.bat
-          echo "nmake" >> task.bat
-          echo "nmake install" >> task.bat
+            --with-php-build=`"${{ github.workspace }}\deps`" || exit 1" >> task.bat
+          echo "nmake || exit 1" >> task.bat
+          echo "nmake install || exit 1" >> task.bat
           cat task.bat
 
           # php sdk jank! woohoo
@@ -227,15 +227,7 @@ jobs:
         run: |
           $env:REPORT_EXIT_STATUS=1
 
-          .\php.exe .\SDK\script\run-tests.php -P -q --show-diff --show-slow 30000 -n -c .\php.ini ${{ github.workspace }}\tests || exit 1
-
-      - name: Upload workspace
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace-${{ inputs.php }}-opcache-${{ matrix.opcache }}-${{ inputs.runs-on }}
-          path: |
-            ${{ github.workspace }}
+          .\php.exe .\SDK\script\run-tests.php -P -q --show-diff --show-slow 30000 -n -c .\php.ini ${{ github.workspace }}\tests
 
       - name: Upload test results
         if: always()
