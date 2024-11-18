@@ -30,13 +30,13 @@ if (PHP_PMMPTHREAD != "no") {
 			PMMPTHREAD_EXT_DIR + "/src",
 			"copy.c monitor.c worker.c globals.c prepare.c store.c handlers.c object.c routine.c queue.c ext_sockets_hacks.c",
 			PMMPTHREAD_EXT_NAME,
-			PMMPTHREAD_EXT_DIR + "/src"
+			MODE_PHPIZE ? "src" : null
 		);
 		ADD_SOURCES(
 			PMMPTHREAD_EXT_DIR + "/classes",
 			"pool.c thread.c thread_safe_array.c thread_safe.c runnable.c worker.c",
 			PMMPTHREAD_EXT_NAME,
-			PMMPTHREAD_EXT_DIR + "/classes"
+			MODE_PHPIZE ? "classes" : null
 		);
 	} else {
 		WARNING("pmmpthread not enabled; libraries and headers not found");
