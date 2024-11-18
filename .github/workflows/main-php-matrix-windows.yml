@@ -33,8 +33,8 @@ jobs:
     concurrency: php-debug-${{ inputs.php }}-${{ inputs.runs-on }}-${{ github.ref }}
 
     outputs:
-      cache-hit: ${{ steps.php-build-cache.outputs.cache-hit != 'false' }}
-      cache-key: ${{ steps.cache-key.outputs.key }}
+      cache-hit: ${{ steps.php-build-cache.outputs.cache-hit }}
+      key: ${{ steps.cache-key.outputs.key }}
 
     steps:
       - name: Set PHP build cache key
