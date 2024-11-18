@@ -185,7 +185,8 @@ jobs:
           echo "call configure ^`
             --with-pmmpthread^`
             --with-pmmpthread-sockets^`
-            --with-php-prefix=`"${{ github.workspace }}\bin`"" >> task.bat
+            --with-prefix=`"${{ github.workspace }}\bin`"^`
+            --with-php-build=`"${{ github.workspace }}\deps`"" >> task.bat
           echo "nmake" >> task.bat
           echo "nmake install" >> task.bat
           cat task.bat
