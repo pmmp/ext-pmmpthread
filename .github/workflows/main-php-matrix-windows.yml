@@ -83,7 +83,7 @@ jobs:
               $deps_type = "stable"
           }
 
-          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ steps.deps.outputs.deps_dir }}`"" > task.bat
+          echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ github.workspace }}\deps`"" > task.bat
           & .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
 
       - name: Download pthreads4w dependency
