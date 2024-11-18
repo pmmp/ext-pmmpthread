@@ -46,7 +46,10 @@ jobs:
         uses: actions/cache@v4
         id: php-build-cache
         with:
-          path: ${{ github.workspace }}/php
+          path: |
+            bin
+            php-sdk
+            deps
           key: ${{ steps.cache-key.outputs.key }}
           lookup-only: true
 
@@ -178,8 +181,8 @@ jobs:
 
       - name: Compile extension
         run: |
-          echo "${{ github.workspace }}\bin\SDK\phpize.bat" > task.bat
-          echo "configure ^`
+          echo "call ${{ github.workspace }}\bin\SDK\phpize.bat" > task.bat
+          echo "call configure ^`
             --with-pmmpthread^`
             --with-pmmpthread-sockets^`
             --with-php-prefix=`"${{ github.workspace }}\bin`"" >> task.bat
