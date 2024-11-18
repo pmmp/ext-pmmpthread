@@ -72,11 +72,6 @@ jobs:
           ref: "php-${{ inputs.php }}"
           path: php-src
 
-      - name: Checkout ext-pmmpthread
-        uses: actions/checkout@v4
-        with:
-          path: php-src/ext/ext-pmmpthread
-
       - name: Download PHP build dependencies
         working-directory: php-sdk
         run: |
