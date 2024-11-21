@@ -13,7 +13,7 @@ Thread::setAutoloadFile(__DIR__ . '/assets/i-dont-exist.php');
 
 $thread = new class extends Thread{
 	public function run() : void{
-
+		echo "unreachable\n";
 	}
 };
 

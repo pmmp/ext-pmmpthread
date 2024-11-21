@@ -9,7 +9,7 @@ Thread::setAutoloadFile(__DIR__ . '/assets/autoload-file-uncaught-exception.php'
 
 $thread = new class extends Thread{
 	public function run() : void{
-
+		echo "unreachable\n";
 	}
 };
 

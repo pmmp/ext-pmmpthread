@@ -826,61 +826,8 @@ static inline void pmmpthread_prepare_sapi(const pmmpthread_ident_t* source) {
 	}
 } /* }}} */
 
-/* {{{ Includes the autoloader provided, if any. This code is borrowed from krakjoe/parallel. */
-static int pmmpthread_thread_bootstrap(zend_string* file) {
-	zend_file_handle fh;
-	zend_op_array* ops;
-	zval rv;
-	int result;
-
-	if (!file) {
-		return SUCCESS;
-	}
-
-	zend_stream_init_filename_ex(&fh, file);
-	result = php_stream_open_for_zend_ex(&fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
-
-	if (result != SUCCESS) {
-		zend_error(E_ERROR, "Unable to open thread autoload file %s", ZSTR_VAL(file));
-		return FAILURE;
-	}
-
-	zend_hash_add_empty_element(&EG(included_files),
-		fh.opened_path ?
-		fh.opened_path : file);
-
-	ops = zend_compile_file(&fh, ZEND_REQUIRE);
-
-	zend_destroy_file_handle(&fh);
-
-	if (ops) {
-		ZVAL_UNDEF(&rv);
-		zend_execute(ops, &rv);
-		destroy_op_array(ops);
-		efree(ops);
-
-		if (EG(exception)) {
-			zend_exception_error(EG(exception), E_ERROR);
-			zend_error(E_ERROR, "Uncaught exception thrown from thread autoload file %s", ZSTR_VAL(file));
-			return FAILURE;
-		}
-
-		zval_ptr_dtor(&rv);
-		return SUCCESS;
-	}
-
-	if (EG(exception)) {
-		zend_exception_error(EG(exception), E_ERROR);
-		zend_error(E_ERROR, "Error compiling thread autoload file %s", ZSTR_VAL(file));
-	}
-
-	return FAILURE;
-} /* }}} */
-
 /* {{{ */
-int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options) {
-	zend_string *autoload_file = NULL;
-
+int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options, zend_string **autoload_file) {
 	PMMPTHREAD_PREPARATION_BEGIN_CRITICAL() {
 		thread->local.id = pmmpthread_self();
 		thread->local.ls = ts_resource(0);
@@ -936,28 +883,14 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 			pmmpthread_prepare_includes(&thread->creator);
 
 		if (PMMPTHREAD_G(autoload_file)) {
-			autoload_file = zend_string_init(ZSTR_VAL(PMMPTHREAD_G(autoload_file)), ZSTR_LEN(PMMPTHREAD_G(autoload_file)), 1);
+			*autoload_file = zend_string_init(ZSTR_VAL(PMMPTHREAD_G(autoload_file)), ZSTR_LEN(PMMPTHREAD_G(autoload_file)), 1);
 		}
 		pmmpthread_monitor_add(ready, PMMPTHREAD_MONITOR_READY);
 
 		PMMPTHREAD_G(thread_count)++;
 	} PMMPTHREAD_PREPARATION_END_CRITICAL();
 
-	int result = SUCCESS;
-
-	//TODO: we probably should put this code inside routine instead of prepare
-	if (autoload_file != NULL) {
-		zend_first_try{
-			if (pmmpthread_thread_bootstrap(autoload_file) == FAILURE) {
-				//by this point the ready monitor has probably already been destroyed
-				//the main thread doesn't wait for user code to start running
-				pmmpthread_monitor_add(&thread->monitor, PMMPTHREAD_MONITOR_ERROR);
-				result = FAILURE;
-			}
-		} zend_end_try();
-		zend_string_release(autoload_file);
-	}
-	return result;
+	return SUCCESS;
 } /* }}} */
 
 /* {{{ Calls user shutdown functions before entering into the AWAIT_JOIN state.

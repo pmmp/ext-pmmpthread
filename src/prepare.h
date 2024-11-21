@@ -30,7 +30,7 @@ void pmmpthread_prepared_entry_late_bindings(const pmmpthread_ident_t* source, z
 void pmmpthread_context_late_bindings(const pmmpthread_ident_t* source); /* }}} */
 
 /* {{{ */
-int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options); /* }}} */
+int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options, zend_string **autoload_file); /* }}} */
 
 /* {{{ */
 void pmmpthread_call_shutdown_functions(void); /* }}} */
