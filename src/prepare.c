@@ -837,7 +837,7 @@ static int pmmpthread_thread_bootstrap(zend_string* file) {
 		return SUCCESS;
 	}
 
-	zend_stream_init_filename(&fh, file);
+	zend_stream_init_filename_ex(&fh, file);
 	result = php_stream_open_for_zend_ex(&fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
 
 	if (result != SUCCESS) {
