@@ -942,10 +942,13 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 
 	int result = SUCCESS;
 
+	//TODO: we probably should put this code inside routine instead of prepare
 	if (autoload_file != NULL) {
 		int result = FAILURE;
 		if (pmmpthread_thread_bootstrap(autoload_file) == FAILURE) {
-			pmmpthread_monitor_add(ready, PMMPTHREAD_MONITOR_ERROR);
+			//by this point the ready monitor has probably already been destroyed
+			//the main thread doesn't wait for user code to start running
+			pmmpthread_monitor_add(&thread->monitor, PMMPTHREAD_MONITOR_ERROR);
 			result = FAILURE;
 		}
 		zend_string_release(autoload_file);
