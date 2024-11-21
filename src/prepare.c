@@ -841,6 +841,7 @@ static int pmmpthread_thread_bootstrap(zend_string* file) {
 	result = php_stream_open_for_zend_ex(&fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
 
 	if (result != SUCCESS) {
+		zend_error(E_ERROR, "Unable to open thread autoload file %s", ZSTR_VAL(file));
 		return FAILURE;
 	}
 
@@ -859,7 +860,8 @@ static int pmmpthread_thread_bootstrap(zend_string* file) {
 		efree(ops);
 
 		if (EG(exception)) {
-			zend_clear_exception();
+			zend_exception_error(EG(exception), E_ERROR);
+			zend_error(E_ERROR, "Uncaught exception thrown from thread autoload file %s", ZSTR_VAL(file));
 			return FAILURE;
 		}
 
@@ -868,7 +870,8 @@ static int pmmpthread_thread_bootstrap(zend_string* file) {
 	}
 
 	if (EG(exception)) {
-		zend_clear_exception();
+		zend_exception_error(EG(exception), E_ERROR);
+		zend_error(E_ERROR, "Error compiling thread autoload file %s", ZSTR_VAL(file));
 	}
 
 	return FAILURE;
