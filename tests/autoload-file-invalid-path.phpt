@@ -20,7 +20,7 @@ $thread = new class extends Thread{
 $thread->start(Thread::INHERIT_NONE);
 $thread->join();
 ?>
---EXPECT--
+--EXPECTF--
 Warning: Unknown: Failed to open stream: No such file or directory in Unknown on line 0
 
 Fatal error: Unable to open thread autoload file %si-dont-exist.php in Unknown on line 0
