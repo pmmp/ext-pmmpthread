@@ -1,5 +1,5 @@
 /* This is a generated file, edit the .stub.php file instead.
- * Stub hash: f07c76a75d7bf70fbbcf7bfe841cc003d1ec6727 */
+ * Stub hash: 48854b4be7c9443ff7d4eb5490f3fd79a6bc6118 */
 
 ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_getCreatorId, 0, 0, IS_LONG, 0)
 ZEND_END_ARG_INFO()
@@ -13,6 +13,10 @@ ZEND_BEGIN_ARG_WITH_RETURN_OBJ_INFO_EX(arginfo_class_pmmp_thread_Thread_getShare
 ZEND_END_ARG_INFO()
 
 #define arginfo_class_pmmp_thread_Thread_getRunningCount arginfo_class_pmmp_thread_Thread_getCreatorId
+
+ZEND_BEGIN_ARG_WITH_RETURN_TYPE_INFO_EX(arginfo_class_pmmp_thread_Thread_setAutoloadFile, 0, 1, IS_VOID, 0)
+	ZEND_ARG_TYPE_INFO(0, file, IS_STRING, 0)
+ZEND_END_ARG_INFO()
 
 #define arginfo_class_pmmp_thread_Thread_getThreadId arginfo_class_pmmp_thread_Thread_getCreatorId
 
@@ -33,6 +37,7 @@ ZEND_METHOD(pmmp_thread_Thread, getCurrentThread);
 ZEND_METHOD(pmmp_thread_Thread, getCurrentThreadId);
 ZEND_METHOD(pmmp_thread_Thread, getSharedGlobals);
 ZEND_METHOD(pmmp_thread_Thread, getRunningCount);
+ZEND_METHOD(pmmp_thread_Thread, setAutoloadFile);
 ZEND_METHOD(pmmp_thread_Thread, getThreadId);
 ZEND_METHOD(pmmp_thread_Thread, isJoined);
 ZEND_METHOD(pmmp_thread_Thread, isStarted);
@@ -46,6 +51,7 @@ static const zend_function_entry class_pmmp_thread_Thread_methods[] = {
 	ZEND_ME(pmmp_thread_Thread, getCurrentThreadId, arginfo_class_pmmp_thread_Thread_getCurrentThreadId, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getSharedGlobals, arginfo_class_pmmp_thread_Thread_getSharedGlobals, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getRunningCount, arginfo_class_pmmp_thread_Thread_getRunningCount, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
+	ZEND_ME(pmmp_thread_Thread, setAutoloadFile, arginfo_class_pmmp_thread_Thread_setAutoloadFile, ZEND_ACC_PUBLIC|ZEND_ACC_STATIC)
 	ZEND_ME(pmmp_thread_Thread, getThreadId, arginfo_class_pmmp_thread_Thread_getThreadId, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isJoined, arginfo_class_pmmp_thread_Thread_isJoined, ZEND_ACC_PUBLIC)
 	ZEND_ME(pmmp_thread_Thread, isStarted, arginfo_class_pmmp_thread_Thread_isStarted, ZEND_ACC_PUBLIC)
