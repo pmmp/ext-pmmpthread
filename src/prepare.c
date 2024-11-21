@@ -22,6 +22,7 @@
 #include <src/copy.h>
 #include <Zend/zend_enum.h>
 #include <Zend/zend_observer.h>
+#include <Zend/zend_stream.h>
 
 #define PMMPTHREAD_PREPARATION_BEGIN_CRITICAL() pmmpthread_globals_lock();
 #define PMMPTHREAD_PREPARATION_END_CRITICAL()   pmmpthread_globals_unlock()
@@ -836,7 +837,8 @@ static int pmmpthread_thread_bootstrap(zend_string* file) {
 		return SUCCESS;
 	}
 
-	result = php_stream_open_for_zend_ex(ZSTR_VAL(file), &fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
+	zend_stream_init_filename(&fh, file);
+	result = php_stream_open_for_zend_ex(&fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
 
 	if (result != SUCCESS) {
 		return FAILURE;
