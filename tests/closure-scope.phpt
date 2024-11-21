@@ -26,7 +26,7 @@ class B extends A{
 
 $closure = B::getBoundClosure();
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public $closure;
 
 	public function run() : void{
@@ -35,7 +35,7 @@ $t = new class extends \Thread{
 	}
 };
 $t->closure = $closure;
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 ?>
 --EXPECT--
 string(1) "B"

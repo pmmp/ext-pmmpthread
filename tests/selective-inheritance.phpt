@@ -12,8 +12,8 @@ define ("TEST_CONSTANT", true);
 
 class TestClass {}
 
-class TestThread extends Thread {
-	public function run() { 
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{ 
 		var_dump(function_exists("TestFunction"));
 		var_dump(defined("TEST_CONSTANT"));
 		var_dump(class_exists("TestClass")); 
@@ -21,17 +21,17 @@ class TestThread extends Thread {
 }
 
 $thread = new TestThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 unset($thread);
 
 $thread = new TestThread();
-$thread->start(PTHREADS_INHERIT_NONE);
+$thread->start(\pmmp\thread\Thread::INHERIT_NONE);
 $thread->join();
 unset($thread);
 
 $thread = new TestThread();
-$thread->start(PTHREADS_INHERIT_FUNCTIONS | PTHREADS_INHERIT_CLASSES);
+$thread->start(\pmmp\thread\Thread::INHERIT_FUNCTIONS | \pmmp\thread\Thread::INHERIT_CLASSES);
 $thread->join();
 unset($thread);
 ?>

@@ -29,14 +29,13 @@ class A
 	}
 }
 
-$t = new class extends Thread {
-	public function run()
-	{
+$t = new class extends \pmmp\thread\Thread {
+	public function run() : void{
 		A::getA();
 	}
 };
 
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 --EXPECT--
 int(1)
 array(2) {

@@ -4,13 +4,13 @@ Test stateful fatalities
 This test verifies that state includes fatalities
 --FILE--
 <?php
-class TestThread extends Thread {
-	public function run(){
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{
 		i_do_not_exist();
 	}
 }
 $test = new TestThread();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 var_dump($test->isTerminated());
 ?>

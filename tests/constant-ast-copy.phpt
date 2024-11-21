@@ -12,13 +12,13 @@ class Test
 	}
 }
 
-$t = new class extends \Thread {
-    public function run() {
+$t = new class extends \pmmp\thread\Thread {
+    public function run() : void{
         throw new \Exception();
     }
 };
 
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 ?>
 --EXPECTF--
 Fatal error: Uncaught Exception in %s:12

@@ -1,15 +1,15 @@
 --TEST--
-Test that Threaded object properties and sync still works when their creator is destroyed
+Test that ThreadSafe object properties and sync still works when their creator is destroyed
 --DESCRIPTION--
-Previously, a Threaded object's monitor and property store would be directly destroyed when the original object went out of scope, which would lead to segfaults if other threads tried to use their refs afterwards.
+Previously, a ThreadSafe object's monitor and property store would be directly destroyed when the original object went out of scope, which would lead to segfaults if other threads tried to use their refs afterwards.
 
-Now, we refcount the internal structures for Threaded objects, so they should continue to work after their creator has gone out of scope.
+Now, we refcount the internal structures for ThreadSafe objects, so they should continue to work after their creator has gone out of scope.
 
 This test verifies that locking, property write and more continue to work when the thread that created it destroys its original reference.
 --FILE--
 <?php
 
-$t = new class extends \Thread{
+$t = new class extends \pmmp\thread\Thread{
 	/** @var string|null */
 	public $chan = null;
 
@@ -17,28 +17,27 @@ $t = new class extends \Thread{
 	public $shutdown = false;
 
 	public function run() : void{
-		$chan = $this->synchronized(function() : \ThreadedArray{
-			$chan = new \ThreadedArray;
+		$this->synchronized(function() : void{
+			$chan = new \pmmp\thread\ThreadSafeArray;
 			$chan[] = 1;
-			$this->chan = serialize($chan);
+			$this->chan = $chan;
 			$this->notify();
-			return $chan;
 		});
-		$this->synchronized(function() use(&$chan) : void{
+		$this->synchronized(function() : void{
 			while(!$this->shutdown){
 				$this->wait();
 			}
-			$chan = null; //destroy from creator context
+			$this->chan = null; //destroy from creator context
 		});
 	}
 };
 
-$t->start();
-$chan = $t->synchronized(function() use($t) : \ThreadedArray{
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
+$chan = $t->synchronized(function() use($t) : \pmmp\thread\ThreadSafeArray{
 	while($t->chan === null){
 		$t->wait();
 	}
-	return unserialize($t->chan);
+	return $t->chan;
 });
 $t->synchronized(function() use($t) : void{
 	$t->shutdown = true;
@@ -57,15 +56,15 @@ $chan->synchronized(function() : void{
 echo "ok\n";
 ?>
 --EXPECTF--
-object(ThreadedArray)#%d (1) {
+object(pmmp\thread\ThreadSafeArray)#%d (1) {
   [0]=>
   int(1)
 }
 int(1)
-object(ThreadedArray)#%d (0) {
+object(pmmp\thread\ThreadSafeArray)#%d (0) {
 }
 string(4) "test"
-object(ThreadedArray)#%d (1) {
+object(pmmp\thread\ThreadSafeArray)#%d (1) {
   ["property"]=>
   string(4) "test"
 }

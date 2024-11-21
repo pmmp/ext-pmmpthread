@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,50 +15,113 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_GLOBALS
-#define HAVE_PTHREADS_GLOBALS
 
-#ifndef HAVE_PTHREADS_GLOBALS_H
-#	include <src/globals.h>
+#include <src/globals.h>
+#include <src/prepare.h>
+
+struct _pmmpthread_globals pmmpthread_globals;
+
+#ifndef PMMPTHREAD_G
+#	define PMMPTHREAD_G () ?  : (void***) &pmmpthread_globals
 #endif
 
-#ifndef HAVE_PTHREADS_PREPARE_H
-#	include <src/prepare.h>
-#endif
-
-struct _pthreads_globals pthreads_globals;
-
-#ifndef PTHREADS_G
-#	define PTHREADS_G () ?  : (void***) &pthreads_globals
-#endif
-
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-static void pthreads_globals_shared_sockets_dtor_func(zval *pDest) {
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+static void pmmpthread_globals_shared_sockets_dtor_func(zval *pDest) {
 	close(Z_LVAL_P(pDest));
 }
 #endif
 
-/* {{{ */
-zend_bool pthreads_globals_init(){
-	if (!PTHREADS_G(init)&&!PTHREADS_G(failed)) {
-		PTHREADS_G(init)=1;
-		if (!(PTHREADS_G(monitor)=pthreads_monitor_alloc()))
-			PTHREADS_G(failed)=1;
-		if (PTHREADS_G(failed)) {
-			PTHREADS_G(init)=0;
-		} else {
-			zend_hash_init(
-				&PTHREADS_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-			zend_hash_init(
-				&PTHREADS_G(shared_sockets), 16, NULL, (dtor_func_t) pthreads_globals_shared_sockets_dtor_func, 1);
-#endif
+static void pmmpthread_globals_string_dtor_func(zval* pDest) {
+	free(Z_STR_P(pDest));
+}
+
+zend_string* pmmpthread_globals_find_interned_string(zend_string* string) {
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) {
+		//permanent strings should always safe to share
+		return string;
+	}
+
+	zend_string_hash_val(string); //interned strings must always have their hash values known
+
+	//try zend's table first
+	zend_string* result = zend_interned_string_find_permanent(string);
+	if (result != NULL) {
+		return result;
+	}
+
+	if (pmmpthread_globals_lock()) {
+		zval *zv = zend_hash_find(&PMMPTHREAD_G(interned_strings), string);
+		if (zv != NULL) {
+			result = Z_STR_P(zv);
 		}
 
-		PTHREADS_G(autoload_file) = NULL;
+		pmmpthread_globals_unlock();
+	}
+
+	return result;
+}
+
+zend_string* pmmpthread_globals_add_interned_string(zend_string* string) {
+	if (GC_FLAGS(string) & IS_STR_PERMANENT) {
+		//permanent strings should always safe to share
+		return string;
+	}
+
+	zend_string* result = NULL;
+
+	zend_string_hash_val(string); //interned strings must always have their hash values known
+	if (pmmpthread_globals_lock()) {
+		result = pmmpthread_globals_find_interned_string(string);
+		if (result == NULL) {
+			zval value;
+
+			result = zend_string_init(ZSTR_VAL(string), ZSTR_LEN(string), 1);
+			GC_ADD_FLAGS(result, IS_STR_INTERNED | IS_STR_PERMANENT);
+			GC_SET_REFCOUNT(result, 1);
+			ZSTR_H(result) = ZSTR_H(string);
+
+			ZVAL_INTERNED_STR(&value, result);
+
+			zend_hash_add_new(&PMMPTHREAD_G(interned_strings), result, &value);
+		}
+
+		pmmpthread_globals_unlock();
+	}
+
+	return result;
+}
+
+/* {{{ */
+zend_bool pmmpthread_globals_init(){
+	if (!PMMPTHREAD_G(init)&&!PMMPTHREAD_G(failed)) {
+		PMMPTHREAD_G(init)=1;
+		if (pmmpthread_monitor_init(&PMMPTHREAD_G(monitor)) == FAILURE)
+			PMMPTHREAD_G(failed)=1;
+		if (PMMPTHREAD_G(failed)) {
+			PMMPTHREAD_G(init)=0;
+		} else {
+			PMMPTHREAD_G(thread_shared_globals) = NULL; //this will be inited on main thread request start
+			zend_hash_init(
+				&PMMPTHREAD_G(objects), 64, NULL, (dtor_func_t) NULL, 1);
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+			zend_hash_init(
+				&PMMPTHREAD_G(shared_sockets), 16, NULL, (dtor_func_t) pmmpthread_globals_shared_sockets_dtor_func, 1);
+#endif
+			zend_hash_init(
+				&PMMPTHREAD_G(interned_strings),
+				1024,
+				NULL,
+				(dtor_func_t)pmmpthread_globals_string_dtor_func,
+				1
+			);
+			ZVAL_UNDEF(&PMMPTHREAD_G(undef_zval));
+			PMMPTHREAD_G(thread_count) = 0; //only counting threads explicitly created by pmmpthread
+		}
+
+		PMMPTHREAD_G(autoload_file) = NULL;
 
 #define INIT_STRING(n, v) do { \
-	PTHREADS_G(strings).n = zend_new_interned_string(zend_string_init(v, 1)); \
+	PMMPTHREAD_G(strings).n = zend_new_interned_string(zend_string_init(v, 1)); \
 } while(0)
 
 		INIT_STRING(run, ZEND_STRL("run"));
@@ -66,33 +129,29 @@ zend_bool pthreads_globals_init(){
 		INIT_STRING(session.use_cookies, ZEND_STRL("use_cookies"));
 #undef INIT_STRING
 
-		ZVAL_INTERNED_STR(
-			&PTHREADS_G(strings).worker,
-			zend_new_interned_string(zend_string_init(ZEND_STRL("worker"), 1)));
-
-		return PTHREADS_G(init);
+		return PMMPTHREAD_G(init);
 	} else return 0;
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_lock(){
-	return pthreads_monitor_lock(PTHREADS_G(monitor));
+zend_bool pmmpthread_globals_lock(){
+	return pmmpthread_monitor_lock(&PMMPTHREAD_G(monitor));
 } /* }}} */
 
 /* {{{ */
-void pthreads_globals_unlock() {
-	pthreads_monitor_unlock(PTHREADS_G(monitor));
+void pmmpthread_globals_unlock() {
+	pmmpthread_monitor_unlock(&PMMPTHREAD_G(monitor));
 } /* }}} */
 
 /* {{{ */
-pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length) {
-	pthreads_zend_object_t *bucket = (pthreads_zend_object_t*) ecalloc(1, length);
+pmmpthread_zend_object_t* pmmpthread_globals_object_alloc(size_t length) {
+	pmmpthread_zend_object_t *bucket = (pmmpthread_zend_object_t*) ecalloc(1, length);
 
-	if (pthreads_globals_lock()) {
+	if (pmmpthread_globals_lock()) {
 		zend_hash_index_update_ptr(
-			&PTHREADS_G(objects),
+			&PMMPTHREAD_G(objects),
 			(zend_ulong) bucket, bucket);
-		pthreads_globals_unlock();
+		pmmpthread_globals_unlock();
 	}
 
 	memset(bucket, 0, length);
@@ -101,64 +160,64 @@ pthreads_zend_object_t* pthreads_globals_object_alloc(size_t length) {
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_object_valid(pthreads_zend_object_t *address) {
+zend_bool pmmpthread_globals_object_valid(pmmpthread_zend_object_t *address) {
 	zend_bool valid = 0;
 
 	if (!address)
 		return valid;
 
-	if (pthreads_globals_lock()) {
-		if (zend_hash_index_exists(&PTHREADS_G(objects), (zend_ulong) address)) {
+	if (pmmpthread_globals_lock()) {
+		if (zend_hash_index_exists(&PMMPTHREAD_G(objects), (zend_ulong) address)) {
 			valid = 1;
 		}
-		pthreads_globals_unlock();
+		pmmpthread_globals_unlock();
 	}
 
 	return valid;
 } /* }}} */
 
 /* {{{ */
-zend_bool pthreads_globals_object_delete(pthreads_zend_object_t *address) {
+zend_bool pmmpthread_globals_object_delete(pmmpthread_zend_object_t *address) {
 	zend_bool deleted = 0;
 
 	if (!address)
 		return deleted;
 
-	if (pthreads_globals_lock()) {
+	if (pmmpthread_globals_lock()) {
 		deleted = zend_hash_index_del(
-			&PTHREADS_G(objects), (zend_ulong) address);
-		pthreads_globals_unlock();
+			&PMMPTHREAD_G(objects), (zend_ulong) address);
+		pmmpthread_globals_unlock();
 	}
 
 	return deleted;
 } /* }}} */
 
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-void pthreads_globals_shared_socket_track(PHP_SOCKET socket) {
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+void pmmpthread_globals_shared_socket_track(PHP_SOCKET socket) {
 	if (socket < 0) {
 		return;
 	}
 
-	if (pthreads_globals_lock()) {
+	if (pmmpthread_globals_lock()) {
 		zval value;
 
 		ZVAL_LONG(&value, (zend_long) socket);
-		zend_hash_index_add(&PTHREADS_G(shared_sockets), (zend_ulong) socket, &value);
+		zend_hash_index_add(&PMMPTHREAD_G(shared_sockets), (zend_ulong) socket, &value);
 
-		pthreads_globals_unlock();
+		pmmpthread_globals_unlock();
 	}
 }
 
-zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket) {
+zend_bool pmmpthread_globals_socket_shared(PHP_SOCKET socket) {
 	zend_bool result = 0;
 	if (socket < 0) {
 		return result;
 	}
 
-	if (pthreads_globals_lock()) {
-		result = zend_hash_index_find(&PTHREADS_G(shared_sockets), (zend_ulong) socket) != NULL;
+	if (pmmpthread_globals_lock()) {
+		result = zend_hash_index_find(&PMMPTHREAD_G(shared_sockets), (zend_ulong) socket) != NULL;
 	
-		pthreads_globals_unlock();
+		pmmpthread_globals_unlock();
 	}
 
 	return result;
@@ -166,31 +225,31 @@ zend_bool pthreads_globals_socket_shared(PHP_SOCKET socket) {
 #endif
 
 /* {{{ */
-zend_bool pthreads_globals_set_autoload_file(const zend_string *path) {
-	if (pthreads_globals_lock()) {
+zend_bool pmmpthread_globals_set_autoload_file(const zend_string *path) {
+	if (pmmpthread_globals_lock()) {
 		zend_string *copy = path ? zend_string_init(ZSTR_VAL(path), ZSTR_LEN(path), 1) : NULL;
 
-		if (PTHREADS_G(autoload_file)) {
-			zend_string_release(PTHREADS_G(autoload_file));
+		if (PMMPTHREAD_G(autoload_file)) {
+			zend_string_release(PMMPTHREAD_G(autoload_file));
 		}
-		PTHREADS_G(autoload_file) = copy;
-		pthreads_globals_unlock();
+		PMMPTHREAD_G(autoload_file) = copy;
+		pmmpthread_globals_unlock();
 		return 1;
 	}
 	return 0;
 } /* }}} */
 
 /* {{{ */
-void pthreads_globals_shutdown() {
-	if (PTHREADS_G(init)) {
-		PTHREADS_G(init)=0;
-		PTHREADS_G(failed)=0;
+void pmmpthread_globals_shutdown() {
+	if (PMMPTHREAD_G(init)) {
+		PMMPTHREAD_G(init)=0;
+		PMMPTHREAD_G(failed)=0;
 		/* we allow proc shutdown to destroy tables, and global strings */
-		pthreads_monitor_free(PTHREADS_G(monitor));
-		zend_hash_destroy(&PTHREADS_G(objects));
-#if HAVE_PTHREADS_EXT_SOCKETS_SUPPORT
-		zend_hash_destroy(&PTHREADS_G(shared_sockets));
+		pmmpthread_monitor_destroy(&PMMPTHREAD_G(monitor));
+		zend_hash_destroy(&PMMPTHREAD_G(objects));
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+		zend_hash_destroy(&PMMPTHREAD_G(shared_sockets));
 #endif
+		zend_hash_destroy(&PMMPTHREAD_G(interned_strings));
 	}
 } /* }}} */
-#endif

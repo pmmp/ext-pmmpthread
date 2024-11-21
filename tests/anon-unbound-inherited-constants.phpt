@@ -5,9 +5,9 @@ Linking an anonymous class can cause new constants to become available. These sh
 from copied versions of the anonymous class.
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 interface Dummy {
 	public const A_CONSTANT = 1;
@@ -17,12 +17,12 @@ interface Dummy2 {
 	public const A_CONSTANT_2 = 2;
 }
 
-abstract class Base extends ThreadedRunnable implements Dummy {
+abstract class Base extends \pmmp\thread\Runnable implements Dummy {
 	public const BASE_CONSTANT = 3;
 }
 
 $collectable = new class extends Base implements Dummy2 {
-	public function run() {
+	public function run() : void{
 		var_dump(self::A_CONSTANT);
 		var_dump(static::A_CONSTANT);
 		var_dump(self::A_CONSTANT_2);

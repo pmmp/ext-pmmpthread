@@ -8,8 +8,8 @@ variables_order=ES
 --FILE--
 <?php
 
-class TestThread extends Thread {
-	public function run() {
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{
 		var_dump(is_array($GLOBALS));
 		var_dump(is_array($_SERVER));
 		var_dump(is_array($_ENV));
@@ -17,7 +17,7 @@ class TestThread extends Thread {
 }
 
 $thread = new TestThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 bool(true)

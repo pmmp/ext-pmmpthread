@@ -16,9 +16,9 @@ class childClass extends parentClass {
 
 }
 
-class clientThread extends Thread {
+class clientThread extends \pmmp\thread\Thread {
 
-    public function run() {
+    public function run() : void{
         $objChild = new childClass();
 
     }               
@@ -27,7 +27,7 @@ class clientThread extends Thread {
 
 
 $objClientThread = new clientThread();
-$objClientThread->start();
+$objClientThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objClientThread->join();
 echo "OK\n";
 --EXPECTF--

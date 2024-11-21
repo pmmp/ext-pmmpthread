@@ -2,10 +2,10 @@
 Test traits scope (gh issue #484)
 --FILE--
 <?php
-class MyWork extends \ThreadedRunnable {
+class MyWork extends \pmmp\thread\Runnable {
 	use \MyTrait;
 
-	public function run() {
+	public function run() : void{
     	$this->getSomething();
 	}
 }
@@ -19,7 +19,7 @@ trait MyTrait {
 	}
 }
 
-$pool = new \Pool(1, \Worker::class);
+$pool = new \pmmp\thread\Pool(1, \pmmp\thread\Worker::class);
 $pool->submit(new MyWork());
 $pool->shutdown();
 --EXPECT--

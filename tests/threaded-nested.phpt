@@ -1,19 +1,19 @@
 --TEST--
-Test nested Threaded objects
+Test nested ThreadSafe objects
 --DESCRIPTION--
-This test verifies the possibility to nest Threaded objects
+This test verifies the possibility to nest ThreadSafe objects
 --FILE--
 <?php
-class Node extends ThreadedBase {}
+class Node extends \pmmp\thread\ThreadSafe {}
 
-class TestNestedWrite extends Thread {
+class TestNestedWrite extends \pmmp\thread\Thread {
     private $shared;
 
-    public function __construct(ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         var_dump($this->shared['queue'][0]);
 
         // link to new var
@@ -23,7 +23,7 @@ class TestNestedWrite extends Thread {
         //unset($this->shared['queue'][0]);
 
         // or replace ref
-        $this->shared['queue'][0] = new ThreadedArray();
+        $this->shared['queue'][0] = new \pmmp\thread\ThreadSafeArray();
 
         $this->shared['lock'] = true;
         $this->shared->synchronized(function() : void{
@@ -45,14 +45,14 @@ class TestNestedWrite extends Thread {
     }
 }
 
-class TestNestedRead extends Thread {
+class TestNestedRead extends \pmmp\thread\Thread {
     private $shared;
 
-    public function __construct(ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         $this->shared->synchronized(function() : void{
             while(!isset($this->shared['lock'])){
                 $this->shared->wait();
@@ -75,19 +75,19 @@ class TestNestedRead extends Thread {
     }
 }
 
-class Test extends Thread {
-    public function run() {
-        $queue = new ThreadedArray();
-        $queue[0] = new ThreadedArray();
+class Test extends \pmmp\thread\Thread {
+    public function run() : void{
+        $queue = new \pmmp\thread\ThreadSafeArray();
+        $queue[0] = new \pmmp\thread\ThreadSafeArray();
 
-        $shared = new ThreadedArray();
+        $shared = new \pmmp\thread\ThreadSafeArray();
         $shared['queue'] = $queue;
 
         $thread = new TestNestedWrite($shared);
-        $thread->start();
+        $thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
         $thread2 = new TestNestedRead($shared);
-        $thread2->start();
+        $thread2->start(\pmmp\thread\Thread::INHERIT_ALL);
 
         $shared->synchronized(function() use ($shared) : void{
             while(!isset($shared['lock3'])){
@@ -105,14 +105,14 @@ class Test extends Thread {
     }
 }
 $thread = new Test();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 ?>
 --EXPECT--
-object(ThreadedArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }
-object(ThreadedArray)#4 (0) {
+object(pmmp\thread\ThreadSafeArray)#5 (0) {
 }
-object(Node)#4 (0) {
+object(Node)#5 (0) {
 }
 

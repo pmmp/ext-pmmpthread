@@ -4,7 +4,7 @@ Test magic __isset and __unset
 This test verifies that __isset and __unset work as expected
 --FILE--
 <?php
-class Test extends ThreadedBase {
+class Test extends \pmmp\thread\ThreadSafe {
 
     public function __isset($key) {
         printf("magic %s\n", __FUNCTION__);

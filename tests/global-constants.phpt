@@ -10,8 +10,8 @@ define ("DCONST", 1.19);
 define ("NCONST", null);
 define ("BCONST", true);
 
-class TestThread extends Thread {
-	public function run() {
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{
 		foreach (array(
 			"string" => SCONST,
 			"long" => LCONST,
@@ -26,7 +26,7 @@ class TestThread extends Thread {
 }
 
 $thread = new TestThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 string:string(8) "mystring"

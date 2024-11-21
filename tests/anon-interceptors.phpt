@@ -4,13 +4,13 @@ Test interceptors of anonymous classes
 This test verifies that interceptors of anonymous Thread objects work as expected
 --FILE--
 <?php
-class Foo extends ThreadedBase {
+class Foo extends \pmmp\thread\ThreadSafe {
     public $bar;
 
     public function __construct() {
         var_dump(__METHOD__);
 
-        $this->bar = new class extends ThreadedBase {
+        $this->bar = new class extends \pmmp\thread\ThreadSafe {
             private $buzz;
 
             public function __construct() {
@@ -35,22 +35,22 @@ class Foo extends ThreadedBase {
     }
 }
 
-class Test extends \Thread {
-    public function run() {
+class Test extends \pmmp\thread\Thread {
+    public function run() : void{
         $foo = new Foo();
         var_dump($foo->bar);
     }
 }
 $thread = new Test();
-$thread->start() && $thread->join();
---EXPECTF--
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
+--EXPECT--
 string(16) "Foo::__construct"
 string(16) "Bar::__construct"
 string(4) "buzz"
 string(11) "hello world"
 string(11) "hello world"
-object(%s@anonymous)#3 (1) {
-  ["buzz"]=>
+object(pmmp\thread\ThreadSafe@anonymous)#4 (1) {
+  ["buzz":"pmmp\thread\ThreadSafe@anonymous":private]=>
   string(11) "hello world"
 }
 string(15) "Foo::__destruct"

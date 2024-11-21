@@ -1,3 +1,3 @@
 <?php
 
-class ExternalBaseClass extends \ThreadedBase {}
+class ExternalBaseClass extends \pmmp\thread\ThreadSafe {}

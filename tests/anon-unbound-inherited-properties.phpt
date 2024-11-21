@@ -5,16 +5,16 @@ Linking an anonymous class can cause new properties to become available. These s
 be available on the copied versions of anonymous classes.
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
-$worker->start();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
-class Base extends ThreadedRunnable {
+class Base extends \pmmp\thread\Runnable {
 	public static $staticProp = "staticProp";
 
 	public $prop = "prop";
 
-	public function run() {}
+	public function run() : void{}
 }
 
 class Base2 extends Base {
@@ -24,7 +24,7 @@ class Base2 extends Base {
 }
 
 $collectable = new class extends Base2 {
-	public function run() {
+	public function run() : void{
 		var_dump($this->prop);
 		var_dump($this->prop2);
 		var_dump(self::$staticProp);

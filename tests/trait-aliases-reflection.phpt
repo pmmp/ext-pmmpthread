@@ -11,15 +11,15 @@ trait Hello {
 class Foo {
     use Hello { world as sun; }
 }
-$t = new class extends Thread {
-    public function run() {
+$t = new class extends \pmmp\thread\Thread {
+    public function run() : void{
         $foo = new Foo();
 
         $class = new ReflectionClass($foo);
         var_dump($class->getTraitAliases());
     }
 };
-$t->start() && $t->join();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 --EXPECT--
 array(1) {
   ["sun"]=>

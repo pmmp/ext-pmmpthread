@@ -14,15 +14,15 @@ class B extends A{
     public static $var = 'B';
 }
 
-class thr extends Thread{
-    public function run(){
+class thr extends \pmmp\thread\Thread{
+    public function run() : void{
         $a = new A();
         var_dump($a->gVar());
     }
 }
 
 $thr = new thr();
-$thr->start();
+$thr->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thr->join();
 --EXPECT--
 string(1) "A"

@@ -1,13 +1,16 @@
 <?php
+
+use pmmp\thread\Thread;
+
 /*
 	Rules:
 		1. only ever wait FOR something
 		2. only ever wait FOR something
 		3. only ever wait FOR something
 
-	Only one thread may use synchronized() on a Threaded object at any given time, unless the synchronized closure calls wait().
+	Only one thread may enter synchronized() on a ThreadSafe object at any given time, unless the synchronized closure calls wait().
 	Other threads which try to use synchronized() at the same time will block until either:
-		a) the currently-executing synchronized callable calls wait() on the Threaded object
+		a) the currently-executing synchronized callable calls wait() on the ThreadSafe object
 		b) the currently-executing synchronized callable returns.
 	
 	Threads are not guaranteed to execute in any particular order; therefore, the following code could execute in one of two ways:
@@ -16,6 +19,8 @@
 */
 
 class BadCode extends Thread{
+	public bool $awake = false;
+
 	public function run() : void{
 		/* The following is BAD CODE
 		 * The main thread might check `awake` here, and see that it's false: */
@@ -28,7 +33,9 @@ class BadCode extends Thread{
 	}
 }
 class GoodCode extends Thread{
-	public function run() {
+	public bool $awake = false;
+
+	public function run() : void{
 		/* The following is GOOD CODE
 		 * One of two things might happen:
 		 *     1) this synchronized block executes first, awake becomes true, and the main thread will never go to sleep,
@@ -45,9 +52,11 @@ class GoodCode extends Thread{
 }
 $thread = new GoodCode();
 
-$thread->start();
+/* this thread isn't using any other code - we can use INHERIT_NONE */
+$thread->start(Thread::INHERIT_NONE);
+
 /*
- * wait() can ONLY be reliably used inside a synchronized block on the SAME Threaded object that you're synchronizing with.
+ * wait() can ONLY be reliably used inside a synchronized block on the SAME ThreadSafe object that you're synchronizing with.
  * The behaviour of wait() is undefined if used outside a synchronized() block on the same object that you're wait()ing on.
  * (This means it might or might not do what you expect).
  *

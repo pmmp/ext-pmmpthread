@@ -4,14 +4,14 @@ Test wait/notify
 This test will verify wait/notify functionality
 --FILE--
 <?php
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public $sent;
 	
 	public function __construct() {
 	    $this->sent = false;
 	}
 	
-	public function run(){
+	public function run() : void{
 	    $this->synchronized(function($self){
 		    $self->sent = true;
 		    $self->notify();
@@ -19,7 +19,7 @@ class ThreadTest extends Thread {
 	}
 }
 $thread = new ThreadTest();
-if($thread->start()) {
+if($thread->start(\pmmp\thread\Thread::INHERIT_ALL)) {
 	$thread->synchronized(function($me){
 	    if (!$me->sent) {
 		    var_dump($me->wait());

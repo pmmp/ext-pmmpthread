@@ -1,72 +1,63 @@
 <?php
-/*
-* This is for advanced users ONLY !!
-*
-* In a large application, the overhead of each thread having to copy the entire context may become undesireable.
-* Selective Inheritance serves as a way to choose which parts of the environment are available in threading contexts
-* Following is some code that demonstrates the use of this feature
-*
-* Note: if a member of a pthreads object, is an object itself of a user defined type, and the class table is not inherited
-*   you are asking for trouble !!
-* Note: the included_files table is only populated where PTHREADS_INHERIT_INCLUDES is set
-*/
 
-class my_class {}
+use pmmp\thread\Thread;
+
+/*
+ * When starting a Thread, many things must be copied from the parent thread's context. This includes:
+ * - INI settings set by ini_set()
+ * - User-defined code (classes, functions, constants, list of included files)
+ *
+ * This process is extremely costly and bug-prone, and should be avoided wherever possible.
+ *
+ * When to use inheritance options:
+ *
+ * - Thread::INHERIT_NONE: Copies nothing. Use when you can autoload all the code you need (best for performance and memory usage)
+ * - Thread::INHERIT_INI: Copies INI settings but no code. Use this if you've used ini_set() and want to make sure the settings are copied, and your code can't re-apply them inside the thread.
+ * - Thread::INHERIT_ALL: Copies everything. Use in single-file scripts, or when you can't autoload parts of your code (slow, wastes memory)
+ * - Everything else: Never, they are legacy leftovers and have no good use case
+ *
+ * NOTE: The following things are **always** available on threads, regardless of INHERIT_* options:
+ * - Built-in classes, functions and constants (provided by extensions or the PHP core)
+ * - Preloaded user-defined classes, functions and constants (https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.preload)
+ */
+
+class my_class{
+}
 
 function my_function(){
-    return __FUNCTION__;
+	return __FUNCTION__;
 }
 
-define ("my_constant", 1);
+define("my_constant", 1);
 
-class Selective extends Thread {
-    public function run() {
-        /* functions exist where PTHREADS_INHERIT_FUNCTIONS is set */
-        var_dump(function_exists("my_function"));
-        /* classes exist where PTHREADS_INHERIT_CLASSES is set **BE CAREFUL** */
-        var_dump(class_exists("my_class"));
-        /* constants exist where PTHREADS_INHERIT_CONSTANTS is set */
-        var_dump(defined("my_constant"));
-    }
+ini_set('memory_limit', '123456789');
+
+class Selective extends Thread{
+	public function run() : void{
+		/* functions exist where Thread::INHERIT_FUNCTIONS is set */
+		echo "User-defined function inherited: " . (function_exists("my_function") ? "yes" : "no") . "\n";
+		/* classes exist where Thread::INHERIT_CLASSES is set **BE CAREFUL** */
+		echo "User-defined class inherited: " . (class_exists("my_class") ? "yes" : "no") . "\n";
+		/* constants exist where Thread::INHERIT_CONSTANTS is set */
+		echo "User-defined constant inherited: " . (defined("my_constant") ? "yes" : "no") . "\n";
+
+		/* INI entries exist where Thread::INHERIT_INI is set */
+		echo "ini_set() INI entries inherited: " . (ini_get('memory_limit') === '123456789' ? "yes" : "no") . "\n";
+
+		/* built-in classes, functions and constants are always available */
+		echo "Built-in classes available: " . (class_exists("stdClass") ? "yes" : "no") . "\n";
+		echo "Built-in functions available: " . (function_exists("var_dump") ? "yes" : "no") . "\n";
+		echo "Built-in constants available: " . (defined("PHP_VERSION") ? "yes" : "no") . "\n";
+	}
 }
 
-?>
-expect:
-    bool(false)
-    bool(false)
-    bool(false)
-<?php
-$test = new Selective();
-$test->start(PTHREADS_INHERIT_NONE);
-$test->join();
-?>
-=======================================
-expect:
-    bool(false)
-    bool(true)
-    bool(true)
-<?php
-$test = new Selective();
-$test->start(PTHREADS_INHERIT_ALL & ~PTHREADS_INHERIT_FUNCTIONS);
-$test->join();
-?>
-=======================================
-expect:
-    bool(false)
-    bool(false)
-    bool(true)
-<?php
-$test = new Selective();
-$test->start(PTHREADS_INHERIT_INI | PTHREADS_INHERIT_CONSTANTS);
-$test->join();
-?>
-=======================================
-expect:
-    bool(true)
-    bool(true)
-    bool(true)
-<?php
-$test = new Selective();
-$test->start();
-$test->join();
-?>
+foreach([
+	"INHERIT_NONE" => Thread::INHERIT_NONE,
+	"INHERIT_INI" => Thread::INHERIT_INI,
+	"INHERIT_ALL" => Thread::INHERIT_ALL
+] as $name => $value){
+	echo "--- $name ---\n";
+	$test = new Selective();
+	$test->start($value);
+	$test->join();
+}

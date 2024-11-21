@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,19 +15,34 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_COPY_H
-#define HAVE_PTHREADS_COPY_H
+#ifndef HAVE_PMMPTHREAD_COPY_H
+#define HAVE_PMMPTHREAD_COPY_H
 
-#include <src/pthreads.h>
-
-#if PHP_VERSION_ID >= 80000
+#include <src/pmmpthread.h>
+#include <src/thread.h>
 #include <Zend/zend_attributes.h>
-/* {{{ */
-HashTable* pthreads_copy_attributes(HashTable *attributes); /* }}} */
-#endif
+#include <Zend/zend_types.h>
+#include <src/prepare.h>
 
 /* {{{ */
-zend_function* pthreads_copy_function(const zend_function *function); /* }}} */
+zend_string* pmmpthread_copy_string(zend_string* s); /* }}} */
 
+/* {{{ */
+int pmmpthread_copy_zval(const pmmpthread_ident_t* owner, zval* dest, zval* source); /* }}} */
+
+/* {{{ */
+HashTable* pmmpthread_copy_attributes(const pmmpthread_ident_t* owner, HashTable *attributes, zend_string *filename); /* }}} */
+
+/* {{{ */
+void pmmpthread_copy_zend_type(const zend_type* old_type, zend_type* new_type); /* }}} */
+
+/* {{{ */
+zend_function* pmmpthread_copy_function(const pmmpthread_ident_t* owner, const zend_function *function); /* }}} */
+
+/* {{{ */
+zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closure* closure_obj, zend_bool silent, zval *pzval); /* }}} */
+
+/* {{{ */
+zend_result pmmpthread_resolve_enum_reference(zend_class_entry* enum_ce, zend_string* case_name, zval* pzval); /* }}} */
 #endif
 

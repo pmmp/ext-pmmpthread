@@ -1,21 +1,20 @@
 --TEST--
 Test that standard Socket objects get copied and overwritten properly
 --SKIPIF--
-<?php if(PHP_VERSION_ID < 80000) die("skip this test is for PHP 8.0+ only"); ?>
 <?php if(!extension_loaded("sockets")) die("skip ext-sockets is required for this test"); ?>
 --FILE--
 <?php
 
-$threaded = new class extends \ThreadedBase{};
+$threaded = new class extends \pmmp\thread\ThreadSafe{};
 $threaded->socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 socket_connect($threaded->socket, "127.0.0.1", 19132);
 
-$thread = new class($threaded) extends \Thread{
+$thread = new class($threaded) extends \pmmp\thread\Thread{
 
 	public bool $started = false;
 	public bool $wait1 = false;
 
-	public function __construct(public \ThreadedBase $threaded){}
+	public function __construct(public \pmmp\thread\ThreadSafe $threaded){}
 
 	public function run() : void{
 		socket_getpeername($this->threaded->socket, $addr, $port);
@@ -31,7 +30,7 @@ $thread = new class($threaded) extends \Thread{
 		echo "child thread: $addr:$port\n";
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $thread->synchronized(function() use ($thread) : void{
 	while(!$thread->started) $thread->wait();

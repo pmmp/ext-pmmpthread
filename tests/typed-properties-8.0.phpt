@@ -1,7 +1,5 @@
 --TEST--
 Test that typed properties on copied classes work properly
---SKIPIF--
-<?php if(PHP_VERSION_ID < 80000) die("skip: this test is for 8.0+ only"); ?>
 --FILE--
 <?php
 
@@ -75,9 +73,9 @@ testStatics();
 testNonStatics();
 echo "--- main thread end ---\n";
 
-$w = new Worker;
-$w->start();
-$w->stack(new class extends \ThreadedRunnable{
+$w = new \pmmp\thread\Worker;
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
+$w->stack(new class extends \pmmp\thread\Runnable{
 	public function run() : void{
 		echo "--- worker thread start ---\n";
 		testStatics();

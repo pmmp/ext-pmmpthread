@@ -4,14 +4,14 @@ Test graceful fatalities
 This test verifies that fatalities are graceful with regard to state
 --FILE--
 <?php
-class TestThread extends Thread {
-	public function run(){
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{
 		/* silent fatal error */
 		echo @MY::$FATAL;
 	}
 }
 $test = new TestThread();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 var_dump($test->isTerminated());
 ?>

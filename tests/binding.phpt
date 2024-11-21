@@ -4,14 +4,14 @@ Test pthreads connections
 This test verifies that variables are bound properly by pthreads
 --FILE--
 <?php
-class ThreadTesting extends Thread {
+class ThreadTesting extends \pmmp\thread\Thread {
 	public $other;
 	public $done;
 	
 	public function setOther($other){
 		$this->other = $other;
 	}
-	public function run(){
+	public function run() : void{
 		$this->synchronized(function($that) {
 			$that->done = true;
 			$that->notify();
@@ -19,14 +19,14 @@ class ThreadTesting extends Thread {
 	}
 }
 
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public $other;
 	public $done;
 	
 	public function setOther($other){
 		$this->other = $other;
 	}
-	public function run(){
+	public function run() : void{
 		$this->synchronized(function($that) {
 			$that->done = true;
 			$that->notify();
@@ -39,7 +39,7 @@ $threads[1]=new ThreadTest();
 $threads[0]->setOther($threads[1]);
 $threads[1]->setOther($threads[0]);
 foreach($threads as $thread)
-	$thread->start();
+	$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 foreach($threads as $thread) {
 	$thread->synchronized(function() use($thread){
 		if (!$thread->done)

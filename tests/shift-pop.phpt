@@ -4,7 +4,17 @@ Test shift and pop
 This test verifies that shift and pop functionality are working
 --FILE--
 <?php
-$s = new ThreadedArray();
+$s = new \pmmp\thread\ThreadSafeArray();
+
+$s["string"] = "string";
+var_dump($s);
+var_dump($s->shift());
+var_dump($s);
+$s["string"] = "string";
+var_dump($s);
+var_dump($s->pop());
+var_dump($s);
+
 $s[] = "help";
 var_dump($s);
 var_dump($s->shift());
@@ -21,21 +31,35 @@ while (($next = $s->pop())) {
 }
 ?>
 --EXPECT--
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
+  ["string"]=>
+  string(6) "string"
+}
+string(6) "string"
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
+}
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
+  ["string"]=>
+  string(6) "string"
+}
+string(6) "string"
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
+}
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   [0]=>
   string(4) "help"
 }
 string(4) "help"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(ThreadedArray)#1 (1) {
+object(pmmp\thread\ThreadSafeArray)#2 (1) {
   [1]=>
   string(4) "next"
 }
 string(4) "next"
-object(ThreadedArray)#1 (0) {
+object(pmmp\thread\ThreadSafeArray)#2 (0) {
 }
-object(ThreadedArray)#1 (100) {
+object(pmmp\thread\ThreadSafeArray)#2 (100) {
   [1]=>
   int(1)
   [2]=>

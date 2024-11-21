@@ -6,18 +6,17 @@ class copy (it is only relevant to unbound anonymous classes).
 --FILE--
 <?php
 
-class T2 extends ThreadedRunnable
+class T2 extends \pmmp\thread\Runnable
 {
     public function __get($p){}
 
-	public function run()
-	{
+	public function run() : void{
         var_dump($this->prop);
 	}
 }
 
-$w = new Worker();
-$w->start();
+$w = new \pmmp\thread\Worker();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(new class extends T2 {});
 $w->shutdown();
 --EXPECT--

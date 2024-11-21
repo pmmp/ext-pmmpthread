@@ -1,6 +1,6 @@
 /*
   +----------------------------------------------------------------------+
-  | pthreads                                                             |
+  | pmmpthread                                                             |
   +----------------------------------------------------------------------+
   | Copyright (c) Joe Watkins 2012 - 2015                                |
   +----------------------------------------------------------------------+
@@ -15,28 +15,26 @@
   | Author: Joe Watkins <krakjoe@php.net>                                |
   +----------------------------------------------------------------------+
  */
-#ifndef HAVE_PTHREADS_PREPARE_H
-#define HAVE_PTHREADS_PREPARE_H
+#ifndef HAVE_PMMPTHREAD_PREPARE_H
+#define HAVE_PMMPTHREAD_PREPARE_H
 
-#ifndef HAVE_PTHREADS_H
-#	include <src/pthreads.h>
-#endif
+#include <src/pmmpthread.h>
 
 /* {{{ fetch prepared class entry */
-zend_class_entry* pthreads_prepare_single_class(pthreads_object_t* thread, zend_class_entry *candidate); /* }}} */
+zend_class_entry* pmmpthread_prepare_single_class(const pmmpthread_ident_t* source, zend_class_entry *candidate); /* }}} */
 
 /* {{{ */
-void pthreads_prepared_entry_late_bindings(pthreads_object_t* thread, zend_class_entry *candidate, zend_class_entry *prepared); /* }}} */
+void pmmpthread_prepared_entry_late_bindings(const pmmpthread_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared); /* }}} */
 
 /* {{{ */
-void pthreads_context_late_bindings(pthreads_object_t* thread); /* }}} */
+void pmmpthread_context_late_bindings(const pmmpthread_ident_t* source); /* }}} */
 
 /* {{{ */
-void pthreads_prepare_parent(pthreads_object_t *thread); /* }}} */
+int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options); /* }}} */
 
 /* {{{ */
-int pthreads_prepared_startup(pthreads_object_t* thread, pthreads_monitor_t *ready, zend_class_entry *thread_ce); /* }}} */
+void pmmpthread_call_shutdown_functions(void); /* }}} */
 
 /* {{{ */
-int pthreads_prepared_shutdown(void); /* }}} */
+int pmmpthread_prepared_shutdown(void); /* }}} */
 #endif

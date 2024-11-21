@@ -8,14 +8,14 @@ function TestFunction(){
 	return __FUNCTION__;
 }
 
-class TestThread extends Thread {
-	public function run() { 
+class TestThread extends \pmmp\thread\Thread {
+	public function run() : void{ 
 		printf("%s\n", TestFunction()); 
 	}
 }
 
 $thread = new TestThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 TestFunction

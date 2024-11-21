@@ -4,9 +4,9 @@ Test synchronized blocks
 This test verifies that syncronization is working
 --FILE--
 <?php
-class T extends Thread {
+class T extends \pmmp\thread\Thread {
         public $data;
-        public function run() {
+        public function run() : void{
             $this->synchronized(function($thread){
 				$thread->data = true;
 				$thread->notify();
@@ -14,7 +14,7 @@ class T extends Thread {
         }
 }
 $t = new T;
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function($thread){
 	if (!$thread->data) {
 		var_dump($thread->wait());

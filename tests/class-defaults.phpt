@@ -4,48 +4,29 @@ Test class defaults
 Class defaults should now initialize defaults properly
 --FILE--
 <?php
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 
-	public function run(){
+	public function __construct(){
+		$this->string = strrev($this->string);
+	}
+
+	public function run() : void{
 		var_dump($this);
 	}
 	
 	protected $string = "hello world";
-	protected $array  = array(1, 2, 3);
 	private $pstring  = "world hello";
-	private $parray   = array(3, 2, 1);
 	protected static $nocopy = true;
 }
 
 $test =new Test();
-$test->string = strrev($test->string);
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
---EXPECTF--
-object(Test)#%d (%d) {
-  ["string"]=>
+--EXPECT--
+object(Test)#2 (2) {
+  ["string":protected]=>
   string(11) "dlrow olleh"
-  ["array"]=>
-  object(ThreadedArray)#%d (%d) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    int(3)
-  }
-  ["pstring"]=>
+  ["pstring":"Test":private]=>
   string(11) "world hello"
-  ["parray"]=>
-  object(ThreadedArray)#%d (%d) {
-    [0]=>
-    int(3)
-    [1]=>
-    int(2)
-    [2]=>
-    int(1)
-  }
 }
-
-

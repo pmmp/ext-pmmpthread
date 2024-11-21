@@ -4,26 +4,26 @@ Test pthreads workers rules (collect)
 This test verifies that workers cannot be misused (collect)
 --FILE--
 <?php
-class Test extends Thread {
-	public function __construct(Worker $worker) {
+class Test extends \pmmp\thread\Thread {
+	public function __construct(\pmmp\thread\Worker $worker) {
 		$this->worker = $worker;
 	}
 	
-	public function run() {
+	public function run() : void{
 		$this->worker->collect();
 	}
 }
 
-$worker = new Worker();
-$worker->start();
+$worker = new \pmmp\thread\Worker();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test = new Test($worker);
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECTF--
-Fatal error: Uncaught RuntimeException: only the creator of this Worker may call collect in %s:8
+Fatal error: Uncaught RuntimeException: only the creator of this pmmp\thread\Worker may call collect in %s:%d
 Stack trace:
-#0 %s(8): Worker->collect()
+#0 %s(%d): pmmp\thread\Worker->collect()
 #1 [internal function]: Test->run()
 #2 {main}
-  thrown in %s on line 8
+  thrown in %s on line %d

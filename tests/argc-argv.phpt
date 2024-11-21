@@ -8,13 +8,13 @@ register_argc_argv=1
 --test=1
 --FILE--
 <?php
-$t = new class extends Thread{
+$t = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		global $argc, $argv;
 		var_dump($argc, $argv);
 	}
 };
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECTF--
 int(2)

@@ -5,10 +5,10 @@ We cannot supply a reference to properties, as modifying them would not have the
 To avoid surprises, we throw an exception ...
 --FILE--
 <?php
-foreach (new ThreadedArray() as $k => &$v) {}
+foreach (new \pmmp\thread\ThreadSafeArray() as $k => &$v) {}
 ?>
 --EXPECTF--
-Fatal error: Uncaught RuntimeException: iteration by reference is not allowed on ThreadedArray objects in %s:2
+Fatal error: Uncaught RuntimeException: iteration by reference is not allowed on pmmp\thread\ThreadSafeArray objects in %s:2
 Stack trace:
 #0 {main}
   thrown in %s on line 2

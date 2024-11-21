@@ -4,10 +4,10 @@ Test pthreads Worker::unstack
 This test verifies that unstack functions as intended
 --FILE--
 <?php
-$worker = new Worker();
+$worker = new \pmmp\thread\Worker();
 
-$worker->stack(new class extends ThreadedRunnable {
-	public function run() {
+$worker->stack(new class extends \pmmp\thread\Runnable {
+	public function run() : void{
 		var_dump($this);
 	}
 });

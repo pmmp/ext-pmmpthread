@@ -14,7 +14,7 @@ Test that doc comments are copied, no leaking/errors
 /**
 * Comment
 */
-class T extends Thread {  
+class T extends \pmmp\thread\Thread {  
     /**
     * @var testing
     */
@@ -25,7 +25,7 @@ class T extends Thread {
     * @package package
     * @subpackage subpackage
     */
-    public function run() {
+    public function run() : void{
        $reflect = new ReflectionMethod("T", "run");
        var_dump($reflect);
        var_dump($reflect->getDocComment());
@@ -33,7 +33,7 @@ class T extends Thread {
 }
 
 $t = new T();
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 
 $reflect = new ReflectionMethod("T", "run");
@@ -42,7 +42,7 @@ var_dump($reflect->getDocComment());
 
 ?>
 --EXPECTF--
-object(ReflectionMethod)#2 (2) {
+object(ReflectionMethod)#3 (2) {
   ["name"]=>
   string(3) "run"
   ["class"]=>
@@ -54,7 +54,7 @@ string(%d) "/**
     * @package package
     * @subpackage subpackage
     */"
-object(ReflectionMethod)#2 (2) {
+object(ReflectionMethod)#3 (2) {
   ["name"]=>
   string(3) "run"
   ["class"]=>

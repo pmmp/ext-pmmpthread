@@ -6,12 +6,12 @@ created, where the new class implements at least one interface
 --FILE--
 <?php
 
-$worker = new \Worker();
-$worker->start();
+$worker = new \pmmp\thread\Worker();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 interface A {}
-class task extends ThreadedRunnable implements A {
-	public function run() {}
+class task extends \pmmp\thread\Runnable implements A {
+	public function run() : void{}
 }
 
 $worker->stack(new task());

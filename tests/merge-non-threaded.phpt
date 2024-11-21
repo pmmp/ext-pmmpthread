@@ -14,16 +14,22 @@ $stdClass->foo = "foo";
 $stdClass->bar = "bar";
 $stdClass->baz = "baz";
 
-$safe = new ThreadedArray();
+$safe = new \pmmp\thread\ThreadSafeArray();
 $safe->merge($array);
 
 $safe["foo"] = "bar";
 $safe->merge($stdClass, false);
 
+$anonymous = new class{
+	public int $anonProp = 1;
+};
+$safe->merge($anonymous);
+
 var_dump($safe);
+
 ?>
 --EXPECTF--
-object(ThreadedArray)#%d (%d) {
+object(pmmp\thread\ThreadSafeArray)#%d (%d) {
   [0]=>
   int(0)
   [1]=>
@@ -50,4 +56,6 @@ object(ThreadedArray)#%d (%d) {
   string(3) "bar"
   ["baz"]=>
   string(3) "baz"
+  ["anonProp"]=>
+  int(1)
 }

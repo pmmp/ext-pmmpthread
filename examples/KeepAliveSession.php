@@ -1,5 +1,7 @@
 <?php
 
+use pmmp\thread\Thread;
+
 /**
  * This is small example that shows the implementation of a thread based HTTP server
  * supporting Connection: keep-alive and how session handling can be implemented.
@@ -9,11 +11,11 @@
  *     $ php -f keep-alive-session.php 8822
  *     
  * where 8822 is an example port to let the server listen to. To run this example you
- * need a thread-safe compiled PHP > 5.3 with pthreads enabled.
+ * need a thread-safe compiled PHP > 5.3 with pmmpthread enabled.
  * 
  * @author Tim Wagner <tw@appserver.io>
  * @version 0.1.0
- * @link https://github.com/krakjoe/pthreads
+ * @link https://github.com/pmmp/ext-pmmpthread
  */
 class Test extends Thread
 {
@@ -67,10 +69,8 @@ class Test extends Thread
 
     /**
      * The thread's run() method that runs in parallel.
-     * 
-     * @link http://www.php.net/manual/en/thread.run.php
      */
-    public function run()
+    public function run() : void
     {
                 
         // initialize the local variables and the socket
@@ -185,7 +185,13 @@ if ($socket) {
     
     while (++ $worker < 5) {
         $workers[$worker] = new Test($socket);
-        $workers[$worker]->start(PTHREADS_INHERIT_ALL|PTHREADS_ALLOW_HEADERS);
+
+        /*
+         * You really, really don't want to use INHERIT_ALL in a production application - it's really slow and wastes lots of memory
+         * Prefer INHERIT_NONE if you can autoload your code and don't set any INI entries
+         * In this example code, it's used because we're in a single-file script and don't have an autoloader
+         */
+        $workers[$worker]->start(Thread::INHERIT_ALL|Thread::ALLOW_HEADERS);
     }
     
     foreach ($workers as $worker) {

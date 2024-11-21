@@ -9,7 +9,7 @@ interface INamedThread {
 	function getName();
 }
 
-class TestThread extends Thread implements INamedThread {
+class TestThread extends \pmmp\thread\Thread implements INamedThread {
 	public function setName($name) {
 		$this->name = $name;
 	}
@@ -17,12 +17,12 @@ class TestThread extends Thread implements INamedThread {
 		return $this->name;
 	}
 	
-	public function run() { printf("%s\n", $this->getName()); }
+	public function run() : void{ printf("%s\n", $this->getName()); }
 }
 
 $thread = new TestThread();
 $thread->setName("InterfaceTest");
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 InterfaceTest

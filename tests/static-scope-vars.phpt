@@ -4,7 +4,7 @@ Test static scope vars gh issue #501
 Static member reference vars were not copied appropriately
 --FILE--
 <?php
-class Test extends ThreadedBase
+class Test extends \pmmp\thread\ThreadSafe
 {
     public function method()
     {
@@ -18,16 +18,15 @@ class Test extends ThreadedBase
 $objInstance = new Test();
 $objInstance->method();
 
-$objThread = new class extends Thread
+$objThread = new class extends \pmmp\thread\Thread
 {
-    public function run()
-    {
+    public function run() : void{
         $objInstance = new Test();
         $objInstance->method();
     }
 };
 
-$objThread->start();
+$objThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objThread->join();
 --EXPECT--
 string(5) "value"

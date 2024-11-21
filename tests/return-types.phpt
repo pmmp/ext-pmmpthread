@@ -8,13 +8,13 @@ function some() : string {
 	return __FUNCTION__;
 }
 
-$thread = new class extends Thread {
-	public function run () {
+$thread = new class extends \pmmp\thread\Thread {
+	public function run() : void{
 		var_dump(some());
 	}
 };
 
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 --EXPECT--
 string(4) "some"

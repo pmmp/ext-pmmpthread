@@ -5,14 +5,13 @@ This is yet another variation of static properties that has highlighted regressi
 --FILE--
 <?php
 
-$worker = new \Worker();
-$worker->start();
+$worker = new \pmmp\thread\Worker();
+$worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 class TestAsyncTask extends ManInTheMiddle {
 	public static $destroyed = false;
 
-	public function run()
-	{
+	public function run() : void{
 		try {
 			var_dump(self::$destroyed);
 		} catch(\Error $e) {
@@ -21,7 +20,7 @@ class TestAsyncTask extends ManInTheMiddle {
 	}
 }
 
-abstract class ManInTheMiddle extends \ThreadedRunnable{}
+abstract class ManInTheMiddle extends \pmmp\thread\Runnable{}
 
 error_reporting(-1);
 

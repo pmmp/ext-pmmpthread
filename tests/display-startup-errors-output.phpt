@@ -16,21 +16,22 @@ function undefined(){
 	if($a === true);
 }
 
-$w = new \Worker();
-$w->start();
-
-$w->stack(new class extends \ThreadedRunnable{
-	public function run(){
+$w = new \pmmp\thread\Worker();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
+$w->stack(new class extends \pmmp\thread\Runnable{
+	public function run() : void{
 		throwException();
 	}
 });
+$w->shutdown();
 
-$w->stack(new class extends \ThreadedRunnable{
-	public function run(){
+$w = new \pmmp\thread\Worker();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
+$w->stack(new class extends \pmmp\thread\Runnable{
+	public function run() : void{
 		undefined();
 	}
 });
-
 $w->shutdown();
 --EXPECTF--
 Fatal error: Uncaught Exception: Exception in %s:%d

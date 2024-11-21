@@ -6,14 +6,14 @@ property with the same name.
 --FILE--
 <?php
 
-class A extends \ThreadedRunnable{
+class A extends \pmmp\thread\Runnable{
 	public static $a = [];
 
-	public function run() {}
+	public function run() : void{}
 }
 class B extends A{
 
-	public function run(){
+	public function run() : void{
 		echo "---worker thread start---\n";
 		doTest();
 		echo "---worker thread end---\n";
@@ -26,8 +26,8 @@ function doTest() : void{
 	var_dump(A::$a);
 }
 
-$t = new \Worker();
-$t->start();
+$t = new \pmmp\thread\Worker();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $t->stack(new B);
 $t->shutdown();

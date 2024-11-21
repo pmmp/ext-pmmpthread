@@ -4,14 +4,14 @@ Test pthreads constant array copy
 <?php
 const CONSTANT_ARRAY = ['ok'];
 
-class Test extends Thread {
-        public function run() {
+class Test extends \pmmp\thread\Thread {
+        public function run() : void{
                 echo CONSTANT_ARRAY[0];
         }
 }
 
 $test = new Test();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 --EXPECT--
 ok

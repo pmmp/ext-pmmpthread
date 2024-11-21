@@ -20,12 +20,12 @@ class MyClass implements ExternalConstantsInterface {}
 
 var_dump(MyClass::BUZZ);
 
-$thread = new class extends Thread{
+$thread = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		var_dump(MyClass::BUZZ);
 	}
 };
-$thread->start(PTHREADS_INHERIT_ALL) && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 --EXPECT--
 int(1)
 int(1)

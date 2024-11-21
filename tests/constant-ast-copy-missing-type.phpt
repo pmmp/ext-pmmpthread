@@ -5,10 +5,10 @@ AST in op array literals caused corrupted heaps because it wasn't copied properl
 --FILE--
 <?php
 namespace any\name\space {
-	class Test extends \Thread {
+	class Test extends \pmmp\thread\Thread {
 		const KEY = '';
 
-		public function run() {
+		public function run() : void{
 			static $arrConst = [self::KEY => true];
 
 			var_dump($arrConst);
@@ -20,7 +20,7 @@ namespace {
 	use any\name\space\Test;
 
 	$objTest = new Test();
-	$objTest->start();
+	$objTest->start(\pmmp\thread\Thread::INHERIT_ALL);
 	$objTest->join();
 }
 ?>

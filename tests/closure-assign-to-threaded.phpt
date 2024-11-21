@@ -1,9 +1,9 @@
 --TEST--
-Test assigning Closure to Threaded doesn't break use()d variables
+Test assigning Closure to ThreadSafe doesn't break use()d variables
 --FILE--
 <?php
 
-$t = new class extends \ThreadedBase{};
+$t = new class extends \pmmp\thread\ThreadSafe{};
 $name = "eren5960";
 $type = "normal";
 $t->func = function() use($name, $type) : void{

@@ -10,9 +10,9 @@ seconds.
 <?php if (defined('PHP_WINDOWS_VERSION_MAJOR')) die("skip: no support for this on windows"); ?>
 --FILE--
 <?php
-class T extends Thread {
+class T extends \pmmp\thread\Thread {
         public $data;
-        public function run() {
+        public function run() : void{
 			$start = time();
             $this->synchronized(function() use($start) {
 				while (time() - $start < 3) {
@@ -23,7 +23,7 @@ class T extends Thread {
 }
 
 $t = new T;
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->synchronized(function($thread){
 	var_dump($thread->wait(100)); # should return false because no notification sent
 								  # but may wake up (and return true) because notification might come from

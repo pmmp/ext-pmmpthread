@@ -13,23 +13,23 @@ class MyIterator implements \Iterator {
                 $this->position = 0;
         }
 
-        public function next() {
+        public function next() : void{
                 ++$this->position;
         }
 
-        public function key() {
+        public function key() : int{
                 return $this->position;
         }
 
-        public function current() {
+        public function current() : string{
                 return $this->items[$this->position];
         }
 
-        public function valid() {
+        public function valid() : bool{
                 return ($this->position < count($this->items));
         }
 
-        public function rewind() {
+        public function rewind() : void{
                 $this->myProtectedMethod();
                 $this->position = 0;
         }
@@ -37,8 +37,8 @@ class MyIterator implements \Iterator {
         protected function myProtectedMethod() {}
 }
 
-class MyThread extends \Thread {
-        public function run() {
+class MyThread extends \pmmp\thread\Thread {
+        public function run() : void{
                 $it = new \MyIterator();
                 foreach ($it as $item) {}
                 print "SUCCESS";
@@ -48,7 +48,7 @@ class MyThread extends \Thread {
 $items = new \MyIterator();
 foreach ($items as $item) {}
 $thread = new \MyThread();
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 --EXPECT--
 SUCCESS

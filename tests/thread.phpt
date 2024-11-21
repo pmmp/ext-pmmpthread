@@ -4,13 +4,13 @@ Test basic threading
 This test will create and join a simple thread
 --FILE--
 <?php
-class ThreadTest extends Thread {
-	public function run(){
+class ThreadTest extends \pmmp\thread\Thread {
+	public function run() : void{
 		/* nothing to do */
 	}
 }
 $thread = new ThreadTest();
-if($thread->start())
+if($thread->start(\pmmp\thread\Thread::INHERIT_ALL))
 	var_dump($thread->join());
 ?>
 --EXPECT--

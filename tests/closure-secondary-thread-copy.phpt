@@ -6,10 +6,9 @@ semantics differ to that of normal function copying.
 --FILE--
 <?php
 
-class SubThread extends Thread
+class SubThread extends \pmmp\thread\Thread
 {
-    public function run()
-    {
+    public function run() : void{
         $this->testFunction();
     }
 
@@ -19,15 +18,14 @@ class SubThread extends Thread
     }
 }
 
-$thread = new class extends Thread {
-    public function run()
-    {
+$thread = new class extends \pmmp\thread\Thread {
+    public function run() : void{
         $thread = new SubThread();
-        $thread->start(PTHREADS_INHERIT_NONE) && $thread->join();
+        $thread->start(\pmmp\thread\Thread::INHERIT_NONE) && $thread->join();
     }
 };
 
-$thread->start() && $thread->join();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL) && $thread->join();
 echo "OK\n";
 --EXPECT--
 OK

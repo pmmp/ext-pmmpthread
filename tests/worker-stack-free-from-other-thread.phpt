@@ -10,13 +10,13 @@ This test ensures that no unexpected behaviour occurs when a Worker instance is 
 --FILE--
 <?php
 
-class TestThread extends \Thread{
+class TestThread extends \pmmp\thread\Thread{
 	public $worker = null;
 	public $shutdown = false;
 
 	public function run() : void{
-		$this->worker = new \Worker();
-		$this->worker->start();
+		$this->worker = new \pmmp\thread\Worker();
+		$this->worker->start(\pmmp\thread\Thread::INHERIT_ALL);
 		$this->synchronized(fn() => $this->notify());
 		$this->synchronized(function() : void{
 			while(!$this->shutdown){
@@ -28,7 +28,7 @@ class TestThread extends \Thread{
 };
 
 $thread = new TestThread;
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->synchronized(function() use ($thread) : void{
 	while($thread->worker === null){
 		$thread->wait();

@@ -4,17 +4,17 @@ Test access to user defined methods in the object context
 User methods are now imported from your declared class into the thread
 --FILE--
 <?php
-class ThreadTest extends Thread {
+class ThreadTest extends \pmmp\thread\Thread {
 	public function objectTest(){
 		return $this->value;
 	}
 	
-	public function run(){
+	public function run() : void{
 		$this->value = 1;
 	}
 }
 $thread = new ThreadTest();
-if($thread->start()) {
+if($thread->start(\pmmp\thread\Thread::INHERIT_ALL)) {
 	$thread->join();
 	var_dump($thread->objectTest());
 }

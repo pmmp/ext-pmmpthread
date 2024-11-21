@@ -5,18 +5,18 @@ We need to copy closures which are defined and bound by included classes
 --FILE--
 <?php
 
-class Foo extends \Thread {
+class Foo extends \pmmp\thread\Thread {
     /** @var bool */
     public $running;
 
-    /** @var \ThreadedArray */
+    /** @var \pmmp\thread\ThreadSafeArray */
     private $shared;
 
-    public function __construct(\ThreadedArray $shared) {
+    public function __construct(\pmmp\thread\ThreadSafeArray $shared) {
         $this->shared = $shared;
     }
 
-    public function run() {
+    public function run() : void{
         $this->running = true;
 
         require __DIR__ .'/assets/ExternalClosureDefinition.php';
@@ -33,10 +33,10 @@ class Foo extends \Thread {
     }
 }
 
-$shared = new ThreadedArray();
+$shared = new \pmmp\thread\ThreadSafeArray();
 
 $foo = new Foo($shared);
-$foo->start();
+$foo->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $foo->synchronized(function() use ($foo, $shared) : void{
     while(!isset($shared['loader'])) {

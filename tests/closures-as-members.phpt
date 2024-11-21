@@ -4,19 +4,24 @@ Testing closure members
 This test verifies that closures can be set as members and called from anywhere
 --FILE--
 <?php
-$test = new ThreadedBase();
+$test = new class extends \pmmp\thread\ThreadSafe{
+    public $some;
+};
 
 $test->some = function(){
     echo "Hello Some\n";
 };
 
-class T extends Thread {
+class T extends \pmmp\thread\Thread {
+    private $test;
+    public $used;
+    public $set;
 
     public function __construct($test) {
         $this->test = $test;
     }
     
-    public function run() {
+    public function run() : void{
         /* call original closure */
         $this->call($this->test->some);
         
@@ -43,7 +48,7 @@ class T extends Thread {
 
 /* start thread to call closure */
 $t = new T($test);
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 /* wait for new closure */
 $t->synchronized(function() use($t) {

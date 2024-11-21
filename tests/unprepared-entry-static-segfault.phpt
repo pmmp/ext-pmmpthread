@@ -4,7 +4,7 @@ Test fix for #665
 Unprepared entries in static properties causing segfault
 --FILE--
 <?php
-class SystemLoader extends \ThreadedBase
+class SystemLoader extends \pmmp\thread\ThreadSafe
 {
     private static $objConfig = null;
 
@@ -14,18 +14,18 @@ class SystemLoader extends \ThreadedBase
     }
 }
 
-class SystemLoaderConfig extends \ThreadedBase { }
+class SystemLoaderConfig extends \pmmp\thread\ThreadSafe { }
 
 SystemLoader::getConfig();
 
-class Test extends Thread {
-	public function run(){
+class Test extends \pmmp\thread\Thread {
+	public function run() : void{
 		echo SystemLoaderConfig::class;
 	}
 }
 
 $objTestThread = new Test();
-$objTestThread->start();
+$objTestThread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $objTestThread->join();
 --EXPECT--
 SystemLoaderConfig

@@ -6,12 +6,12 @@ with interned strings (since they were not being copied).
 --FILE--
 <?php
 
-class Foo extends Thread
+class Foo extends \pmmp\thread\Thread
 {
 	public $running = true;
-	private $shared;
+	public $shared;
 
-	public function run() {
+	public function run() : void{
 		require __DIR__ . '/child-to-parent-class-copying-helper.php';
 
 		$this->shared['baseClass'] = new ExternalBaseClass();
@@ -28,8 +28,8 @@ class Foo extends Thread
 }
 
 $foo = new Foo();
-$foo->shared = new ThreadedArray();
-$foo->start();
+$foo->shared = new \pmmp\thread\ThreadSafeArray();
+$foo->start(\pmmp\thread\Thread::INHERIT_ALL);
 
 $foo->synchronized(function() use ($foo) : void{
 	while(!isset($foo->shared['baseClass'])){

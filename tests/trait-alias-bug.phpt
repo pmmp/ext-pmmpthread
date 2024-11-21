@@ -15,16 +15,16 @@ class B {
   }
 }
 
-class My extends Thread{
-    function run(){
+class My extends \pmmp\thread\Thread{
+    public function run() : void{
         for($i=1;$i<2;$i++){
-            echo Thread::getCurrentThreadId();
+            echo \pmmp\thread\Thread::getCurrentThreadId();
         }
     }
 }
 
 $a = new My();
-$a->start();
+$a->start(\pmmp\thread\Thread::INHERIT_ALL);
 $a->join();
 --EXPECTF--
 %i

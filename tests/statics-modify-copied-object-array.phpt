@@ -15,8 +15,8 @@ class Test{
 
 Test::init(3);
 
-$thread = new Worker;
-$thread->start(PTHREADS_INHERIT_CLASSES);
+$thread = new \pmmp\thread\Worker;
+$thread->start(\pmmp\thread\Thread::INHERIT_CLASSES);
 
 var_dump(Test::$array);
 Test::$array = [];
@@ -32,10 +32,10 @@ echo "script end\n";
 --EXPECTF--
 array(2) {
   [0]=>
-  object(stdClass)#1 (0) {
+  object(stdClass)#2 (0) {
   }
   [1]=>
-  object(stdClass)#2 (0) {
+  object(stdClass)#3 (0) {
   }
 }
 array(0) {

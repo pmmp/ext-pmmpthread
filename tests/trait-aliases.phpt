@@ -10,16 +10,16 @@ trait testTrait {
     }
 }
 
-class myThread extends Thread {
+class myThread extends \pmmp\thread\Thread {
     use testTrait  {fromTrait as fromTraitAliased;}
 
-    public function run() {
+    public function run() : void{
         $this->fromTrait('blah');
     }
 }
 
 $t = new myThread();
-$t->start();
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
 $t->join();
 --EXPECT--
 string(9) "fromTrait"

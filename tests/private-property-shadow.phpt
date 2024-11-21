@@ -4,12 +4,10 @@ Test that private properties are correctly shadowed
 Child classes shouldn't be able to access parent private properties by defining a property with the same name.
 Regardless of whether we verify visibility or not, private properties are supposed to be exclusive to a class and
 multiple private properties in a hierarchy with the same name should not become one.
---XFAIL--
-This bug has not been fixed yet
 --FILE--
 <?php
 
-class A extends \ThreadedBase{
+class A extends \pmmp\thread\ThreadSafe{
 	private $test = 1;
 
 	protected function dump() : void{
@@ -20,18 +18,18 @@ class A extends \ThreadedBase{
 class B extends A{
 	public $test = 3;
 
-	public function run(){
+	public function run() : void{
 		$this->test = 2;
 		parent::dump();
 		var_dump($this->test);
 	}
 }
 
-$t = new \Worker();
+$t = new \pmmp\thread\Worker();
 
-$t->start();
-$t->stack(new class extends \ThreadedRunnable{
-	public function run(){
+$t->start(\pmmp\thread\Thread::INHERIT_ALL);
+$t->stack(new class extends \pmmp\thread\Runnable{
+	public function run() : void{
 		$b = new B;
 		$b->run();
 	}

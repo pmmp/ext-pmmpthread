@@ -10,14 +10,14 @@ class Test {
     }
 }
 
-class UserThread extends Thread {
-    public function run () {
+class UserThread extends \pmmp\thread\Thread {
+    public function run() : void{
         Test::called_func("argument");
     }
 }
 
 $thread = new UserThread;
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 string(11) "called_func"

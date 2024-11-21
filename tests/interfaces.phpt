@@ -16,12 +16,12 @@ class MY implements iMY{
     }
 }
 
-class TEST extends Thread {
+class TEST extends \pmmp\thread\Thread {
     public function __construct() {
 
     }
 
-    public function run(){
+    public function run() : void{
 	    $MY = new MY();
         var_dump(in_array("iMY",get_declared_interfaces()));
 	    var_dump(in_array("iMY",class_implements($MY)));
@@ -29,7 +29,7 @@ class TEST extends Thread {
 }
 
 $test = new TEST();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 bool(true)

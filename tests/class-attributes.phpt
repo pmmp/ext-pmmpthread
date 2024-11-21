@@ -1,7 +1,5 @@
 --TEST--
 Test attributes copying
---SKIPIF--
-<?php if(PHP_VERSION_ID < 80000) die("skip: this test is for 8.0+ only"); ?>
 --FILE--
 <?php
 
@@ -88,14 +86,14 @@ echo "--- main thread start ---\n";
 test();
 echo "--- main thread end ---\n";
 
-$thread = new class extends \Thread{
+$thread = new class extends \pmmp\thread\Thread{
 	public function run() : void{
 		echo "--- child thread start ---\n";
 		test();
 		echo "--- child thread end ---\n";
 	}
 };
-$thread->start();
+$thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 echo "OK\n";
 ?>

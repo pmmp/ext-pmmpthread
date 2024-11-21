@@ -1,13 +1,13 @@
 --TEST--
 Test anonymous classes (unbound double inherited class)
 --DESCRIPTION--
-This test verifies that anonymous Threaded objects (with double inheritance)
+This test verifies that anonymous ThreadSafe objects (with double inheritance)
 work as expected
 --FILE--
 <?php
 
 /** c */
-class C extends ThreadedRunnable
+class C extends \pmmp\thread\Runnable
 {
     use T1, T2 {
         T2::t insteadof T1;
@@ -29,14 +29,14 @@ class C extends ThreadedRunnable
     public static function __set_state($ps){}
     public function __clone(){}
     public function __debugInfo(){}
-    public function run(){var_dump(self::C, $this->c2);}
+    public function run() : void{var_dump(self::C, $this->c2);}
 }
 
 trait T1 {function t(){}}
 trait T2 {function t(){}}
 
-$w = new Worker();
-$w->start();
+$w = new \pmmp\thread\Worker();
+$w->start(\pmmp\thread\Thread::INHERIT_ALL);
 $w->stack(/** b */new class extends C {});
 $w->shutdown();
 --EXPECT--

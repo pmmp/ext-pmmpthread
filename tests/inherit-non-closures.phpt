@@ -1,11 +1,11 @@
 --TEST--
 Test inherit none closures
 --DESCRIPTION--
-This test verifies that closures work when using PTHREADS_INHERIT_NONE
+This test verifies that closures work when using INHERIT_NONE
 --FILE--
 <?php
-class Test extends Thread {
-	public function run() {
+class Test extends \pmmp\thread\Thread {
+	public function run() : void{
 		$this->synchronized(function(){
 			echo "OK\n";
 		});
@@ -13,7 +13,7 @@ class Test extends Thread {
 }
 
 $test = new Test();
-$test->start(PTHREADS_INHERIT_NONE);
+$test->start(\pmmp\thread\Thread::INHERIT_NONE);
 $test->join();
 --EXPECT--
 OK

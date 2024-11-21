@@ -4,7 +4,7 @@ Test static:: regression
 Bug #210 shows static:: requires different logic to self::
 --FILE--
 <?php
-class testbug extends Thread
+class testbug extends \pmmp\thread\Thread
 {
     public static $somevar = 123;
     
@@ -14,15 +14,14 @@ class testbug extends Thread
         var_dump(static::$somevar);
     }
 
-    public function run()
-    {
+    public function run() : void{
         var_dump(self::$somevar);
         var_dump(static::$somevar);
     }
 }
 
 $testbug = new testbug;
-$testbug->start();
+$testbug->start(\pmmp\thread\Thread::INHERIT_ALL);
 ?>
 --EXPECT--
 int(123)

@@ -7,16 +7,16 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 
 interface TestInterface{}
 
-class Test extends Thread {
+class Test extends \pmmp\thread\Thread {
 	/**
 	 * doccomment run
 	 */
-	public function run() {
+	public function run() : void{
 		$this->alive = true;
 		/**
 		 * doccomment anonymous
 		 */
-		$this->anonymous = new class extends Thread implements TestInterface {
+		$this->anonymous = new class extends \pmmp\thread\Thread implements TestInterface {
 			const CONSTANT = 'constant';
 			/**
 			 * @var
@@ -25,7 +25,7 @@ class Test extends Thread {
 			protected $protProp;
 			private $privProp;
 			public static $staticProp;
-			public function run() {
+			public function run() : void{
 				var_dump('anonymous run');
 				$this->ready = true;
 			}
@@ -35,7 +35,7 @@ class Test extends Thread {
 			public static function staticMethod() {}
 		};
 		var_dump($this->anonymous);
-		$this->anonymous->start();
+		$this->anonymous->start(\pmmp\thread\Thread::INHERIT_ALL);
 		$this->anonymous->join();
 		$this->synchronized(function() : void{
 			$this->notify();
@@ -48,7 +48,7 @@ class Test extends Thread {
 	}
 }
 $test = new Test();
-$test->start();
+$test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->synchronized(function() use ($test) : void{
 	while(!isset($test->anonymous, $test->anonymous->ready)) {
 		$test->wait();
@@ -63,22 +63,22 @@ $test->synchronized(function() use ($test) : void{
 	$test->notify();
 });
 $test->join();
---EXPECTF--
-object(%s@anonymous)#2 (3) {
+--EXPECT--
+object(pmmp\thread\Thread@anonymous)#3 (3) {
   ["pubProp"]=>
   NULL
-  ["protProp"]=>
+  ["protProp":protected]=>
   NULL
-  ["privProp"]=>
+  ["privProp":"pmmp\thread\Thread@anonymous":private]=>
   NULL
 }
 string(13) "anonymous run"
-object(%s@anonymous)#3 (4) {
+object(pmmp\thread\Thread@anonymous)#4 (4) {
   ["pubProp"]=>
   NULL
-  ["protProp"]=>
+  ["protProp":protected]=>
   NULL
-  ["privProp"]=>
+  ["privProp":"pmmp\thread\Thread@anonymous":private]=>
   NULL
   ["ready"]=>
   bool(true)
