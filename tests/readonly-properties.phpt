@@ -41,10 +41,10 @@ $t->start(\pmmp\thread\Thread::INHERIT_ALL) && $t->join();
 
 test();
 ?>
---EXPECT--
+--EXPECTF--
 int(1)
 string(40) "Cannot modify readonly property Test::$a"
-string(62) "Cannot initialize readonly property Test::$b from global scope"
+string(%d) "Cannot %s readonly property Test::$b from global scope"
 int(1)
 string(40) "Cannot modify readonly property Test::$a"
-string(62) "Cannot initialize readonly property Test::$b from global scope"
+string(%d) "Cannot %s readonly property Test::$b from global scope"

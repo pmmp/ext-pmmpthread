@@ -51,7 +51,7 @@ string(5) "thing"
 NULL
 object(pmmp\thread\ThreadSafeArray)#3 (0) {
 }
-object(Closure)#4 (0) {
+object(Closure)#4 (%d) {%A
 }
 array(5) {
   [0]=>

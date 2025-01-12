@@ -40,10 +40,10 @@ $closureWithUse = static function () use ($test): void{
 };
 wrap($closureWithUse, $worker);
 ?>
---EXPECT--
-object(Closure)#4 (0) {
+--EXPECTF--
+object(Closure)#4 (%d) {%A
 }
-object(Closure)#7 (1) {
+object(Closure)#7 (%d) {%A
   ["static"]=>
   array(1) {
     ["test"]=>
