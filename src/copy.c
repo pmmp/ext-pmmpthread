@@ -351,7 +351,13 @@ static zval* pmmpthread_copy_literals(const pmmpthread_ident_t* owner, zval *old
 
 	memcpy(memory, old, sizeof(zval) * last);
 	while (literal < end) {
-		if (pmmpthread_copy_zval(owner, literal, old_literal) == FAILURE) {
+		if (Z_TYPE_P(old_literal) == IS_UNDEF) {
+			/*
+			 * Literals may have unused holes in 8.4 due to compiler optimizations
+			 * See https://github.com/php/php-src/commit/1e7aac315ef1 (zend_compile_rope_finalize)
+			 */
+			ZVAL_UNDEF(literal);
+		} else if (pmmpthread_copy_zval(owner, literal, old_literal) == FAILURE) {
 			zend_error_at_noreturn(
 				E_CORE_ERROR,
 				filename,
