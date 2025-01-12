@@ -182,40 +182,80 @@ static void prepare_class_function_table(const pmmpthread_ident_t* source, zend_
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
+static zend_property_info* copy_property_info(
+	const pmmpthread_ident_t* source,
+	const zend_class_entry *candidate,
+	zend_class_entry *prepared,
+	const zend_property_info* info
+) {
+	zend_property_info* dup = zend_hash_index_find_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)info);
+	if (dup) {
+		return dup;
+	}
+
+	if (info->ce->type == ZEND_INTERNAL_CLASS) {
+		dup = pemalloc(sizeof(zend_property_info), 1);
+	}
+	else {
+		dup = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
+	}
+	memcpy(dup, info, sizeof(zend_property_info));
+
+	zend_hash_index_update_ptr(&PMMPTHREAD_ZG(resolve), (zend_ulong)info, dup);
+
+	dup->name = pmmpthread_copy_string(info->name);
+	if (info->doc_comment) {
+		if (PMMPTHREAD_ZG(options) & PMMPTHREAD_INHERIT_COMMENTS) {
+			dup->doc_comment = pmmpthread_copy_string(info->doc_comment);
+		}
+		else dup->doc_comment = NULL;
+	}
+
+	if (info->ce) {
+		if (info->ce == candidate) {
+			dup->ce = prepared;
+		}
+		else dup->ce = pmmpthread_prepared_entry(source, info->ce);
+	}
+
+	pmmpthread_copy_zend_type(&info->type, &dup->type);
+
+	if (info->attributes) {
+		dup->attributes = pmmpthread_copy_attributes(source, info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
+	}
+
+#if PHP_VERSION_ID >= 80400
+	if (info->prototype) {
+		dup->prototype = copy_property_info(source, candidate, prepared, info->prototype);
+	} else dup->prototype = NULL;
+
+	if (info->hooks) {
+		dup->hooks = zend_arena_alloc(&CG(arena), ZEND_PROPERTY_HOOK_STRUCT_SIZE);
+		for (uint32_t i = 0; i < ZEND_PROPERTY_HOOK_COUNT; i++) {
+			if (info->hooks[i]) {
+				const zend_function* original_hook = info->hooks[i];
+				zend_function* copy_hook = pmmpthread_copy_function(source, original_hook);
+
+				if (original_hook->type == ZEND_USER_FUNCTION) {
+					ZEND_ASSERT(original_hook->op_array.prop_info);
+					copy_hook->op_array.prop_info = copy_property_info(source, candidate, prepared, info->hooks[i]->op_array.prop_info);
+				}
+
+				dup->hooks[i] = copy_hook;
+			} else dup->hooks[i] = NULL;
+		}
+	} else dup->hooks = NULL;
+#endif
+
+	return dup;
+}
 /* {{{ */
 static void prepare_class_property_table(const pmmpthread_ident_t* source, zend_class_entry *candidate, zend_class_entry *prepared) {
 
 	zend_property_info *info;
 	zend_string *name;
 	ZEND_HASH_FOREACH_STR_KEY_PTR(&candidate->properties_info, name, info) {
-		zend_property_info *dup;
-
-		if (info->ce->type == ZEND_INTERNAL_CLASS) {
-			dup = pemalloc(sizeof(zend_property_info), 1);
-		} else {
-			dup = zend_arena_alloc(&CG(arena), sizeof(zend_property_info));
-		}
-		memcpy(dup, info, sizeof(zend_property_info));
-
-		dup->name = pmmpthread_copy_string(info->name);
-		if (info->doc_comment) {
-			if (PMMPTHREAD_ZG(options) & PMMPTHREAD_INHERIT_COMMENTS) {
-				dup->doc_comment = pmmpthread_copy_string(info->doc_comment);
-			} else dup->doc_comment = NULL;
-		}
-
-		if (info->ce) {
-			if (info->ce == candidate) {
-				dup->ce = prepared;
-			} else dup->ce = pmmpthread_prepared_entry(source, info->ce);
-		}
-
-		pmmpthread_copy_zend_type(&info->type, &dup->type);
-
-		if (info->attributes) {
-			dup->attributes = pmmpthread_copy_attributes(source, info->attributes, info->ce->type == ZEND_INTERNAL_CLASS ? NULL : info->ce->info.user.filename);
-		}
-
+		zend_property_info* dup = copy_property_info(source, candidate, prepared, info);
 		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
 			if (dup->doc_comment)
 				zend_string_release(dup->doc_comment);
@@ -257,7 +297,11 @@ static void prepare_class_property_table(const pmmpthread_ident_t* source, zend_
 			}
 
 			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
-				if (info->ce == prepared && (info->flags & ZEND_ACC_STATIC) == 0) {
+				if (info->ce == prepared && (info->flags & ZEND_ACC_STATIC) == 0
+#if PHP_VERSION_ID >= 80400
+					&& (info->flags & ZEND_ACC_VIRTUAL) == 0
+#endif
+				) {
 					prepared->properties_info_table[OBJ_PROP_TO_NUM(info->offset)] = info;
 				}
 			} ZEND_HASH_FOREACH_END();
@@ -484,6 +528,8 @@ static zend_class_entry* pmmpthread_copy_entry(const pmmpthread_ident_t* source,
 	(candidate->doc_comment)) {
 		prepared->doc_comment = pmmpthread_copy_string(candidate->doc_comment);
 	} else prepared->doc_comment = NULL;
+	prepared->num_hooked_props = candidate->num_hooked_props;
+	prepared->num_hooked_prop_variance_checks = candidate->num_hooked_prop_variance_checks;
 #else
 	(candidate->info.user.doc_comment)) {
 		prepared->info.user.doc_comment = pmmpthread_copy_string(candidate->info.user.doc_comment);
