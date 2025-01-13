@@ -255,10 +255,15 @@ static void prepare_class_property_table(const pmmpthread_ident_t* source, zend_
 	zend_property_info *info;
 	zend_string *name;
 	ZEND_HASH_FOREACH_STR_KEY_PTR(&candidate->properties_info, name, info) {
-		zend_property_info* dup = copy_property_info(source, candidate, prepared, info);
-		if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
-			if (dup->doc_comment)
-				zend_string_release(dup->doc_comment);
+		zend_property_info* dup = zend_hash_find_ptr(&prepared->properties_info, name);
+		//TODO: if this is non-null it may need updating (if we copied it previously for an unlinked class)
+		//for now this just ensures that we don't have UAFs with reused property infos
+		//hopefully this doesn't shit a brick???
+		if (dup == NULL) {
+			dup = copy_property_info(source, candidate, prepared, info);
+			if (!zend_hash_str_add_ptr(&prepared->properties_info, name->val, name->len, dup)) {
+				ZEND_ASSERT(0);
+			}
 		}
 	} ZEND_HASH_FOREACH_END();
 
