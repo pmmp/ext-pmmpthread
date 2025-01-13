@@ -302,11 +302,7 @@ static void prepare_class_property_table(const pmmpthread_ident_t* source, zend_
 			}
 
 			ZEND_HASH_FOREACH_PTR(&prepared->properties_info, info) {
-				if (info->ce == prepared && (info->flags & ZEND_ACC_STATIC) == 0
-#if PHP_VERSION_ID >= 80400
-					&& (info->flags & ZEND_ACC_VIRTUAL) == 0
-#endif
-				) {
+				if (info->ce == prepared && PMMPTHREAD_OBJECT_PROPERTY(info)) {
 					prepared->properties_info_table[OBJ_PROP_TO_NUM(info->offset)] = info;
 				}
 			} ZEND_HASH_FOREACH_END();

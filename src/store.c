@@ -835,7 +835,7 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 
 		for (int i = 0; i < object->ce->default_properties_count; i++) {
 			zend_property_info* info = object->ce->properties_info_table[i];
-			if (info == NULL || (info->flags & ZEND_ACC_STATIC) != 0) {
+			if (info == NULL || !PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				continue;
 			}
 

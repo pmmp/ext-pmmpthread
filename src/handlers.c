@@ -93,7 +93,7 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info == ZEND_WRONG_PROPERTY_INFO) {
 			rv = &EG(uninitialized_zval);
-		} else if (info == NULL || (info->flags & ZEND_ACC_STATIC) != 0) { //dynamic property
+		} else if (info == NULL || !PMMPTHREAD_OBJECT_PROPERTY(info)) { //dynamic property
 			if (pmmpthread_store_read(object, &zmember, type, rv) == FAILURE) {
 				if (type != BP_VAR_IS) {
 					zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
@@ -161,7 +161,7 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 		bool ok = true;
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
+			if (info != NULL && PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
 
 				zend_execute_data* execute_data = EG(current_execute_data);
@@ -232,7 +232,7 @@ int pmmpthread_has_property(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 1);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
+			if (info != NULL && PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
 			isset = pmmpthread_store_isset(object, &zmember, has_set_exists);
@@ -272,7 +272,7 @@ void pmmpthread_unset_property(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
+			if (info != NULL && PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
 			}
 			pmmpthread_store_delete(object, &zmember);
