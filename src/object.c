@@ -258,7 +258,9 @@ static inline void pmmpthread_base_write_property_defaults(pmmpthread_zend_objec
 			value = OBJ_PROP(&base->std, info->offset);
 			if (!Z_ISUNDEF_P(value)) {
 				result = pmmpthread_store_write(
-					&base->std, &key,
+					&base->std,
+					&key,
+					info,
 					value,
 					PMMPTHREAD_STORE_NO_COERCE_ARRAY
 				);

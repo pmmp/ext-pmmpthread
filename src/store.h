@@ -38,13 +38,16 @@ typedef struct _pmmpthread_store_t {
 
 void pmmpthread_store_init(pmmpthread_store_t* store);
 void pmmpthread_store_destroy(pmmpthread_store_t* store);
-void pmmpthread_store_sync_local_properties(zend_object* object);
-void pmmpthread_store_full_sync_local_properties(zend_object *object);
+void pmmpthread_store_clean_stale_cache(zend_object* object);
+void pmmpthread_store_cache_all(zend_object *object);
 int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overwrite, zend_bool coerce_array_to_threaded);
-int pmmpthread_store_delete(zend_object *object, zval *key);
-int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read);
+void pmmpthread_store_clean_local_property(zend_object* object, zval* key, zend_property_info* prop_info);
+int pmmpthread_store_delete(zend_object *object, zval *key, zend_property_info* prop_info);
+int pmmpthread_store_read_ex(zend_object *object, zval *key, zend_property_info* prop_info, int type, zval *read, zend_bool force_cache);
+int pmmpthread_store_read(zend_object *object, zval *key, zend_property_info* prop_info, int type, zval *read);
 zend_bool pmmpthread_store_isset(zend_object *object, zval *key, int has_set_exists);
-int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded);
+int pmmpthread_store_write_ex(zend_object *object, zval *key, zend_property_info* prop_info, zval *write, zend_bool coerce_array_to_threaded, zend_bool *cached);
+int pmmpthread_store_write(zend_object *object, zval *key, zend_property_info* prop_info, zval *write, zend_bool coerce_array_to_threaded);
 void pmmpthread_store_tohash(zend_object *object, HashTable *hash);
 int pmmpthread_store_shift(zend_object *object, zval *member);
 int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preserve, zval *chunk);
@@ -59,4 +62,7 @@ void pmmpthread_store_key(zend_object *object, zval *key, HashPosition *position
 void pmmpthread_store_data(zend_object *object, zval *value, HashPosition *position);
 void pmmpthread_store_forward(zend_object *object, HashPosition *position); /* }}} */
 
+static inline zend_bool pmmpthread_store_retain_in_local_cache(zval* val) {
+	return IS_THREADSAFE_CLASS_INSTANCE(val) || IS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val) || Z_TYPE_P(val) == IS_STRING;
+}
 #endif

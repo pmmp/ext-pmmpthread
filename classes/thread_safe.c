@@ -83,7 +83,7 @@ ThreadSafe_method(synchronized)
 
 	if (pmmpthread_monitor_lock(&threaded->monitor)) {
 		/* synchronize property tables */
-		pmmpthread_store_sync_local_properties(Z_OBJ_P(getThis()));
+		pmmpthread_store_clean_stale_cache(Z_OBJ_P(getThis()));
 
 		zend_try {
 			/* call the closure */

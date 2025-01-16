@@ -80,12 +80,12 @@ object(TS)#3 (3) {
   NULL
 }
 object(TS)#3 (2) {
+  ["a"]=>
+  uninitialized(int)
   ["b"]=>
   string(5) "hello"
   ["c"]=>
   NULL
-  ["a"]=>
-  uninitialized(int)
 }
 bool(false)
 bool(true)

@@ -66,7 +66,7 @@ zval *pmmpthread_get_property_ptr_ptr_stub(zend_object *object, zend_string *mem
 
 /* {{{ */
 zval* pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
-	if (pmmpthread_store_read(object, member, type, rv) == FAILURE) {
+	if (pmmpthread_store_read(object, member, NULL, type, rv) == FAILURE) {
 		//TODO: this ought to generate warnings, but this is a pain right now due to key type juggling
 		//for now this maintains the v4 behaviour of silently generating NULL, which is better than segfaulting
 		if (!EG(exception)) {
@@ -81,39 +81,27 @@ zval* pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
 
 zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 	zval zmember;
-	zend_guard* guard;
+	zval result;
 
-	ZVAL_STR(&zmember, member);
-
-	if (object->ce->__get && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_GET)) {
-		(*guard) |= IN_GET;
-		zend_call_known_instance_method_with_1_params(object->ce->__get, object, rv, &zmember);
-		(*guard) &= ~IN_GET;
+	zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+	if (info != NULL && info != ZEND_WRONG_PROPERTY_INFO) {
+		ZVAL_STR(&zmember, info->name);
 	} else {
-		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
-		if (info == ZEND_WRONG_PROPERTY_INFO) {
-			rv = &EG(uninitialized_zval);
-		} else if (info == NULL || !PMMPTHREAD_OBJECT_PROPERTY(info)) { //dynamic property
-			if (pmmpthread_store_read(object, &zmember, type, rv) == FAILURE) {
-				if (type != BP_VAR_IS) {
-					zend_error(E_WARNING, "Undefined property: %s::$%s", ZSTR_VAL(object->ce->name), ZSTR_VAL(member));
-				}
-				rv = &EG(uninitialized_zval);
-			}
-		} else {
-			//defined property, use mangled name
-			ZVAL_STR(&zmember, info->name);
-
-			if (pmmpthread_store_read(object, &zmember, type, rv) == FAILURE) {
-				if (type != BP_VAR_IS && !EG(exception)) {
-					zend_throw_error(NULL, "Typed property %s::$%s must not be accessed before initialization",
-						ZSTR_VAL(info->ce->name),
-						ZSTR_VAL(member));
-				}
-				rv = &EG(uninitialized_zval);
-			}
+		ZVAL_STR(&zmember, member);
+	}
+	//this moves the value to cache for zend_std_read_property() to work on
+	pmmpthread_store_read_ex(object, &zmember, info, type, rv, 1);
+	if (EG(exception)) {
+		rv = &EG(uninitialized_zval);
+	} else {
+		//no cache for now - we don't want the VM bypassing this handler
+		zend_std_read_property(object, member, type, NULL, rv);
+		//tidy property cache so we don't read wrong values later
+		if (!pmmpthread_store_retain_in_local_cache(rv)) {
+			pmmpthread_store_clean_local_property(object, &zmember, info);
 		}
 	}
+
 	return rv;
 }
 /* }}} */
@@ -129,7 +117,7 @@ zval* pmmpthread_read_property_deny(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 
 /* {{{ */
 void pmmpthread_write_dimension(PMMPTHREAD_WRITE_DIMENSION_PASSTHRU_D) {
-	if (pmmpthread_store_write(object, member, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
+	if (pmmpthread_store_write(object, member, NULL, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)){
 		zend_throw_error(
 			pmmpthread_ce_nts_value_error,
 			"Cannot assign non-thread-safe value of type %s to %s",
@@ -144,43 +132,27 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 	zval tmp;
 	zend_guard* guard;
 
-	ZVAL_STR(&zmember, member);
-	ZVAL_UNDEF(&tmp);
+	//no cache for now - cache would allow the VM to bypass this handler
+	//std_write may coerce the var to a different type, so we need to use the result
+	value = zend_std_write_property(object, member, value, NULL);
 
-	if (object->ce->__set && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_SET)) {
-		zval rv;
-		ZVAL_UNDEF(&rv);
-
-		(*guard) |= IN_SET;
-		zend_call_known_instance_method_with_2_params(object->ce->__set, object, &rv, &zmember, value);
-		(*guard) &= ~IN_SET;
-
-		if (Z_TYPE(rv) != IS_UNDEF)
-			zval_dtor(&rv);
-	} else {
-		bool ok = true;
+	if (value != &EG(error_zval)) {
+		zval* real_value = NULL;
+		zval zmember;
+		ZVAL_UNDEF(&zmember);
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
-		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && PMMPTHREAD_OBJECT_PROPERTY(info)) {
-				ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
-
-				zend_execute_data* execute_data = EG(current_execute_data);
-				bool strict = execute_data
-					&& execute_data->func
-					&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
-
-				//zend_verify_property_type() might modify the value
-				//value is not copied before we receive it, so it might be
-				//from opcache protected memory which we can't modify
-				ZVAL_COPY(&tmp, value);
-				value = &tmp;
-
-				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
-					ok = false;
-				}
+		if (info != NULL) {
+			if (info != ZEND_WRONG_PROPERTY_INFO) {
+				ZVAL_STR(&zmember, info->name);
+				real_value = OBJ_PROP(object, info->offset);
 			}
-
-			if (ok && pmmpthread_store_write(object, &zmember, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
+		} else if (object->properties != NULL) {
+			ZVAL_STR(&zmember, member);
+			real_value = zend_hash_find(object->properties, member);
+		}
+		if (real_value != NULL) {
+			zend_bool cached = 0;
+			if (pmmpthread_store_write_ex(object, &zmember, info, real_value, PMMPTHREAD_STORE_NO_COERCE_ARRAY, &cached) == FAILURE && !EG(exception)) {
 				zend_throw_error(
 					pmmpthread_ce_nts_value_error,
 					"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
@@ -188,11 +160,13 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 					ZSTR_VAL(object->ce->name),
 					ZSTR_VAL(member)
 				);
+				value = &EG(error_zval);
+			}
+			if (!cached) {
+				pmmpthread_store_clean_local_property(object, &zmember, info);
 			}
 		}
 	}
-
-	zval_ptr_dtor(&tmp);
 
 	return EG(exception) ? &EG(error_zval) : value;
 }
@@ -249,34 +223,21 @@ int pmmpthread_has_property_deny(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
 
 /* {{{ */
 void pmmpthread_unset_dimension(PMMPTHREAD_UNSET_DIMENSION_PASSTHRU_D) {
-	pmmpthread_store_delete(object, member);
+	pmmpthread_store_delete(object, member, NULL);
 }
 
 void pmmpthread_unset_property(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 	zval zmember;
-	zend_guard* guard;
-
-	ZVAL_STR(&zmember, member);
-
-	if (object->ce->__unset && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_UNSET)) {
-		zval rv;
-		ZVAL_UNDEF(&rv);
-
-		(*guard) |= IN_UNSET;
-		zend_call_known_instance_method_with_1_params(object->ce->__unset, object, &rv, &zmember);
-		(*guard) &= ~IN_UNSET;
-
-		if (Z_TYPE(rv) != IS_UNDEF) {
-			zval_dtor(&rv);
-		}
-	} else {
+	
+	zend_std_unset_property(object, member, NULL);
+	if (!EG(exception)) {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
-		if (info != ZEND_WRONG_PROPERTY_INFO) {
-			if (info != NULL && PMMPTHREAD_OBJECT_PROPERTY(info)) {
-				ZVAL_STR(&zmember, info->name); //defined property, use mangled name
-			}
-			pmmpthread_store_delete(object, &zmember);
+		if (info != NULL && info != ZEND_WRONG_PROPERTY_INFO) {
+			ZVAL_STR(&zmember, info->name);
+		} else {
+			ZVAL_STR(&zmember, member);
 		}
+		pmmpthread_store_delete(object, &zmember, info);
 	}
 }
 /* }}} */

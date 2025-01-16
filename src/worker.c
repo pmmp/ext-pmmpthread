@@ -118,7 +118,7 @@ zend_long pmmpthread_worker_collect_tasks(pmmpthread_worker_data_t *worker_data,
 		item = worker_data->gc.head;
 		zend_long tasks_collected = 0;
 		while (item) {
-			pmmpthread_store_full_sync_local_properties(Z_OBJ(item->value));
+			pmmpthread_store_cache_all(Z_OBJ(item->value));
 			if (collect(call, &item->value)) {
 				item = item->next;
 
@@ -149,7 +149,7 @@ zend_result pmmpthread_worker_sync_collectable_tasks(pmmpthread_worker_data_t* w
 		while (item) {
 			pmmpthread_zend_object_t* threaded = PMMPTHREAD_FETCH_FROM(Z_OBJ(item->value));
 			if (pmmpthread_monitor_lock(&threaded->ts_obj->monitor)) {
-				pmmpthread_store_full_sync_local_properties(Z_OBJ(item->value));
+				pmmpthread_store_cache_all(Z_OBJ(item->value));
 				pmmpthread_monitor_unlock(&threaded->ts_obj->monitor);
 			}
 			item = item->next;

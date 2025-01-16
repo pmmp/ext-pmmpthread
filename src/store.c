@@ -68,7 +68,50 @@ static void pmmpthread_store_init_local_properties(zend_object* object) {
 	}
 } /* }}} */
 
-void pmmpthread_store_sync_local_properties(zend_object* object) { /* {{{ */
+static bool cache_item_stale(const zval* val, const pmmpthread_storage* ts_val) {
+	zend_bool remove = 1;
+	if (ts_val) {
+		ZVAL_DEINDIRECT(val);
+		if (ts_val->type == STORE_TYPE_THREADSAFE_OBJECT && IS_THREADSAFE_CLASS_INSTANCE(val)) {
+			pmmpthread_zend_object_t* shared = ((pmmpthread_zend_object_storage_t*)ts_val)->object;
+			pmmpthread_zend_object_t* local = PMMPTHREAD_FETCH_FROM(Z_OBJ_P(val));
+
+			if (
+				shared == local || //same object
+				(pmmpthread_globals_object_valid(shared) && shared->ts_obj == local->ts_obj) //connection to a valid foreign object
+				) {
+				remove = 0;
+			}
+		} else if (ts_val->type == STORE_TYPE_CLOSURE && IS_CLOSURE_OBJECT(val)) {
+			zend_closure* shared = ((pmmpthread_closure_storage_t*)ts_val)->closure;
+			zend_closure* local = (zend_closure*)Z_OBJ_P(val);
+			if (shared == local) {
+				remove = 0;
+			}
+#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
+		} else if (ts_val->type == STORE_TYPE_SOCKET && IS_EXT_SOCKETS_OBJECT(val)) {
+			pmmpthread_socket_storage_t* shared = (pmmpthread_socket_storage_t*)ts_val;
+			php_socket* local = Z_SOCKET_P(val);
+			if (shared->bsd_socket == local->bsd_socket) {
+				remove = 0;
+			}
+#endif
+		} else if (ts_val->type == STORE_TYPE_STRING_PTR && Z_TYPE_P(val) == IS_STRING) {
+			pmmpthread_string_storage_t* string = (pmmpthread_string_storage_t*)ts_val;
+			if (string->owner.ls == TSRMLS_CACHE && string->string == Z_STR_P(val)) {
+				//local caching of this by other threads is probably fine too, but fully caching it would probably
+				//require bytewise comparison, which isn't gonna be very performant
+				//it should be sufficient to only persist the owner thread's ref, since that's where copies will be
+				//made from anyway.
+				remove = 0;
+			}
+		}
+	}
+
+	return remove;
+}
+
+void pmmpthread_store_clean_stale_cache(zend_object* object) { /* {{{ */
 	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
 	pmmpthread_object_t *ts_obj = threaded->ts_obj;
 	zend_ulong idx;
@@ -81,76 +124,45 @@ void pmmpthread_store_sync_local_properties(zend_object* object) { /* {{{ */
 		return;
 	}
 
+	for (int prop_index = 0; prop_index < object->ce->default_properties_count; prop_index++) {
+		zend_property_info* prop_info = object->ce->properties_info_table[prop_index];
+		if (!prop_info) {
+			continue;
+		}
+
+		ts_val = TRY_PMMPTHREAD_STORAGE_PTR_P(zend_hash_find(&ts_obj->props.hash, prop_info->name));
+		val = OBJ_PROP(object, prop_info->offset);
+
+		if (cache_item_stale(val, ts_val)) {
+			zval_ptr_dtor(val);
+			ZVAL_UNDEF(val);
+		}
+	}
+
 	if (threaded->std.properties) {
 		ZEND_HASH_FOREACH_KEY_VAL(threaded->std.properties, idx, name, val) {
+			if (Z_TYPE_P(val) == IS_INDIRECT) {
+				//ptr to known property, don't mess with it
+				continue;
+			}
 			if (!name) {
 				ts_val = TRY_PMMPTHREAD_STORAGE_PTR_P(zend_hash_index_find(&ts_obj->props.hash, idx));
 			} else {
 				ts_val = TRY_PMMPTHREAD_STORAGE_PTR_P(zend_hash_find(&ts_obj->props.hash, name));
 			}
 
-			remove = 1;
-			if (ts_val) {
-				ZVAL_DEINDIRECT(val);
-				if (ts_val->type == STORE_TYPE_THREADSAFE_OBJECT && IS_THREADSAFE_CLASS_INSTANCE(val)) {
-					pmmpthread_zend_object_t* shared = ((pmmpthread_zend_object_storage_t*)ts_val)->object;
-					pmmpthread_zend_object_t* local = PMMPTHREAD_FETCH_FROM(Z_OBJ_P(val));
-
-					if (
-						shared == local || //same object
-						(pmmpthread_globals_object_valid(shared) && shared->ts_obj == local->ts_obj) //connection to a valid foreign object
-					) {
-						remove = 0;
-					}
-				} else if (ts_val->type == STORE_TYPE_CLOSURE && IS_CLOSURE_OBJECT(val)) {
-					zend_closure* shared = ((pmmpthread_closure_storage_t*)ts_val)->closure;
-					zend_closure* local = (zend_closure*)Z_OBJ_P(val);
-					if (shared == local) {
-						remove = 0;
-					}
-#if HAVE_PMMPTHREAD_EXT_SOCKETS_SUPPORT
-				} else if (ts_val->type == STORE_TYPE_SOCKET && IS_EXT_SOCKETS_OBJECT(val)) {
-					pmmpthread_socket_storage_t* shared = (pmmpthread_socket_storage_t*)ts_val;
-					php_socket* local = Z_SOCKET_P(val);
-					if (shared->bsd_socket == local->bsd_socket) {
-						remove = 0;
-					}
-#endif
-				} else if (ts_val->type == STORE_TYPE_STRING_PTR && Z_TYPE_P(val) == IS_STRING) {
-					pmmpthread_string_storage_t* string = (pmmpthread_string_storage_t*)ts_val;
-					if (string->owner.ls == TSRMLS_CACHE && string->string == Z_STR_P(val)) {
-						//local caching of this by other threads is probably fine too, but fully caching it would probably
-						//require bytewise comparison, which isn't gonna be very performant
-						//it should be sufficient to only persist the owner thread's ref, since that's where copies will be
-						//made from anyway.
-						remove = 0;
-					}
-				}
-			}
-
-			if (remove) {
+			if (cache_item_stale(val, ts_val)) {
 				if (!name) {
 					zend_hash_index_del(threaded->std.properties, idx);
-				}
-				else {
+				} else {
 					zend_hash_del(threaded->std.properties, name);
 				}
 			}
 		} ZEND_HASH_FOREACH_END();
-		HT_FLAGS(threaded->std.properties) &= ~HASH_FLAG_HAS_EMPTY_IND;
 	}
+
 	threaded->local_props_modcount = ts_obj->props.modcount;
 } /* }}} */
-
-static inline zend_bool pmmpthread_store_retain_in_local_cache(zval* val) {
-	return IS_THREADSAFE_CLASS_INSTANCE(val) || IS_CLOSURE_OBJECT(val) || IS_EXT_SOCKETS_OBJECT(val) || Z_TYPE_P(val) == IS_STRING;
-}
-
-static inline zend_bool pmmpthread_store_valid_local_cache_item(zval* val) {
-	//zend_std_get_properties_ex() may add IS_INDIRECT zvals to point to the linear property table
-	//we don't want that, because they aren't used by pmmpthread and are always uninitialized
-	return Z_TYPE_P(val) != IS_INDIRECT;
-}
 
 /* {{{ */
 static inline zend_bool pmmpthread_store_storage_is_cacheable(zval* zstorage) {
@@ -172,7 +184,7 @@ static inline zend_bool pmmpthread_store_storage_is_pmmpthread_obj(zval* zstorag
 } /* }}} */
 
 /* {{{ Syncs all the cacheable properties from TS storage into local cache */
-void pmmpthread_store_full_sync_local_properties(zend_object *object) {
+void pmmpthread_store_cache_all(zend_object *object) {
 	pmmpthread_zend_object_t* threaded = PMMPTHREAD_FETCH_FROM(object);
 
 	if (GC_IS_RECURSIVE(&threaded->std)) {
@@ -184,47 +196,70 @@ void pmmpthread_store_full_sync_local_properties(zend_object *object) {
 	}
 	GC_PROTECT_RECURSION(&threaded->std);
 
-	pmmpthread_store_sync_local_properties(object); //remove any outdated cache elements
+	pmmpthread_store_clean_stale_cache(object); //remove any unwanted cache elements
+
+	//TODO: we might be able to avoid initializing this if there are no dynamic properties
+	pmmpthread_store_init_local_properties(object);
 
 	pmmpthread_object_t* ts_obj = threaded->ts_obj;
 
 	zend_long idx;
 	zend_string* name;
 	zval* zstorage;
+	zval* cached;
 
-	pmmpthread_store_init_local_properties(&threaded->std);
-
-	ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
-		zval* cached;
-		zval pzval;
-
-		//we just synced local cache, so if something is already here, it doesn't need to be modified
-		if (!name) {
-			cached = zend_hash_index_find(threaded->std.properties, idx);
-		} else {
-			cached = zend_hash_find(threaded->std.properties, name);
-		}
-		if (cached && pmmpthread_store_valid_local_cache_item(cached)) {
-			if (pmmpthread_store_storage_is_pmmpthread_obj(zstorage)) {
-				pmmpthread_store_full_sync_local_properties(Z_OBJ_P(cached));
-			}
+	for (int prop_index = 0; prop_index < object->ce->default_properties_count; prop_index++) {
+		zend_property_info* prop_info = object->ce->properties_info_table[prop_index];
+		if (!prop_info || !PMMPTHREAD_OBJECT_PROPERTY(prop_info)) {
 			continue;
 		}
-		if (pmmpthread_store_storage_is_cacheable(zstorage)) {
-			pmmpthread_store_restore_zval(&pzval, zstorage);
 
-			if (pmmpthread_store_storage_is_pmmpthread_obj(zstorage)) {
-				pmmpthread_store_full_sync_local_properties(Z_OBJ(pzval));
+		zstorage = zend_hash_find(&ts_obj->props.hash, prop_info->name);
+		cached = OBJ_PROP(object, prop_info->offset);
+		if (Z_ISUNDEF_P(cached) && pmmpthread_store_storage_is_cacheable(zstorage)) {
+			pmmpthread_store_restore_zval(cached, zstorage);
+		}
+
+		if (pmmpthread_store_storage_is_pmmpthread_obj(zstorage)) {
+			pmmpthread_store_cache_all(Z_OBJ_P(cached));
+		}
+	}
+
+	ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
+		zval pzval;
+
+		ZVAL_UNDEF(&pzval);
+		//we just synced local cache, so if something is already here, it doesn't need to be modified
+		cached = name ?
+			zend_hash_find(threaded->std.properties, name) :
+			zend_hash_index_find(threaded->std.properties, idx);
+
+		if (cached) {
+			if (Z_TYPE_P(cached) == IS_INDIRECT) {
+				//ptr to known property which we've already processed
+				continue;
 			}
+			//we still need to call store_cache_all() on thread-safe objects even if cached
+		} else if (pmmpthread_store_storage_is_cacheable(zstorage)) {
+			pmmpthread_store_restore_zval(&pzval, zstorage);
+			cached = &pzval;
+		} else {
+			//not cached or cacheable
+			continue;
+		}
 
-			if (!name) {
-				if (!zend_hash_index_update(threaded->std.properties, idx, &pzval)) {
-					zval_ptr_dtor(&pzval);
-				}
-			} else {
+		if (pmmpthread_store_storage_is_pmmpthread_obj(zstorage)) {
+			pmmpthread_store_cache_all(Z_OBJ_P(cached));
+		}
+
+		if (!Z_ISUNDEF(pzval)) {
+			zval* update = name ?
 				/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
-				if (!zend_hash_str_update(threaded->std.properties, ZSTR_VAL(name), ZSTR_LEN(name), &pzval))
-					zval_ptr_dtor(&pzval);
+				zend_hash_str_update(threaded->std.properties, ZSTR_VAL(name), ZSTR_LEN(name), &pzval) :
+				zend_hash_index_update(threaded->std.properties, idx, &pzval);
+
+			if (!update) {
+				zval_ptr_dtor(&pzval);
 			}
 		}
 	} ZEND_HASH_FOREACH_END();
@@ -280,8 +315,35 @@ static inline zend_bool pmmpthread_store_member_is_cacheable(zend_object *object
 	return pmmpthread_store_storage_is_cacheable(zstorage);
 } /* }}} */
 
+
+void pmmpthread_store_clean_local_property(zend_object* object, zval* key, zend_property_info* prop_info) {
+	zval* property;
+	if (prop_info != NULL) {
+		property = OBJ_PROP(object, prop_info->offset);
+		zval_ptr_dtor(property);
+		ZVAL_UNDEF(property);
+	} else if (object->properties != NULL) {
+		if (Z_TYPE_P(key) == IS_LONG) {
+			zend_hash_index_del(object->properties, Z_LVAL_P(key));
+		} else {
+			zval* property = zend_hash_find(object->properties, Z_STR_P(key));
+			if (property) {
+				if (Z_TYPE_P(property) == IS_INDIRECT) {
+					//known property, but we don't have prop_info
+					property = Z_INDIRECT_P(property);
+					zval_ptr_dtor(property);
+					ZVAL_UNDEF(property);
+				} else {
+					//dynamic property
+					zend_hash_del(object->properties, Z_STR_P(key));
+				}
+			}
+		}
+	}
+}
+
 /* {{{ */
-int pmmpthread_store_delete(zend_object *object, zval *key) {
+int pmmpthread_store_delete(zend_object *object, zval *key, zend_property_info* prop_info) {
 	int result = FAILURE;
 	zval member;
 	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
@@ -304,10 +366,8 @@ int pmmpthread_store_delete(zend_object *object, zval *key) {
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	} else result = FAILURE;
 
-	if (result == SUCCESS && threaded->std.properties) {
-		if (Z_TYPE(member) == IS_LONG) {
-			zend_hash_index_del(threaded->std.properties, Z_LVAL(member));
-		} else zend_hash_del(threaded->std.properties, Z_STR(member));
+	if (result == SUCCESS) {
+		pmmpthread_store_clean_local_property(object, &member, prop_info);
 	}
 
 	if (coerced)
@@ -389,23 +449,33 @@ zend_bool pmmpthread_store_isset(zend_object *object, zval *key, int has_set_exi
 	return isset;
 } /* }}} */
 
-static inline void pmmpthread_store_update_local_property(zend_object* object, zval* key, zval* value) {
-	if (pmmpthread_store_retain_in_local_cache(value)) {
+static inline void pmmpthread_store_update_local_property(zend_object* object, zval* key, zend_property_info* prop_info, zval* value) {
+	Z_TRY_ADDREF_P(value);
+
+	zval* property;
+	if (prop_info != NULL && prop_info != ZEND_WRONG_PROPERTY_INFO) {
+		property = OBJ_PROP(object, prop_info->offset);
+		zval_ptr_dtor(property);
+		ZVAL_COPY_VALUE(property, value);
+	} else {
 		pmmpthread_store_init_local_properties(object);
 		if (Z_TYPE_P(key) == IS_LONG) {
 			zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
 		} else {
 			zend_string* str_key = Z_STR_P(key);
-			if ((GC_FLAGS(str_key) & (IS_STR_PERSISTENT|IS_STR_INTERNED)) == IS_STR_PERSISTENT) {
-				//refcounted persistent string from pmmpthread_store - we can't use it directly
-				//if a bucket with this key already exists, it'll be reused
-				zend_hash_str_update(object->properties, Z_STRVAL_P(key), Z_STRLEN_P(key), value);
-			} else {
-				//any other interned or emalloc'd strings should be safe to use directly here
-				zend_hash_update(object->properties, str_key, value);
+			property = zend_hash_find(object->properties, str_key);
+			if (property != value) {
+				//update_ind() ensures defined properties get properly updated even if we didn't have prop_info
+				if ((GC_FLAGS(str_key) & (IS_STR_PERSISTENT | IS_STR_INTERNED)) == IS_STR_PERSISTENT) {
+					//refcounted persistent string from pmmpthread_store - we can't use it directly
+					//if a bucket with this key already exists, it'll be reused
+					zend_hash_str_update_ind(object->properties, Z_STRVAL_P(key), Z_STRLEN_P(key), value);
+				} else {
+					//any other interned or emalloc'd strings should be safe to use directly here
+					zend_hash_update_ind(object->properties, str_key, value);
+				}
 			}
 		}
-		Z_TRY_ADDREF_P(value);
 	}
 }
 
@@ -433,7 +503,7 @@ static inline zend_bool pmmpthread_store_update_shared_property(pmmpthread_objec
 }
 
 /* {{{ */
-int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) {
+int pmmpthread_store_read_ex(zend_object *object, zval *key, zend_property_info *prop_info, int type, zval *read, zend_bool force_cache) {
 	int result = FAILURE;
 	zval member, *property = NULL;
 	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
@@ -441,17 +511,22 @@ int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) 
 	zend_bool coerced = pmmpthread_store_coerce(key, &member);
 
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
-		if (threaded->std.properties) {
-			pmmpthread_store_sync_local_properties(object);
+		if (prop_info != NULL || threaded->std.properties) {
+			pmmpthread_store_clean_stale_cache(object);
 
 			/* check if there's still a ref in local cache after sync - this ensures ref reuse for ThreadSafe and Closure objects */
 
-			if (Z_TYPE(member) == IS_LONG) {
-				property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
-			} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
+			if (prop_info) {
+				property = OBJ_PROP(object, prop_info->offset);
+			} else {
+				if (Z_TYPE(member) == IS_LONG) {
+					property = zend_hash_index_find(threaded->std.properties, Z_LVAL(member));
+				} else property = zend_hash_find(threaded->std.properties, Z_STR(member));
+			}
 
-			if (property && pmmpthread_store_valid_local_cache_item(property)) {
+			if (property && !Z_ISUNDEF_P(property)) {
 				pmmpthread_monitor_unlock(&ts_obj->monitor);
+				//even if we don't have prop_info, this might be a known property
 				ZVAL_DEINDIRECT(property);
 				ZVAL_COPY(read, property);
 				if (coerced) {
@@ -481,8 +556,9 @@ int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) 
 
 	if (result != SUCCESS) {
 		ZVAL_UNDEF(read);
-	} else {
-		pmmpthread_store_update_local_property(&threaded->std, &member, read);
+	} else if (force_cache || pmmpthread_store_retain_in_local_cache(read)) {
+		//always cache this - we'll need it for std_read handler
+		pmmpthread_store_update_local_property(&threaded->std, &member, prop_info, read);
 	}
 
 	if (coerced)
@@ -490,6 +566,10 @@ int pmmpthread_store_read(zend_object *object, zval *key, int type, zval *read) 
 
 	return result;
 } /* }}} */
+
+int pmmpthread_store_read(zend_object* object, zval* key, zend_property_info* prop_info, int type, zval* read) {
+	return pmmpthread_store_read_ex(object, key, prop_info, type, read, 0);
+}
 
 /* {{{ Copies strings (as needed) for use in thread-safe object tables */
 static zend_string* pmmpthread_store_save_string(zend_string* string) {
@@ -516,13 +596,15 @@ static zend_string* pmmpthread_store_restore_string(zend_string* string) {
 }
 
 /* {{{ */
-int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_bool coerce_array_to_threaded) {
+int pmmpthread_store_write_ex(zend_object *object, zval *key, zend_property_info* prop_info, zval *write, zend_bool coerce_array_to_threaded, zend_bool *cached) {
 	int result = FAILURE;
 	zval vol, member, zstorage;
 	pmmpthread_zend_object_t *threaded =
 		PMMPTHREAD_FETCH_FROM(object);
 	pmmpthread_object_t *ts_obj = threaded->ts_obj;
 	zend_bool coerced = 0;
+
+	*cached = 0;
 
 	if (Z_TYPE_P(write) == IS_ARRAY && coerce_array_to_threaded == PMMPTHREAD_STORE_COERCE_ARRAY) {
 		/* coerce arrays into threaded objects */
@@ -572,15 +654,16 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 		}
 		//this isn't necessary for any specific property write, but since we don't have any other way to clean up local
 		//cached ThreadSafe references that are dead, we have to take the opportunity
-		pmmpthread_store_sync_local_properties(object);
+		pmmpthread_store_clean_stale_cache(object);
 
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	}
 
 	if (result != SUCCESS) {
 		pmmpthread_store_storage_dtor(&zstorage);
-	} else {
-		pmmpthread_store_update_local_property(&threaded->std, &member, write);
+	} else if (pmmpthread_store_retain_in_local_cache(write)) {
+		*cached = 1;
+		pmmpthread_store_update_local_property(&threaded->std, &member, prop_info, write);
 	}
 
 	if (coerced)
@@ -588,6 +671,11 @@ int pmmpthread_store_write(zend_object *object, zval *key, zval *write, zend_boo
 
 	return result;
 } /* }}} */
+
+int pmmpthread_store_write(zend_object* object, zval* key, zend_property_info* prop_info, zval* write, zend_bool coerce_array_to_threaded) {
+	zend_bool dummy = 0;
+	return pmmpthread_store_write_ex(object, key, prop_info, write, coerce_array_to_threaded, &dummy);
+}
 
 /* {{{ */
 int pmmpthread_store_count(zend_object *object, zend_long *count) {
@@ -637,6 +725,8 @@ int pmmpthread_store_shift(zend_object *object, zval *member) {
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
+				//TODO: this should also clear defined properties
+				//it's probably fine not to do this for now since shift() is exclusive to arrays?
 				zend_string_release(Z_STR(key));
 			}
 
@@ -701,6 +791,8 @@ int pmmpthread_store_chunk(zend_object *object, zend_long size, zend_bool preser
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
+				//TODO: this should also clear defined properties
+				//it's probably fine not to do this for now since shift() is exclusive to arrays?
 				zend_string_release(Z_STR(key));
 			}
 		}
@@ -754,6 +846,8 @@ int pmmpthread_store_pop(zend_object *object, zval *member) {
 				if (threaded->std.properties) {
 					zend_hash_del(threaded->std.properties, Z_STR(key));
 				}
+				//TODO: this should also clear defined properties
+				//it's probably fine not to do this for now since shift() is exclusive to arrays?
 				zend_string_release(Z_STR(key));
 			}
 			if (may_be_locally_cached) {
@@ -781,57 +875,8 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 		zend_string *name = NULL;
 		zend_ulong idx;
 		zval *zstorage;
-		zend_bool changed = 0;
 
-		pmmpthread_store_sync_local_properties(object);
-
-
-		ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
-			zval *cached;
-			zval pzval;
-
-			//we just synced local cache, so if something is already here, it doesn't need to be modified
-			if (hash == threaded->std.properties) {
-				if (!name) {
-					cached = zend_hash_index_find(threaded->std.properties, idx);
-				} else {
-					cached = zend_hash_find(threaded->std.properties, name);
-				}
-				if (cached && pmmpthread_store_valid_local_cache_item(cached)) {
-					continue;
-				}
-			} else {
-				if (!name) {
-					cached = zend_hash_index_find(threaded->std.properties, idx);
-					if (cached && pmmpthread_store_valid_local_cache_item(cached)) {
-						zend_hash_index_update(hash, idx, cached);
-						Z_TRY_ADDREF_P(cached);
-						continue;
-					}
-				} else {
-					cached = zend_hash_find(threaded->std.properties, name);
-					if (cached && pmmpthread_store_valid_local_cache_item(cached)) {
-						/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
-						zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), cached);
-						Z_TRY_ADDREF_P(cached);
-						continue;
-					}
-				}
-			}
-
-			pmmpthread_store_restore_zval(&pzval, zstorage);
-
-			if (!name) {
-				if (!zend_hash_index_update(hash, idx, &pzval)) {
-					zval_ptr_dtor(&pzval);
-				}
-			} else {
-				/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
-				if (!zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), &pzval))
-					zval_ptr_dtor(&pzval);
-			}
-			changed = 1;
-		} ZEND_HASH_FOREACH_END();
+		pmmpthread_store_clean_stale_cache(object);
 
 		for (int i = 0; i < object->ce->default_properties_count; i++) {
 			zend_property_info* info = object->ce->properties_info_table[i];
@@ -840,18 +885,57 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 			}
 
 			zval pzval;
-			if (zend_hash_find(hash, info->name) == NULL) {
-				//uninitialized typed property
-				ZVAL_INDIRECT(&pzval, &object->properties_table[OBJ_PROP_TO_NUM(info->offset)]);
-				zend_hash_update(hash, info->name, &pzval);
-				HT_FLAGS(hash) |= HASH_FLAG_HAS_EMPTY_IND;
-				changed = 1;
+			zval zname;
+			ZVAL_STR(&zname, info->name);
+			pmmpthread_store_read_ex(object, &zname, info, BP_VAR_R, &pzval, hash == object->properties);
+
+			//indirections should already exist if this is the normal property table
+			if (hash != object->properties) {
+				if (Z_ISUNDEF(pzval)) {
+					ZVAL_INDIRECT(&pzval, OBJ_PROP(object, info->offset));
+					zend_hash_update(hash, info->name, &pzval);
+					HT_FLAGS(hash) |= HASH_FLAG_HAS_EMPTY_IND;
+				} else {
+					Z_TRY_ADDREF(pzval);
+					zend_hash_update(hash, info->name, &pzval);
+				}
 			}
 		}
 
-		if (changed && hash == threaded->std.properties) {
+		ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
+			zval pzval;
+			zval* existing;
+
+			zval key;
+			if (name) {
+				ZVAL_STR(&key, name);
+				existing = zend_hash_find(hash, name);
+			} else {
+				ZVAL_LONG(&key, idx);
+				existing = zend_hash_index_find(hash, idx);
+			}
+			if (existing) {
+				//either this is a new hash, or clean cache, so if an element already exists,
+				//don't mess with it
+				continue;
+			}
+
+			pmmpthread_store_read_ex(object, &key, NULL, BP_VAR_R, &pzval, hash == object->properties);
+			if (hash != object->properties) {
+				Z_TRY_ADDREF(pzval);
+				if (name) {
+					/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
+					zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), &pzval);
+				} else {
+					zend_hash_index_update(hash, idx, &pzval);
+				}
+			}
+		} ZEND_HASH_FOREACH_END();
+
+		if (hash == threaded->std.properties) {
 			//if this is the object's own properties table, we need to ensure that junk added here
 			//doesn't get incorrectly treated as gospel
+			//TODO: we should use get_properties_for() so we don't have to deal with this bullshit
 			threaded->local_props_modcount = ts_obj->props.modcount - 1;
 		}
 
@@ -1248,6 +1332,8 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 									zend_hash_index_del(destination->properties, Z_LVAL(key));
 								} else {
 									zend_hash_del(destination->properties, Z_STR(key));
+									//TODO: this should also clear defined properties
+									//it's probably fine not to do this for now since this operation is exclusive to arrays?
 								}
 							}
 						}
@@ -1297,7 +1383,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 							if (!overwrite && zend_hash_index_exists(&ts_obj->props.hash, Z_LVAL(key))) {
 								goto next;
 							}
-							if (pmmpthread_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
+							if (pmmpthread_store_write(destination, &key, NULL, pzval, coerce_array_to_threaded) == FAILURE) {
 								zend_throw_error(
 									pmmpthread_ce_nts_value_error,
 									"Cannot merge non-thread-safe value of type %s (input key %zd) into %s",
@@ -1312,7 +1398,7 @@ int pmmpthread_store_merge(zend_object *destination, zval *from, zend_bool overw
 							if (!overwrite && zend_hash_exists(&ts_obj->props.hash, Z_STR(key))) {
 								goto next;
 							}
-							if (pmmpthread_store_write(destination, &key, pzval, coerce_array_to_threaded) == FAILURE) {
+							if (pmmpthread_store_write(destination, &key, NULL, pzval, coerce_array_to_threaded) == FAILURE) {
 								zend_throw_error(
 									pmmpthread_ce_nts_value_error,
 									"Cannot merge non-thread-safe value of type %s (input key \"%s\") into %s",
@@ -1416,7 +1502,7 @@ void pmmpthread_store_data(zend_object *object, zval *value, HashPosition *posit
 		zval key;
 		zend_hash_get_current_key_zval_ex(&ts_obj->props.hash, &key, position);
 
-		if (pmmpthread_store_read(object, &key, BP_VAR_R, value) == FAILURE) {
+		if (pmmpthread_store_read(object, &key, NULL, BP_VAR_R, value) == FAILURE) {
 			ZVAL_UNDEF(value);
 		}
 		if (Z_TYPE(key) == IS_STRING) {

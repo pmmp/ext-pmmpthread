@@ -242,7 +242,7 @@ zend_bool pmmpthread_join(pmmpthread_zend_object_t* thread) {
 
 	//now, synchronize all object properties that may have been assigned by the thread
 	if (pmmpthread_monitor_lock(&thread->ts_obj->monitor)) {
-		pmmpthread_store_full_sync_local_properties(&thread->std);
+		pmmpthread_store_cache_all(&thread->std);
 		pmmpthread_monitor_unlock(&thread->ts_obj->monitor);
 	}
 	if (thread->worker_data != NULL) {
@@ -250,7 +250,7 @@ zend_bool pmmpthread_join(pmmpthread_zend_object_t* thread) {
 	}
 	pmmpthread_zend_object_t* user_globals = PMMPTHREAD_ZG(thread_shared_globals);
 	if (pmmpthread_monitor_lock(&user_globals->ts_obj->monitor)) {
-		pmmpthread_store_full_sync_local_properties(&user_globals->std);
+		pmmpthread_store_cache_all(&user_globals->std);
 		pmmpthread_monitor_unlock(&user_globals->ts_obj->monitor);
 	}
 
