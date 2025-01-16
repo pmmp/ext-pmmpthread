@@ -450,21 +450,23 @@ zend_bool pmmpthread_store_isset(zend_object *object, zval *key, int has_set_exi
 } /* }}} */
 
 static inline void pmmpthread_store_update_local_property(zend_object* object, zval* key, zend_property_info* prop_info, zval* value) {
-	Z_TRY_ADDREF_P(value);
-
 	zval* property;
 	if (prop_info != NULL && prop_info != ZEND_WRONG_PROPERTY_INFO) {
+		Z_TRY_ADDREF_P(value);
 		property = OBJ_PROP(object, prop_info->offset);
 		zval_ptr_dtor(property);
 		ZVAL_COPY_VALUE(property, value);
 	} else {
 		pmmpthread_store_init_local_properties(object);
-		if (Z_TYPE_P(key) == IS_LONG) {
-			zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
-		} else {
-			zend_string* str_key = Z_STR_P(key);
-			property = zend_hash_find(object->properties, str_key);
-			if (property != value) {
+		property = Z_TYPE_P(key) == IS_LONG ?
+			zend_hash_index_find(object->properties, Z_LVAL_P(key)) :
+			zend_hash_find(object->properties, Z_STR_P(key));
+		if (property != value) {
+			Z_TRY_ADDREF_P(value);
+			if (Z_TYPE_P(key) == IS_LONG) {
+				zend_hash_index_update(object->properties, Z_LVAL_P(key), value);
+			} else {
+				zend_string* str_key = Z_STR_P(key);
 				//update_ind() ensures defined properties get properly updated even if we didn't have prop_info
 				if ((GC_FLAGS(str_key) & (IS_STR_PERSISTENT | IS_STR_INTERNED)) == IS_STR_PERSISTENT) {
 					//refcounted persistent string from pmmpthread_store - we can't use it directly
