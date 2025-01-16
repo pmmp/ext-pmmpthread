@@ -81,7 +81,7 @@ zval* pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
 
 zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 	zval zmember;
-	zval result;
+	zval *result;
 
 	zend_property_info* info = zend_get_property_info(object->ce, member, 0);
 	if (info != NULL && info != ZEND_WRONG_PROPERTY_INFO) {
@@ -95,7 +95,8 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		rv = &EG(uninitialized_zval);
 	} else {
 		//no cache for now - we don't want the VM bypassing this handler
-		zend_std_read_property(object, member, type, NULL, rv);
+		result = zend_std_read_property(object, member, type, NULL, rv);
+		ZVAL_COPY_VALUE(rv, result);
 		//tidy property cache so we don't read wrong values later
 		if (!pmmpthread_store_retain_in_local_cache(rv)) {
 			pmmpthread_store_clean_local_property(object, &zmember, info);
