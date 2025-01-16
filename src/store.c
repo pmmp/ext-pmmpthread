@@ -898,7 +898,6 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 					zend_hash_update(hash, info->name, &pzval);
 					HT_FLAGS(hash) |= HASH_FLAG_HAS_EMPTY_IND;
 				} else {
-					Z_TRY_ADDREF(pzval);
 					zend_hash_update(hash, info->name, &pzval);
 				}
 			}
@@ -924,7 +923,6 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 
 			pmmpthread_store_read_ex(object, &key, NULL, BP_VAR_R, &pzval, hash == object->properties);
 			if (hash != object->properties) {
-				Z_TRY_ADDREF(pzval);
 				if (name) {
 					/* we can't use zend_hash_update() here - the string from store.props must not be returned to user code */
 					zend_hash_str_update(hash, ZSTR_VAL(name), ZSTR_LEN(name), &pzval);
