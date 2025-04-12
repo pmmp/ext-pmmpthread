@@ -32,6 +32,12 @@ function test(object $t1) : void{
 	var_dump($t1->c);
 	var_dump(isset($t1->c));
 	var_dump(property_exists($t1, "c"));
+
+	unset($t1->b);
+	var_dump($t1);
+	foreach($t1 as $name => $value){
+		var_dump($name, $value);
+	}
 }
 
 echo "--- Normal object ---\n";
@@ -69,6 +75,16 @@ NULL
 NULL
 bool(false)
 bool(true)
+object(NTS)#2 (1) {
+  ["a"]=>
+  uninitialized(int)
+  ["b"]=>
+  uninitialized(string)
+  ["c"]=>
+  NULL
+}
+string(1) "c"
+NULL
 --- pthreads object ---
 --- properties are currently expected to be in an unstable order ---
 object(TS)#3 (3) {
@@ -97,4 +113,14 @@ NULL
 NULL
 bool(false)
 bool(true)
+object(TS)#3 (1) {
+  ["a"]=>
+  uninitialized(int)
+  ["b"]=>
+  uninitialized(string)
+  ["c"]=>
+  NULL
+}
+string(1) "c"
+NULL
 --- Done ---

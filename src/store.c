@@ -316,139 +316,6 @@ static inline zend_bool pmmpthread_store_member_is_cacheable(zend_object *object
 } /* }}} */
 
 
-void pmmpthread_store_clean_local_property(zend_object* object, zval* key, zend_property_info* prop_info) {
-	zval* property;
-	if (prop_info != NULL) {
-		property = OBJ_PROP(object, prop_info->offset);
-		zval_ptr_dtor(property);
-		ZVAL_UNDEF(property);
-	} else if (object->properties != NULL) {
-		if (Z_TYPE_P(key) == IS_LONG) {
-			zend_hash_index_del(object->properties, Z_LVAL_P(key));
-		} else {
-			zval* property = zend_hash_find(object->properties, Z_STR_P(key));
-			if (property) {
-				if (Z_TYPE_P(property) == IS_INDIRECT) {
-					//known property, but we don't have prop_info
-					property = Z_INDIRECT_P(property);
-					zval_ptr_dtor(property);
-					ZVAL_UNDEF(property);
-				} else {
-					//dynamic property
-					zend_hash_del(object->properties, Z_STR_P(key));
-				}
-			}
-		}
-	}
-}
-
-/* {{{ */
-int pmmpthread_store_delete(zend_object *object, zval *key, zend_property_info* prop_info) {
-	int result = FAILURE;
-	zval member;
-	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
-	pmmpthread_object_t *ts_obj = threaded->ts_obj;
-	zend_bool coerced = pmmpthread_store_coerce(key, &member);
-
-	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
-		zend_bool was_pmmpthread_object = pmmpthread_store_member_is_cacheable(object, &member);
-		if (Z_TYPE(member) == IS_LONG) {
-			result = zend_hash_index_del(&ts_obj->props.hash, Z_LVAL(member));
-		} else result = zend_hash_del(&ts_obj->props.hash, Z_STR(member));
-
-		if (result == SUCCESS && was_pmmpthread_object) {
-			_pmmpthread_store_bump_modcount_nolock(threaded);
-		}
-		//TODO: it would be better if we can update this, if we deleted the first element
-		pmmpthread_store_invalidate_bounds(&ts_obj->props);
-
-		//TODO: sync local properties?
-		pmmpthread_monitor_unlock(&ts_obj->monitor);
-	} else result = FAILURE;
-
-	if (result == SUCCESS) {
-		pmmpthread_store_clean_local_property(object, &member, prop_info);
-	}
-
-	if (coerced)
-		zval_ptr_dtor(&member);
-
-	return result;
-}
-/* }}} */
-
-/* {{{ */
-zend_bool pmmpthread_store_isset(zend_object *object, zval *key, int has_set_exists) {
-	zend_bool isset = 0;
-	zval member;
-	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
-	pmmpthread_object_t *ts_obj = threaded->ts_obj;
-	zend_bool coerced = pmmpthread_store_coerce(key, &member);
-
-	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
-		zval *zstorage;
-
-		if (Z_TYPE(member) == IS_LONG) {
-			zstorage = zend_hash_index_find(&ts_obj->props.hash, Z_LVAL(member));
-		} else zstorage = zend_hash_find(&ts_obj->props.hash, Z_STR(member));
-
-		if (zstorage) {
-			isset = 1;
-			if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
-				switch (Z_TYPE_P(zstorage)) {
-					case IS_NULL:
-					case IS_FALSE:
-						isset = 0;
-						break;
-					case IS_LONG:
-						if (Z_LVAL_P(zstorage) == 0) {
-							isset = 0;
-						}
-						break;
-					case IS_DOUBLE:
-						if (Z_DVAL_P(zstorage) == 0.0) {
-							isset = 0;
-						}
-						break;
-					case IS_STRING:
-						if (Z_STRLEN_P(zstorage) == 0 || Z_STRVAL_P(zstorage)[0] == '0') {
-							isset = 0;
-						}
-						break;
-					case IS_ARRAY:
-						if (zend_hash_num_elements(Z_ARRVAL_P(zstorage)) == 0) {
-							isset = 0;
-						}
-						break;
-					case IS_PTR: {
-						pmmpthread_storage* storage = TRY_PMMPTHREAD_STORAGE_PTR_P(zstorage);
-						if (storage->type == STORE_TYPE_STRING_PTR) {
-							pmmpthread_string_storage_t* string = (pmmpthread_string_storage_t*)storage;
-							if (ZSTR_LEN(string->string) == 0 || ZSTR_VAL(string->string)[0] == '0') {
-								isset = 0;
-							}
-						}
-					} break;
-					default:
-						break;
-				}
-			} else if (has_set_exists == ZEND_PROPERTY_ISSET) {
-				if (Z_TYPE_P(zstorage) == IS_NULL) {
-					isset = 0;
-				}
-			} else if (has_set_exists != ZEND_PROPERTY_EXISTS) {
-				ZEND_ASSERT(0);
-			}
-		}
-		pmmpthread_monitor_unlock(&ts_obj->monitor);
-	}
-
-	if (coerced)
-		zval_ptr_dtor(&member);
-
-	return isset;
-} /* }}} */
-
 static inline void pmmpthread_store_update_local_property(zend_object* object, zval* key, zend_property_info* prop_info, zval* value) {
 	zval* property;
 	if (prop_info != NULL && prop_info != ZEND_WRONG_PROPERTY_INFO) {
@@ -503,6 +370,146 @@ static inline zend_bool pmmpthread_store_update_shared_property(pmmpthread_objec
 
 	return result;
 }
+
+void pmmpthread_store_clean_local_property(zend_object* object, zval* key, zend_property_info* prop_info) {
+	zval* property;
+	if (prop_info != NULL) {
+		property = OBJ_PROP(object, prop_info->offset);
+		zval_ptr_dtor(property);
+		ZVAL_UNDEF(property);
+	} else if (object->properties != NULL) {
+		if (Z_TYPE_P(key) == IS_LONG) {
+			zend_hash_index_del(object->properties, Z_LVAL_P(key));
+		} else {
+			zval* property = zend_hash_find(object->properties, Z_STR_P(key));
+			if (property) {
+				if (Z_TYPE_P(property) == IS_INDIRECT) {
+					//known property, but we don't have prop_info
+					property = Z_INDIRECT_P(property);
+					zval_ptr_dtor(property);
+					ZVAL_UNDEF(property);
+				} else {
+					//dynamic property
+					zend_hash_del(object->properties, Z_STR_P(key));
+				}
+			}
+		}
+	}
+}
+
+/* {{{ */
+int pmmpthread_store_delete(zend_object *object, zval *key, zend_property_info* prop_info) {
+	int result = FAILURE;
+	zval member;
+	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
+	pmmpthread_object_t *ts_obj = threaded->ts_obj;
+	zend_bool coerced = pmmpthread_store_coerce(key, &member);
+
+	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
+		zend_bool was_pmmpthread_object = pmmpthread_store_member_is_cacheable(object, &member);
+		if (prop_info != NULL) {
+			zval indirect;
+			ZVAL_INDIRECT(&indirect, &PMMPTHREAD_G(unset_property));
+			result = pmmpthread_store_update_shared_property(ts_obj, &member, &indirect);
+		} else {
+			if (Z_TYPE(member) == IS_LONG) {
+				result = zend_hash_index_del(&ts_obj->props.hash, Z_LVAL(member));
+			} else result = zend_hash_del(&ts_obj->props.hash, Z_STR(member));
+		}
+
+		if (result == SUCCESS && was_pmmpthread_object) {
+			_pmmpthread_store_bump_modcount_nolock(threaded);
+		}
+		//TODO: it would be better if we can update this, if we deleted the first element
+		pmmpthread_store_invalidate_bounds(&ts_obj->props);
+
+		//TODO: sync local properties?
+		pmmpthread_monitor_unlock(&ts_obj->monitor);
+	} else result = FAILURE;
+
+	if (result == SUCCESS) {
+		pmmpthread_store_clean_local_property(object, &member, prop_info);
+	}
+
+	if (coerced)
+		zval_ptr_dtor(&member);
+
+	return result;
+}
+/* }}} */
+
+/* {{{ */
+zend_bool pmmpthread_store_isset(zend_object *object, zval *key, int has_set_exists) {
+	zend_bool isset = 0;
+	zval member;
+	pmmpthread_zend_object_t *threaded = PMMPTHREAD_FETCH_FROM(object);
+	pmmpthread_object_t *ts_obj = threaded->ts_obj;
+	zend_bool coerced = pmmpthread_store_coerce(key, &member);
+
+	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
+		zval *zstorage;
+
+		if (Z_TYPE(member) == IS_LONG) {
+			zstorage = zend_hash_index_find(&ts_obj->props.hash, Z_LVAL(member));
+		} else zstorage = zend_hash_find(&ts_obj->props.hash, Z_STR(member));
+
+		if (zstorage) {
+			isset = 1;
+			if (has_set_exists == ZEND_PROPERTY_NOT_EMPTY) {
+				switch (Z_TYPE_P(zstorage)) {
+					case IS_INDIRECT: //we only use IS_INDIRECT for uninit/unset known properties
+					case IS_NULL:
+					case IS_FALSE:
+						isset = 0;
+						break;
+					case IS_LONG:
+						if (Z_LVAL_P(zstorage) == 0) {
+							isset = 0;
+						}
+						break;
+					case IS_DOUBLE:
+						if (Z_DVAL_P(zstorage) == 0.0) {
+							isset = 0;
+						}
+						break;
+					case IS_STRING:
+						if (Z_STRLEN_P(zstorage) == 0 || Z_STRVAL_P(zstorage)[0] == '0') {
+							isset = 0;
+						}
+						break;
+					case IS_ARRAY:
+						if (zend_hash_num_elements(Z_ARRVAL_P(zstorage)) == 0) {
+							isset = 0;
+						}
+						break;
+					case IS_PTR: {
+						pmmpthread_storage* storage = TRY_PMMPTHREAD_STORAGE_PTR_P(zstorage);
+						if (storage->type == STORE_TYPE_STRING_PTR) {
+							pmmpthread_string_storage_t* string = (pmmpthread_string_storage_t*)storage;
+							if (ZSTR_LEN(string->string) == 0 || ZSTR_VAL(string->string)[0] == '0') {
+								isset = 0;
+							}
+						}
+					} break;
+					default:
+						break;
+				}
+			} else if (has_set_exists == ZEND_PROPERTY_ISSET) {
+				if (Z_TYPE_P(zstorage) == IS_NULL || Z_TYPE_P(zstorage) == IS_INDIRECT) {
+					isset = 0;
+				}
+			} else if (has_set_exists != ZEND_PROPERTY_EXISTS) {
+				ZEND_ASSERT(0);
+			}
+		}
+		pmmpthread_monitor_unlock(&ts_obj->monitor);
+	}
+
+	if (coerced)
+		zval_ptr_dtor(&member);
+
+	return isset;
+} /* }}} */
 
 /* {{{ */
 int pmmpthread_store_read_ex(zend_object *object, zval *key, zend_property_info *prop_info, int type, zval *read, zend_bool force_cache) {
@@ -1108,6 +1115,14 @@ static pmmpthread_storage* pmmpthread_store_create(pmmpthread_ident_t* source, z
 static zend_result pmmpthread_store_save_zval(pmmpthread_ident_t* source, zval *zstorage, zval *write) {
 	zend_result result = FAILURE;
 	switch (Z_TYPE_P(write)) {
+		case IS_UNDEF:
+			if (write == &PMMPTHREAD_G(uninitialized_property)) {
+				ZVAL_INDIRECT(zstorage, &PMMPTHREAD_G(uninitialized_property));
+			} else {
+				ZVAL_INDIRECT(zstorage, &PMMPTHREAD_G(unset_property));
+			}
+			result = SUCCESS;
+			break;
 		case IS_NULL:
 		case IS_FALSE:
 		case IS_TRUE:
@@ -1212,6 +1227,11 @@ static int pmmpthread_store_convert(pmmpthread_storage *storage, zval *pzval){
 static void pmmpthread_store_restore_zval_ex(zval *unstore, zval *zstorage, zend_bool *may_be_locally_cached) {
 	*may_be_locally_cached = pmmpthread_store_storage_is_cacheable(zstorage);
 	switch (Z_TYPE_P(zstorage)) {
+		case IS_INDIRECT:
+			//we only use IS_INDIRECT for uninit/unset known properties
+			//ZVAL_COPY_PROP ensures retention of Z_PROP_FLAG
+			ZVAL_COPY_PROP(unstore, Z_INDIRECT_P(zstorage));
+			break;
 		case IS_NULL:
 		case IS_FALSE:
 		case IS_TRUE:
@@ -1455,6 +1475,24 @@ static void pmmpthread_store_storage_dtor (zval *zstorage){
 	}
 } /* }}} */
 
+static void iterator_skip_uninit(pmmpthread_object_t* ts_obj, HashPosition* position) {
+	while (true) {
+		if (zend_hash_has_more_elements_ex(&ts_obj->props.hash, position) == FAILURE) {
+			*position = HT_INVALID_IDX;
+			break;
+		}
+		zval* current = zend_hash_get_current_data_ex(&ts_obj->props.hash, position);
+
+		if (Z_TYPE_P(current) == IS_INDIRECT) {
+			//we currently only use IS_INDIRECT for uninit and unset properties
+			ZEND_ASSERT(Z_TYPE_P(Z_INDIRECT_P(current)) == IS_UNDEF);
+			zend_hash_move_forward_ex(&ts_obj->props.hash, position);
+		} else {
+			break;
+		}
+	}
+}
+
 /* {{{ iteration helpers */
 void pmmpthread_store_reset(zend_object *object, HashPosition *position) {
 	pmmpthread_object_t *ts_obj = PMMPTHREAD_FETCH_TS_FROM(object);
@@ -1462,11 +1500,8 @@ void pmmpthread_store_reset(zend_object *object, HashPosition *position) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		if (ts_obj->props.first == HT_INVALID_IDX) {
 			zend_hash_internal_pointer_reset_ex(&ts_obj->props.hash, position);
-			if (zend_hash_has_more_elements_ex(&ts_obj->props.hash, position) == FAILURE) { //empty
-				*position = HT_INVALID_IDX;
-			} else {
-				ts_obj->props.first = *position;
-			}
+			iterator_skip_uninit(ts_obj, position);
+			ts_obj->props.first = *position;
 		} else {
 			*position = ts_obj->props.first;
 		}
@@ -1519,9 +1554,7 @@ void pmmpthread_store_forward(zend_object *object, HashPosition *position) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zend_hash_move_forward_ex(
 			&ts_obj->props.hash, position);
-		if (zend_hash_has_more_elements_ex(&ts_obj->props.hash, position) == FAILURE) {
-			*position = HT_INVALID_IDX;
-		}
+		iterator_skip_uninit(ts_obj, position);
 		pmmpthread_monitor_unlock(&ts_obj->monitor);
 	}
 } /* }}} */

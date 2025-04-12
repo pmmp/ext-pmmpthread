@@ -187,6 +187,21 @@ static inline int _pmmpthread_connect_nolock(pmmpthread_zend_object_t* source, p
 		if (destination->std.properties)
 			zend_hash_clean(destination->std.properties);
 
+		for (int i = 0; i < destination->std.ce->default_properties_count; i++) {
+			zend_property_info* prop_info = destination->std.ce->properties_info_table[i];
+			if (!prop_info || !PMMPTHREAD_OBJECT_PROPERTY(prop_info)) {
+				continue;
+			}
+
+			zval* local = OBJ_PROP(destination, prop_info->offset);
+			zval* shared = zend_hash_find(&source->ts_obj->props.hash, prop_info->name);
+
+			//ensure connected objects reflect unset/uninit property state correctly
+			//indirections will point to PMMPTHREAD_G if they exist
+			Z_PROP_FLAG_P(local) = Z_TYPE_P(shared) == IS_INDIRECT ?
+				Z_PROP_FLAG_P(Z_INDIRECT_P(shared)) :
+				0;
+		}
 		return SUCCESS;
 	} else return FAILURE;
 } /* }}} */
@@ -243,43 +258,43 @@ static inline void pmmpthread_base_write_property_defaults(pmmpthread_zend_objec
 
 	zend_class_entry* ce = base->std.ce;
 
-	while (ce != NULL) {
-		ZEND_HASH_FOREACH_PTR(&ce->properties_info, info) {
-			zval* value;
-			int result;
+	for (int i = 0; i < ce->default_properties_count; i++) {
+		info = ce->properties_info_table[i];
+		if (info == NULL || !PMMPTHREAD_OBJECT_PROPERTY(info)) {
+			continue;
+		}
 
-			if (!PMMPTHREAD_OBJECT_PROPERTY(info)) {
-				continue;
-			}
+		zval* value;
+		int result;
 
-			zend_string* interned_name = pmmpthread_globals_add_interned_string(info->name);
-			ZVAL_INTERNED_STR(&key, interned_name);
+		zend_string* interned_name = pmmpthread_globals_add_interned_string(info->name);
+		ZVAL_INTERNED_STR(&key, interned_name);
 
-			value = OBJ_PROP(&base->std, info->offset);
-			if (!Z_ISUNDEF_P(value)) {
-				result = pmmpthread_store_write(
-					&base->std,
-					&key,
-					info,
-					value,
-					PMMPTHREAD_STORE_NO_COERCE_ARRAY
-				);
-				if (result == FAILURE) {
-					zend_throw_error(
-						NULL,
-						"Cannot use non-thread-safe default of type %s for thread-safe class property %s::$%s",
-						zend_zval_type_name(value),
-						ZSTR_VAL(ce->name),
-						ZSTR_VAL(Z_STR(key))
-					);
-					break;
-				}
-				zval_ptr_dtor(value);
-				ZVAL_UNDEF(value);
-			}
-		} ZEND_HASH_FOREACH_END();
+		value = OBJ_PROP(&base->std, info->offset);
+		if (Z_ISUNDEF_P(value)) {
+			ZEND_ASSERT(Z_PROP_FLAG_P(value) & IS_PROP_UNINIT);
+			value = &PMMPTHREAD_G(uninitialized_property);
+		}
+		result = pmmpthread_store_write(
+			&base->std,
+			&key,
+			info,
+			value,
+			PMMPTHREAD_STORE_NO_COERCE_ARRAY
+		);
+		if (result == FAILURE) {
+			zend_throw_error(
+				NULL,
+				"Cannot use non-thread-safe default of type %s for thread-safe class property %s::$%s",
+				zend_zval_type_name(value),
+				ZSTR_VAL(ce->name),
+				ZSTR_VAL(Z_STR(key))
+			);
+			break;
+		}
+		zval_ptr_dtor(value);
+		ZVAL_UNDEF(value);
 
-		ce = ce->parent;
 	}
 } /* }}} */
 

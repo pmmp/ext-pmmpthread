@@ -114,7 +114,11 @@ zend_bool pmmpthread_globals_init(){
 				(dtor_func_t)pmmpthread_globals_string_dtor_func,
 				1
 			);
-			ZVAL_UNDEF(&PMMPTHREAD_G(undef_zval));
+
+			ZVAL_UNDEF(&PMMPTHREAD_G(uninitialized_property));
+			Z_PROP_FLAG_P(&PMMPTHREAD_G(uninitialized_property)) |= IS_PROP_UNINIT;
+			ZVAL_UNDEF(&PMMPTHREAD_G(unset_property));
+
 			PMMPTHREAD_G(thread_count) = 0; //only counting threads explicitly created by pmmpthread
 		}
 

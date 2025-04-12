@@ -59,7 +59,8 @@ struct _pmmpthread_globals {
 	*/
 	HashTable interned_strings;
 
-	zval undef_zval;
+	zval uninitialized_property;
+	zval unset_property;
 
 	/*
 	* High Frequency Strings
