@@ -179,8 +179,8 @@ void pmmpthread_current_thread(zval *return_value) {
 } /* }}} */
 
 /* {{{ */
-static inline int _pmmpthread_connect_nolock(pmmpthread_zend_object_t* source, pmmpthread_zend_object_t* destination) {
-	if (source && destination) {
+static inline int _pmmpthread_connect_no_global_lock(pmmpthread_zend_object_t* source, pmmpthread_zend_object_t* destination) {
+	if (source && destination && pmmpthread_monitor_lock(&source->ts_obj->monitor)) {
 		destination->ts_obj = source->ts_obj;
 		++destination->ts_obj->refcount;
 
@@ -202,6 +202,8 @@ static inline int _pmmpthread_connect_nolock(pmmpthread_zend_object_t* source, p
 				Z_PROP_FLAG_P(Z_INDIRECT_P(shared)) :
 				0;
 		}
+
+		pmmpthread_monitor_unlock(&source->ts_obj->monitor);
 		return SUCCESS;
 	} else return FAILURE;
 } /* }}} */
@@ -210,7 +212,7 @@ static inline int _pmmpthread_connect_nolock(pmmpthread_zend_object_t* source, p
 static int pmmpthread_connect(pmmpthread_zend_object_t* source, pmmpthread_zend_object_t* destination) {
 	int result = FAILURE;
 	if(pmmpthread_globals_lock()){
-		result = _pmmpthread_connect_nolock(source, destination);
+		result = _pmmpthread_connect_no_global_lock(source, destination);
 		pmmpthread_globals_unlock();
 	}
 	return result;
