@@ -90,7 +90,7 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		zend_call_known_instance_method_with_1_params(object->ce->__get, object, rv, &zmember);
 		(*guard) &= ~IN_GET;
 	} else {
-		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+		zend_property_info* info = zend_get_property_info(object->ce, member, 1);
 		ZVAL_STR(&zmember, member);
 		if (info != NULL) {
 			if (info->flags & ZEND_ACC_VIRTUAL) {
@@ -174,7 +174,7 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 			zval zmember;
 
 			ZVAL_STR(&zmember, member);
-			zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+			zend_property_info* info = zend_get_property_info(object->ce, member, 1);
 			if (info != NULL) {
 				if (info->flags & ZEND_ACC_VIRTUAL) {
 					return value;
@@ -287,7 +287,7 @@ void pmmpthread_unset_property(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 	} else {
 		zend_std_unset_property(object, member, NULL);
 		if (!EG(exception)) {
-			zend_property_info* info = zend_get_property_info(object->ce, member, 0);
+			zend_property_info* info = zend_get_property_info(object->ce, member, 1);
 			if (info != NULL && !PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				info = NULL; //don't send invalid infos into store
 			}
