@@ -5,6 +5,7 @@ User methods are now imported from your declared class into the thread
 --FILE--
 <?php
 class ThreadTest extends \pmmp\thread\Thread {
+	public int $value;
 	public function objectTest(){
 		return $this->value;
 	}

@@ -4,6 +4,8 @@ Test magic __get and __set
 This test verifies that __set and __get work as expected
 --FILE--
 <?php
+
+#[\AllowDynamicProperties]
 class Test extends \pmmp\thread\ThreadSafe {
 
     public function __get($key) {

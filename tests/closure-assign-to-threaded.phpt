@@ -3,7 +3,9 @@ Test assigning Closure to ThreadSafe doesn't break use()d variables
 --FILE--
 <?php
 
-$t = new class extends \pmmp\thread\ThreadSafe{};
+$t = new class extends \pmmp\thread\ThreadSafe{
+	public \Closure $func;
+};
 $name = "eren5960";
 $type = "normal";
 $t->func = function() use($name, $type) : void{

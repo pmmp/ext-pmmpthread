@@ -15,9 +15,10 @@ comparison which would return true if the property tables of two distinct object
 --FILE--
 <?php
 class Test extends \pmmp\thread\Thread {
-	public function __construct(\pmmp\thread\ThreadSafeArray $arg1, \pmmp\thread\ThreadSafeArray $arg2) {
-		$this->arg1 = $arg1;
-		$this->arg2 = $arg2;
+	public function __construct(
+		private \pmmp\thread\ThreadSafeArray $arg1,
+		private \pmmp\thread\ThreadSafeArray $arg2
+	) {
 	}
 
 	public function run() : void{

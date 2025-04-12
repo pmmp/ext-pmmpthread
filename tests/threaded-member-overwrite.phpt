@@ -3,7 +3,9 @@ Test that ThreadSafe doesn't crash when overwriting a member with a non-ThreadSa
 --FILE--
 <?php
 
-$v = new \pmmp\thread\ThreadSafe();
+$v = new class extends \pmmp\thread\ThreadSafe{
+	public $a;
+};
 $v2 = new \pmmp\thread\ThreadSafe();
 $v->a = function(){};
 

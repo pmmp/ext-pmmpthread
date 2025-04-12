@@ -12,7 +12,9 @@ function test(object $t) : void{
 }
 
 test(new \stdClass);
-test(new \pmmp\thread\ThreadSafe);
+test(new class extends \pmmp\thread\ThreadSafe{
+	public $prop;
+});
 ?>
 --EXPECT--
 bool(true)

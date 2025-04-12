@@ -5,6 +5,7 @@ This test verifies that reading properties from the object without var_dump/prin
 --FILE--
 <?php
 class Test extends \pmmp\thread\Thread {
+	public string $name;
 	public function run() : void{ 
 		$this->name = sprintf("%s", __CLASS__);
 	}

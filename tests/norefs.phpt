@@ -8,9 +8,12 @@ the code in this test would fail with pthreads v2 and will work as expected with
 <?php
 
 class T extends \pmmp\thread\Thread {
+	public \pmmp\thread\ThreadSafe $t;
 
 	public function __construct() {
-		$this->t = new \pmmp\thread\ThreadSafe();
+		$this->t = new class extends \pmmp\thread\ThreadSafe{
+			public bool $set;
+		};
 		$this->t->set = true;
 	}
 
@@ -27,18 +30,18 @@ $t->join();
 --EXPECTF--
 object(T)#%d (%d) {
   ["t"]=>
-  object(pmmp\thread\ThreadSafe)#%d (%d) {
+  object(%s@anonymous)#%d (%d) {
     ["set"]=>
     bool(true)
   }
 }
-object(pmmp\thread\ThreadSafe)#%d (%d) {
+object(%s@anonymous)#%d (%d) {
   ["set"]=>
   bool(true)
 }
 object(T)#%d (%d) {
   ["t"]=>
-  object(pmmp\thread\ThreadSafe)#%d (%d) {
+  object(%s@anonymous)#%d (%d) {
     ["set"]=>
     bool(true)
   }

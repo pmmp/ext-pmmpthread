@@ -5,8 +5,9 @@ This test verifies that workers cannot be misused (collect)
 --FILE--
 <?php
 class Test extends \pmmp\thread\Thread {
-	public function __construct(\pmmp\thread\Worker $worker) {
-		$this->worker = $worker;
+	public function __construct(
+		private \pmmp\thread\Worker $worker
+	) {
 	}
 	
 	public function run() : void{

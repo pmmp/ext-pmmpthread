@@ -13,6 +13,7 @@ class MY {
 }
 
 class TEST extends \pmmp\thread\Thread {
+        private string $my;
         public function __construct($my) {
                 $this->my = serialize($my);
         }

@@ -5,6 +5,7 @@ Static methods as declared in the users implementation of Thread should now be a
 --FILE--
 <?php
 class ThreadTest extends \pmmp\thread\Thread {
+	public int $result;
 	public static function staticTest(){
 		return 1;
 	}

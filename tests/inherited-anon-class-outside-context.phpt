@@ -8,6 +8,8 @@ Unbound anon class causing segfaults, we delay copy but still cannot serialize t
 interface TestInterface{}
 
 class Test extends \pmmp\thread\Thread {
+	public bool $alive = false;
+	public \pmmp\thread\Thread $anonymous;
 	/**
 	 * doccomment run
 	 */
@@ -25,6 +27,7 @@ class Test extends \pmmp\thread\Thread {
 			protected $protProp;
 			private $privProp;
 			public static $staticProp;
+			public bool $ready;
 			public function run() : void{
 				var_dump('anonymous run');
 				$this->ready = true;
@@ -71,6 +74,8 @@ object(pmmp\thread\Thread@anonymous)#3 (3) {
   NULL
   ["privProp":"pmmp\thread\Thread@anonymous":private]=>
   NULL
+  ["ready"]=>
+  uninitialized(bool)
 }
 string(13) "anonymous run"
 object(pmmp\thread\Thread@anonymous)#4 (4) {

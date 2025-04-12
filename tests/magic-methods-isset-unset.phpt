@@ -4,6 +4,8 @@ Test magic __isset and __unset
 This test verifies that __isset and __unset work as expected
 --FILE--
 <?php
+
+#[\AllowDynamicProperties]
 class Test extends \pmmp\thread\ThreadSafe {
 
     public function __isset($key) {

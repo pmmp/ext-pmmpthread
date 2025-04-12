@@ -10,6 +10,7 @@ interface INamedThread {
 }
 
 class TestThread extends \pmmp\thread\Thread implements INamedThread {
+	public string $name;
 	public function setName($name) {
 		$this->name = $name;
 	}

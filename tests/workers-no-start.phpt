@@ -5,8 +5,9 @@ This test verifies that workers cannot be misused (start)
 --FILE--
 <?php
 class Test extends \pmmp\thread\Thread {
-	public function __construct(\pmmp\thread\Worker $worker) {
-		$this->worker = $worker;
+	public function __construct(
+		private \pmmp\thread\Worker $worker
+	) {
 	}
 	
 	public function run() : void{
@@ -20,11 +21,11 @@ $test->start(\pmmp\thread\Thread::INHERIT_ALL);
 $test->join();
 ?>
 --EXPECTF--
-Fatal error: Uncaught RuntimeException: only the creator of this pmmp\thread\Worker may start it in %s:8
+Fatal error: Uncaught RuntimeException: only the creator of this pmmp\thread\Worker may start it in %s:%d
 Stack trace:
-#0 %s(8): pmmp\thread\Thread->start(%d)
+#0 %s(%d): pmmp\thread\Thread->start(%d)
 #1 [internal function]: Test->run()
 #2 {main}
-  thrown in %s on line 8
+  thrown in %s on line %d
 
 
