@@ -95,7 +95,7 @@ zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 		if (info != NULL) {
 			if (info->flags & ZEND_ACC_VIRTUAL) {
 				//virtual properties are similar to magic methods - don't touch store or cache
-				return zend_std_read_property(object, &zmember, type, NULL, rv);
+				return zend_std_read_property(object, member, type, NULL, rv);
 			}
 			if (!PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				info = NULL; //don't send invalid infos into store
