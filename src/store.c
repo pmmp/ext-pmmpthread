@@ -118,7 +118,6 @@ void pmmpthread_store_clean_stale_cache(zend_object* object) { /* {{{ */
 	zend_string *name;
 	zval *val;
 	pmmpthread_storage *ts_val;
-	zend_bool remove;
 
 	if (threaded->local_props_modcount == ts_obj->props.modcount) {
 		return;
@@ -883,7 +882,6 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 	if (pmmpthread_monitor_lock(&ts_obj->monitor)) {
 		zend_string *name = NULL;
 		zend_ulong idx;
-		zval *zstorage;
 
 		pmmpthread_store_clean_stale_cache(object);
 
@@ -910,7 +908,7 @@ void pmmpthread_store_tohash(zend_object *object, HashTable *hash) {
 			}
 		}
 
-		ZEND_HASH_FOREACH_KEY_VAL(&ts_obj->props.hash, idx, name, zstorage) {
+		ZEND_HASH_FOREACH_KEY(&ts_obj->props.hash, idx, name) {
 			zval pzval;
 			zval* existing;
 
