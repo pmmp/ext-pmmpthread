@@ -50,7 +50,7 @@ jobs:
 
       - name: Checkout PHP build SDK
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: php/php-sdk-binary-tools
           ref: php-sdk-${{ env.PHP_SDK_BINARY_TOOLS_VER }} #TODO: probably should update this, but haven't tested newer versions
@@ -58,7 +58,7 @@ jobs:
 
       - name: Checkout PHP
         if: steps.cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: php/php-src
           ref: "php-${{ inputs.php }}"
@@ -152,7 +152,7 @@ jobs:
           #- "jit-tracing" #borked until 8.3 due to php-src bugs
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Fetch PHP build cache
         uses: actions/cache/restore@v4 #fails if cache is missing
