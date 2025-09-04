@@ -8,12 +8,12 @@ on:
 jobs:
   build-php:
     name: Build PHP (Valgrind ${{ matrix.valgrind }})
-    concurrency: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.ref }}
+    concurrency: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2204-${{ github.ref }}
     strategy:
       matrix:
         valgrind: [0, 1]
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Install PHP build dependencies
@@ -26,7 +26,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php
-          key: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2004-${{ github.run_id }}
+          key: php-debug-master-valgrind-${{ matrix.valgrind }}-ubuntu2204-${{ github.run_id }}
 
       - name: Install Valgrind
         if: matrix.valgrind == '1' && steps.php-build-cache.outputs.cache-hit != 'true'
@@ -77,7 +77,7 @@ jobs:
           - drd
 
     needs: build-php
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -88,7 +88,7 @@ jobs:
         id: php-build-cache
         with:
           path: ${{ github.workspace }}/php 
-          key: php-debug-master-valgrind-${{ matrix.valgrind-tool != 'none' && 1 || 0 }}-ubuntu2004
+          key: php-debug-master-valgrind-${{ matrix.valgrind-tool != 'none' && 1 || 0 }}-ubuntu2204
 
       - name: Install Valgrind
         if: matrix.valgrind-tool != 'none'
