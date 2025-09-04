@@ -21,7 +21,7 @@ on:
         default: 'windows-2022'
 
 env:
-  PHP_SDK_BINARY_TOOLS_VER: 2.2.0
+  PHP_SDK_BINARY_TOOLS_VER: 2.3.0
   PTHREAD_W32_VER: 3.0.0
 
 jobs:
@@ -36,6 +36,15 @@ jobs:
         id: cache-key
         run: |
           echo "key=php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}" >> $env:GITHUB_OUTPUT
+
+      - name: Set php-sdk task command
+        id: php-sdk-command
+        run: |
+          $vsToolsetFlag = ""
+          if ("${{ inputs.vs-crt }}" -eq "vs16") {
+              $vsToolsetFlag = "-s 14.29"
+          }
+          echo "command=`"${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat`" $vsToolsetFlag -t task.bat" >> $env:GITHUB_OUTPUT
 
       - name: Check PHP build cache
         uses: actions/cache@v4
@@ -77,7 +86,7 @@ jobs:
           }
 
           echo "phpsdk_deps -u -t ${{ inputs.vs-crt }} -b $php_base -a ${{ inputs.vs-arch }} -s $deps_type -d `"${{ github.workspace }}\deps`" || exit 1" > task.bat
-          & .\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat -t task.bat
+          & ${{ steps.php-sdk-command.outputs.command }}
 
       - name: Download pthreads4w dependency
         if: steps.cache.outputs.cache-hit != 'true'
@@ -92,7 +101,7 @@ jobs:
         working-directory: pthreads4w-code
         run: |
           echo "nmake VC || exit 1" > task.bat
-          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & ${{ steps.php-sdk-command.outputs.command }}
 
       - name: Copy pthreads4w files to deps dir
         if: steps.cache.outputs.cache-hit != 'true'
@@ -128,8 +137,7 @@ jobs:
           echo "nmake install || exit 1" >> task.bat
           cat task.bat
 
-          # php sdk jank! woohoo
-          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & ${{ steps.php-sdk-command.outputs.command }}
 
       - name: Add pthreads4w DLL to build result
         if: steps.cache.outputs.cache-hit != 'true'
@@ -163,6 +171,15 @@ jobs:
             deps
           key: php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}
 
+      - name: Set php-sdk task command
+        id: php-sdk-command
+        run: |
+          $vsToolsetFlag = ""
+          if ("${{ inputs.vs-crt }}" -eq "vs16") {
+              $vsToolsetFlag = "-s 14.29"
+          }
+          echo "command=`"${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat`" $vsToolsetFlag -t task.bat" >> $env:GITHUB_OUTPUT
+
       - name: Compile extension
         run: |
           echo "call ${{ github.workspace }}\bin\SDK\phpize.bat || exit 1" > task.bat
@@ -175,8 +192,7 @@ jobs:
           echo "nmake install || exit 1" >> task.bat
           cat task.bat
 
-          # php sdk jank! woohoo
-          & "${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat" -t task.bat
+          & ${{ steps.php-sdk-command.outputs.command }}
 
       - name: Generate php.ini
         working-directory: bin
