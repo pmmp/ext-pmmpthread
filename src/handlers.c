@@ -247,11 +247,11 @@ void pmmpthread_write_dimension(PMMPTHREAD_WRITE_DIMENSION_PASSTHRU_D) {
 
 zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 	zval zmember;
-	zval tmp;
+	zval coerced_value;
 	zend_guard* guard;
 
 	ZVAL_STR(&zmember, member);
-	ZVAL_UNDEF(&tmp);
+	ZVAL_UNDEF(&coerced_value);
 
 	if (object->ce->__set && (guard = zend_get_property_guard(object, member)) && !((*guard) & IN_SET)) {
 		zval rv;
@@ -269,6 +269,11 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 		if (info == ZEND_WRONG_PROPERTY_INFO) {
 			return &EG(error_zval);
 		}
+
+		//zend_verify_property_type() might modify the value
+		//value is not copied before we receive it, so it might be
+		//from opcache protected memory which we can't modify
+		ZVAL_COPY(&coerced_value, value);
 
 		if (info != NULL && (info->flags & ZEND_ACC_STATIC) == 0) {
 			ZVAL_STR(&zmember, info->name); //use mangled name to avoid private member shadowing issues
@@ -312,19 +317,13 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 					&& execute_data->func
 					&& ZEND_CALL_USES_STRICT_TYPES(EG(current_execute_data));
 
-				//zend_verify_property_type() might modify the value
-				//value is not copied before we receive it, so it might be
-				//from opcache protected memory which we can't modify
-				ZVAL_COPY(&tmp, value);
-				value = &tmp;
-
-				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
+				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, &coerced_value, strict)) {
 					write_store = false;
 				}
 			}
 		}
 
-		if (write_store && pmmpthread_store_write(object, &zmember, value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
+		if (write_store && pmmpthread_store_write(object, &zmember, &coerced_value, PMMPTHREAD_STORE_NO_COERCE_ARRAY) == FAILURE && !EG(exception)) {
 			zend_throw_error(
 				pmmpthread_ce_nts_value_error,
 				"Cannot assign non-thread-safe value of type %s to thread-safe class property %s::$%s",
@@ -335,9 +334,14 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 		}
 	}
 
-	zval_ptr_dtor(&tmp);
+	zval_ptr_dtor(&coerced_value);
 
-	return EG(exception) ? &EG(error_zval) : NULL;
+	//technically, this should return the coercedValue, but PHP doesn't give us a way to do that
+	//and we can't return a ptr to a stack variable
+	//so instead this will mirror the behaviour of a hooked property and return the original, non-coerced value
+	//this is an unfortunate deviation from the standard behaviour, but since we should only see coercion in
+	//weak mode anyway, it shouldn't cause anyone any serious headaches.
+	return EG(exception) ? &EG(error_zval) : value;
 }
 /* }}} */
 
