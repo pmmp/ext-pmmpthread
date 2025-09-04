@@ -9,7 +9,7 @@ on:
         type: string
       runs-on:
         description: 'GitHub runner'
-        default: 'ubuntu-20.04'
+        default: 'ubuntu-22.04'
         type: string
 
 jobs:

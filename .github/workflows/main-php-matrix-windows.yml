@@ -18,7 +18,7 @@ on:
       runs-on:
         description: 'GitHub runner'
         type: string
-        default: 'windows-2019'
+        default: 'windows-2022'
 
 env:
   PHP_SDK_BINARY_TOOLS_VER: 2.2.0
