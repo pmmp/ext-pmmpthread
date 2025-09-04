@@ -79,6 +79,7 @@ zval* pmmpthread_read_dimension(PMMPTHREAD_READ_DIMENSION_PASSTHRU_D) {
 	return rv;
 }
 
+#if PHP_VERSION_ID >= 80400
 /* {{{
 * Copy pasta from zend_object_handlers.c because the equivalent over there had to be static...
 */
@@ -151,6 +152,7 @@ static bool zend_call_get_hook(
 
 	return true;
 }
+#endif //PHP_VERSION_ID >= 80400
 
 zval* pmmpthread_read_property(PMMPTHREAD_READ_PROPERTY_PASSTHRU_D) {
 	zval zmember;
