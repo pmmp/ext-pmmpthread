@@ -306,7 +306,6 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 				}
 			}
 #endif
-
 			if (write_store) { //if hooked, the setter will do the type verification, so we can skip this
 				zend_execute_data* execute_data = EG(current_execute_data);
 				bool strict = execute_data
@@ -317,9 +316,8 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 				//value is not copied before we receive it, so it might be
 				//from opcache protected memory which we can't modify
 				ZVAL_COPY(&tmp, value);
-				value = &tmp;
 
-				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
+				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, &tmp, strict)) {
 					write_store = false;
 				}
 			}
