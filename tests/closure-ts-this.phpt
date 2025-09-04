@@ -29,8 +29,8 @@ $thread->start(\pmmp\thread\Thread::INHERIT_ALL);
 $thread->join();
 
 ?>
---EXPECT--
-object(Closure)#4 (1) {
+--EXPECTF--
+object(Closure)#4 (%d) {%A
   ["this"]=>
   object(A)#3 (0) {
   }

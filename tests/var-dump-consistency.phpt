@@ -13,18 +13,18 @@ var_dump($t["sock"]);
 var_dump($t);
 
 ?>
---EXPECT--
+--EXPECTF--
 object(stdClass)#4 (0) {
 }
 object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["sock"]=>
-  object(Closure)#3 (0) {
+  object(Closure)#3 (%d) {%A
   }
 }
-object(Closure)#3 (0) {
+object(Closure)#3 (%d) {%A
 }
 object(pmmp\thread\ThreadSafeArray)#2 (1) {
   ["sock"]=>
-  object(Closure)#3 (0) {
+  object(Closure)#3 (%d) {%A
   }
 }

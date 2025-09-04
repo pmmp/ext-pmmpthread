@@ -248,7 +248,7 @@ static inline void pmmpthread_base_write_property_defaults(pmmpthread_zend_objec
 			zval* value;
 			int result;
 
-			if (info->flags & ZEND_ACC_STATIC) {
+			if (!PMMPTHREAD_OBJECT_PROPERTY(info)) {
 				continue;
 			}
 

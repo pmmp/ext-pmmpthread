@@ -15,6 +15,7 @@ jobs:
           - 8.1.33
           - 8.2.29
           - 8.3.25
+          - 8.4.12
 
     uses: ./.github/workflows/main-php-matrix.yml
     with:
@@ -33,6 +34,8 @@ jobs:
             vs-crt: vs16
           - php: 8.3.25
             vs-crt: vs16
+          - php: 8.4.12
+            vs-crt: vs17
 
     uses: ./.github/workflows/main-php-matrix-windows.yml
     with:

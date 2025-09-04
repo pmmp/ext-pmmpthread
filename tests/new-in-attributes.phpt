@@ -28,20 +28,20 @@ $w->start(\pmmp\thread\Thread::INHERIT_ALL) && $w->join();
 test();
 
 ?>
---EXPECT--
+--EXPECTF--
 array(1) {
   [0]=>
-  object(Attr)#4 (1) {
+  object(Attr)#%d (1) {
     ["object"]=>
-    object(stdClass)#6 (0) {
+    object(stdClass)#%d (0) {
     }
   }
 }
 array(1) {
   [0]=>
-  object(Attr)#4 (1) {
+  object(Attr)#%d (1) {
     ["object"]=>
-    object(stdClass)#6 (0) {
+    object(stdClass)#%d (0) {
     }
   }
 }
