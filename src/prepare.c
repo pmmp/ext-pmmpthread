@@ -182,6 +182,18 @@ static void prepare_class_function_table(const pmmpthread_ident_t* source, zend_
 	} ZEND_HASH_FOREACH_END();
 } /* }}} */
 
+
+static inline void pmmpthread_update_function_scope(const pmmpthread_ident_t* source, zend_function* function, zend_class_entry* candidate, zend_class_entry* prepared) {
+	zend_class_entry *scope = function->common.scope;
+	if (scope == candidate) {
+		function->common.scope = prepared;
+	} else {
+		if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
+			function->common.scope = pmmpthread_prepared_entry(source, function->common.scope);
+		}
+	}
+}
+
 static zend_property_info* copy_property_info(
 	const pmmpthread_ident_t* source,
 	const zend_class_entry *candidate,
@@ -240,6 +252,10 @@ static zend_property_info* copy_property_info(
 					ZEND_ASSERT(original_hook->op_array.prop_info);
 					copy_hook->op_array.prop_info = copy_property_info(source, candidate, prepared, info->hooks[i]->op_array.prop_info);
 				}
+
+				//assume this is fine to do here, for now? new properties may be added in late binding, so we can't
+				//do this along with normal functions like we normally would
+				pmmpthread_update_function_scope(source, copy_hook, candidate, prepared);
 
 				dup->hooks[i] = copy_hook;
 			} else dup->hooks[i] = NULL;
@@ -572,13 +588,8 @@ static inline int pmmpthread_prepared_entry_function_prepare(zval *bucket, int a
 	zend_class_entry *candidate = va_arg(argv, zend_class_entry*);
 	zend_class_entry *scope = function->common.scope;
 
-	if (scope == candidate) {
-		function->common.scope = prepared;
-	} else {
-		if (function->common.scope && function->common.scope->type == ZEND_USER_CLASS) {
-			function->common.scope = pmmpthread_prepared_entry(source, function->common.scope);
-		}
-	}
+	pmmpthread_update_function_scope(source, function, candidate, prepared);
+
 	return ZEND_HASH_APPLY_KEEP;
 } /* }}} */
 
