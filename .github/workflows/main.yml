@@ -41,5 +41,4 @@ jobs:
     with:
       php: ${{ matrix.php }}
       vs-crt: ${{ matrix.vs-crt }}
-      runs-on: ${{ matrix.runs-on }}
     secrets: inherit
