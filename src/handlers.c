@@ -316,8 +316,9 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 				//value is not copied before we receive it, so it might be
 				//from opcache protected memory which we can't modify
 				ZVAL_COPY(&tmp, value);
+				value = &tmp;
 
-				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, &tmp, strict)) {
+				if (ZEND_TYPE_IS_SET(info->type) && !zend_verify_property_type(info, value, strict)) {
 					write_store = false;
 				}
 			}
@@ -336,7 +337,7 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 
 	zval_ptr_dtor(&tmp);
 
-	return EG(exception) ? &EG(error_zval) : value;
+	return EG(exception) ? &EG(error_zval) : NULL;
 }
 /* }}} */
 
