@@ -7,6 +7,10 @@ on:
         description: 'PHP version'
         type: string
         required: true
+      opcache-shared:
+        description: 'Whether OPcache needs a zend_extension option (not needed in 8.5+)'
+        type: boolean
+        default: false
       vs-arch:
         description: 'CPU arch to build for (x86 or x64)'
         type: string
@@ -21,7 +25,7 @@ on:
         default: 'windows-2022'
 
 env:
-  PHP_SDK_BINARY_TOOLS_VER: 2.3.0
+  PHP_SDK_BINARY_TOOLS_VER: 2.4.0
   PTHREAD_W32_VER: 3.0.0
 
 jobs:
@@ -35,7 +39,7 @@ jobs:
       - name: Set PHP build cache key
         id: cache-key
         run: |
-          echo "key=php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}" >> $env:GITHUB_OUTPUT
+          echo "key=php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}-php-sdk-${{ env.PHP_SDK_BINARY_TOOLS_VER }}" >> $env:GITHUB_OUTPUT
 
       - name: Set php-sdk task command
         id: php-sdk-command
@@ -169,7 +173,7 @@ jobs:
             bin
             php-sdk
             deps
-          key: php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}
+          key: php-debug-${{ inputs.php }}-${{ inputs.vs-arch }}-${{ inputs.vs-crt }}-${{ inputs.runs-on }}-php-sdk-${{ env.PHP_SDK_BINARY_TOOLS_VER }}
 
       - name: Set php-sdk task command
         id: php-sdk-command
@@ -204,7 +208,11 @@ jobs:
           $opcache = "${{ matrix.opcache }}"
           if ($opcache -ne "off") {
             echo "Enabling OPcache"
-            echo "zend_extension=php_opcache.dll" >> php.ini
+            $opcache_shared = "${{ inputs.opcache-shared }}"
+            if ($opcache_shared -eq "true") {
+              echo "OPcache is a shared extension in this version"
+              echo "zend_extension=php_opcache.dll" >> php.ini
+            }
             echo "opcache.enable=1" >> php.ini
             echo "opcache.enable_cli=1" >> php.ini
             echo "opcache.protect_memory=1" >> php.ini

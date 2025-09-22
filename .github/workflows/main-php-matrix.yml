@@ -7,6 +7,10 @@ on:
         description: 'PHP version'
         required: true
         type: string
+      opcache-shared:
+        description: 'Whether opcache needs a zend_extension option (not needed in 8.5+)'
+        type: boolean
+        default: false
       runs-on:
         description: 'GitHub runner'
         default: 'ubuntu-22.04'
@@ -122,7 +126,10 @@ jobs:
           echo "extension=pmmpthread.so" > $GITHUB_WORKSPACE/php.ini
           if [[ "${{ matrix.opcache }}" != "off" ]]; then
             echo "Enabling OPcache"
-            echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
+            if [[ "${{ inputs.opcache-shared }}" == "true" ]]; then
+              echo "OPcache is a shared extension in this version"
+              echo "zend_extension=opcache.so" >> $GITHUB_WORKSPACE/php.ini
+            fi
             echo "opcache.enable=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.enable_cli=1" >> $GITHUB_WORKSPACE/php.ini
             echo "opcache.protect_memory=1" >> $GITHUB_WORKSPACE/php.ini

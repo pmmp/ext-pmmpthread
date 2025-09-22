@@ -787,12 +787,29 @@ zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closur
 		);
 	} else {
 		HashTable* static_variables = NULL;
-		if (closure_obj->func.type == ZEND_USER_FUNCTION && closure_obj->func.op_array.static_variables != NULL) {
-			//if this is a real closure, we need to update the static_variables from the original closure object
-			//so that the copied closure has the correct use()d variables
-			//this should not modify the original closure
-			//these have to be copied before the closure is created, to maintain the original behaviour
-			static_variables = pmmpthread_copy_statics(owner, closure_obj->func.op_array.static_variables);
+#if PHP_VERSION_ID >= 80200
+		HashTable* static_variables_ptr = NULL;
+#endif
+		if (closure_obj->func.type == ZEND_USER_FUNCTION){
+			if (closure_obj->func.op_array.static_variables != NULL) {
+				//if this is a real closure, we need to update the static_variables from the original closure object
+				//so that the copied closure has the correct use()d variables
+				//this should not modify the original closure
+				//these have to be copied before the closure is created, to maintain the original behaviour
+				static_variables = pmmpthread_copy_statics(owner, closure_obj->func.op_array.static_variables);
+			}
+#if PHP_VERSION_ID >= 80200
+			//in PHP 8.5, the static_variables field is not overwritten when creating a new closure, so it may be different
+			//than the static_variables_ptr, which will typically contain bound variables
+			HashTable *origin_static_variables_ptr = ZEND_MAP_PTR_GET(closure_obj->func.op_array.static_variables_ptr);
+			if (origin_static_variables_ptr != NULL) {
+				if (origin_static_variables_ptr != closure_obj->func.op_array.static_variables) {
+					static_variables_ptr = pmmpthread_copy_statics(owner, origin_static_variables_ptr);
+				} else {
+					static_variables_ptr = static_variables;
+				}
+			}
+#endif
 		}
 
 		//we don't know where the definition for this closure is, so create a definition from this copy of it
@@ -810,15 +827,15 @@ zend_result pmmpthread_copy_closure(const pmmpthread_ident_t* owner, zend_closur
 		if (static_variables != NULL) {
 			zend_closure* new_closure = (zend_closure*)Z_OBJ_P(pzval);
 			ZEND_ASSERT(new_closure->func.type == ZEND_USER_FUNCTION);
-			if (new_closure->func.op_array.static_variables != NULL) {
+			if (ZEND_MAP_PTR_GET(new_closure->func.op_array.static_variables_ptr) != NULL) {
 				//the closure may have static_variables allocated from its original creation by zend_compile.c
-				zend_array_release(new_closure->func.op_array.static_variables);
+				zend_array_release(ZEND_MAP_PTR_GET(new_closure->func.op_array.static_variables_ptr));
 			}
 			new_closure->func.op_array.static_variables = static_variables;
 #if PHP_VERSION_ID >= 80200
 			ZEND_MAP_PTR_INIT(
 				new_closure->func.op_array.static_variables_ptr,
-				new_closure->func.op_array.static_variables
+				static_variables_ptr
 			);
 #else
 			//this is not strictly necessary for 8.1, but is here for the sake of completeness
