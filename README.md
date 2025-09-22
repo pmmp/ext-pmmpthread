@@ -11,7 +11,7 @@ This is a fork of the now-abandoned [krakjoe/pthreads](https://github.com/krakjo
 While the idea of PHP threading may seem great, the barrier to using threads is much higher than other languages, due to severe limitations imposed by the design of the Zend Engine. Many things are not possible with threads in PHP, or are simply far too performance-intensive to be worthwhile.
 
 You can learn more about pthreads at the following links:
-- https://doc.pmmp.io/en/rtfd/developer-reference/threading-in-php-wtf.html
+- https://doc.pmmp.io/en/rtfd/developers/threading-in-php-wtf.html
 - https://gist.github.com/krakjoe/6437782
 - https://gist.github.com/krakjoe/9384409
 
