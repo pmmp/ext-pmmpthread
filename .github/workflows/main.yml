@@ -16,11 +16,11 @@ jobs:
             opcache-shared: true
           - php: 8.2.29
             opcache-shared: true
-          - php: 8.3.27
+          - php: 8.3.28
             opcache-shared: true
-          - php: 8.4.14
+          - php: 8.4.15
             opcache-shared: true
-          - php: 8.5.0RC3
+          - php: 8.5.0
             opcache-shared: false
 
     uses: ./.github/workflows/main-php-matrix.yml
@@ -40,13 +40,13 @@ jobs:
           - php: 8.2.29
             vs-crt: vs16
             opcache-shared: true
-          - php: 8.3.27
+          - php: 8.3.28
             vs-crt: vs16
             opcache-shared: true
-          - php: 8.4.14
+          - php: 8.4.15
             vs-crt: vs17
             opcache-shared: true
-          - php: 8.5.0RC3
+          - php: 8.5.0
             vs-crt: vs17
             opcache-shared: false
 
