@@ -535,7 +535,7 @@ static zend_op_array** pmmpthread_copy_dynamic_func_defs(const pmmpthread_ident_
 
 	for (int i = 0; i < num_dynamic_func_defs; i++) {
 		//assume this is OK?
-		new[i] = (zend_op_array*) pmmpthread_copy_function(owner, old[i]);
+		new[i] = (zend_op_array*) pmmpthread_copy_function(owner, (const zend_function*) old[i]);
 	}
 
 	return new;
@@ -628,7 +628,7 @@ static inline zend_function* pmmpthread_copy_user_function(const pmmpthread_iden
 		if (op_array->vars) 		op_array->vars = pmmpthread_copy_variables(variables, op_array->last_var);
 		if (op_array->attributes) op_array->attributes = pmmpthread_copy_attributes(owner, op_array->attributes, op_array->filename);
 
-		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pmmpthread_copy_dynamic_func_defs(owner, op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
+		if (op_array->num_dynamic_func_defs) op_array->dynamic_func_defs = pmmpthread_copy_dynamic_func_defs(owner, (const zend_op_array**) op_array->dynamic_func_defs, op_array->num_dynamic_func_defs);
 	}
 
 	if (copy_static_variables && op_array->static_variables) {
