@@ -22,6 +22,7 @@
 #include <src/copy.h>
 #include <Zend/zend_enum.h>
 #include <Zend/zend_observer.h>
+#include <Zend/zend_stream.h>
 
 #define PMMPTHREAD_PREPARATION_BEGIN_CRITICAL() pmmpthread_globals_lock();
 #define PMMPTHREAD_PREPARATION_END_CRITICAL()   pmmpthread_globals_unlock()
@@ -889,8 +890,7 @@ static inline void pmmpthread_prepare_sapi(const pmmpthread_ident_t* source) {
 } /* }}} */
 
 /* {{{ */
-int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options) {
-
+int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_t *ready, zend_class_entry *thread_ce, zend_ulong thread_options, zend_string **autoload_file) {
 	PMMPTHREAD_PREPARATION_BEGIN_CRITICAL() {
 		thread->local.id = pmmpthread_self();
 		thread->local.ls = ts_resource(0);
@@ -945,6 +945,9 @@ int pmmpthread_prepared_startup(pmmpthread_object_t* thread, pmmpthread_monitor_
 		if (thread_options & PMMPTHREAD_INHERIT_INCLUDES)
 			pmmpthread_prepare_includes(&thread->creator);
 
+		if (PMMPTHREAD_G(autoload_file)) {
+			*autoload_file = zend_string_init(ZSTR_VAL(PMMPTHREAD_G(autoload_file)), ZSTR_LEN(PMMPTHREAD_G(autoload_file)), 1);
+		}
 		pmmpthread_monitor_add(ready, PMMPTHREAD_MONITOR_READY);
 
 		PMMPTHREAD_G(thread_count)++;

@@ -62,6 +62,11 @@ struct _pmmpthread_globals {
 	zval undef_zval;
 
 	/*
+	* File included on all new threads before any user code runs, usually an autoloader
+	*/
+	zend_string *autoload_file;
+
+	/*
 	* High Frequency Strings
 	*/
 	struct _strings {
@@ -112,6 +117,9 @@ zend_bool pmmpthread_globals_lock(); /* }}} */
 
 /* {{{ release global lock */
 void pmmpthread_globals_unlock(); /* }}} */
+
+/* {{{ set autoload file used to bootstrap new threads */
+zend_bool pmmpthread_globals_set_autoload_file(const zend_string *autoload_file); /* }}} */
 
 /* {{{ shutdown global structures */
 void pmmpthread_globals_shutdown(); /* }}} */

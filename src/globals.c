@@ -118,6 +118,8 @@ zend_bool pmmpthread_globals_init(){
 			PMMPTHREAD_G(thread_count) = 0; //only counting threads explicitly created by pmmpthread
 		}
 
+		PMMPTHREAD_G(autoload_file) = NULL;
+
 #define INIT_STRING(n, v) do { \
 	PMMPTHREAD_G(strings).n = zend_new_interned_string(zend_string_init(v, 1)); \
 } while(0)
@@ -221,6 +223,21 @@ zend_bool pmmpthread_globals_socket_shared(PHP_SOCKET socket) {
 	return result;
 }
 #endif
+
+/* {{{ */
+zend_bool pmmpthread_globals_set_autoload_file(const zend_string *path) {
+	if (pmmpthread_globals_lock()) {
+		zend_string *copy = path ? zend_string_init(ZSTR_VAL(path), ZSTR_LEN(path), 1) : NULL;
+
+		if (PMMPTHREAD_G(autoload_file)) {
+			zend_string_release(PMMPTHREAD_G(autoload_file));
+		}
+		PMMPTHREAD_G(autoload_file) = copy;
+		pmmpthread_globals_unlock();
+		return 1;
+	}
+	return 0;
+} /* }}} */
 
 /* {{{ */
 void pmmpthread_globals_shutdown() {

@@ -129,3 +129,16 @@ Thread_method(getRunningCount)
 
 	RETURN_LONG(count);
 }
+
+/* {{{ proto void Thread::setAutoloadFile(string|null $file)
+	Sets the path of the file used to set up new threads */
+Thread_method(setAutoloadFile)
+{
+	zend_string* file;
+
+	ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 1, 1)
+		Z_PARAM_STR(file)
+	ZEND_PARSE_PARAMETERS_END();
+
+	pmmpthread_globals_set_autoload_file(file);
+} /* }}} */

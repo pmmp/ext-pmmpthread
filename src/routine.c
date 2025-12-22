@@ -35,6 +35,57 @@ static void pmmpthread_routine_free(pmmpthread_routine_arg_t* r) {
 	pmmpthread_monitor_destroy(&r->ready);
 } /* }}} */
 
+/* {{{ Includes the autoloader provided, if any. This code is borrowed from krakjoe/parallel. */
+static int pmmpthread_routine_run_bootstrap(zend_string* file) {
+	zend_file_handle fh;
+	zend_op_array* ops;
+	zval rv;
+	int result;
+
+	if (!file) {
+		return SUCCESS;
+	}
+
+	zend_stream_init_filename_ex(&fh, file);
+	result = php_stream_open_for_zend_ex(&fh, USE_PATH | REPORT_ERRORS | STREAM_OPEN_FOR_INCLUDE);
+
+	if (result != SUCCESS) {
+		zend_error(E_ERROR, "Unable to open thread autoload file %s", ZSTR_VAL(file));
+		return FAILURE;
+	}
+
+	zend_hash_add_empty_element(&EG(included_files),
+		fh.opened_path ?
+		fh.opened_path : file);
+
+	ops = zend_compile_file(&fh, ZEND_REQUIRE);
+
+	zend_destroy_file_handle(&fh);
+
+	if (ops) {
+		ZVAL_UNDEF(&rv);
+		zend_execute(ops, &rv);
+		destroy_op_array(ops);
+		efree(ops);
+
+		if (EG(exception)) {
+			zend_exception_error(EG(exception), E_ERROR);
+			zend_error(E_ERROR, "Uncaught exception thrown from thread autoload file %s", ZSTR_VAL(file));
+			return FAILURE;
+		}
+
+		zval_ptr_dtor(&rv);
+		return SUCCESS;
+	}
+
+	if (EG(exception)) {
+		zend_exception_error(EG(exception), E_ERROR);
+		zend_error(E_ERROR, "Error compiling thread autoload file %s", ZSTR_VAL(file));
+	}
+
+	return FAILURE;
+} /* }}} */
+
 /* {{{ */
 static inline zend_result pmmpthread_routine_run_function(pmmpthread_zend_object_t* connection) {
 	zend_function* run;
@@ -106,12 +157,24 @@ static void* pmmpthread_routine(pmmpthread_routine_arg_t* routine) {
 	zend_ulong thread_options = routine->options;
 	pmmpthread_object_t* ts_obj = thread->ts_obj;
 	pmmpthread_monitor_t* ready = &routine->ready;
+	zend_string* autoload_file = NULL;
 
-	if (pmmpthread_prepared_startup(ts_obj, ready, thread->std.ce, thread_options) == SUCCESS) {
+	if (pmmpthread_prepared_startup(ts_obj, ready, thread->std.ce, thread_options, &autoload_file) == SUCCESS) {
 		pmmpthread_queue done_tasks_cache;
 		memset(&done_tasks_cache, 0, sizeof(pmmpthread_queue));
 
 		zend_first_try{
+			if (autoload_file != NULL) {
+				zend_try {
+					if (pmmpthread_routine_run_bootstrap(autoload_file) == FAILURE) {
+						zend_bailout();
+					}
+				} zend_catch {
+					zend_string_release(autoload_file);
+					zend_bailout();
+				} zend_end_try();
+			}
+
 			ZVAL_UNDEF(&PMMPTHREAD_ZG(this));
 			pmmpthread_object_connect(thread, &PMMPTHREAD_ZG(this));
 			if (pmmpthread_routine_run_function(PMMPTHREAD_FETCH_FROM(Z_OBJ_P(&PMMPTHREAD_ZG(this)))) == FAILURE) {
@@ -140,6 +203,8 @@ static void* pmmpthread_routine(pmmpthread_routine_arg_t* routine) {
 					}
 				}
 			}
+		} zend_catch {
+			pmmpthread_monitor_add(&ts_obj->monitor, PMMPTHREAD_MONITOR_ERROR);
 		} zend_end_try();
 
 		pmmpthread_call_shutdown_functions();

@@ -152,6 +152,14 @@ abstract class Thread extends Runnable
     public static function getRunningCount() : int{}
 
     /**
+     * Sets the file to be included when a new thread is started
+     * Typically this would be the path of your vendor/autoload.php
+     *
+     * @param string $file
+     */
+    public static function setAutoloadFile(string $file) : void{}
+
+    /**
      * Will return the identity of the referenced Thread
      *
      * @return int
