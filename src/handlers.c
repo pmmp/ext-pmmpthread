@@ -262,7 +262,7 @@ zval* pmmpthread_write_property(PMMPTHREAD_WRITE_PROPERTY_PASSTHRU_D) {
 		(*guard) &= ~IN_SET;
 
 		if (Z_TYPE(rv) != IS_UNDEF)
-			zval_dtor(&rv);
+			zval_ptr_dtor(&rv);
 	} else {
 		bool write_store = true;
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);
@@ -375,7 +375,7 @@ int pmmpthread_has_property(PMMPTHREAD_HAS_PROPERTY_PASSTHRU_D) {
 		if (Z_TYPE(rv) != IS_UNDEF) {
 			//TODO: this doesn't account for ZEND_PROPERTY_NOT_EMPTY
 			isset = zend_is_true(&rv);
-			zval_dtor(&rv);
+			zval_ptr_dtor(&rv);
 		}
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 1);
@@ -453,7 +453,7 @@ void pmmpthread_unset_property(PMMPTHREAD_UNSET_PROPERTY_PASSTHRU_D) {
 		(*guard) &= ~IN_UNSET;
 
 		if (Z_TYPE(rv) != IS_UNDEF) {
-			zval_dtor(&rv);
+			zval_ptr_dtor(&rv);
 		}
 	} else {
 		zend_property_info* info = zend_get_property_info(object->ce, member, 0);

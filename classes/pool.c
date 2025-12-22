@@ -171,7 +171,7 @@ Pool_method(submit) {
 					zend_fcall_info_args_clear(&fci, 1);
 
 				if (Z_TYPE(retval) != IS_UNDEF)
-					zval_dtor(&retval);
+					zval_ptr_dtor(&retval);
 			}
 
 			zval options;
