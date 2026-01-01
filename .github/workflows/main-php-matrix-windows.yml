@@ -51,7 +51,7 @@ jobs:
           echo "command=`"${{ github.workspace }}\php-sdk\phpsdk-${{ inputs.vs-crt }}-${{ inputs.vs-arch }}.bat`" $vsToolsetFlag -t task.bat" >> $env:GITHUB_OUTPUT
 
       - name: Check PHP build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache
         with:
           path: |
@@ -167,7 +167,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fetch PHP build cache
-        uses: actions/cache/restore@v4 #fails if cache is missing
+        uses: actions/cache/restore@v5 #fails if cache is missing
         with:
           path: |
             bin
