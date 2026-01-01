@@ -33,7 +33,7 @@ jobs:
           echo "key=php-debug-${{ inputs.php }}-valgrind-${{ matrix.valgrind }}-${{ inputs.runs-on }}" >> $GITHUB_OUTPUT
 
       - name: Check PHP build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache
         with:
           path: ${{ github.workspace }}/php
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Fetch PHP build cache
-        uses: actions/cache/restore@v4 #fails if cache is missing
+        uses: actions/cache/restore@v5 #fails if cache is missing
         with:
           path: ${{ github.workspace }}/php
           key: php-debug-${{ inputs.php }}-valgrind-${{ matrix.valgrind-tool != 'none' && 1 || 0 }}-${{ inputs.runs-on }}
